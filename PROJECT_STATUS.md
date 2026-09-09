@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **2 COMPLETE** (Vue recruiter console foundation)  
+**Phase:** **4 COMPLETE** (Identity Federation Gateway + Webhook & Subscription Defense, local)  
 **Overall:** **PROJECT C — NOT COMPLETE**
 
 ## Completeness
@@ -12,7 +12,9 @@
 | Phase 0 architecture lock | **COMPLETE** |
 | Phase 1 Java/Spring foundation | **COMPLETE** |
 | Phase 2 Vue recruiter console | **COMPLETE** |
-| Application production IAM / Entra / JWT | **NOT STARTED** |
+| Phase 3 Identity Federation Gateway | **COMPLETE** (local JWT/JWKS; Entra PLANNED) |
+| Phase 4 Webhook & Subscription Defense | **COMPLETE** (QuayForge HMAC; Graph subscriptions PLANNED) |
+| Application production IAM / Entra | **NOT STARTED** |
 | Apache Camel | **NOT STARTED** |
 | Microsoft Graph | **NOT STARTED** |
 | GCP resources | **NONE PROVISIONED** |
@@ -22,19 +24,17 @@
 | Project B | **FROZEN** — not modified |
 | LIVE VERIFIED | **Nothing** |
 
-## Phase 2 evidence
+## Phase 3–4 evidence
 
-- Official `create-vue` scaffold in `frontend/`
-- Vue 3 + TypeScript + Pinia + Vue Router + SCSS + Vite
-- Typed API client for health, ready, and synthetic evaluate
-- Session-only boundary events
-- Vitest + Vue Test Utils + MSW
-- Playwright smoke against the real local Java backend
-- `frontend` typecheck, lint, unit tests, production build
-- `backend/mvnw.cmd verify` still required as regression
+- Spring Security OAuth2 resource server with asymmetric JWT + JWKS
+- AuthN (401) vs AuthZ (403 / domain FAIL) kept separate
+- QuayForge HMAC-SHA256 over raw bytes, constant-time compare, ±300s freshness
+- Replay nonce store ≠ event-id idempotency
+- Vue Identity Lab and Webhook Defense Lab against the real Java API
+- Secrets are not shipped to the browser or committed
 
-Details: [docs/PHASE2.md](docs/PHASE2.md).
+Details: [docs/PHASE3.md](docs/PHASE3.md), [docs/PHASE4.md](docs/PHASE4.md).
 
 ## Next (do not start automatically)
 
-Phase 3 — Identity Federation Gateway. Do not implement OAuth2/OIDC, JWT/JWKS, Entra, Graph, HMAC, Camel, or GCP until that phase is requested.
+Phase 5 — Contract Drift Firewall. Do not implement Camel, Entra live, Graph, Secret Manager, or GCP until that phase is requested.

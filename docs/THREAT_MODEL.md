@@ -3,6 +3,20 @@
 Scope: BoundaryMesh API, worker, Vue demo, GCP project, Entra/Graph connector, partner webhooks.  
 Out of scope: compromising Google or Microsoft as vendors; physical datacenter.
 
+## Phase 3–4 implemented mitigations
+
+| Threat | Implemented now | Still planned |
+| --- | --- | --- |
+| Spoofing (JWT) | Asymmetric RS256 + JWKS, issuer, audience, exp, nbf | Entra issuer/JWKS live |
+| Spoofing (webhook) | HMAC-SHA256 over raw body, constant-time compare | Secret Manager |
+| Tampering (webhook body) | Signature covers SHA-256 of raw bytes | Graph-specific proofs |
+| Replay | Signed timestamp ±300s + atomic nonce store | Firestore TTL adapter |
+| Elevation of privilege | Scope `boundary.evaluate` on HTTP and domain AuthZ | Entra app roles / ACL |
+| Information disclosure | Sanitized 401/403, no raw JWT/HMAC in responses or normal logs | Gitleaks CI, cloud log sinks |
+| Oversized ingest | 65536-byte webhook limit, 413 | Distributed rate limit |
+
+Do not mark GCP / Secret Manager / KMS / Firestore as implemented.
+
 Each important threat maps to **preventive**, **detective**, and **recovery** controls.
 
 ## Spoofing

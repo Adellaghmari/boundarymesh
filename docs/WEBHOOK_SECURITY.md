@@ -23,7 +23,7 @@ Used for partner HTTP callbacks.
 v1:{timestamp}:{nonce}:{sha256(raw_body)}
 ```
 
-HMAC-SHA256 over that UTF-8 string with the secret from Secret Manager.
+HMAC-SHA256 over that UTF-8 string. Phase 4 uses a local `WebhookSecretProvider` (env or generated ephemeral). Secret Manager remains **PLANNED**.
 
 ### Verification steps
 
@@ -31,8 +31,8 @@ HMAC-SHA256 over that UTF-8 string with the secret from Secret Manager.
 2. Compute HMAC.
 3. Compare with `MessageDigest.isEqual` (constant-time).
 4. Reject if timestamp outside **±300 seconds** (configurable per integration, max 600).
-5. Reject if nonce seen in the replay window (Firestore `replayNonces/{integrationId}/{nonce}` with TTL = window).
-6. Then run AuthZ ACL, contract, egress, engine.
+5. Reject if nonce seen in the replay window (Phase 4: in-memory `ReplayNonceStore` with expiry and `recordIfAbsent`. Firestore adapter remains **PLANNED**).
+6. Then parse JSON, apply event-id idempotency, and run the engine. Contract Drift Firewall is **not** Phase 4.
 
 ### Malicious replay vs legitimate duplicate
 
@@ -80,24 +80,39 @@ API and partners use UTC. Leeway 60s inside the 300s window. Graph validation ha
 
 Invalid signature, expired timestamp, and replay are **not** downstream errors. The API responds 401/403/409 as designed and does **not** publish Pub/Sub.
 
-HTTP codes (ingress):
+HTTP codes (Phase 4 local QuayForge path):
 
 | Case | Status |
 | --- | --- |
-| Bad HMAC | 401 |
-| Expired timestamp | 401 |
-| Replay | 409 with `REPLAY_DETECTED` |
-| Graph validation | 200 + token body |
-| Duplicate event_id after ALLOW | 200 with prior transaction id |
+| Missing required headers | 400 |
+| Wrong `Content-Type` | 415 |
+| Body over 65536 bytes | 413 |
+| Signed-path outcomes (valid, bad HMAC, stale/future, replay, duplicate) | **200** + `DecisionResponse` (`ALLOW` / `REJECT`, reason codes) |
+| Graph validation | **PLANNED** |
+
+The 200 + bounded decision body is intentional: the response is not a signature oracle (no expected HMAC, no secret, no nonce store dump). Future production ingress may tighten HTTP codes without changing the control model.
+
+Max body: 65536 bytes. Reject before unbounded buffering (`BoundedRawBodyFilter`).
+
+Future distributed rate limiting is **PLANNED**. This is not production DDoS protection.
 
 ## Tests (Phase 4)
 
+Implemented:
+
 - valid signature
-- tampered body
-- wrong secret version
-- expired timestamp
+- invalid / missing signature
+- expired and future timestamp
 - nonce replay
 - new nonce, same `event_id` (duplicate, not replay)
+- concurrent nonce race on `recordIfAbsent`
+- oversized payload (413)
+- wrong content type (415)
+- constant-time compare via `MessageDigest.isEqual`
+- lab helper does not return the secret or `v1=` signature
+
+Not implemented:
+
 - Graph validation echo
-- Graph wrong `clientState`
-- constant-time path covered by a focused unit test (document the API used)
+- Graph `clientState`
+- Secret Manager versioned secrets

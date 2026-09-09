@@ -1,6 +1,6 @@
 # CV claims matrix
 
-**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 2.
+**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 4.
 
 Statuses: `PLANNED` → `IMPLEMENTED` → `TESTED` → `LIVE VERIFIED`
 
@@ -23,16 +23,22 @@ This is portfolio work, not professional employment.
 | Java 25 | **TESTED** | Temurin 25.0.4.1; `--release 25`; Enforcer |
 | Maven | **TESTED** | Wrapper 3.9.11; `mvnw.cmd verify` |
 | Spring Boot 4.1.1 | **TESTED** | Context load + HTTP tests |
-| Spring Security (local filter chain) | **IMPLEMENTED** | Local/test permit health/ready/dev. **Not IAM.** |
-| Spring Security OAuth2 resource server | PLANNED | Dependency ≠ implementation |
-| Spring Security OIDC BFF | PLANNED | |
-| Identity Federation Gateway | PLANNED | |
-| AuthN vs AuthZ evidence | PLANNED | Control kinds modeled only |
+| Spring Security (local filter chain) | **TESTED** | Resource-server chain, headers, CORS, 401/403 JSON |
+| Spring Security OAuth2 resource server | **TESTED** | Local JWT decoder + JWKS. Not Entra |
+| Spring Security OIDC BFF | PLANNED | No Authorization Code login |
+| Identity Federation Gateway | **TESTED** | Local issuer. Entra remains PLANNED |
+| AuthN vs AuthZ evidence | **TESTED** | HTTP 401/403 and domain identity/authorization controls |
+| JWT validation (iss/aud/exp/nbf/sig) | **TESTED** | Asymmetric RS256 |
+| JWKS validation / key rotation tests | **TESTED** | In-process JWKS |
+| Scope/role authorization | **TESTED** | `boundary.read` / `boundary.evaluate` / `boundary.admin` |
 | Microsoft Entra ID (admin) | PLANNED | No app registration |
 | Entra client-credentials JWT | PLANNED | |
-| JWKS validation / key rotation tests | PLANNED | |
-| Webhook HMAC-SHA256 | PLANNED | |
-| Replay vs duplicate distinction | PLANNED | Reason code exists; no verifier |
+| Webhook HMAC-SHA256 | **TESTED** | QuayForge raw-body contract |
+| Constant-time signature comparison | **TESTED** | `MessageDigest.isEqual` |
+| Timestamp freshness | **TESTED** | ±300s via `Clock` |
+| Replay defense | **TESTED** | Atomic in-memory nonce store |
+| Idempotency foundation | **TESTED** | Separate from replay; `duplicate_delivery` |
+| Replay vs duplicate distinction | **TESTED** | Same nonce ≠ same event_id |
 | Graph notification validation (harness) | PLANNED | |
 | Graph subscription lifecycle | PLANNED | |
 | Microsoft Graph Calendar connector | PLANNED | |
@@ -47,7 +53,7 @@ This is portfolio work, not professional employment.
 | Data Boundary Firewall | PLANNED | |
 | Boundary Enforcement Engine foundation | **TESTED** | Synthetic ControlVector |
 | Outcomes ALLOW / TRANSFORM / QUARANTINE / REJECT | **TESTED** | |
-| JUnit 5 | **TESTED** | 38 tests |
+| JUnit 5 | **TESTED** | Identity + webhook + engine suites |
 | ArchUnit | **TESTED** | Domain/application must not depend on Spring/cloud |
 | Spotless | **TESTED** | Bound to `verify` |
 | Spring Actuator health | **TESTED** | `/api/v1/health` and `/api/v1/ready` |
@@ -75,7 +81,7 @@ This is portfolio work, not professional employment.
 | Pact | PLANNED | |
 | Testcontainers emulators | PLANNED | |
 | Camel tests | PLANNED | |
-| Frontend API integration | **TESTED** | health, ready, synthetic evaluate |
+| Frontend API integration | **TESTED** | health, ready, JWT evaluate, webhook lab |
 | OpenTelemetry / Micrometer | PLANNED | Actuator health only |
 | Cloud Logging / Monitoring / Trace | PLANNED | |
 | Firebase Hosting | PLANNED | |

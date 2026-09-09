@@ -14,6 +14,8 @@ Java 21 remains an emergency fallback only if a transitive library later proves 
 
 **Phase 1 resolved (2026-09-09):** Eclipse Temurin **25.0.4.1+1**, Maven Wrapper **3.9.11**, Spring Boot **4.1.1**, Spring Security **7.1.1** (BOM, not forced).
 
+**Phase 3–4 resolved (2026-09-10):** Spring Boot **4.1.1**, Spring Security **7.1.1** (BOM), Nimbus JOSE JWT **10.9.1** (via `spring-security-oauth2-jose`, not a second JWT library). Node **22.23.2** (22 LTS patch; not Node 24).
+
 ## Backend
 
 | Component | Locked | Why |

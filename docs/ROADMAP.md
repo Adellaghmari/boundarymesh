@@ -7,8 +7,8 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 | **0** | Product / security / architecture lock | This documentation. COMPLETE when gate is YES |
 | **1** | Java / Spring local foundation | Maven modules, domain types, health endpoints, in-memory adapters, no GCP |
 | **2** | Vue recruiter console foundation | Vite app, routes, SCSS visual system, synthetic fixtures, SYNTHETIC DEMO banners |
-| **3** | Identity Federation Gateway | Spring Security resource server + BFF OIDC (test issuer locally), AuthN vs AuthZ evidence |
-| **4** | Webhook & Subscription Defense | HMAC, nonce, Graph validation **harness** |
+| **3** | Identity Federation Gateway | **COMPLETE** local JWT/JWKS resource server + AuthN vs AuthZ. Entra / BFF OIDC remain later |
+| **4** | Webhook & Subscription Defense | **COMPLETE** QuayForge HMAC, freshness, replay, idempotency. Graph subscriptions remain later |
 | **5** | Contract Drift Firewall | OpenAPI 3.1, AsyncAPI, JSON Schema runtime, quarantine on drift |
 | **6** | Data Boundary Firewall | versioned policies, public field-path evidence |
 | **7** | Boundary Enforcement Engine | ControlVector → EnforcementDecision, decision-table tests, API wiring |

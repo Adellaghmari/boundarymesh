@@ -4,6 +4,33 @@ Flagship capability #1: **Identity Federation Gateway**.
 
 Authentication answers **who**. Authorization answers **whether this who may perform this boundary crossing**.
 
+## Phase 3 — implemented (local)
+
+Implemented and tested locally:
+
+- Spring Security OAuth 2.0 **resource server**
+- Asymmetric JWT (RS256) + JWKS
+- Issuer, audience, exp, nbf, subject, scope
+- `kid` and in-process key rotation
+- Domain `BoundaryPrincipal` via adapter (not Spring `Authentication` in domain)
+- HTTP **401** vs **403** vs domain AuthN PASS / AuthZ FAIL
+
+**Not implemented:** Microsoft Entra ID, interactive OIDC Authorization Code / BFF, browser login, tenant `tid` allowlists against `login.microsoftonline.com`.
+
+Local issuer defaults (`boundarymesh.security` in local/test):
+
+| Setting | Purpose |
+| --- | --- |
+| `issuer` | Allowed `iss` |
+| `audience` | Allowed `aud` (BoundaryMesh API) |
+| `access-token-ttl` | Local mint TTL |
+
+Diagnostic: `GET /api/v1/security/me` (authenticated, no raw JWT).  
+Engine path: `POST /api/v1/identity/evaluate` (authenticated; AuthZ is a domain control).  
+HTTP-gated mutation: `POST /api/v1/dev/evaluate` requires `SCOPE_boundary.evaluate`.
+
+The sections below describe the **target** Entra model. Do not read them as live integration.
+
 ## Three identity cases
 
 ### 1. Admin user (delegated)

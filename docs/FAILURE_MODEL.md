@@ -6,11 +6,12 @@ Legend: **FC** fail closed, **FO** fail open (documented), **Q** quarantine, **R
 
 | Failure | Posture | Retry | Outcome | Quarantine | Evidence | UI |
 | --- | --- | --- | --- | --- | --- | --- |
-| Invalid JWT | FC | NR | REJECT | no | AUTHN_INVALID_JWT | Identity invalid |
-| Expired JWT | FC | NR | REJECT | no | AUTHN_EXPIRED | Expired |
-| Wrong issuer | FC | NR | REJECT | no | AUTHN_WRONG_ISSUER | |
-| Wrong audience | FC | NR | REJECT | no | AUTHN_WRONG_AUDIENCE | Wow comparator |
-| Missing scope/role | FC | NR | REJECT | no | AUTHZ_MISSING_* | AuthN valid, AuthZ fail |
+| Invalid JWT | FC | NR | HTTP 401 (not admitted) | no | AUTHN / UNAUTHORIZED | Authentication could not be established |
+| Expired JWT | FC | NR | HTTP 401 | no | UNAUTHORIZED | |
+| Wrong issuer | FC | NR | HTTP 401 | no | UNAUTHORIZED | |
+| Wrong audience | FC | NR | HTTP 401 | no | UNAUTHORIZED | |
+| Missing scope on HTTP-gated route | FC | NR | HTTP 403 | no | FORBIDDEN | Authenticated, not authorized |
+| Missing scope on identity evaluate | FC | NR | REJECT | no | AUTHZ_MISSING_SCOPE | AuthN PASS, AuthZ FAIL |
 | JWKS unavailable | FC | NR | REJECT | no | AUTHN_JWKS_UNAVAILABLE | |
 | JWKS rotation unknown kid (refresh fails) | FC | NR | REJECT | no | | |
 | Invalid webhook HMAC | FC | NR | REJECT | no | AUTHENTICITY_INVALID_SIGNATURE | |

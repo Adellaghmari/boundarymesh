@@ -2,6 +2,23 @@
 
 BoundaryMesh is an **application-security and integration-security** product. Supply-chain container signing is not the center (that is Project B).
 
+## Phase 3–4 local enforcement layers
+
+| Layer | Owns | Does not own |
+| --- | --- | --- |
+| Spring Security | HTTP authentication, route authorization, security headers, CORS | Domain crossing outcomes |
+| Boundary Enforcement Engine | `ControlVector` → `ALLOW` / `REJECT` / … | HTTP 401/403 admission |
+
+**CSRF:** disabled on the local resource-server API because callers use bearer JWT or HMAC headers and there is no cookie session. A future Entra OIDC BFF **must re-enable CSRF** for browser cookies. CSRF is not globally “turned off forever.”
+
+**CORS:** local origins only (`http://127.0.0.1:5173`, `http://localhost:5173`, `http://127.0.0.1:4173`). No `*` and no credentialed wildcard. Disallowed origins are rejected (HTTP 403) and do not receive `Access-Control-Allow-Origin`.
+
+**TLS:** local HTTP is accepted. Cloud Run HTTPS is later. No fake local certificates.
+
+**Public (local):** health, ready, OpenAPI docs, local JWKS/issuer, token mint (local/test), webhook lab helper, QuayForge webhook ingest (HMAC, not anonymous-arbitrary).
+
+**Protected (local):** `GET /api/v1/security/me` (authenticated), `POST /api/v1/identity/evaluate` (authenticated), `POST /api/v1/dev/evaluate` (`SCOPE_boundary.evaluate`). Production profile does not expose `/api/v1/dev/**`.
+
 ## Principles
 
 1. **Fail closed** on authentication, authorization, authenticity, freshness, and replay.

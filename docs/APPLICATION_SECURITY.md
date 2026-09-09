@@ -16,15 +16,21 @@ Container scan (Artifact Registry / optional Trivy) may exist because Cloud Run 
 
 ## Application controls (product)
 
-- Spring Security OAuth2
-- HMAC constant-time
-- Replay window
-- CSRF on BFF
-- Problem+json no stack traces in prod
-- Size-limited ingest
-- Implicit-deny egress
-- Secret references
+Implemented locally (Phases 3–4):
+
+- Spring Security OAuth2 resource server (JWT/JWKS)
+- HMAC-SHA256 + `MessageDigest.isEqual`
+- Freshness window + replay nonce store
+- Sanitized JSON 401/403
+- Size-limited webhook ingest (65536)
+
+Still planned:
+
+- CSRF on future Entra BFF
+- Implicit-deny egress engine
+- Secret Manager references
 - KMS signing
+- Semgrep / Gitleaks / ZAP in CI
 
 ## ZAP scope
 

@@ -1,10 +1,25 @@
 # API contracts
 
-Source of truth: `contracts/openapi/boundary-api.yaml` (OpenAPI 3.1) — created in Phase 5, specified here.
+Generated OpenAPI: `/v3/api-docs` (springdoc). Runtime Contract Drift Firewall remains Phase 5.
 
-All error bodies: `application/problem+json` with `reason_code`.
+401/403 bodies are sanitized JSON (`timestamp`, `request_id`, `error_code`, `message`). Not HTML. No token, signature, or stack traces.
 
 Base path: `/api/v1`.
+
+## Phase 3–4 implemented
+
+| Method | Path | Auth | Notes |
+| --- | --- | --- | --- |
+| GET | `/health`, `/ready` | public | Recruiter-safe |
+| GET | `/security/me` | bearer JWT | Safe identity only |
+| POST | `/identity/evaluate` | bearer JWT (authenticated) | Domain AuthN/AuthZ → engine |
+| POST | `/dev/evaluate` | bearer JWT + `boundary.evaluate` | Local/test synthetic evaluate |
+| POST | `/dev/tokens` | local/test only | Mint scenario tokens. Not Entra |
+| GET | `/dev/jwks`, `/dev/issuer` | local/test only | Test JWKS |
+| POST | `/webhooks/quayforge` | HMAC headers (`quayforge-hmac`, **not** OAuth) | Raw-body signature |
+| POST | `/dev/webhook-lab/{scenario}` | local/test only | Server-side signing. No secret to Vue |
+
+Security schemes in OpenAPI: `bearer-jwt` and `quayforge-hmac`. No secret values.
 
 ## Public (no auth)
 

@@ -4,16 +4,16 @@ Every scenario is **deterministic and reproducible** via seed id. Label **SYNTHE
 
 | ID | Scenario | Expected outcome |
 | --- | --- | --- |
-| S01 | Valid Entra JWT, all controls pass | ALLOW |
-| S02 | Expired JWT | REJECT AUTHN_EXPIRED |
-| S03 | Wrong issuer | REJECT AUTHN_WRONG_ISSUER |
-| S04 | Wrong audience | REJECT AUTHN_WRONG_AUDIENCE |
-| S05 | Missing app role / scope | REJECT AUTHZ_MISSING_* |
-| S06 | Valid HMAC webhook | ALLOW or ALLOW_WITH_TRANSFORMATION |
+| S01 | Valid **local** machine JWT, all controls pass | ALLOW — Identity Lab |
+| S02 | Expired JWT | HTTP 401 — authentication cannot be established |
+| S03 | Wrong issuer | HTTP 401 |
+| S04 | Wrong audience | HTTP 401 |
+| S05 | Missing evaluate permission | AuthN PASS, AuthZ FAIL, REJECT |
+| S06 | Valid HMAC webhook | ALLOW — Webhook Lab |
 | S07 | Invalid HMAC | REJECT AUTHENTICITY_INVALID_SIGNATURE |
 | S08 | Expired webhook timestamp | REJECT FRESHNESS_EXPIRED |
 | S09 | Malicious replay (nonce reuse) | REJECT REPLAY_DETECTED |
-| S10 | Legitimate duplicate (`event_id` reuse, new nonce) | DUPLICATE_DELIVERY / prior result |
+| S10 | Legitimate duplicate (`event_id` reuse, new nonce) | `duplicate_delivery: true`, prior result |
 | S11 | Graph subscription validation handshake | 200 + token echo |
 | S12 | Graph notification (harness) | ALLOW_* after engine |
 | S13 | Schema valid | contract VALID |
