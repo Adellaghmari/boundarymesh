@@ -1,0 +1,49 @@
+$color-canvas: #eef3f6;
+$color-ink: #12202e;
+$color-ink-muted: #4a5c6a;
+$color-surface: #ffffff;
+$color-surface-raised: #f6fafb;
+$color-header: #0c3d42;
+$color-header-ink: #f3fbfb;
+$color-accent: #0f7a74;
+$color-accent-soft: #d7efed;
+$color-border: #c9d6dc;
+$color-focus: #0b5fff;
+
+$color-allow: #0d6b4c;
+$color-allow-soft: #d8f3e8;
+$color-transform: #8a5a12;
+$color-transform-soft: #f7ead2;
+$color-quarantine: #8a4b16;
+$color-quarantine-soft: #f6e2d2;
+$color-reject: #8b1e2d;
+$color-reject-soft: #f6d9de;
+$color-pass: #0d6b4c;
+$color-fail: #8b1e2d;
+$color-na: #4a5c6a;
+$color-unavailable: #8a5a12;
+
+$space-1: 0.25rem;
+$space-2: 0.5rem;
+$space-3: 0.75rem;
+$space-4: 1rem;
+$space-5: 1.5rem;
+$space-6: 2rem;
+$space-7: 3rem;
+
+$font-sans: 'Segoe UI', 'Helvetica Neue', sans-serif;
+$font-mono: 'Cascadia Mono', 'Consolas', monospace;
+$measure: 68rem;
+
+$radius-sm: 0.25rem;
+$radius-md: 0.5rem;
+
+$shadow-sm: 0 1px 2px rgb(18 32 46 / 6%);
+
+$bp-md: 48rem;
+$bp-lg: 68rem;
+
+@mixin focus-ring {
+  outline: 2px solid $color-focus;
+  outline-offset: 2px;
+}

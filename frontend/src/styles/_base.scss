@@ -1,0 +1,114 @@
+@use 'tokens' as *;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  color: $color-ink;
+  background: $color-canvas;
+  font-family: $font-sans;
+  line-height: 1.5;
+}
+
+a {
+  color: $color-accent;
+}
+
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  @include focus-ring;
+}
+
+button,
+select {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+h2 {
+  font-size: 1.2rem;
+}
+
+h3 {
+  font-size: 1rem;
+}
+
+.skip-link {
+  position: absolute;
+  left: $space-4;
+  top: -3rem;
+  z-index: 20;
+  padding: $space-2 $space-3;
+  background: $color-surface;
+  color: $color-ink;
+}
+
+.skip-link:focus {
+  top: $space-4;
+}
+
+.truth-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  padding: 0.15rem $space-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-surface-raised;
+  color: $color-ink;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.card {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-sm;
+  padding: $space-5;
+}
+
+.muted {
+  color: $color-ink-muted;
+}
+
+.stack {
+  display: grid;
+  gap: $space-4;
+}
+
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+  align-items: center;
+}

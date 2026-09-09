@@ -18,6 +18,10 @@ dist/
 .vite/
 coverage/
 *.tsbuildinfo
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 
 # Secrets and local env — never commit
 .env
