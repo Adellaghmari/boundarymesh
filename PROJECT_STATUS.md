@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **1 COMPLETE** (Java / Spring domain foundation)  
+**Phase:** **2 COMPLETE** (Vue recruiter console foundation)  
 **Overall:** **PROJECT C — NOT COMPLETE**
 
 ## Completeness
@@ -11,10 +11,10 @@
 | --- | --- |
 | Phase 0 architecture lock | **COMPLETE** |
 | Phase 1 Java/Spring foundation | **COMPLETE** |
+| Phase 2 Vue recruiter console | **COMPLETE** |
 | Application production IAM / Entra / JWT | **NOT STARTED** |
 | Apache Camel | **NOT STARTED** |
 | Microsoft Graph | **NOT STARTED** |
-| Vue frontend | **NOT STARTED** |
 | GCP resources | **NONE PROVISIONED** |
 | Microsoft credentials | **NONE CREATED** |
 | GCP service-account JSON keys | **NONE** |
@@ -22,17 +22,19 @@
 | Project B | **FROZEN** — not modified |
 | LIVE VERIFIED | **Nothing** |
 
-## Phase 1 evidence
+## Phase 2 evidence
 
-- Java `openjdk 25.0.4.1 LTS` (Temurin)
-- Maven Wrapper **3.9.11**
-- Spring Boot **4.1.1**
-- Spring Security **7.1.1** (BOM-managed)
-- `backend/mvnw.cmd verify` — 38 tests passed
-- Health, ready, synthetic evaluate, ArchUnit, Spotless
+- Official `create-vue` scaffold in `frontend/`
+- Vue 3 + TypeScript + Pinia + Vue Router + SCSS + Vite
+- Typed API client for health, ready, and synthetic evaluate
+- Session-only boundary events
+- Vitest + Vue Test Utils + MSW
+- Playwright smoke against the real local Java backend
+- `frontend` typecheck, lint, unit tests, production build
+- `backend/mvnw.cmd verify` still required as regression
 
-Details: [docs/PHASE1.md](docs/PHASE1.md).
+Details: [docs/PHASE2.md](docs/PHASE2.md).
 
 ## Next (do not start automatically)
 
-Phase 2 — Vue recruiter console foundation.
+Phase 3 — Identity Federation Gateway. Do not implement OAuth2/OIDC, JWT/JWKS, Entra, Graph, HMAC, Camel, or GCP until that phase is requested.

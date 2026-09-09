@@ -1,6 +1,6 @@
 # CV claims matrix
 
-**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 1.
+**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 2.
 
 Statuses: `PLANNED` → `IMPLEMENTED` → `TESTED` → `LIVE VERIFIED`
 
@@ -8,8 +8,17 @@ This is portfolio work, not professional employment.
 
 | Capability | Status | Notes |
 | --- | --- | --- |
-| Product thesis / Velora Interchange | PLANNED | Domain enums exist; product not shipped |
-| Vue 3 + TypeScript + Pinia + Vue Router + SCSS + Vite | PLANNED | |
+| Product thesis / Velora Interchange | **IMPLEMENTED** | Console uses Velora systems; SYNTHETIC DEMO labeled |
+| Vue 3 | **TESTED** | create-vue + recruiter console + Vitest |
+| TypeScript | **TESTED** | `vue-tsc --build` |
+| Pinia | **TESTED** | runtime + events stores |
+| Vue Router | **TESTED** | typed routes + 404 |
+| SCSS | **TESTED** | token system, no Tailwind |
+| Vite | **TESTED** | dev proxy + production build |
+| Vitest | **TESTED** | unit/component tests |
+| Vue Test Utils | **TESTED** | outcome, control vector, routes |
+| Playwright | **TESTED** | local smoke vs real Java backend |
+| MSW | **TESTED** | frontend API unit tests only; not WireMock |
 | Integration Boundary Graph | PLANNED | |
 | Java 25 | **TESTED** | Temurin 25.0.4.1; `--release 25`; Enforcer |
 | Maven | **TESTED** | Wrapper 3.9.11; `mvnw.cmd verify` |
@@ -66,7 +75,7 @@ This is portfolio work, not professional employment.
 | Pact | PLANNED | |
 | Testcontainers emulators | PLANNED | |
 | Camel tests | PLANNED | |
-| Vitest / Playwright | PLANNED | |
+| Frontend API integration | **TESTED** | health, ready, synthetic evaluate |
 | OpenTelemetry / Micrometer | PLANNED | Actuator health only |
 | Cloud Logging / Monitoring / Trace | PLANNED | |
 | Firebase Hosting | PLANNED | |

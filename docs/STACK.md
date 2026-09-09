@@ -39,12 +39,14 @@ Java 21 remains an emergency fallback only if a transitive library later proves 
 | Component | Locked |
 | --- | --- |
 | Vue | **3.5.42** line (3.5.x) |
-| TypeScript | **5.9.x** (strict) |
+| TypeScript | **6.x** selected by official Vue tooling (strict) |
 | Pinia | **4.0.3** line (4.x) |
 | Vue Router | **5.3.1** line (5.x) |
 | Vite | **8.2.x** |
 | SCSS | `sass` modern compiler |
-| HTTP | `ofetch` or native `fetch` wrapper — no Axios required |
+| HTTP | Typed native `fetch` client — no Axios |
+
+**Phase 2 resolved (2026-09-09):** Vue **3.5.42**, Pinia **4.0.3**, Vue Router **5.3.1**, Vite **8.2.2**, TypeScript **6.0.3**, Vitest **4.1.11**, Playwright **1.63.0**, MSW **2.15.0**. Details: [PHASE2.md](PHASE2.md).
 | Graph viz | Vue-rendered SVG/Canvas boundary graph (no D3 unless layout requires it in Phase 13) |
 | Tests | Vitest + Vue Test Utils + Playwright |
 

@@ -48,9 +48,13 @@ JUnit 5. Mockito only at adapter edges.
 - Pub/Sub emulator: publish after persist, duplicate delivery
 - KMS: **use test double** locally; live KMS only in LIVE VERIFIED phase
 
+## Frontend unit (Phase 2)
+
+Vitest + Vue Test Utils. MSW mocks HTTP for the typed API client only. MSW is not WireMock and is not a Java integration test stand-in.
+
 ## Frontend E2E
 
-Playwright: wow path, reject audience, replay, quarantine, attestation verify page, admin 401 without login.
+Phase 2 Playwright smoke: overview, local health/ready, four synthetic evaluate outcomes, event detail. Playwright starts the real local Java backend. Later phases add Entra/Graph/attestation paths.
 
 ## Live (Phase 18)
 

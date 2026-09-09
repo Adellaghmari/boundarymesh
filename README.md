@@ -45,13 +45,17 @@ Do not describe BoundaryMesh as professional security employment, paid Microsoft
 
 Do not modify **Project A** (AI Operations Copilot) or **Project B** (CloudOps Release Intelligence). Both are frozen.
 
-## What exists now (Phase 1)
+## What exists now (Phase 2)
 
-Local Java 25 / Spring Boot 4.1.1 backend with a testable Boundary Enforcement Engine. Synthetic `POST /api/v1/dev/evaluate` only. **Not** Entra, Graph, Camel, GCP, or Vue.
+Local Java 25 / Spring Boot 4.1.1 backend with a testable Boundary Enforcement Engine, plus a Vue 3 / TypeScript recruiter console. Synthetic `POST /api/v1/dev/evaluate` only. Boundary events are browser-session memory. **Not** Entra, Graph, Camel, GCP, or a public deploy.
 
-## How to run (Phase 1)
+Implemented and tested where the matrix says so: Vue, TypeScript, Vite, Pinia, Vue Router, SCSS, frontend API integration, synthetic recruiter console.
 
-Requires **JDK 25**. No secrets.
+Still **PLANNED:** Entra, Microsoft Graph, Apache Camel, GCP, Firestore, Pub/Sub, Secret Manager, KMS, Pulumi.
+
+## How to run (Phase 2)
+
+Requires **JDK 25** and **Node 22**. No secrets. `VITE_*` values are public browser configuration.
 
 ```powershell
 cd backend
@@ -59,17 +63,32 @@ cd backend
 .\mvnw.cmd -pl api -am spring-boot:run
 ```
 
-```text
-GET  http://localhost:8080/api/v1/health
-GET  http://localhost:8080/api/v1/ready
-POST http://localhost:8080/api/v1/dev/evaluate
+```powershell
+cd frontend
+npm install
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm run dev
 ```
 
-The evaluate body must include `"synthetic": true` and all nine controls. See [docs/PHASE1.md](docs/PHASE1.md).
+Full-stack helper: `scripts/dev-local.ps1`.
+
+```text
+Frontend  http://localhost:5173
+GET       http://localhost:8080/api/v1/health
+GET       http://localhost:8080/api/v1/ready
+POST      http://localhost:8080/api/v1/dev/evaluate
+```
+
+The evaluate body must include `"synthetic": true` and all nine controls. See [docs/PHASE1.md](docs/PHASE1.md) and [docs/PHASE2.md](docs/PHASE2.md).
+
+Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the Vite app.
 
 ## Current status
 
-**PROJECT C — NOT COMPLETE.** Phase 0 COMPLETE. Phase 1 COMPLETE (local foundation). Nothing is LIVE VERIFIED. No GCP, no Microsoft credentials.
+**PROJECT C — NOT COMPLETE.** Phase 0 COMPLETE. Phase 1 COMPLETE. Phase 2 COMPLETE (local recruiter console). Nothing is LIVE VERIFIED. No GCP, no Microsoft credentials.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 
@@ -104,6 +123,7 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_M
 | [docs/CI_CD.md](docs/CI_CD.md) | GitHub WIF |
 | [docs/PHASE0_GATE.md](docs/PHASE0_GATE.md) | Final YES/NO gate |
 | [docs/PHASE1.md](docs/PHASE1.md) | Phase 1 implementation record |
+| [docs/PHASE2.md](docs/PHASE2.md) | Phase 2 Vue console record |
 | [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Records |
 
 ## Phase 0 gate
