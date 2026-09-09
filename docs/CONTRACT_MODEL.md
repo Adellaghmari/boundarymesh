@@ -1,8 +1,14 @@
 # Contract model — Contract Drift Firewall
 
-Flagship capability #3.
+Flagship capability #3. **Phase 5 TESTED locally.**
 
 Integration contracts are **runtime enforcement artifacts**, not wiki pages.
+
+Canonical tree: `contracts/openapi/`, `contracts/asyncapi/`, `contracts/json-schema/`. Maven copies that tree onto the API classpath. There is one source of truth per artifact.
+
+QuayForge Orders version is taken from `X-Velora-Contract-Version`. It is not inferred from payload shape when the header exists. Default is `v1`.
+
+`CONTRACT_DRIFT` is conservative: the declared supported version fails schema validation **and** another supported version accepts the same payload. One bad field on the declared version is `SCHEMA_VIOLATION`, not drift.
 
 ## Which spec where
 

@@ -45,18 +45,23 @@ Do not describe BoundaryMesh as professional security employment, paid Microsoft
 
 Do not modify **Project A** (AI Operations Copilot) or **Project B** (CloudOps Release Intelligence). Both are frozen.
 
-## What exists now (Phases 0–4)
+## What exists now (Phases 0–7)
 
 Local Java 25 / Spring Boot 4.1.1 / Spring Security resource server with a testable Boundary Enforcement Engine, plus a Vue 3 recruiter console.
 
 Phase 3 proves **local** JWT/JWKS identity federation (not Entra, not interactive OIDC login).  
-Phase 4 proves **QuayForge** HMAC webhook defense, freshness, replay, and duplicate delivery (not Graph subscriptions).
+Phase 4 proves **QuayForge** HMAC webhook defense, freshness, replay, and duplicate delivery (not Graph subscriptions).  
+Phase 5 proves **Contract Drift Firewall**: versioned OpenAPI 3.1 / AsyncAPI / JSON Schema artifacts and runtime payload validation.  
+Phase 6 proves **Data Boundary Firewall**: destination-specific ALLOW / REDACT / DENY with a real transformed outbound payload.  
+Phase 7 composes those controls in the Boundary Enforcement Engine. All four outcomes are produced by implemented mechanisms.
 
-Synthetic evaluate is now JWT-protected (`boundary.evaluate`). Identity Lab and Webhook Lab call the real Java backend. Boundary events are browser-session memory. **Not** Entra, Graph, Camel, GCP, or a public deploy.
+A valid JWT, scope, HMAC, freshness window, and unused nonce still do **not** automatically allow a crossing.
 
-Still **PLANNED:** Entra, Microsoft Graph, Apache Camel, GCP, Firestore, Pub/Sub, Secret Manager, KMS, Pulumi.
+Synthetic evaluate and composed crossing are JWT-protected (`boundary.evaluate`). Labs call the real Java backend. Boundary events are browser-session memory. **Not** Entra, Graph, Camel, GCP, or a public deploy.
 
-## How to run (Phases 3–4)
+Still **PLANNED:** Entra, Microsoft Graph, Apache Camel, GCP, Firestore, Pub/Sub, Secret Manager, KMS, Pulumi, Credential & Consent Vault, Quarantine & Recovery Orchestrator beyond the QUARANTINE outcome.
+
+## How to run (Phases 3–7)
 
 Requires **JDK 25** and **Node 22**. No secrets. `VITE_*` values are public browser configuration.
 
@@ -86,17 +91,20 @@ GET       http://localhost:8080/api/v1/dev/jwks
 POST      http://localhost:8080/api/v1/dev/tokens
 POST      http://localhost:8080/api/v1/identity/evaluate
 POST      http://localhost:8080/api/v1/webhooks/quayforge
+POST      http://localhost:8080/api/v1/dev/contract-lab/{scenario}
+POST      http://localhost:8080/api/v1/dev/egress-lab/{destination}/{scenario}
+POST      http://localhost:8080/api/v1/dev/crossings/evaluate
 ```
 
-`POST /api/v1/dev/evaluate` requires a local bearer JWT with `boundary.evaluate`. The Identity Lab and Webhook Lab in the Vue console mint or sign on the Java side — do not paste tokens or HMAC secrets into the UI.
+`POST /api/v1/dev/evaluate` and `POST /api/v1/dev/crossings/evaluate` require a local bearer JWT with `boundary.evaluate`. Labs mint or sign on the Java side — do not paste tokens or HMAC secrets into the UI.
 
-See [docs/PHASE3.md](docs/PHASE3.md) and [docs/PHASE4.md](docs/PHASE4.md).
+See [docs/PHASE5.md](docs/PHASE5.md), [docs/PHASE6.md](docs/PHASE6.md), and [docs/PHASE7.md](docs/PHASE7.md).
 
 Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the Vite app.
 
 ## Current status
 
-**PROJECT C — NOT COMPLETE.** Phase 0 COMPLETE. Phase 1 COMPLETE. Phase 2 COMPLETE. Phase 3 COMPLETE (local JWT/JWKS). Phase 4 COMPLETE (QuayForge HMAC). Nothing is LIVE VERIFIED. No GCP, no Microsoft credentials.
+**PROJECT C — NOT COMPLETE.** Phase 0–7 COMPLETE locally. Identity #1 is local only (Entra future). Webhook #2 is generic HMAC (Graph subscriptions future). Contract Drift #3 TESTED. Data Boundary #4 TESTED. Credential Vault #5 PLANNED. Quarantine Orchestrator #6 PLANNED beyond the QUARANTINE outcome. Nothing is LIVE VERIFIED. No GCP, no Microsoft credentials.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 

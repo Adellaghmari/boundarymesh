@@ -1,6 +1,6 @@
 # API contracts
 
-Generated OpenAPI: `/v3/api-docs` (springdoc). Runtime Contract Drift Firewall remains Phase 5.
+Generated OpenAPI: `/v3/api-docs` (springdoc). Partner/runtime contracts live under `contracts/` and are enforced at runtime.
 
 401/403 bodies are sanitized JSON (`timestamp`, `request_id`, `error_code`, `message`). Not HTML. No token, signature, or stack traces.
 
@@ -18,6 +18,9 @@ Base path: `/api/v1`.
 | GET | `/dev/jwks`, `/dev/issuer` | local/test only | Test JWKS |
 | POST | `/webhooks/quayforge` | HMAC headers (`quayforge-hmac`, **not** OAuth) | Raw-body signature |
 | POST | `/dev/webhook-lab/{scenario}` | local/test only | Server-side signing. No secret to Vue |
+| POST | `/dev/contract-lab/{scenario}` | local/test only | Contract Drift Lab. Safe violation paths |
+| POST | `/dev/egress-lab/{destination}/{scenario}` | local/test only | Data Boundary Lab |
+| POST | `/dev/crossings/evaluate` | bearer JWT + `boundary.evaluate` | Composed local pipeline |
 
 Security schemes in OpenAPI: `bearer-jwt` and `quayforge-hmac`. No secret values.
 

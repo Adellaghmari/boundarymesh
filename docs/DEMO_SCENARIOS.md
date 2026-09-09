@@ -16,11 +16,13 @@ Every scenario is **deterministic and reproducible** via seed id. Label **SYNTHE
 | S10 | Legitimate duplicate (`event_id` reuse, new nonce) | `duplicate_delivery: true`, prior result |
 | S11 | Graph subscription validation handshake | 200 + token echo |
 | S12 | Graph notification (harness) | ALLOW_* after engine |
-| S13 | Schema valid | contract VALID |
-| S14 | Schema mismatch | REJECT CONTRACT_SCHEMA_INVALID |
-| S15 | Contract version drift | QUARANTINE CONTRACT_DRIFT |
-| S16 | Forbidden outgoing field | REJECT EGRESS_FIELD_DENIED |
-| S17 | Redaction | ALLOW_WITH_TRANSFORMATION |
+| S13 | Schema valid (Contract Lab valid-v1) | ALLOW, contract VALID |
+| S14 | Schema mismatch (missing field / wrong type) | REJECT CONTRACT_SCHEMA_INVALID |
+| S15 | Contract version drift (v1 header, v2 body) | QUARANTINE CONTRACT_DRIFT_DETECTED |
+| S16 | Forbidden outgoing field (`internal_risk_score`) | REJECT EGRESS_FIELD_DENIED |
+| S17 | Redaction (Rivertide email/name) | ALLOW_WITH_TRANSFORMATION |
+| S17b | Unsupported contract v3 | QUARANTINE CONTRACT_VERSION_UNSUPPORTED |
+| S17c | Full composed crossing | Identity+contract PASS, egress TRANSFORM |
 | S18 | Credential version change (old HMAC) | REJECT authenticity / then new ALLOW |
 | S19 | Secret unavailable | QUARANTINE CREDENTIAL_UNAVAILABLE |
 | S20 | Downstream timeout | QUARANTINE DELIVERY_TIMEOUT |

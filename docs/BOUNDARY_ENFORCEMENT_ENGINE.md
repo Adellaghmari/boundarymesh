@@ -1,6 +1,6 @@
 # Boundary Enforcement Engine
 
-The Boundary Enforcement Engine is the core of Project C. It is **not** Project A's Decision Assurance Engine.
+The Boundary Enforcement Engine is the core of Project C. It is **not** Project A's Decision Assurance Engine. After Phase 7 it composes **real** identity, authorization, authenticity, freshness, replay, contract, and egress results. It still does not parse JWT, verify HMAC, validate JSON Schema, or redact.
 
 | | Decision Assurance (A) | Boundary Enforcement (C) |
 | --- | --- | --- |

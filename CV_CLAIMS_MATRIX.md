@@ -1,6 +1,6 @@
 # CV claims matrix
 
-**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 4.
+**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 7.
 
 Statuses: `PLANNED` → `IMPLEMENTED` → `TESTED` → `LIVE VERIFIED`
 
@@ -46,12 +46,18 @@ This is portfolio work, not professional employment.
 | Calendars.Read least privilege | PLANNED | |
 | Apache Camel 4.22 routes | PLANNED | No Camel dependency |
 | EIP: router, translator, DLC, idempotent consumer, CB, wire tap | PLANNED | |
-| OpenAPI 3.1 | **IMPLEMENTED** | springdoc `/v3/api-docs`. **Not runtime contract enforcement.** |
-| AsyncAPI delivery instructions | PLANNED | |
-| JSON Schema runtime validation | PLANNED | |
-| Contract Drift Firewall | PLANNED | |
-| Data Boundary Firewall | PLANNED | |
-| Boundary Enforcement Engine foundation | **TESTED** | Synthetic ControlVector |
+| OpenAPI 3.1 | **TESTED** | Partner artifact `contracts/openapi/` plus springdoc. Runtime uses referenced JSON Schema |
+| AsyncAPI delivery instructions | **TESTED** | Validated AsyncAPI 3 artifact. Pub/Sub runtime still PLANNED |
+| JSON Schema runtime validation | **TESTED** | networknt 3.0.6, dialect 2020-12 |
+| versioned integration contracts | **TESTED** | QuayForge v1/v2 supported, v3 unsupported |
+| Contract Drift Firewall | **TESTED** | Drift ≠ malformed. Affects BoundaryOutcome |
+| destination-specific data egress policy | **TESTED** | CoveCRM / Rivertide / Lumenway |
+| deterministic redaction | **TESTED** | `[REDACTED]` outbound copy |
+| data minimization | **TESTED** | Implicit deny + destination allow-lists |
+| Data Boundary Firewall | **TESTED** | Real transformation, not UI masking |
+| Boundary Enforcement Engine foundation | **TESTED** | Synthetic ControlVector plus real contract/egress |
+| expanded Boundary Enforcement Engine | **TESTED** | Seven real controls composed |
+| integrated multi-control boundary crossing | **TESTED** | `POST /api/v1/dev/crossings/evaluate` |
 | Outcomes ALLOW / TRANSFORM / QUARANTINE / REJECT | **TESTED** | |
 | JUnit 5 | **TESTED** | Identity + webhook + engine suites |
 | ArchUnit | **TESTED** | Domain/application must not depend on Spring/cloud |

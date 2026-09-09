@@ -1,8 +1,10 @@
 # Data Boundary Firewall
 
-Flagship capability #4.
+Flagship capability #4. **Phase 6 TESTED locally.**
 
-Before information leaves one trust boundary, BoundaryMesh evaluates **destination-specific deterministic rules**. There is no ML PII classifier.
+Before information leaves one trust boundary, BoundaryMesh evaluates **destination-specific deterministic rules**. There is no ML PII classifier. This is deterministic data minimization, not a GDPR compliance claim.
+
+Lab before/after views may show fictional QuayForge sample values because they are intentionally synthetic. Engine evidence and logs use field paths, never those values.
 
 ## Model
 
