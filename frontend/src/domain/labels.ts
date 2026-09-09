@@ -36,8 +36,8 @@ export const CONTROL_CATALOG: readonly ControlCatalogEntry[] = [
   },
   {
     kind: 'REPLAY',
-    label: 'Replay',
-    summary: 'Whether this is a malicious replay rather than a new crossing.',
+    label: 'Replay Defense',
+    summary: 'Whether a prohibited replay was detected inside the protected window.',
   },
   {
     kind: 'CONTRACT',

@@ -47,12 +47,25 @@ export async function fetchReady(): Promise<ApiResponse<ReadyResponse>> {
   return { ...response, data: assertReady(response.data) }
 }
 
+export async function issueLocalToken(scenario: string): Promise<string> {
+  const response = await apiClient.request<{ access_token?: string }>('/api/v1/dev/tokens', {
+    method: 'POST',
+    body: { scenario },
+  })
+  if (typeof response.data.access_token !== 'string' || response.data.access_token.length === 0) {
+    throw new BoundaryMeshApiError('malformed', 'Local token helper did not return a token.')
+  }
+  return response.data.access_token
+}
+
 export async function evaluateBoundary(
   request: EvaluateRequest,
 ): Promise<ApiResponse<EvaluateResponse>> {
+  const token = await issueLocalToken('VALID_MACHINE')
   const response = await apiClient.request<unknown>('/api/v1/dev/evaluate', {
     method: 'POST',
     body: request,
+    authorization: `Bearer ${token}`,
   })
   try {
     return { ...response, data: assertEvaluateResponse(response.data) }
@@ -65,5 +78,35 @@ export async function evaluateBoundary(
         status: response.status,
       },
     )
+  }
+}
+
+export async function evaluateIdentity(scenario: string): Promise<ApiResponse<EvaluateResponse>> {
+  const token = await issueLocalToken(scenario)
+  const response = await apiClient.request<unknown>('/api/v1/identity/evaluate', {
+    method: 'POST',
+    authorization: `Bearer ${token}`,
+  })
+  try {
+    return { ...response, data: assertEvaluateResponse(response.data) }
+  } catch {
+    throw new BoundaryMeshApiError('malformed', 'The identity evaluate response was not valid.', {
+      requestId: response.requestId,
+      status: response.status,
+    })
+  }
+}
+
+export async function runWebhookLab(scenario: string): Promise<ApiResponse<EvaluateResponse>> {
+  const response = await apiClient.request<unknown>(`/api/v1/dev/webhook-lab/${scenario}`, {
+    method: 'POST',
+  })
+  try {
+    return { ...response, data: assertEvaluateResponse(response.data) }
+  } catch {
+    throw new BoundaryMeshApiError('malformed', 'The webhook lab response was not valid.', {
+      requestId: response.requestId,
+      status: response.status,
+    })
   }
 }

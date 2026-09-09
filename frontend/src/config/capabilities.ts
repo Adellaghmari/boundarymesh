@@ -1,7 +1,7 @@
 import type { CapabilityClaim } from '@/domain/types'
 
 /**
- * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 2.
+ * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 4.
  * Not fetched from Git. Do not invent progress.
  */
 export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
@@ -26,14 +26,16 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
   {
     id: 'identity-federation',
     label: 'Identity Federation Gateway',
-    status: 'PLANNED',
-    notes: 'No Entra, OIDC, JWT, or JWKS validation yet.',
+    status: 'TESTED',
+    notes:
+      'Local JWT/JWKS resource server and AuthN vs AuthZ evidence. Microsoft Entra remains PLANNED.',
   },
   {
     id: 'webhook-defense',
     label: 'Webhook & Subscription Defense',
-    status: 'PLANNED',
-    notes: 'No HMAC or Graph notification validation yet.',
+    status: 'TESTED',
+    notes:
+      'QuayForge HMAC, freshness, replay, and idempotency. Microsoft Graph subscriptions remain PLANNED.',
   },
   {
     id: 'contract-firewall',

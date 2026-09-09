@@ -21,7 +21,9 @@ import { OUTCOME_COPY } from '@/domain/labels'
       <p>
         BoundaryMesh sits in front of system-to-system integrations. It is not an assistant, not a
         release board, and not a generic API client. Phase 2 evaluates synthetic Velora Interchange
-        crossings against the local Java Boundary Enforcement Engine.
+        crossings against the local Java Boundary Enforcement Engine. Identity Lab and Webhook Lab
+        exercise Spring Security JWT checks and signed-webhook defense. Microsoft Entra and Graph
+        remain planned.
       </p>
     </section>
 

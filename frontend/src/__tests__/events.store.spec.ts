@@ -35,6 +35,28 @@ describe('events store', () => {
     expect(event?.reasonCodes[0]?.code).toBe('IDENTITY_INVALID')
   })
 
+  it('records identity evaluate AuthN/AuthZ evidence from the backend', async () => {
+    const store = useEventsStore()
+    const event = await store.evaluateIdentityScenario('VALID_MACHINE')
+    expect(event?.ingressKind).toBe('TOKEN_PROTECTED_API')
+    expect(event?.identity?.status).toBe('PASS')
+    expect(event?.authorization?.status).toBe('PASS')
+    expect(store.identityFailure).toBeNull()
+  })
+
+  it('surfaces authentication failure without inventing a crossing outcome', async () => {
+    server.use(
+      http.post('/api/v1/identity/evaluate', () =>
+        HttpResponse.json({ error_code: 'UNAUTHORIZED', message: 'No' }, { status: 401 }),
+      ),
+    )
+    const store = useEventsStore()
+    const event = await store.evaluateIdentityScenario('EXPIRED')
+    expect(event).toBeNull()
+    expect(store.identityFailure?.kind).toBe('unauthorized')
+    expect(store.identityFailure?.message).toContain('Authentication could not be established')
+  })
+
   it('surfaces API failures without inventing an outcome', async () => {
     server.use(
       http.post('/api/v1/dev/evaluate', () =>

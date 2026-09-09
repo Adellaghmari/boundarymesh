@@ -11,8 +11,8 @@ import TruthBanner from '@/components/TruthBanner.vue'
         <TruthBanner label="CURRENT VERSUS PLANNED" />
       </div>
       <p>
-        This page describes what Phase 2 actually runs locally. It does not present the final
-        architecture as deployed.
+        This page describes what Phases 1–4 actually run locally. It does not present the final
+        cloud architecture as deployed.
       </p>
     </header>
 
@@ -24,6 +24,8 @@ import TruthBanner from '@/components/TruthBanner.vue'
           <li>Java 25 / Spring Boot local backend</li>
           <li>Boundary Enforcement Engine</li>
           <li>Synthetic local evaluate API</li>
+          <li>Spring Security JWT resource server (local issuer / JWKS)</li>
+          <li>QuayForge HMAC webhook defense, freshness, and replay</li>
         </ul>
       </article>
       <article class="card stack">

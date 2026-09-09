@@ -10,6 +10,8 @@ const links = [
   { name: ROUTE_NAMES.boundaryEvents, to: '/boundary-events', label: 'Boundary Events' },
   { name: ROUTE_NAMES.connections, to: '/connections', label: 'Connections' },
   { name: ROUTE_NAMES.architecture, to: '/architecture', label: 'Architecture' },
+  { name: ROUTE_NAMES.identity, to: '/identity', label: 'Identity Lab' },
+  { name: ROUTE_NAMES.webhooks, to: '/webhooks', label: 'Webhook Lab' },
   { name: ROUTE_NAMES.status, to: '/status', label: 'Status' },
 ] as const
 

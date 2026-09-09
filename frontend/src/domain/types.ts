@@ -60,14 +60,43 @@ export interface EvaluateRequest {
   controls: ControlInputMap
 }
 
+export type IngressKind = 'TOKEN_PROTECTED_API' | 'SIGNED_WEBHOOK' | 'SYNTHETIC_EVALUATE'
+
+export interface IdentityView {
+  status: ControlStatus
+  principal?: string | null
+  issuer?: string | null
+  method?: string | null
+  keyId?: string | null
+  explanation?: string | null
+}
+
+export interface AuthorizationView {
+  status: ControlStatus
+  grantedScopes: string[]
+  explanation?: string | null
+}
+
+export interface ControlView {
+  kind: ControlKind
+  status: ControlStatus
+  reasonCodes: string[]
+  safeExplanation: string
+}
+
 export interface EvaluateResponse {
   banner: string
   transaction_id: string
   outcome: BoundaryOutcome
+  ingress_kind?: IngressKind
   reason_codes: ReasonCode[]
   applied_controls: Partial<Record<ControlKind, ControlStatus>>
+  controls?: ControlView[]
   decided_at: string
   policy_version: string
+  duplicate_delivery?: boolean
+  identity?: IdentityView
+  authorization?: AuthorizationView
 }
 
 export interface HealthResponse {
@@ -103,6 +132,11 @@ export interface BoundaryEventRecord {
   controlResults: ControlResult[]
   banner: string
   requestId: string
+  ingressKind?: IngressKind
+  duplicateDelivery?: boolean
+  identity?: IdentityView
+  authorization?: AuthorizationView
+  httpStatus?: number
 }
 
 export const CAPABILITY_STATUSES = ['PLANNED', 'IMPLEMENTED', 'TESTED', 'LIVE VERIFIED'] as const

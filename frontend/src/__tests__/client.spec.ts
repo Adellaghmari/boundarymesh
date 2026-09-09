@@ -52,7 +52,20 @@ describe('API client', () => {
         HttpResponse.json({ error_code: 'UNAUTHORIZED', message: 'No' }, { status: 401 }),
       ),
     )
-    await expect(client.request('/api/v1/denied')).rejects.toMatchObject({ kind: 'unauthorized' })
+    await expect(client.request('/api/v1/denied')).rejects.toMatchObject({
+      kind: 'unauthorized',
+      message: 'Authentication could not be established.',
+    })
+
+    server.use(
+      http.get('/api/v1/forbidden', () =>
+        HttpResponse.json({ error_code: 'FORBIDDEN', message: 'No' }, { status: 403 }),
+      ),
+    )
+    await expect(client.request('/api/v1/forbidden')).rejects.toMatchObject({
+      kind: 'forbidden',
+      message: 'The authenticated principal is not authorized for this boundary crossing.',
+    })
 
     server.use(
       http.get('/api/v1/boom', () => HttpResponse.json({ message: 'hidden' }, { status: 500 })),

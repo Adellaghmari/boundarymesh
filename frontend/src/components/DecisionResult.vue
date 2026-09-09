@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import AuthnAuthzPanel from '@/components/AuthnAuthzPanel.vue'
 import ControlVectorView from '@/components/ControlVectorView.vue'
 import OutcomeBadge from '@/components/OutcomeBadge.vue'
 import TruthBanner from '@/components/TruthBanner.vue'
+import WebhookDefensePanel from '@/components/WebhookDefensePanel.vue'
 import { crossingLabel, OUTCOME_COPY } from '@/domain/labels'
 import type { BoundaryEventRecord } from '@/domain/types'
 
@@ -23,6 +25,20 @@ defineProps<{
     <p class="muted">
       This is a deterministic Java engine decision, not a score and not a probabilistic judgment.
     </p>
+    <p v-if="event.duplicateDelivery" class="muted">
+      Legitimate duplicate delivery. Replay attack: no. Side effect: not repeated.
+    </p>
+    <AuthnAuthzPanel
+      v-if="event.identity || event.authorization"
+      :identity="event.identity"
+      :authorization="event.authorization"
+    />
+    <WebhookDefensePanel
+      v-if="event.ingressKind === 'SIGNED_WEBHOOK'"
+      :controls="event.controlResults"
+      :duplicate-delivery="event.duplicateDelivery"
+    />
+    <p v-if="event.ingressKind" class="muted">Ingress {{ event.ingressKind }}</p>
 
     <dl class="result__meta">
       <div>

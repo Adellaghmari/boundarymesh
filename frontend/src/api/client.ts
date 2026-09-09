@@ -6,6 +6,7 @@ export interface RequestOptions {
   body?: unknown
   timeoutMs?: number
   signal?: AbortSignal
+  authorization?: string
 }
 
 export interface ApiResponse<T> {
@@ -68,7 +69,14 @@ function classifyHttpError(status: number, body: unknown, requestId: string): Bo
   if (status === 401) {
     return new BoundaryMeshApiError(
       'unauthorized',
-      'The local API refused this request. Phase 2 has no operator login.',
+      'Authentication could not be established.',
+      { status, requestId: backendRequestId, errorCode },
+    )
+  }
+  if (status === 403) {
+    return new BoundaryMeshApiError(
+      'forbidden',
+      'The authenticated principal is not authorized for this boundary crossing.',
       { status, requestId: backendRequestId, errorCode },
     )
   }
@@ -106,6 +114,9 @@ export class BoundaryMeshApiClient {
       }
       if (options.body !== undefined) {
         headers['Content-Type'] = 'application/json'
+      }
+      if (options.authorization) {
+        headers.Authorization = options.authorization
       }
 
       const response = await fetch(resolveApiUrl(path, this.baseUrl), {

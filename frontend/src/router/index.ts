@@ -6,6 +6,8 @@ export const ROUTE_NAMES = {
   boundaryEventDetail: 'boundary-event-detail',
   connections: 'connections',
   architecture: 'architecture',
+  identity: 'identity',
+  webhooks: 'webhooks',
   status: 'status',
   notFound: 'not-found',
 } as const
@@ -41,6 +43,18 @@ export const routes: RouteRecordRaw[] = [
     name: ROUTE_NAMES.architecture,
     component: () => import('@/views/ArchitectureView.vue'),
     meta: { title: 'Architecture' },
+  },
+  {
+    path: '/identity',
+    name: ROUTE_NAMES.identity,
+    component: () => import('@/views/IdentityLabView.vue'),
+    meta: { title: 'Identity Lab' },
+  },
+  {
+    path: '/webhooks',
+    name: ROUTE_NAMES.webhooks,
+    component: () => import('@/views/WebhookLabView.vue'),
+    meta: { title: 'Webhook Lab' },
   },
   {
     path: '/status',

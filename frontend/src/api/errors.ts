@@ -1,5 +1,11 @@
 export type ApiErrorKind =
-  'unavailable' | 'timeout' | 'bad-request' | 'unauthorized' | 'server' | 'malformed'
+  | 'unavailable'
+  | 'timeout'
+  | 'bad-request'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'server'
+  | 'malformed'
 
 export class BoundaryMeshApiError extends Error {
   readonly kind: ApiErrorKind

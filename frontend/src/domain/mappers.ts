@@ -83,10 +83,71 @@ export function toBoundaryEvent(input: {
     policyVersion: input.response.policy_version,
     reasonCodes: input.response.reason_codes,
     appliedControls: applied,
-    controlResults: controlResultsFromRequest(input.request, applied),
+    controlResults: controlResultsFromDecision(input.response, input.request),
     banner: input.response.banner,
     requestId: input.requestId,
+    ingressKind: input.response.ingress_kind,
+    duplicateDelivery: input.response.duplicate_delivery,
+    identity: input.response.identity,
+    authorization: input.response.authorization,
   }
+}
+
+export function toDecisionEvent(input: {
+  scenarioId: string
+  scenarioLabel: string
+  sourceSystem: EvaluateRequest['source_system']
+  destinationSystem: EvaluateRequest['destination_system']
+  integrationId: string
+  response: EvaluateResponse
+  requestId: string
+}): BoundaryEventRecord {
+  return {
+    transactionId: input.response.transaction_id,
+    scenarioId: input.scenarioId,
+    scenarioLabel: input.scenarioLabel,
+    sourceSystem: input.sourceSystem,
+    destinationSystem: input.destinationSystem,
+    integrationId: input.integrationId,
+    outcome: input.response.outcome,
+    decidedAt: input.response.decided_at,
+    policyVersion: input.response.policy_version,
+    reasonCodes: input.response.reason_codes,
+    appliedControls: input.response.applied_controls,
+    controlResults: controlResultsFromDecision(input.response),
+    banner: input.response.banner,
+    requestId: input.requestId,
+    ingressKind: input.response.ingress_kind,
+    duplicateDelivery: input.response.duplicate_delivery,
+    identity: input.response.identity,
+    authorization: input.response.authorization,
+  }
+}
+
+export function controlResultsFromDecision(
+  response: EvaluateResponse,
+  request?: EvaluateRequest,
+): ControlResult[] {
+  if (response.controls && response.controls.length > 0) {
+    return CONTROL_CATALOG.map((entry) => {
+      const found = response.controls?.find((item) => item.kind === entry.kind)
+      return {
+        kind: entry.kind,
+        status: found?.status ?? response.applied_controls[entry.kind] ?? 'NOT_APPLICABLE',
+        reasonCodes: found?.reasonCodes ?? [],
+        safeExplanation: found?.safeExplanation ?? entry.summary,
+      }
+    })
+  }
+  if (request) {
+    return controlResultsFromRequest(request, response.applied_controls)
+  }
+  return CONTROL_CATALOG.map((entry) => ({
+    kind: entry.kind,
+    status: response.applied_controls[entry.kind] ?? 'NOT_APPLICABLE',
+    reasonCodes: [],
+    safeExplanation: entry.summary,
+  }))
 }
 
 export function assertEvaluateResponse(value: unknown): EvaluateResponse {
@@ -126,7 +187,82 @@ export function assertEvaluateResponse(value: unknown): EvaluateResponse {
     outcome: body.outcome,
     reason_codes: reasonCodes,
     applied_controls: parseAppliedControls(body.applied_controls),
+    controls: parseControls(body.controls),
     decided_at: body.decided_at,
     policy_version: body.policy_version,
+    ingress_kind: body.ingress_kind as EvaluateResponse['ingress_kind'],
+    duplicate_delivery: body.duplicate_delivery === true,
+    identity: parseIdentity(body.identity),
+    authorization: parseAuthorization(body.authorization),
+  }
+}
+
+function parseControls(raw: unknown): EvaluateResponse['controls'] {
+  if (!Array.isArray(raw)) {
+    return undefined
+  }
+  const controls = raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') {
+      return []
+    }
+    const row = item as Record<string, unknown>
+    if (!isControlKind(row.kind) || !isControlStatus(row.status)) {
+      return []
+    }
+    const reasonCodes = Array.isArray(row.reasonCodes)
+      ? row.reasonCodes.flatMap((reason) => {
+          if (typeof reason === 'string') {
+            return [reason]
+          }
+          if (reason && typeof reason === 'object' && typeof (reason as { code?: unknown }).code === 'string') {
+            return [(reason as { code: string }).code]
+          }
+          return []
+        })
+      : []
+    return [
+      {
+        kind: row.kind,
+        status: row.status,
+        reasonCodes,
+        safeExplanation: typeof row.safeExplanation === 'string' ? row.safeExplanation : '',
+      },
+    ]
+  })
+  return controls.length > 0 ? controls : undefined
+}
+
+function parseIdentity(raw: unknown): EvaluateResponse['identity'] {
+  if (!raw || typeof raw !== 'object') {
+    return undefined
+  }
+  const body = raw as Record<string, unknown>
+  if (!isControlStatus(body.status)) {
+    return undefined
+  }
+  return {
+    status: body.status,
+    principal: typeof body.principal === 'string' ? body.principal : null,
+    issuer: typeof body.issuer === 'string' ? body.issuer : null,
+    method: typeof body.method === 'string' ? body.method : null,
+    keyId: typeof body.keyId === 'string' ? body.keyId : null,
+    explanation: typeof body.explanation === 'string' ? body.explanation : null,
+  }
+}
+
+function parseAuthorization(raw: unknown): EvaluateResponse['authorization'] {
+  if (!raw || typeof raw !== 'object') {
+    return undefined
+  }
+  const body = raw as Record<string, unknown>
+  if (!isControlStatus(body.status)) {
+    return undefined
+  }
+  return {
+    status: body.status,
+    grantedScopes: Array.isArray(body.grantedScopes)
+      ? body.grantedScopes.filter((item): item is string => typeof item === 'string')
+      : [],
+    explanation: typeof body.explanation === 'string' ? body.explanation : null,
   }
 }
