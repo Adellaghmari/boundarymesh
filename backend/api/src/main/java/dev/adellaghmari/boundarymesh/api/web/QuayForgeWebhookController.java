@@ -41,7 +41,8 @@ public class QuayForgeWebhookController {
                 request.getHeader(QuayForgeSigningContract.TIMESTAMP_HEADER),
                 request.getHeader(QuayForgeSigningContract.NONCE_HEADER),
                 request.getHeader(QuayForgeSigningContract.SIGNATURE_HEADER),
-                raw);
+                raw,
+                request.getHeader(QuayForgeSigningContract.CONTRACT_VERSION_HEADER));
         if (inbound.connectorId() == null || inbound.timestamp() == null || inbound.nonce() == null) {
             return ResponseEntity.badRequest().build();
         }

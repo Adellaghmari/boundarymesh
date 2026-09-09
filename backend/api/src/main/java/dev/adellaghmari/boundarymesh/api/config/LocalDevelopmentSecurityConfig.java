@@ -44,7 +44,11 @@ public class LocalDevelopmentSecurityConfig {
                         .requestMatchers("/api/v1/dev/jwks", "/api/v1/dev/issuer")
                         .permitAll()
                         .requestMatchers(
-                                "/api/v1/dev/tokens", "/api/v1/dev/identity-lab/**", "/api/v1/dev/webhook-lab/**")
+                                "/api/v1/dev/tokens",
+                                "/api/v1/dev/identity-lab/**",
+                                "/api/v1/dev/webhook-lab/**",
+                                "/api/v1/dev/contract-lab/**",
+                                "/api/v1/dev/egress-lab/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/quayforge")
                         .permitAll()
@@ -53,6 +57,8 @@ public class LocalDevelopmentSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/identity/evaluate")
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/dev/evaluate")
+                        .hasAuthority("SCOPE_boundary.evaluate")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/dev/crossings/evaluate")
                         .hasAuthority("SCOPE_boundary.evaluate")
                         .anyRequest()
                         .denyAll())

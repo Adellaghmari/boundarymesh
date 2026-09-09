@@ -124,7 +124,7 @@ class WebhookSecurityTests {
     }
 
     private SignedRequest signed(String eventId, long timestamp, String nonce) {
-        byte[] body = ("{\"event_id\":\"" + eventId + "\",\"event_type\":\"order.updated\"}")
+        byte[] body = ("{\"event_id\":\"" + eventId + "\",\"event_type\":\"order.updated\",\"order_id\":\"ord-1001\"}")
                 .getBytes(StandardCharsets.UTF_8);
         String signature = QuayForgeSigningContract.signatureHeader(
                 secrets.secretBytes("quayforge-orders"), String.valueOf(timestamp), nonce, body);

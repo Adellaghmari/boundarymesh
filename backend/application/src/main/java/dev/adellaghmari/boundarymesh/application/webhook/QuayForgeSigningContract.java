@@ -27,6 +27,7 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public final class QuayForgeSigningContract {
 
+    public static final String CONTRACT_VERSION_HEADER = "X-Velora-Contract-Version";
     public static final String CONNECTOR_HEADER = "X-Velora-Connector-Id";
     public static final String TIMESTAMP_HEADER = "X-Velora-Timestamp";
     public static final String NONCE_HEADER = "X-Velora-Nonce";

@@ -39,5 +39,15 @@ class DomainArchitectureTest {
                     "com.google.cloud..",
                     "org.apache.camel..",
                     "org.springframework.security..",
-                    "com.nimbusds..");
+                    "com.nimbusds..",
+                    "com.networknt..",
+                    "tools.jackson..");
+
+    @ArchTest
+    static final ArchRule domainMustNotDependOnFrontend = noClasses()
+            .that()
+            .resideInAPackage("dev.adellaghmari.boundarymesh.domain..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("vue..", "org.vue..");
 }

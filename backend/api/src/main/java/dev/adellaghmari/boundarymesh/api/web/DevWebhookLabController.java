@@ -97,7 +97,7 @@ public class DevWebhookLabController {
     }
 
     private LabRequest signed(String connectorId, String eventId, long timestamp, String nonce) {
-        byte[] body = ("{\"event_id\":\"" + eventId + "\",\"event_type\":\"order.updated\"}")
+        byte[] body = ("{\"event_id\":\"" + eventId + "\",\"event_type\":\"order.updated\",\"order_id\":\"ord-1001\"}")
                 .getBytes(StandardCharsets.UTF_8);
         return signed(connectorId, eventId, timestamp, nonce, body);
     }

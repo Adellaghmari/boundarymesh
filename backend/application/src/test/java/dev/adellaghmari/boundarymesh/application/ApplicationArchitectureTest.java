@@ -24,5 +24,6 @@ class ApplicationArchitectureTest {
                     "com.nimbusds..",
                     "com.google.cloud..",
                     "com.microsoft..",
-                    "org.apache.camel..");
+                    "org.apache.camel..",
+                    "com.networknt..");
 }

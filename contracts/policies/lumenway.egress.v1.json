@@ -1,0 +1,19 @@
+{
+  "id": "lumenway-fulfillment",
+  "version": "v1",
+  "destination": "LUMENWAY",
+  "implicit_deny": true,
+  "rules": [
+    { "rule_id": "EGRESS-LW-001", "path": "/customer_id", "action": "ALLOW" },
+    { "rule_id": "EGRESS-LW-002", "path": "/order_id", "action": "ALLOW" },
+    { "rule_id": "EGRESS-LW-003", "path": "/shipping_address", "action": "ALLOW" },
+    { "rule_id": "EGRESS-LW-004", "path": "/email", "action": "REDACT" },
+    { "rule_id": "EGRESS-LW-005", "path": "/full_name", "action": "REDACT" },
+    { "rule_id": "EGRESS-LW-006", "path": "/internal_risk_score", "action": "DENY", "deny_mode": "REJECT" },
+    { "rule_id": "EGRESS-LW-007", "path": "/support_notes", "action": "DENY", "deny_mode": "STRIP" },
+    { "rule_id": "EGRESS-LW-008", "path": "/event_id", "action": "ALLOW" },
+    { "rule_id": "EGRESS-LW-009", "path": "/event_type", "action": "ALLOW" },
+    { "rule_id": "EGRESS-LW-010", "path": "/customer", "action": "ALLOW" },
+    { "rule_id": "EGRESS-LW-011", "path": "/customer/email", "action": "REDACT" }
+  ]
+}

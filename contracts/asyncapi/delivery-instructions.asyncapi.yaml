@@ -1,0 +1,67 @@
+asyncapi: 3.0.0
+info:
+  title: BoundaryMesh delivery instructions
+  version: "1.0.0"
+  description: >
+    SYNTHETIC DEMO event contract for a future normalized delivery instruction.
+    Pub/Sub runtime remains PLANNED. This document is the asynchronous boundary
+    contract, not a live broker.
+channels:
+  deliveryInstructions:
+    address: boundarymesh.delivery.instructions.v1
+    messages:
+      DeliveryInstruction:
+        $ref: "#/components/messages/DeliveryInstruction"
+operations:
+  publishDeliveryInstruction:
+    action: send
+    channel:
+      $ref: "#/channels/deliveryInstructions"
+components:
+  messages:
+    DeliveryInstruction:
+      name: DeliveryInstruction
+      contentType: application/json
+      payload:
+        $ref: "#/components/schemas/DeliveryInstruction"
+  schemas:
+    DeliveryInstruction:
+      type: object
+      additionalProperties: false
+      required:
+        - event_id
+        - transaction_id
+        - integration_id
+        - source_system
+        - destination_system
+        - contract_id
+        - contract_version
+        - egress_policy_id
+        - egress_policy_version
+        - boundary_outcome
+        - payload_sha256
+      properties:
+        event_id:
+          type: string
+        transaction_id:
+          type: string
+        integration_id:
+          type: string
+        source_system:
+          type: string
+        destination_system:
+          type: string
+        contract_id:
+          type: string
+        contract_version:
+          type: string
+        egress_policy_id:
+          type: string
+        egress_policy_version:
+          type: string
+        boundary_outcome:
+          type: string
+          enum: [ALLOW, ALLOW_WITH_TRANSFORMATION, QUARANTINE, REJECT]
+        payload_sha256:
+          type: string
+          description: Hash reference of the transformed outbound body. Not the body.

@@ -1,0 +1,45 @@
+openapi: 3.1.0
+info:
+  title: QuayForge Orders webhook contract
+  version: "1"
+  description: >
+    SYNTHETIC DEMO partner HTTP contract for QuayForge Orders inbound webhooks.
+    This is not generated from BoundaryMesh controllers. Version 1 is the
+    supported request body; version 2 is a breaking amount/status change.
+paths:
+  /webhooks/orders:
+    post:
+      operationId: quayforgeOrderWebhook
+      summary: Signed order event
+      parameters:
+        - in: header
+          name: X-Velora-Contract-Version
+          required: true
+          schema:
+            type: string
+            enum: ["v1", "v2"]
+        - in: header
+          name: X-Velora-Timestamp
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: X-Velora-Nonce
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: X-Velora-Signature
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "../json-schema/quayforge-order.v1.schema.json"
+      responses:
+        "200":
+          description: BoundaryMesh processed the signed request
+components: {}

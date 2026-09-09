@@ -31,6 +31,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <project.build.outputTimestamp>2026-09-09T00:00:00Z</project.build.outputTimestamp>
         <archunit.version>1.4.1</archunit.version>
+        <networknt-json-schema.version>3.0.6</networknt-json-schema.version>
         <springdoc.version>3.1.0</springdoc.version>
         <spotless.version>2.46.1</spotless.version>
     </properties>
@@ -56,6 +57,11 @@
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
                 <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.networknt</groupId>
+                <artifactId>json-schema-validator</artifactId>
+                <version>${networknt-json-schema.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

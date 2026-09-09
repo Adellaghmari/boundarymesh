@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boundarymesh.local/contracts/quayforge-order/v2",
+  "title": "QuayForge order event v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id", "event_type", "order_id", "order_status"],
+  "properties": {
+    "event_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "event_type": { "type": "string", "enum": ["order.created", "order.updated"] },
+    "order_id": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "order_status": { "type": "string", "enum": ["created", "updated", "cancelled"] },
+    "customer_id": { "type": "string", "minLength": 1 },
+    "email": { "type": "string" },
+    "amount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cents", "currency"],
+      "properties": {
+        "cents": { "type": "integer", "minimum": 0 },
+        "currency": { "type": "string", "minLength": 3, "maxLength": 3 }
+      }
+    },
+    "shipping_address": { "type": "string" },
+    "full_name": { "type": "string" },
+    "support_notes": { "type": "string" },
+    "api_debug_metadata": { "type": "string" },
+    "internal_risk_score": { "type": "number" },
+    "legacy_region": { "type": "string" },
+    "customer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "email": { "type": "string" }
+      }
+    }
+  }
+}

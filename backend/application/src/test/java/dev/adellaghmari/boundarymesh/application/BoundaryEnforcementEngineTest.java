@@ -121,6 +121,72 @@ class BoundaryEnforcementEngineTest {
     }
 
     @Test
+    void contractDriftQuarantinesEvenWhenEgressWouldTransform() {
+        ControlVector vector = ControlVector.allPass()
+                .withContract(ControlResult.fail(
+                        ControlKind.CONTRACT, ReasonCode.CONTRACT_DRIFT_DETECTED, "Declared v1 matches v2."))
+                .withEgress(
+                        ControlResult.pass(ControlKind.EGRESS, ReasonCode.EGRESS_REDACTION_REQUIRED, "Would redact."));
+        assertThat(engine.decide(TX, vector).outcome()).isEqualTo(BoundaryOutcome.QUARANTINE);
+    }
+
+    @Test
+    void authenticityFailureDominatesContractQuarantine() {
+        ControlVector vector = ControlVector.allPass()
+                .withAuthenticity(ControlResult.fail(
+                        ControlKind.AUTHENTICITY, ReasonCode.AUTHENTICITY_INVALID_SIGNATURE, "Bad HMAC."))
+                .withContract(ControlResult.fail(
+                        ControlKind.CONTRACT, ReasonCode.CONTRACT_DRIFT_DETECTED, "Would quarantine."));
+        BoundaryDecision decision = engine.decide(TX, vector);
+        assertThat(decision.outcome()).isEqualTo(BoundaryOutcome.REJECT);
+        assertThat(decision.reasonCodes()).containsExactly(ReasonCode.AUTHENTICITY_INVALID_SIGNATURE);
+    }
+
+    @Test
+    void schemaInvalidRejectsWhileUnsupportedQuarantines() {
+        assertThat(engine.decide(
+                                TX,
+                                ControlVector.allPass()
+                                        .withContract(ControlResult.fail(
+                                                ControlKind.CONTRACT,
+                                                ReasonCode.CONTRACT_SCHEMA_INVALID,
+                                                "Missing required field.")))
+                        .outcome())
+                .isEqualTo(BoundaryOutcome.REJECT);
+        assertThat(engine.decide(
+                                TX,
+                                ControlVector.allPass()
+                                        .withContract(ControlResult.fail(
+                                                ControlKind.CONTRACT,
+                                                ReasonCode.CONTRACT_VERSION_UNSUPPORTED,
+                                                "v3 is unsupported.")))
+                        .outcome())
+                .isEqualTo(BoundaryOutcome.QUARANTINE);
+    }
+
+    @Test
+    void egressUnavailableQuarantinesAndRedactionTransforms() {
+        assertThat(engine.decide(
+                                TX,
+                                ControlVector.allPass()
+                                        .withEgress(ControlResult.unavailable(
+                                                ControlKind.EGRESS,
+                                                ReasonCode.EGRESS_POLICY_UNAVAILABLE,
+                                                "No policy.")))
+                        .outcome())
+                .isEqualTo(BoundaryOutcome.QUARANTINE);
+        assertThat(engine.decide(
+                                TX,
+                                ControlVector.allPass()
+                                        .withEgress(ControlResult.pass(
+                                                ControlKind.EGRESS,
+                                                ReasonCode.EGRESS_REDACTION_REQUIRED,
+                                                "Email redacted.")))
+                        .outcome())
+                .isEqualTo(BoundaryOutcome.ALLOW_WITH_TRANSFORMATION);
+    }
+
+    @Test
     void usesInjectedClock() {
         Instant later = Instant.parse("2026-12-01T00:00:00Z");
         BoundaryEnforcementEngine laterEngine = new BoundaryEnforcementEngine(Clock.fixed(later, ZoneOffset.UTC));

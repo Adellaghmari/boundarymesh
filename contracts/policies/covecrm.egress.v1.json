@@ -1,0 +1,19 @@
+{
+  "id": "covecrm-contacts",
+  "version": "v1",
+  "destination": "COVECRM",
+  "implicit_deny": true,
+  "rules": [
+    { "rule_id": "EGRESS-CRM-001", "path": "/customer_id", "action": "ALLOW" },
+    { "rule_id": "EGRESS-CRM-002", "path": "/email", "action": "ALLOW" },
+    { "rule_id": "EGRESS-CRM-003", "path": "/full_name", "action": "ALLOW" },
+    { "rule_id": "EGRESS-CRM-004", "path": "/order_id", "action": "ALLOW" },
+    { "rule_id": "EGRESS-CRM-005", "path": "/internal_risk_score", "action": "DENY", "deny_mode": "REJECT" },
+    { "rule_id": "EGRESS-CRM-006", "path": "/shipping_address", "action": "DENY", "deny_mode": "STRIP" },
+    { "rule_id": "EGRESS-CRM-007", "path": "/api_debug_metadata", "action": "DENY", "deny_mode": "STRIP" },
+    { "rule_id": "EGRESS-CRM-008", "path": "/event_id", "action": "ALLOW" },
+    { "rule_id": "EGRESS-CRM-009", "path": "/event_type", "action": "ALLOW" },
+    { "rule_id": "EGRESS-CRM-010", "path": "/customer", "action": "ALLOW" },
+    { "rule_id": "EGRESS-CRM-011", "path": "/customer/email", "action": "ALLOW" }
+  ]
+}

@@ -9,6 +9,7 @@ public record PolicyVersion(String value) {
     private static final Pattern PATTERN = Pattern.compile("^[a-z0-9][a-z0-9._-]{0,63}$");
 
     public static final PolicyVersion PHASE_1 = new PolicyVersion("boundary-enforcement.phase1.v1");
+    public static final PolicyVersion PHASE_7 = new PolicyVersion("boundary-enforcement.phase7.v1");
 
     public PolicyVersion {
         Objects.requireNonNull(value, "policy version");

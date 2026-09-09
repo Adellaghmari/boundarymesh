@@ -1,6 +1,12 @@
 package dev.adellaghmari.boundarymesh.api.config;
 
 import dev.adellaghmari.boundarymesh.application.BoundaryEnforcementEngine;
+import dev.adellaghmari.boundarymesh.application.contract.ContractEvaluator;
+import dev.adellaghmari.boundarymesh.application.contract.ContractRegistry;
+import dev.adellaghmari.boundarymesh.application.contract.PayloadSchemaValidator;
+import dev.adellaghmari.boundarymesh.application.crossing.CrossingComposer;
+import dev.adellaghmari.boundarymesh.application.egress.EgressEvaluator;
+import dev.adellaghmari.boundarymesh.application.egress.EgressPolicyRepository;
 import dev.adellaghmari.boundarymesh.application.webhook.FreshnessPolicy;
 import dev.adellaghmari.boundarymesh.application.webhook.IdempotencyStore;
 import dev.adellaghmari.boundarymesh.application.webhook.ReplayNonceStore;
@@ -30,13 +36,31 @@ public class ApplicationConfig {
     }
 
     @Bean
+    ContractEvaluator contractEvaluator(ContractRegistry registry, PayloadSchemaValidator validator) {
+        return new ContractEvaluator(registry, validator);
+    }
+
+    @Bean
+    EgressEvaluator egressEvaluator(EgressPolicyRepository repository) {
+        return new EgressEvaluator(repository);
+    }
+
+    @Bean
+    CrossingComposer crossingComposer(
+            BoundaryEnforcementEngine engine, ContractEvaluator contracts, EgressEvaluator egress) {
+        return new CrossingComposer(engine, contracts, egress);
+    }
+
+    @Bean
     WebhookDefenseService webhookDefenseService(
             BoundaryEnforcementEngine engine,
             WebhookSecretProvider secrets,
             ReplayNonceStore replayNonceStore,
             IdempotencyStore idempotencyStore,
             FreshnessPolicy freshnessPolicy,
-            Clock clock) {
-        return new WebhookDefenseService(engine, secrets, replayNonceStore, idempotencyStore, freshnessPolicy, clock);
+            Clock clock,
+            CrossingComposer composer) {
+        return new WebhookDefenseService(
+                engine, secrets, replayNonceStore, idempotencyStore, freshnessPolicy, clock, composer);
     }
 }

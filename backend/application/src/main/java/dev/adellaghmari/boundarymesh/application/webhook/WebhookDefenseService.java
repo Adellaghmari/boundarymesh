@@ -1,6 +1,7 @@
 package dev.adellaghmari.boundarymesh.application.webhook;
 
 import dev.adellaghmari.boundarymesh.application.BoundaryEnforcementEngine;
+import dev.adellaghmari.boundarymesh.application.crossing.CrossingComposer;
 import dev.adellaghmari.boundarymesh.domain.BoundaryDecision;
 import dev.adellaghmari.boundarymesh.domain.ControlKind;
 import dev.adellaghmari.boundarymesh.domain.ControlResult;
@@ -18,7 +19,7 @@ import java.util.regex.Pattern;
 
 /**
  * Generic signed-webhook defense. Order: headers → HMAC over raw bytes → freshness → replay → parse
- * → idempotency → engine.
+ * → contract → egress → idempotency → engine. Security failures do not inspect payload fields.
  */
 public final class WebhookDefenseService {
 
@@ -30,6 +31,7 @@ public final class WebhookDefenseService {
     private final IdempotencyStore idempotencyStore;
     private final FreshnessPolicy freshnessPolicy;
     private final Clock clock;
+    private final CrossingComposer composer;
 
     public WebhookDefenseService(
             BoundaryEnforcementEngine engine,
@@ -37,13 +39,15 @@ public final class WebhookDefenseService {
             ReplayNonceStore replayNonceStore,
             IdempotencyStore idempotencyStore,
             FreshnessPolicy freshnessPolicy,
-            Clock clock) {
+            Clock clock,
+            CrossingComposer composer) {
         this.engine = Objects.requireNonNull(engine);
         this.secrets = Objects.requireNonNull(secrets);
         this.replayNonceStore = Objects.requireNonNull(replayNonceStore);
         this.idempotencyStore = Objects.requireNonNull(idempotencyStore);
         this.freshnessPolicy = Objects.requireNonNull(freshnessPolicy);
         this.clock = Objects.requireNonNull(clock);
+        this.composer = Objects.requireNonNull(composer);
     }
 
     public WebhookDefenseResult evaluate(TransactionId transactionId, QuayForgeWebhookRequest request) {
@@ -115,10 +119,15 @@ public final class WebhookDefenseService {
             return new WebhookDefenseResult(prior.get(), vector, true, eventId.get());
         }
 
-        ControlVector vector = vector(authenticity, freshness, replayPass, ControlResult.pass(ControlKind.CONTRACT));
-        BoundaryDecision decision = engine.decide(transactionId, vector);
-        idempotencyStore.putIfAbsent(eventKey, decision);
-        return new WebhookDefenseResult(decision, vector, false, eventId.get());
+        CrossingComposer.CrossingResult composed = composer.compose(CrossingComposer.webhookAfterSecurity(
+                        new String(request.rawBody(), StandardCharsets.UTF_8),
+                        request.contractVersion(),
+                        authenticity,
+                        freshness,
+                        replayPass)
+                .withTransaction(transactionId));
+        idempotencyStore.putIfAbsent(eventKey, composed.decision());
+        return new WebhookDefenseResult(composed.decision(), composed.vector(), false, eventId.get());
     }
 
     private ControlResult authenticity(QuayForgeWebhookRequest request) {

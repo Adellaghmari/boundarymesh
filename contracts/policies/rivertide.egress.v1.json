@@ -1,0 +1,25 @@
+{
+  "id": "rivertide-settlements",
+  "version": "v1",
+  "destination": "RIVERTIDE",
+  "implicit_deny": true,
+  "rules": [
+    { "rule_id": "EGRESS-RT-001", "path": "/event_id", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-002", "path": "/event_type", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-003", "path": "/order_id", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-004", "path": "/order_status", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-005", "path": "/customer_id", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-006", "path": "/amount", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-007", "path": "/amount/cents", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-008", "path": "/amount/currency", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-009", "path": "/currency", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-010", "path": "/shipping_address", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-011", "path": "/email", "action": "REDACT" },
+    { "rule_id": "EGRESS-RT-012", "path": "/full_name", "action": "REDACT" },
+    { "rule_id": "EGRESS-RT-013", "path": "/internal_risk_score", "action": "DENY", "deny_mode": "REJECT" },
+    { "rule_id": "EGRESS-RT-014", "path": "/support_notes", "action": "DENY", "deny_mode": "STRIP" },
+    { "rule_id": "EGRESS-RT-015", "path": "/api_debug_metadata", "action": "DENY", "deny_mode": "STRIP" },
+    { "rule_id": "EGRESS-RT-016", "path": "/customer", "action": "ALLOW" },
+    { "rule_id": "EGRESS-RT-017", "path": "/customer/email", "action": "REDACT" }
+  ]
+}

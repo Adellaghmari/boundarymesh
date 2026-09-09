@@ -147,10 +147,17 @@ public class DevEvaluateController {
             case "REPLAY_DETECTED" -> ReasonCode.REPLAY_DETECTED;
             case "REPLAY_UNAVAILABLE" -> ReasonCode.REPLAY_UNAVAILABLE;
             case "CONTRACT_INVALID" -> ReasonCode.CONTRACT_INVALID;
+            case "CONTRACT_SCHEMA_INVALID" -> ReasonCode.CONTRACT_SCHEMA_INVALID;
+            case "CONTRACT_MALFORMED_PAYLOAD" -> ReasonCode.CONTRACT_MALFORMED_PAYLOAD;
             case "CONTRACT_UNSUPPORTED" -> ReasonCode.CONTRACT_UNSUPPORTED;
+            case "CONTRACT_VERSION_UNSUPPORTED" -> ReasonCode.CONTRACT_VERSION_UNSUPPORTED;
+            case "CONTRACT_DRIFT_DETECTED" -> ReasonCode.CONTRACT_DRIFT_DETECTED;
             case "CONTRACT_UNAVAILABLE" -> ReasonCode.CONTRACT_UNAVAILABLE;
             case "EGRESS_TRANSFORMATION_REQUIRED" -> ReasonCode.EGRESS_TRANSFORMATION_REQUIRED;
+            case "EGRESS_REDACTION_REQUIRED" -> ReasonCode.EGRESS_REDACTION_REQUIRED;
             case "EGRESS_FIELD_DENIED" -> ReasonCode.EGRESS_FIELD_DENIED;
+            case "EGRESS_POLICY_UNAVAILABLE" -> ReasonCode.EGRESS_POLICY_UNAVAILABLE;
+            case "EGRESS_POLICY_INVALID" -> ReasonCode.EGRESS_POLICY_INVALID;
             case "CREDENTIAL_UNAVAILABLE" -> ReasonCode.CREDENTIAL_UNAVAILABLE;
             case "CONNECTOR_UNAVAILABLE" -> ReasonCode.CONNECTOR_UNAVAILABLE;
             default -> ReasonCode.of(code, "Synthetic reason code.");

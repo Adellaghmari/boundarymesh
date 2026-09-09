@@ -39,7 +39,7 @@ springdoc:
 
 boundarymesh:
   service-name: boundarymesh-api
-  policy-version: boundary-enforcement.phase1.v1
+  policy-version: boundary-enforcement.phase7.v1
   dev-evaluate-enabled: false
   dev-security-tools-enabled: false
   security:

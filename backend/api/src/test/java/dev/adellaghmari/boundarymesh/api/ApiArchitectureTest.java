@@ -16,5 +16,10 @@ class ApiArchitectureTest {
             .resideInAnyPackage("dev.adellaghmari.boundarymesh.domain..", "dev.adellaghmari.boundarymesh.application..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("org.springframework..", "com.google.cloud..", "com.microsoft..", "org.apache.camel..");
+            .resideInAnyPackage(
+                    "org.springframework..",
+                    "com.google.cloud..",
+                    "com.microsoft..",
+                    "org.apache.camel..",
+                    "com.networknt..");
 }

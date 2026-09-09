@@ -56,14 +56,29 @@ public record ReasonCode(String code, String description) {
             new ReasonCode("REPLAY_UNAVAILABLE", "Replay checking could not be evaluated.");
     public static final ReasonCode CONTRACT_INVALID =
             new ReasonCode("CONTRACT_INVALID", "The payload did not satisfy the supported integration contract.");
+    public static final ReasonCode CONTRACT_SCHEMA_INVALID = new ReasonCode(
+            "CONTRACT_SCHEMA_INVALID", "The payload failed JSON Schema validation for a supported version.");
+    public static final ReasonCode CONTRACT_MALFORMED_PAYLOAD =
+            new ReasonCode("CONTRACT_MALFORMED_PAYLOAD", "The payload is not usable JSON for contract evaluation.");
     public static final ReasonCode CONTRACT_UNSUPPORTED = new ReasonCode(
             "CONTRACT_UNSUPPORTED", "The contract or schema version is not supported and was held for operations.");
+    public static final ReasonCode CONTRACT_VERSION_UNSUPPORTED = new ReasonCode(
+            "CONTRACT_VERSION_UNSUPPORTED", "The declared contract version is not in the supported set.");
+    public static final ReasonCode CONTRACT_DRIFT_DETECTED = new ReasonCode(
+            "CONTRACT_DRIFT_DETECTED",
+            "Declared version no longer matches observed structure; treated as provider contract drift.");
     public static final ReasonCode CONTRACT_UNAVAILABLE =
             new ReasonCode("CONTRACT_UNAVAILABLE", "Contract validation could not be evaluated.");
     public static final ReasonCode EGRESS_TRANSFORMATION_REQUIRED = new ReasonCode(
             "EGRESS_TRANSFORMATION_REQUIRED", "The payload may cross only after deterministic transformation.");
+    public static final ReasonCode EGRESS_REDACTION_REQUIRED =
+            new ReasonCode("EGRESS_REDACTION_REQUIRED", "Destination policy requires deterministic field redaction.");
     public static final ReasonCode EGRESS_FIELD_DENIED =
             new ReasonCode("EGRESS_FIELD_DENIED", "A destination policy denied one or more fields.");
+    public static final ReasonCode EGRESS_POLICY_UNAVAILABLE =
+            new ReasonCode("EGRESS_POLICY_UNAVAILABLE", "No destination egress policy could be resolved.");
+    public static final ReasonCode EGRESS_POLICY_INVALID =
+            new ReasonCode("EGRESS_POLICY_INVALID", "The loaded egress policy is invalid and was not applied.");
     public static final ReasonCode CREDENTIAL_UNAVAILABLE = new ReasonCode(
             "CREDENTIAL_UNAVAILABLE", "A required connector credential reference could not be resolved.");
     public static final ReasonCode CONNECTOR_UNAVAILABLE =

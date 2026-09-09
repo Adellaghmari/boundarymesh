@@ -104,7 +104,11 @@ public final class BoundaryEnforcementEngine {
         if (contract.status() != ControlStatus.FAIL) {
             return;
         }
-        if (contains(contract, ReasonCode.CONTRACT_UNSUPPORTED)) {
+        if (containsAny(
+                contract,
+                ReasonCode.CONTRACT_UNSUPPORTED,
+                ReasonCode.CONTRACT_VERSION_UNSUPPORTED,
+                ReasonCode.CONTRACT_DRIFT_DETECTED)) {
             quarantineReasons.addAll(contract.reasonCodes());
         } else {
             rejectReasons.addAll(contract.reasonCodes());
@@ -117,14 +121,16 @@ public final class BoundaryEnforcementEngine {
             List<ReasonCode> quarantineReasons,
             List<ReasonCode> transformReasons) {
         if (egress.status() == ControlStatus.UNAVAILABLE) {
-            rejectReasons.addAll(egress.reasonCodes());
+            quarantineReasons.addAll(egress.reasonCodes());
             return;
         }
         if (egress.status() == ControlStatus.FAIL) {
             rejectReasons.addAll(egress.reasonCodes());
             return;
         }
-        if (egress.status() == ControlStatus.PASS && contains(egress, ReasonCode.EGRESS_TRANSFORMATION_REQUIRED)) {
+        if (egress.status() == ControlStatus.PASS
+                && (contains(egress, ReasonCode.EGRESS_TRANSFORMATION_REQUIRED)
+                        || contains(egress, ReasonCode.EGRESS_REDACTION_REQUIRED))) {
             transformReasons.addAll(egress.reasonCodes());
         }
     }
@@ -137,5 +143,14 @@ public final class BoundaryEnforcementEngine {
 
     private static boolean contains(ControlResult result, ReasonCode expected) {
         return result.reasonCodes().stream().anyMatch(code -> code.code().equals(expected.code()));
+    }
+
+    private static boolean containsAny(ControlResult result, ReasonCode... expected) {
+        for (ReasonCode code : expected) {
+            if (contains(result, code)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
