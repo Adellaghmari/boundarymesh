@@ -33,5 +33,11 @@ class DomainArchitectureTest {
             .resideInAPackage("dev.adellaghmari.boundarymesh.domain..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("com.microsoft..", "com.azure..", "com.google.cloud..", "org.apache.camel..");
+            .resideInAnyPackage(
+                    "com.microsoft..",
+                    "com.azure..",
+                    "com.google.cloud..",
+                    "org.apache.camel..",
+                    "org.springframework.security..",
+                    "com.nimbusds..");
 }

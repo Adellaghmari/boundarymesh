@@ -15,22 +15,43 @@ public record ReasonCode(String code, String description) {
             new ReasonCode("IDENTITY_INVALID", "Identity could not be established or was cryptographically invalid.");
     public static final ReasonCode IDENTITY_UNAVAILABLE = new ReasonCode(
             "IDENTITY_UNAVAILABLE", "Identity could not be verified because a required verifier was unavailable.");
+    public static final ReasonCode AUTHN_EXPIRED = new ReasonCode("AUTHN_EXPIRED", "The presented token is expired.");
+    public static final ReasonCode AUTHN_WRONG_ISSUER =
+            new ReasonCode("AUTHN_WRONG_ISSUER", "The token issuer is not an allowed issuer.");
+    public static final ReasonCode AUTHN_WRONG_AUDIENCE =
+            new ReasonCode("AUTHN_WRONG_AUDIENCE", "The token audience does not target BoundaryMesh.");
+    public static final ReasonCode AUTHN_INVALID_JWT =
+            new ReasonCode("AUTHN_INVALID_JWT", "The token signature or structure is invalid.");
+    public static final ReasonCode AUTHN_UNKNOWN_KID =
+            new ReasonCode("AUTHN_UNKNOWN_KID", "The token key id is not present in the current JWKS.");
+    public static final ReasonCode AUTHN_NOT_YET_VALID =
+            new ReasonCode("AUTHN_NOT_YET_VALID", "The token is not valid yet.");
     public static final ReasonCode AUTHORIZATION_MISSING =
             new ReasonCode("AUTHORIZATION_MISSING", "Authenticated identity lacks permission for this crossing.");
     public static final ReasonCode AUTHORIZATION_UNAVAILABLE = new ReasonCode(
             "AUTHORIZATION_UNAVAILABLE",
             "Authorization could not be evaluated because a required verifier was unavailable.");
+    public static final ReasonCode AUTHZ_MISSING_SCOPE =
+            new ReasonCode("AUTHZ_MISSING_SCOPE", "Authenticated principal is missing a required scope.");
     public static final ReasonCode AUTHENTICITY_INVALID =
             new ReasonCode("AUTHENTICITY_INVALID", "Message authenticity could not be verified.");
+    public static final ReasonCode AUTHENTICITY_INVALID_SIGNATURE =
+            new ReasonCode("AUTHENTICITY_INVALID_SIGNATURE", "The webhook HMAC signature is invalid.");
+    public static final ReasonCode AUTHENTICITY_MISSING_SIGNATURE =
+            new ReasonCode("AUTHENTICITY_MISSING_SIGNATURE", "The webhook signature header is missing or malformed.");
     public static final ReasonCode AUTHENTICITY_UNAVAILABLE = new ReasonCode(
             "AUTHENTICITY_UNAVAILABLE",
             "Authenticity could not be evaluated because a required verifier was unavailable.");
     public static final ReasonCode FRESHNESS_EXPIRED =
             new ReasonCode("FRESHNESS_EXPIRED", "The transaction was outside the permitted freshness window.");
+    public static final ReasonCode FRESHNESS_FUTURE =
+            new ReasonCode("FRESHNESS_FUTURE", "The signed timestamp is too far in the future.");
     public static final ReasonCode FRESHNESS_UNAVAILABLE =
             new ReasonCode("FRESHNESS_UNAVAILABLE", "Freshness could not be evaluated.");
     public static final ReasonCode REPLAY_DETECTED =
             new ReasonCode("REPLAY_DETECTED", "A previously used nonce or equivalent replay marker was detected.");
+    public static final ReasonCode DUPLICATE_DELIVERY = new ReasonCode(
+            "DUPLICATE_DELIVERY", "The provider delivered a previously accepted event with a new security nonce.");
     public static final ReasonCode REPLAY_UNAVAILABLE =
             new ReasonCode("REPLAY_UNAVAILABLE", "Replay checking could not be evaluated.");
     public static final ReasonCode CONTRACT_INVALID =

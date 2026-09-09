@@ -3,14 +3,23 @@ package dev.adellaghmari.boundarymesh.api.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * LOCAL-ONLY development security. This is not Entra, OAuth2, OIDC, or JWT validation.
- * Those remain PLANNED until their dedicated phases.
+ * Local/test resource-server security.
+ *
+ * <p>Spring Security owns HTTP authentication and route authorization. The Boundary Enforcement
+ * Engine owns domain crossing outcomes after a request is admitted.
+ *
+ * <p>CSRF is disabled because this API is a stateless bearer JWT / HMAC resource server and does
+ * not use cookie sessions. A future Entra OIDC BFF must re-enable CSRF for browser cookies.
+ *
+ * <p>This is not Microsoft Entra and not an interactive OIDC login.
  */
 @Configuration
 @Profile({"local", "test"})
@@ -19,13 +28,32 @@ public class LocalDevelopmentSecurityConfig {
     @Bean
     SecurityFilterChain localDevelopmentSecurity(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
+                .headers(Customizer.withDefaults())
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.requestMatchers(
-                                "/api/v1/health", "/api/v1/ready", "/api/v1/dev/**", "/v3/api-docs", "/v3/api-docs/**")
+                .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults())
+                        .authenticationEntryPoint(JsonAccessDeniedWriter.unauthorized())
+                        .accessDeniedHandler(JsonAccessDeniedWriter.forbidden()))
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/api/v1/health", "/api/v1/ready")
                         .permitAll()
+                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**")
+                        .permitAll()
+                        .requestMatchers("/api/v1/dev/jwks", "/api/v1/dev/issuer")
+                        .permitAll()
+                        .requestMatchers(
+                                "/api/v1/dev/tokens", "/api/v1/dev/identity-lab/**", "/api/v1/dev/webhook-lab/**")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/quayforge")
+                        .permitAll()
+                        .requestMatchers("/api/v1/security/me")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/identity/evaluate")
+                        .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/dev/evaluate")
+                        .hasAuthority("SCOPE_boundary.evaluate")
                         .anyRequest()
                         .denyAll())
                 .exceptionHandling(exceptions -> exceptions

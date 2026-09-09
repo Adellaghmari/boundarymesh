@@ -18,5 +18,11 @@ class ApplicationArchitectureTest {
             .resideInAPackage("dev.adellaghmari.boundarymesh.application..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("org.springframework..", "com.google.cloud..", "com.microsoft..", "org.apache.camel..");
+            .resideInAnyPackage(
+                    "org.springframework..",
+                    "org.springframework.security..",
+                    "com.nimbusds..",
+                    "com.google.cloud..",
+                    "com.microsoft..",
+                    "org.apache.camel..");
 }

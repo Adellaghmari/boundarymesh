@@ -5,7 +5,8 @@ package dev.adellaghmari.boundarymesh.api.logging;
  *
  * <p>Never log: Authorization, JWT, cookies, secret values, webhook signatures, raw credentials.
  *
- * <p>Safe MDC: request_id, transaction_id, boundary_outcome, reason_code.
+ * <p>Safe MDC: request_id, transaction_id, boundary_outcome, reason_code, principal_reference,
+ * issuer, provider.
  *
  * <p>Spring access logs are disabled. Request bodies are never logged.
  */

@@ -128,11 +128,21 @@ public class DevEvaluateController {
         return switch (code) {
             case "IDENTITY_INVALID" -> ReasonCode.IDENTITY_INVALID;
             case "IDENTITY_UNAVAILABLE" -> ReasonCode.IDENTITY_UNAVAILABLE;
+            case "AUTHN_EXPIRED" -> ReasonCode.AUTHN_EXPIRED;
+            case "AUTHN_WRONG_ISSUER" -> ReasonCode.AUTHN_WRONG_ISSUER;
+            case "AUTHN_WRONG_AUDIENCE" -> ReasonCode.AUTHN_WRONG_AUDIENCE;
+            case "AUTHN_INVALID_JWT" -> ReasonCode.AUTHN_INVALID_JWT;
+            case "AUTHN_UNKNOWN_KID" -> ReasonCode.AUTHN_UNKNOWN_KID;
+            case "AUTHN_NOT_YET_VALID" -> ReasonCode.AUTHN_NOT_YET_VALID;
             case "AUTHORIZATION_MISSING" -> ReasonCode.AUTHORIZATION_MISSING;
+            case "AUTHZ_MISSING_SCOPE" -> ReasonCode.AUTHZ_MISSING_SCOPE;
             case "AUTHORIZATION_UNAVAILABLE" -> ReasonCode.AUTHORIZATION_UNAVAILABLE;
             case "AUTHENTICITY_INVALID" -> ReasonCode.AUTHENTICITY_INVALID;
+            case "AUTHENTICITY_INVALID_SIGNATURE" -> ReasonCode.AUTHENTICITY_INVALID_SIGNATURE;
+            case "AUTHENTICITY_MISSING_SIGNATURE" -> ReasonCode.AUTHENTICITY_MISSING_SIGNATURE;
             case "AUTHENTICITY_UNAVAILABLE" -> ReasonCode.AUTHENTICITY_UNAVAILABLE;
             case "FRESHNESS_EXPIRED" -> ReasonCode.FRESHNESS_EXPIRED;
+            case "FRESHNESS_FUTURE" -> ReasonCode.FRESHNESS_FUTURE;
             case "FRESHNESS_UNAVAILABLE" -> ReasonCode.FRESHNESS_UNAVAILABLE;
             case "REPLAY_DETECTED" -> ReasonCode.REPLAY_DETECTED;
             case "REPLAY_UNAVAILABLE" -> ReasonCode.REPLAY_UNAVAILABLE;

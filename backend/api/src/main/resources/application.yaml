@@ -41,6 +41,15 @@ boundarymesh:
   service-name: boundarymesh-api
   policy-version: boundary-enforcement.phase1.v1
   dev-evaluate-enabled: false
+  dev-security-tools-enabled: false
+  security:
+    issuer: http://127.0.0.1:8080/api/v1/dev/issuer
+    audience: boundarymesh-api
+    access-token-ttl: 15m
+  webhook:
+    freshness-window: 5m
+    max-body-bytes: 65536
+    quayforge-secret: ""
 
 logging:
   level:

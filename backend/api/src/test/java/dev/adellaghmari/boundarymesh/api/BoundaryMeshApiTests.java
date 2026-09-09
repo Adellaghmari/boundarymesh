@@ -6,6 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import dev.adellaghmari.boundarymesh.api.security.LocalTokenService;
+import dev.adellaghmari.boundarymesh.api.security.TokenScenario;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +23,19 @@ class BoundaryMeshApiTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private LocalTokenService tokens;
+
+    @Test
+    void localCorsAllowsKnownOriginAndIgnoresUnknown() throws Exception {
+        mockMvc.perform(get("/api/v1/health").header("Origin", "http://127.0.0.1:5173"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://127.0.0.1:5173"));
+        mockMvc.perform(get("/api/v1/health").header("Origin", "https://evil.example"))
+                .andExpect(status().isForbidden())
+                .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+    }
 
     @Test
     void health() throws Exception {
@@ -50,6 +65,7 @@ class BoundaryMeshApiTests {
     @Test
     void evaluateAllow() throws Exception {
         mockMvc.perform(post("/api/v1/dev/evaluate")
+                        .header("Authorization", bearer())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(evaluateJson("PASS", "[]")))
                 .andExpect(status().isOk())
@@ -72,6 +88,7 @@ class BoundaryMeshApiTests {
                 """
                         .formatted(controlsJson("FAIL", "[\"IDENTITY_INVALID\"]", "PASS", "[]"));
         mockMvc.perform(post("/api/v1/dev/evaluate")
+                        .header("Authorization", bearer())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
@@ -82,6 +99,7 @@ class BoundaryMeshApiTests {
     @Test
     void evaluateRequiresSyntheticFlag() throws Exception {
         mockMvc.perform(post("/api/v1/dev/evaluate")
+                        .header("Authorization", bearer())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(evaluateJson("PASS", "[]").replace("\"synthetic\": true", "\"synthetic\": false")))
                 .andExpect(status().isBadRequest())
@@ -102,6 +120,10 @@ class BoundaryMeshApiTests {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.openapi").value(org.hamcrest.Matchers.startsWith("3.1")));
+    }
+
+    private String bearer() {
+        return "Bearer " + tokens.issue(TokenScenario.VALID_MACHINE);
     }
 
     private static String evaluateJson(String identityStatus, String identityReasons) {

@@ -15,11 +15,13 @@ final class JsonAccessDeniedWriter {
     private JsonAccessDeniedWriter() {}
 
     static AuthenticationEntryPoint unauthorized() {
-        return (request, response, exception) -> write(response, 401, "UNAUTHORIZED", "Authentication required.");
+        return (request, response, exception) ->
+                write(response, 401, "UNAUTHORIZED", "Authentication could not be established.");
     }
 
     static AccessDeniedHandler forbidden() {
-        return (request, response, exception) -> write(response, 403, "FORBIDDEN", "Access denied.");
+        return (request, response, exception) ->
+                write(response, 403, "FORBIDDEN", "Authenticated principal is not authorized for this operation.");
     }
 
     private static void write(HttpServletResponse response, int status, String code, String message)

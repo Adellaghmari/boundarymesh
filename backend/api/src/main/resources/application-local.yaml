@@ -5,6 +5,7 @@ spring:
 
 boundarymesh:
   dev-evaluate-enabled: true
+  dev-security-tools-enabled: true
 
 logging:
   structured:
