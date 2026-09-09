@@ -97,6 +97,47 @@ export async function evaluateIdentity(scenario: string): Promise<ApiResponse<Ev
   }
 }
 
+export async function runContractLab(scenario: string): Promise<ApiResponse<EvaluateResponse>> {
+  const response = await apiClient.request<unknown>(`/api/v1/dev/contract-lab/${scenario}`, {
+    method: 'POST',
+  })
+  return asDecision(response, 'The contract lab response was not valid.')
+}
+
+export async function runEgressLab(
+  destination: string,
+  scenario: string,
+): Promise<ApiResponse<EvaluateResponse>> {
+  const response = await apiClient.request<unknown>(`/api/v1/dev/egress-lab/${destination}/${scenario}`, {
+    method: 'POST',
+  })
+  return asDecision(response, 'The data boundary lab response was not valid.')
+}
+
+export async function evaluateCrossing(scenario: string): Promise<ApiResponse<EvaluateResponse>> {
+  const token = await issueLocalToken('VALID_MACHINE')
+  const response = await apiClient.request<unknown>('/api/v1/dev/crossings/evaluate', {
+    method: 'POST',
+    body: { scenario },
+    authorization: `Bearer ${token}`,
+  })
+  return asDecision(response, 'The composed crossing response was not valid.')
+}
+
+function asDecision(
+  response: ApiResponse<unknown>,
+  message: string,
+): ApiResponse<EvaluateResponse> {
+  try {
+    return { ...response, data: assertEvaluateResponse(response.data) }
+  } catch {
+    throw new BoundaryMeshApiError('malformed', message, {
+      requestId: response.requestId,
+      status: response.status,
+    })
+  }
+}
+
 export async function runWebhookLab(scenario: string): Promise<ApiResponse<EvaluateResponse>> {
   const response = await apiClient.request<unknown>(`/api/v1/dev/webhook-lab/${scenario}`, {
     method: 'POST',

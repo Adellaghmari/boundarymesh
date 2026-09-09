@@ -17,6 +17,14 @@ async function render(event: BoundaryEventRecord) {
 }
 
 describe('DecisionResult', () => {
+  it.each(['ALLOW', 'ALLOW_WITH_TRANSFORMATION', 'QUARANTINE', 'REJECT'] as const)(
+    'renders %s from the Java outcome',
+    async (outcome) => {
+      const wrapper = await render({ ...sessionEvent, outcome })
+      expect(wrapper.text()).toContain(outcome === 'ALLOW_WITH_TRANSFORMATION' ? 'ALLOW WITH TRANSFORMATION' : outcome)
+    },
+  )
+
   it('shows authentication and authorization separately for JWT events', async () => {
     const wrapper = await render({
       ...sessionEvent,

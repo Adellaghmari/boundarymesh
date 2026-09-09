@@ -34,3 +34,55 @@ export const WEBHOOK_LAB_SCENARIOS = [
   { id: 'duplicate', label: 'Legitimate duplicate', summary: 'New nonce, same event_id. Not a replay.' },
   { id: 'missing-signature', label: 'Missing signature', summary: 'Authenticity fails.' },
 ] as const
+
+export const CONTRACT_LAB_SCENARIOS = [
+  { id: 'valid-v1', label: 'Valid v1 contract', summary: 'Supported version. Payload matches the schema.' },
+  { id: 'missing-required', label: 'Missing required field', summary: 'Supported v1. Schema violation. REJECT.' },
+  { id: 'wrong-type', label: 'Wrong type', summary: 'amount is a string. Schema violation. REJECT.' },
+  { id: 'unsupported-version', label: 'Unsupported v3', summary: 'Version is registered as unsupported. QUARANTINE.' },
+  {
+    id: 'contract-drift',
+    label: 'Contract drift',
+    summary: 'Declares v1 but the body matches supported v2. QUARANTINE.',
+  },
+  { id: 'too-many-violations', label: 'Violation truncation', summary: 'Many extra fields. First 20 violations only.' },
+] as const
+
+export const EGRESS_LAB_DESTINATIONS = [
+  { id: 'COVECRM', label: 'CoveCRM', summary: 'Contact sync. Email may leave.' },
+  { id: 'RIVERTIDE', label: 'Rivertide Settlements', summary: 'Settlement. Email redacted. Risk score denied.' },
+  { id: 'LUMENWAY', label: 'Lumenway Fulfillment', summary: 'Fulfillment. Shipping allowed. Email redacted.' },
+] as const
+
+export const EGRESS_LAB_SCENARIOS = [
+  { id: 'allow', label: 'All permitted fields', summary: 'Only explicitly allowed fields are present.' },
+  { id: 'email-only', label: 'Email contrast', summary: 'Same email field, destination-specific action.' },
+  { id: 'redact', label: 'Multiple redactions', summary: 'Email and name require transformation.' },
+  { id: 'deny', label: 'Forbidden critical field', summary: 'internal_risk_score is present. REJECT.' },
+  { id: 'nested', label: 'Nested field rule', summary: 'JSON Pointer /customer/email.' },
+  { id: 'implicit-deny', label: 'Implicit deny', summary: 'Unlisted legacy_region is omitted.' },
+  { id: 'minimization', label: 'Data minimization', summary: 'Destination receives only what policy permits.' },
+] as const
+
+export const CROSSING_LAB_SCENARIOS = [
+  {
+    id: 'composed-allow',
+    label: 'All controls pass',
+    summary: 'Valid identity, contract v1, no egress transformation. ALLOW.',
+  },
+  {
+    id: 'composed-transform',
+    label: 'Egress redaction',
+    summary: 'Authenticated crossing. Two fields redacted. ALLOW_WITH_TRANSFORMATION.',
+  },
+  {
+    id: 'composed-quarantine',
+    label: 'Contract drift hold',
+    summary: 'Same identity. Declared v1 matches v2. QUARANTINE.',
+  },
+  {
+    id: 'composed-reject-egress',
+    label: 'Forbidden outbound field',
+    summary: 'Contract-valid payload. Critical egress deny. REJECT.',
+  },
+] as const

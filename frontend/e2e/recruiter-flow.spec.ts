@@ -80,6 +80,44 @@ test('webhook lab proves valid signature and replay without exposing secrets', a
   await expect(page.locator('body')).not.toContainText('BOUNDARYMESH_QUAYFORGE_SECRET')
 })
 
+test('contract drift and data boundary labs use Java outcomes', async ({ page }) => {
+  await page.goto('/contracts')
+  await expect(page.getByRole('heading', { name: 'Contract Drift Lab' })).toBeVisible()
+  const result = page.locator('article.result')
+
+  await page.getByRole('radio', { name: /Valid v1 contract/ }).check()
+  await page.getByRole('button', { name: 'Evaluate contract' }).click()
+  await expect(result).toContainText('ALLOW', { timeout: 20_000 })
+
+  await page.getByRole('radio', { name: /Contract drift/ }).check()
+  await page.getByRole('button', { name: 'Evaluate contract' }).click()
+  await expect(result).toContainText('QUARANTINE', { timeout: 20_000 })
+
+  await page.goto('/data-boundary')
+  await expect(page.getByRole('heading', { name: 'Data Boundary Lab' })).toBeVisible()
+  await page.getByRole('radio', { name: /Rivertide Settlements/ }).check()
+  await page.getByRole('radio', { name: /Email contrast/ }).check()
+  await page.getByRole('button', { name: 'Evaluate data boundary' }).click()
+  await expect(page.locator('article.result')).toContainText('ALLOW WITH TRANSFORMATION', { timeout: 20_000 })
+  await expect(page.getByText('[REDACTED]').first()).toBeVisible()
+
+  await page.getByRole('radio', { name: /Forbidden critical field/ }).check()
+  await page.getByRole('button', { name: 'Evaluate data boundary' }).click()
+  await expect(page.locator('article.result')).toContainText('REJECT', { timeout: 20_000 })
+})
+
+test('full crossing inspection shows real composed stages', async ({ page }) => {
+  await page.goto('/crossing')
+  await expect(page.getByRole('heading', { name: 'Full Boundary Crossing' })).toBeVisible()
+  await page.getByRole('radio', { name: /Egress redaction/ }).check()
+  await page.getByRole('button', { name: 'Inspect crossing' }).click()
+  const result = page.locator('article.result')
+  await expect(result).toContainText('ALLOW WITH TRANSFORMATION', { timeout: 20_000 })
+  await expect(page.getByLabel('Boundary crossing inspection')).toContainText('Identity')
+  await expect(page.getByLabel('Boundary crossing inspection')).toContainText('Data Boundary')
+  await expect(page.getByText('PASS').first()).toBeVisible()
+})
+
 test('unknown routes show the 404 page', async ({ page }) => {
   await page.goto('/no-such-console-route')
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()

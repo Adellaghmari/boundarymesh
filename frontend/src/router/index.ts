@@ -8,6 +8,9 @@ export const ROUTE_NAMES = {
   architecture: 'architecture',
   identity: 'identity',
   webhooks: 'webhooks',
+  contracts: 'contracts',
+  dataBoundary: 'data-boundary',
+  crossing: 'crossing',
   status: 'status',
   notFound: 'not-found',
 } as const
@@ -55,6 +58,24 @@ export const routes: RouteRecordRaw[] = [
     name: ROUTE_NAMES.webhooks,
     component: () => import('@/views/WebhookLabView.vue'),
     meta: { title: 'Webhook Lab' },
+  },
+  {
+    path: '/contracts',
+    name: ROUTE_NAMES.contracts,
+    component: () => import('@/views/ContractDriftLabView.vue'),
+    meta: { title: 'Contract Drift Lab' },
+  },
+  {
+    path: '/data-boundary',
+    name: ROUTE_NAMES.dataBoundary,
+    component: () => import('@/views/DataBoundaryLabView.vue'),
+    meta: { title: 'Data Boundary Lab' },
+  },
+  {
+    path: '/crossing',
+    name: ROUTE_NAMES.crossing,
+    component: () => import('@/views/CrossingLabView.vue'),
+    meta: { title: 'Full Crossing' },
   },
   {
     path: '/status',

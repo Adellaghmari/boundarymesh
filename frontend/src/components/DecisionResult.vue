@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import AuthnAuthzPanel from '@/components/AuthnAuthzPanel.vue'
+import ContractEvidence from '@/components/ContractEvidence.vue'
 import ControlVectorView from '@/components/ControlVectorView.vue'
+import CrossingPipeline from '@/components/CrossingPipeline.vue'
+import EgressFieldTable from '@/components/EgressFieldTable.vue'
 import OutcomeBadge from '@/components/OutcomeBadge.vue'
 import TruthBanner from '@/components/TruthBanner.vue'
 import WebhookDefensePanel from '@/components/WebhookDefensePanel.vue'
@@ -11,6 +14,7 @@ import type { BoundaryEventRecord } from '@/domain/types'
 defineProps<{
   event: BoundaryEventRecord
   showDetailLink?: boolean
+  compact?: boolean
 }>()
 </script>
 
@@ -38,6 +42,13 @@ defineProps<{
       :controls="event.controlResults"
       :duplicate-delivery="event.duplicateDelivery"
     />
+    <CrossingPipeline
+      v-if="!compact && event.enforcementTrace?.length"
+      :steps="event.enforcementTrace"
+      :applied="event.appliedControls"
+    />
+    <ContractEvidence v-if="!compact" :contract="event.contract" />
+    <EgressFieldTable v-if="!compact" :egress="event.egress" />
     <p v-if="event.ingressKind" class="muted">Ingress {{ event.ingressKind }}</p>
 
     <dl class="result__meta">

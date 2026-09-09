@@ -90,6 +90,12 @@ export function toBoundaryEvent(input: {
     duplicateDelivery: input.response.duplicate_delivery,
     identity: input.response.identity,
     authorization: input.response.authorization,
+    contract: input.response.contract,
+    egress: input.response.egress,
+    enforcementTrace: input.response.enforcement_trace,
+    classification: input.response.classification,
+    sourcePayload: input.response.source_payload,
+    transformedPayload: input.response.transformed_payload,
   }
 }
 
@@ -121,6 +127,12 @@ export function toDecisionEvent(input: {
     duplicateDelivery: input.response.duplicate_delivery,
     identity: input.response.identity,
     authorization: input.response.authorization,
+    contract: input.response.contract,
+    egress: input.response.egress,
+    enforcementTrace: input.response.enforcement_trace,
+    classification: input.response.classification,
+    sourcePayload: input.response.source_payload,
+    transformedPayload: input.response.transformed_payload,
   }
 }
 
@@ -194,6 +206,12 @@ export function assertEvaluateResponse(value: unknown): EvaluateResponse {
     duplicate_delivery: body.duplicate_delivery === true,
     identity: parseIdentity(body.identity),
     authorization: parseAuthorization(body.authorization),
+    contract: parseContract(body.contract),
+    egress: parseEgress(body.egress),
+    enforcement_trace: parseTrace(body.enforcement_trace),
+    classification: typeof body.classification === 'string' ? body.classification : undefined,
+    source_payload: typeof body.source_payload === 'string' ? body.source_payload : undefined,
+    transformed_payload: typeof body.transformed_payload === 'string' ? body.transformed_payload : undefined,
   }
 }
 
@@ -248,6 +266,105 @@ function parseIdentity(raw: unknown): EvaluateResponse['identity'] {
     keyId: typeof body.keyId === 'string' ? body.keyId : null,
     explanation: typeof body.explanation === 'string' ? body.explanation : null,
   }
+}
+
+function parseContract(raw: unknown): EvaluateResponse['contract'] {
+  if (!raw || typeof raw !== 'object') {
+    return undefined
+  }
+  const body = raw as Record<string, unknown>
+  const violations = Array.isArray(body.violations)
+    ? body.violations.flatMap((item) => {
+        if (!item || typeof item !== 'object') {
+          return []
+        }
+        const row = item as Record<string, unknown>
+        if (typeof row.path !== 'string') {
+          return []
+        }
+        return [
+          {
+            path: row.path,
+            keyword: typeof row.keyword === 'string' ? row.keyword : '',
+            expected: typeof row.expected === 'string' ? row.expected : '',
+            actual: typeof row.actual === 'string' ? row.actual : '',
+          },
+        ]
+      })
+    : []
+  return {
+    id: typeof body.id === 'string' ? body.id : null,
+    version: typeof body.version === 'string' ? body.version : null,
+    type: typeof body.type === 'string' ? body.type : null,
+    status: typeof body.status === 'string' ? body.status : null,
+    classification: typeof body.classification === 'string' ? body.classification : null,
+    truncatedCount: typeof body.truncated_count === 'number' ? body.truncated_count : 0,
+    violations,
+  }
+}
+
+function parseEgress(raw: unknown): EvaluateResponse['egress'] {
+  if (!raw || typeof raw !== 'object') {
+    return undefined
+  }
+  const body = raw as Record<string, unknown>
+  const fields = Array.isArray(body.fields)
+    ? body.fields.flatMap((item) => {
+        if (!item || typeof item !== 'object') {
+          return []
+        }
+        const row = item as Record<string, unknown>
+        if (typeof row.path !== 'string' || typeof row.action !== 'string') {
+          return []
+        }
+        return [
+          {
+            path: row.path,
+            action: row.action,
+            ruleId: typeof row.rule_id === 'string' ? row.rule_id : '',
+            explanation: typeof row.explanation === 'string' ? row.explanation : '',
+          },
+        ]
+      })
+    : []
+  return {
+    policyId: typeof body.policy_id === 'string' ? body.policy_id : '',
+    policyVersion: typeof body.policy_version === 'string' ? body.policy_version : '',
+    destination: typeof body.destination === 'string' ? body.destination : '',
+    fields,
+    redactedPaths: stringList(body.redacted_paths),
+    deniedPaths: stringList(body.denied_paths),
+    implicitDenyPaths: stringList(body.implicit_deny_paths),
+    transformationCount: typeof body.transformation_count === 'number' ? body.transformation_count : 0,
+  }
+}
+
+function parseTrace(raw: unknown): EvaluateResponse['enforcement_trace'] {
+  if (!Array.isArray(raw)) {
+    return undefined
+  }
+  const steps = raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') {
+      return []
+    }
+    const row = item as Record<string, unknown>
+    if (typeof row.kind !== 'string' || !isControlStatus(row.status)) {
+      return []
+    }
+    return [
+      {
+        kind: row.kind,
+        status: row.status,
+        explanation: typeof row.explanation === 'string' ? row.explanation : '',
+        reference: typeof row.reference === 'string' ? row.reference : '',
+      },
+    ]
+  })
+  return steps.length > 0 ? steps : undefined
+}
+
+function stringList(raw: unknown): string[] {
+  return Array.isArray(raw) ? raw.filter((item): item is string => typeof item === 'string') : []
 }
 
 function parseAuthorization(raw: unknown): EvaluateResponse['authorization'] {

@@ -84,6 +84,48 @@ export interface ControlView {
   safeExplanation: string
 }
 
+export interface ViolationView {
+  path: string
+  keyword: string
+  expected: string
+  actual: string
+}
+
+export interface ContractView {
+  id?: string | null
+  version?: string | null
+  type?: string | null
+  status?: string | null
+  classification?: string | null
+  truncatedCount: number
+  violations: ViolationView[]
+}
+
+export interface FieldActionView {
+  path: string
+  action: string
+  ruleId: string
+  explanation: string
+}
+
+export interface EgressView {
+  policyId: string
+  policyVersion: string
+  destination: string
+  fields: FieldActionView[]
+  redactedPaths: string[]
+  deniedPaths: string[]
+  implicitDenyPaths: string[]
+  transformationCount: number
+}
+
+export interface TraceStepView {
+  kind: string
+  status: ControlStatus
+  explanation: string
+  reference: string
+}
+
 export interface EvaluateResponse {
   banner: string
   transaction_id: string
@@ -97,6 +139,12 @@ export interface EvaluateResponse {
   duplicate_delivery?: boolean
   identity?: IdentityView
   authorization?: AuthorizationView
+  contract?: ContractView
+  egress?: EgressView
+  enforcement_trace?: TraceStepView[]
+  classification?: string
+  source_payload?: string
+  transformed_payload?: string
 }
 
 export interface HealthResponse {
@@ -137,6 +185,12 @@ export interface BoundaryEventRecord {
   identity?: IdentityView
   authorization?: AuthorizationView
   httpStatus?: number
+  contract?: ContractView
+  egress?: EgressView
+  enforcementTrace?: TraceStepView[]
+  classification?: string
+  sourcePayload?: string
+  transformedPayload?: string
 }
 
 export const CAPABILITY_STATUSES = ['PLANNED', 'IMPLEMENTED', 'TESTED', 'LIVE VERIFIED'] as const

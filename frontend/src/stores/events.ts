@@ -1,6 +1,13 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { evaluateBoundary, evaluateIdentity, runWebhookLab } from '@/api/boundarymesh'
+import {
+  evaluateBoundary,
+  evaluateCrossing,
+  evaluateIdentity,
+  runContractLab,
+  runEgressLab,
+  runWebhookLab,
+} from '@/api/boundarymesh'
 import { BoundaryMeshApiError, isRetryable, userMessageFor } from '@/api/errors'
 import { toBoundaryEvent, toDecisionEvent } from '@/domain/mappers'
 import { buildEvaluateRequest, scenarioById, type ScenarioId } from '@/domain/scenarios'
@@ -30,6 +37,9 @@ export const useEventsStore = defineStore('events', () => {
   const webhookFailure = ref<SecurityHttpFailure | null>(null)
   const lastIdentityEvent = ref<BoundaryEventRecord | null>(null)
   const lastWebhookEvent = ref<BoundaryEventRecord | null>(null)
+  const lastContractEvent = ref<BoundaryEventRecord | null>(null)
+  const lastEgressEvent = ref<BoundaryEventRecord | null>(null)
+  const lastCrossingEvent = ref<BoundaryEventRecord | null>(null)
 
   const newestFirst = computed(() =>
     [...events.value].sort((a, b) => b.decidedAt.localeCompare(a.decidedAt)),
@@ -147,11 +157,77 @@ export const useEventsStore = defineStore('events', () => {
     }
   }
 
+  async function evaluateContractScenario(scenarioId: string): Promise<BoundaryEventRecord | null> {
+    return runLab('QUAYFORGE', 'RIVERTIDE', 'quayforge-orders', scenarioId, runContractLab, (record) => {
+      lastContractEvent.value = record
+    })
+  }
+
+  async function evaluateEgressScenario(
+    destination: string,
+    scenarioId: string,
+  ): Promise<BoundaryEventRecord | null> {
+    return runLab(
+      'QUAYFORGE',
+      destination as BoundaryEventRecord['destinationSystem'],
+      'quayforge-orders',
+      scenarioId,
+      () => runEgressLab(destination, scenarioId),
+      (record) => {
+        lastEgressEvent.value = record
+      },
+    )
+  }
+
+  async function evaluateCrossingScenario(scenarioId: string): Promise<BoundaryEventRecord | null> {
+    return runLab('QUAYFORGE', 'RIVERTIDE', 'quayforge-orders', scenarioId, evaluateCrossing, (record) => {
+      lastCrossingEvent.value = record
+    })
+  }
+
+  async function runLab(
+    sourceSystem: BoundaryEventRecord['sourceSystem'],
+    destinationSystem: BoundaryEventRecord['destinationSystem'],
+    integrationId: string,
+    scenarioId: string,
+    call: (scenarioId: string) => Promise<Awaited<ReturnType<typeof runContractLab>>>,
+    rememberLab: (record: BoundaryEventRecord) => void,
+  ): Promise<BoundaryEventRecord | null> {
+    evaluating.value = true
+    errorMessage.value = null
+    retryable.value = false
+    try {
+      const response = await call(scenarioId)
+      const record = toDecisionEvent({
+        scenarioId,
+        scenarioLabel: scenarioId,
+        sourceSystem,
+        destinationSystem,
+        integrationId,
+        response: response.data,
+        requestId: response.requestId,
+      })
+      remember(record)
+      lastEvent.value = record
+      rememberLab(record)
+      return record
+    } catch (error) {
+      errorMessage.value = userMessageFor(error)
+      retryable.value = isRetryable(error)
+      return null
+    } finally {
+      evaluating.value = false
+    }
+  }
+
   function clearSession(): void {
     events.value = []
     lastEvent.value = null
     lastIdentityEvent.value = null
     lastWebhookEvent.value = null
+    lastContractEvent.value = null
+    lastEgressEvent.value = null
+    lastCrossingEvent.value = null
     errorMessage.value = null
     identityFailure.value = null
     webhookFailure.value = null
@@ -162,6 +238,9 @@ export const useEventsStore = defineStore('events', () => {
     lastEvent,
     lastIdentityEvent,
     lastWebhookEvent,
+    lastContractEvent,
+    lastEgressEvent,
+    lastCrossingEvent,
     evaluating,
     errorMessage,
     retryable,
@@ -174,6 +253,9 @@ export const useEventsStore = defineStore('events', () => {
     evaluateScenario,
     evaluateIdentityScenario,
     evaluateWebhookScenario,
+    evaluateContractScenario,
+    evaluateEgressScenario,
+    evaluateCrossingScenario,
     clearSession,
   }
 })

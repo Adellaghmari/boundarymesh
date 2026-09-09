@@ -12,6 +12,9 @@ const links = [
   { name: ROUTE_NAMES.architecture, to: '/architecture', label: 'Architecture' },
   { name: ROUTE_NAMES.identity, to: '/identity', label: 'Identity Lab' },
   { name: ROUTE_NAMES.webhooks, to: '/webhooks', label: 'Webhook Lab' },
+  { name: ROUTE_NAMES.contracts, to: '/contracts', label: 'Contract Lab' },
+  { name: ROUTE_NAMES.dataBoundary, to: '/data-boundary', label: 'Data Boundary' },
+  { name: ROUTE_NAMES.crossing, to: '/crossing', label: 'Full Crossing' },
   { name: ROUTE_NAMES.status, to: '/status', label: 'Status' },
 ] as const
 

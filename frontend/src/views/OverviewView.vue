@@ -23,7 +23,8 @@ import { OUTCOME_COPY } from '@/domain/labels'
         release board, and not a generic API client. Phase 2 evaluates synthetic Velora Interchange
         crossings against the local Java Boundary Enforcement Engine. Identity Lab and Webhook Lab
         exercise Spring Security JWT checks and signed-webhook defense. Microsoft Entra and Graph
-        remain planned.
+        remain planned. Contract Drift Lab and Data Boundary Lab now evaluate real Java contract and
+        egress controls. A valid identity is not an automatic crossing.
       </p>
     </section>
 

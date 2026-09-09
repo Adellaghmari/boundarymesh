@@ -1,7 +1,7 @@
 import type { CapabilityClaim } from '@/domain/types'
 
 /**
- * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 4.
+ * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 7.
  * Not fetched from Git. Do not invent progress.
  */
 export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
@@ -15,7 +15,7 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     id: 'enforcement-engine',
     label: 'Boundary Enforcement Engine',
     status: 'TESTED',
-    notes: 'Deterministic ControlVector decisions. Synthetic evaluate only.',
+    notes: 'Deterministic ControlVector decisions including real contract and egress controls.',
   },
   {
     id: 'vue-frontend',
@@ -40,14 +40,14 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
   {
     id: 'contract-firewall',
     label: 'Contract Drift Firewall',
-    status: 'PLANNED',
-    notes: 'OpenAPI docs exist; runtime contract enforcement does not.',
+    status: 'TESTED',
+    notes: 'Versioned OpenAPI/AsyncAPI/JSON Schema artifacts. Runtime validation and drift quarantine.',
   },
   {
     id: 'data-firewall',
     label: 'Data Boundary Firewall',
-    status: 'PLANNED',
-    notes: 'Egress reason codes exist; policy engine is later.',
+    status: 'TESTED',
+    notes: 'Destination-specific ALLOW/REDACT/DENY with real outbound transformation.',
   },
   {
     id: 'credential-vault',
