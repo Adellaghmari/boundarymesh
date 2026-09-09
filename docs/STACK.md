@@ -1,0 +1,112 @@
+# Stack lock
+
+Phase 0 version lock as of **2026-09-09**. No runtime is provisioned. Patch versions may move forward within the locked major/minor lines during later phases if a security fix requires it. Major upgrades require a new ADR.
+
+## Language and runtime
+
+| Component | Locked | Why |
+| --- | --- | --- |
+| JDK | **Java 25 LTS** (Eclipse Temurin) | Current Java LTS. Spring Boot 4.1 supports 17–26. Camel 4.22.0 supports 17, 21, and 25. |
+| Build | **Apache Maven 3.9.x** | Standard Spring Boot packaging; one module with two Spring Boot applications sharing a domain jar. |
+| Bytecode | `--release 25` | No accidental older-API drift. |
+
+Java 21 remains an emergency fallback only if a transitive library later proves incompatible. It is not the target.
+
+**Phase 1 resolved (2026-09-09):** Eclipse Temurin **25.0.4.1+1**, Maven Wrapper **3.9.11**, Spring Boot **4.1.1**, Spring Security **7.1.1** (BOM, not forced).
+
+## Backend
+
+| Component | Locked | Why |
+| --- | --- | --- |
+| Spring Boot | **4.1.1** | Current OSS line (OSS support through 2027-07). 4.0 OSS ends 2026-12. |
+| Spring Framework | **7.x** (BOM-managed) | Jakarta EE 11, Jackson 3, JSpecify nullness. |
+| Spring Security | **7.1.x** (BOM-managed) | OAuth2 resource server, OIDC client, method security. |
+| Apache Camel | **4.22.0 LTS** | Current Camel LTS with Spring Boot 4 and Java 25. |
+| Resilience4j | **2.3.x** (`resilience4j-spring-boot3` or Boot 4-compatible equivalent verified in Phase 8) | Circuit breaker, time limiter, Retry-After-aware retry on **outbound connectors only**. Spring Framework 7 `@Retryable` is **not** stacked on the same methods. |
+| JSON Schema | `com.networknt:json-schema-validator` 1.5.x | Runtime JSON Schema 2020-12 validation. |
+| JSON Canonicalization | RFC 8785 (JCS) library, verified in Phase 12 | Attestation bytes. Never default Jackson serialization. |
+| Microsoft Graph | `microsoft-graph` **6.66.1** | Current Graph Java SDK line. |
+| Azure Identity (client only) | `azure-identity` current 1.x compatible with Graph 6.66 | Client-credentials / managed identity **client** for Graph. Not a hosting dependency. |
+| OpenTelemetry | Spring Boot 4 official OTel starter | Traces and metrics to Cloud Trace / Monitoring. |
+| springdoc | OpenAPI 3.1 compatible starter for Boot 4 | Generated + authored OpenAPI stay in sync. |
+
+**Rejected as hosting/runtime:** Spring Cloud Azure Entra starter as the primary security stack (Azure-centric in a GCP product). Entra is an **identity provider**, configured through Spring Security OAuth2.
+
+**Rejected as duplicate resilience:** Spring Framework 7 `@Retryable` on Camel connector methods. One retry owner: Resilience4j.
+
+## Frontend
+
+| Component | Locked |
+| --- | --- |
+| Vue | **3.5.42** line (3.5.x) |
+| TypeScript | **5.9.x** (strict) |
+| Pinia | **4.0.3** line (4.x) |
+| Vue Router | **5.3.1** line (5.x) |
+| Vite | **8.2.x** |
+| SCSS | `sass` modern compiler |
+| HTTP | `ofetch` or native `fetch` wrapper — no Axios required |
+| Graph viz | Vue-rendered SVG/Canvas boundary graph (no D3 unless layout requires it in Phase 13) |
+| Tests | Vitest + Vue Test Utils + Playwright |
+
+No Next.js. No Nuxt as a hosting framework (Vite SPA is enough). No Tailwind-as-identity: SCSS is the visual system.
+
+## Cloud and IaC
+
+| Component | Locked |
+| --- | --- |
+| Region | **`europe-west4`** (Netherlands) — single region, matches operator timezone UTC+2 |
+| Compute | Cloud Run **services** (request-based billing, scale-to-zero) |
+| Messaging | Pub/Sub |
+| Data | Firestore **Native** mode, regional `europe-west4` |
+| Secrets | Secret Manager |
+| Signing | Cloud KMS `EC_SIGN_P256_SHA256` |
+| Frontend host | Firebase Hosting |
+| Images | Artifact Registry |
+| Observability | Cloud Logging, Monitoring, Trace |
+| IaC | Pulumi 3.x + TypeScript + `@pulumi/gcp` |
+| State | GCS DIY backend with object versioning (no Pulumi Cloud subscription required) |
+
+## Test and AppSec (planned)
+
+| Tool | Role |
+| --- | --- |
+| JUnit 5 | Unit / slice |
+| Mockito | Mocks where isolation is required |
+| Spring Boot Test / Spring Security Test | HTTP and security |
+| Camel test support | Route and error-path tests |
+| WireMock | Graph and partner HTTP simulation |
+| Pact JVM | Consumer contracts for Graph client and selected API consumers |
+| Testcontainers | Firestore emulator, Pub/Sub emulator, WireMock |
+| OWASP Dependency-Check | Java dependencies |
+| Gitleaks | Secret scanning |
+| Semgrep | SAST |
+| OWASP ZAP | Baseline DAST against public demo later |
+| Dependabot | Dependency PRs |
+
+Not central: Trivy / Syft / Cosign. Container scan may exist because Cloud Run images exist. It is not the Project C story.
+
+## Module shape
+
+Phase 1 implements `backend/domain`, `backend/application`, `backend/api` only.
+
+## Module shape (later phases)
+
+```text
+backend/
+  domain/            # no Spring, no GCP, no Camel
+  application/       # use cases, engine orchestration
+  security/          # Spring Security adapters, JWT, HMAC
+  integration/       # contract, egress, replay, idempotency
+  connectors/        # Graph, CRM, orders, settlements adapters
+  camel/             # routes only — no policy decisions
+  persistence/       # Firestore ports + adapters
+  audit/             # chain + attestation
+  delivery/          # Pub/Sub publisher/consumer
+  api/               # Spring MVC — Boundary API
+  worker/            # Spring Boot — Delivery Worker
+frontend/            # Vue 3 SPA
+infra/               # Pulumi TypeScript
+contracts/           # OpenAPI, AsyncAPI, JSON Schema (source of truth)
+```
+
+Two deployable Spring Boot applications share `domain`, `application`, `integration`, `audit`. The API process does not call Graph. The worker process does not accept public ingress.
