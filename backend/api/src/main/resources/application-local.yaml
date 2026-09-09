@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+boundarymesh:
+  dev-evaluate-enabled: true
+
+logging:
+  structured:
+    format:
+      console: ecs

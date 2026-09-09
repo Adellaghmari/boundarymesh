@@ -1,0 +1,9 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+boundarymesh:
+  dev-evaluate-enabled: false
+
+# Prod profile is a configuration placeholder only. No cloud credentials. Entra remains PLANNED.

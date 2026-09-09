@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: boundarymesh-api
+  profiles:
+    default: local
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+server:
+  shutdown: graceful
+  port: 8080
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never
+    include-exception: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  health:
+    defaults:
+      enabled: true
+
+springdoc:
+  api-docs:
+    enabled: true
+    version: OPENAPI_3_1
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: false
+
+boundarymesh:
+  service-name: boundarymesh-api
+  policy-version: boundary-enforcement.phase1.v1
+  dev-evaluate-enabled: false
+
+logging:
+  level:
+    root: INFO
+    dev.adellaghmari.boundarymesh: INFO
+    org.springframework.security: WARN

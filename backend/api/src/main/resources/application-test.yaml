@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+boundarymesh:
+  dev-evaluate-enabled: true
+
+logging:
+  level:
+    root: WARN
+    dev.adellaghmari.boundarymesh: INFO

@@ -1,0 +1,44 @@
+# Java / Maven / Gradle
+target/
+build/
+.gradle/
+*.class
+*.jar
+*.war
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# Node / Vue / Vite
+node_modules/
+dist/
+.vite/
+coverage/
+*.tsbuildinfo
+
+# Secrets and local env — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+credentials.json
+**/secrets/
+service-account*.json
+
+# Pulumi local
+.pulumi/
+
+# OS / logs
+.DS_Store
+Thumbs.db
+*.log
+
+# Test / emulator
+.firebase/
+firestore-debug.log
+pubsub-debug.log
