@@ -192,8 +192,8 @@ test('boundary graph, audit chain, and attestation follow a real crossing', asyn
   await expect(page.getByLabel('Enforcement stages')).toContainText('Identity')
   const attestationLink = page.getByTestId('edge-detail').locator('a[href^="/attestations/"]')
   await expect(attestationLink).toBeVisible()
-  const attestationHref = attestationLink
-  await expect(attestationHref).toHaveAttribute('href', )
+  const attestationHref = await attestationLink.getAttribute('href')
+  expect(attestationHref).toMatch(/^\/attestations\//)
   await page.getByTestId('edge-detail').getByRole('link', { name: 'quayforge-orders' }).click()
   await expect(page.getByRole('heading', { name: /Audit chain/ })).toBeVisible()
   await page.getByRole('button', { name: 'Verify chain' }).click()
