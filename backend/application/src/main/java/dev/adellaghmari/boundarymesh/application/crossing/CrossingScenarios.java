@@ -65,6 +65,52 @@ public final class CrossingScenarios {
         };
     }
 
+    public static CrossingCommand delivery(String scenario) {
+        String eventId = "evt-" + UUID.randomUUID();
+        return switch (normalize(scenario)) {
+            case "transformed-delivery", "success" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "LUMENWAY", false)
+                        .withProfiles("active", "valid", "closed");
+            case "lumenway-translate" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "LUMENWAY", false)
+                        .withProfiles("active", "valid", "closed");
+            case "rivertide-strict" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "RIVERTIDE", false)
+                        .withProfiles("active", "valid", "closed");
+            case "credential-missing" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "COVECRM", false)
+                        .withProfiles("missing", "valid", "closed");
+            case "credential-revoked" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "COVECRM", false)
+                        .withProfiles("revoked", "valid", "closed");
+            case "credential-rotated" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "COVECRM", false)
+                        .withProfiles("rotated", "valid", "closed");
+            case "credential-unavailable" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "COVECRM", false)
+                        .withProfiles("unavailable", "valid", "closed");
+            case "consent-missing" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "RIVERTIDE", false)
+                        .withProfiles("active", "missing", "closed");
+            case "consent-revoked" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "RIVERTIDE", false)
+                        .withProfiles("active", "revoked", "closed");
+            case "circuit-open" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "COVECRM", false)
+                        .withProfiles("active", "valid", "open");
+            case "reject-egress" ->
+                command("v1", QuayForgeDemoPayloads.denyV1(eventId), "COVECRM", false)
+                        .withProfiles("active", "valid", "closed");
+            case "duplicate" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "LUMENWAY", false)
+                        .withProfiles("active", "valid", "closed");
+            case "rate-limit", "rate-limit-then-success", "server-error", "recovery" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "COVECRM", false)
+                        .withProfiles("active", "valid", "closed");
+            default -> unknown(scenario);
+        };
+    }
+
     private static CrossingCommand command(String version, String payload, String destination, boolean unavailable) {
         return new CrossingCommand(
                 null,
@@ -77,7 +123,10 @@ public final class CrossingScenarios {
                 payload,
                 destination,
                 unavailable,
-                null);
+                null,
+                "active",
+                "valid",
+                "closed");
     }
 
     private static String normalize(String scenario) {

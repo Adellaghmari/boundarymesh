@@ -8,5 +8,6 @@ public enum TokenScenario {
     UNKNOWN_KID,
     INVALID_SIGNATURE,
     MISSING_PERMISSION,
-    FUTURE_NBF
+    FUTURE_NBF,
+    VALID_ADMIN
 }

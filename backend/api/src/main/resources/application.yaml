@@ -39,7 +39,8 @@ springdoc:
 
 boundarymesh:
   service-name: boundarymesh-api
-  policy-version: boundary-enforcement.phase7.v1
+  policy-version: boundary-enforcement.phase10.v1
+  worker-base-url: http://127.0.0.1:8081
   dev-evaluate-enabled: false
   dev-security-tools-enabled: false
   security:

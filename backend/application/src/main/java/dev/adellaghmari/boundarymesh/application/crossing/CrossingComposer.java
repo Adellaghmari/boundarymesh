@@ -1,20 +1,36 @@
 package dev.adellaghmari.boundarymesh.application.crossing;
 
 import dev.adellaghmari.boundarymesh.application.BoundaryEnforcementEngine;
+import dev.adellaghmari.boundarymesh.application.connector.ConnectorSafetyEvaluator;
+import dev.adellaghmari.boundarymesh.application.connector.LocalConnectorSafetyPort;
+import dev.adellaghmari.boundarymesh.application.consent.ConsentEvaluation;
+import dev.adellaghmari.boundarymesh.application.consent.ConsentEvaluator;
+import dev.adellaghmari.boundarymesh.application.consent.InMemoryConsentCatalog;
 import dev.adellaghmari.boundarymesh.application.contract.ContractEvaluator;
+import dev.adellaghmari.boundarymesh.application.credential.CredentialEvaluator;
+import dev.adellaghmari.boundarymesh.application.credential.InMemoryCredentialCatalog;
 import dev.adellaghmari.boundarymesh.application.egress.EgressEvaluator;
 import dev.adellaghmari.boundarymesh.application.identity.IdentityControlFactory;
 import dev.adellaghmari.boundarymesh.domain.BoundaryDecision;
+import dev.adellaghmari.boundarymesh.domain.BoundaryOutcome;
 import dev.adellaghmari.boundarymesh.domain.ControlKind;
 import dev.adellaghmari.boundarymesh.domain.ControlResult;
 import dev.adellaghmari.boundarymesh.domain.ControlVector;
 import dev.adellaghmari.boundarymesh.domain.EnforcementTrace;
+import dev.adellaghmari.boundarymesh.domain.PolicyVersion;
 import dev.adellaghmari.boundarymesh.domain.TransactionId;
+import dev.adellaghmari.boundarymesh.domain.consent.ConnectorOperation;
 import dev.adellaghmari.boundarymesh.domain.contract.ContractEvaluation;
+import dev.adellaghmari.boundarymesh.domain.credential.CredentialReference;
 import dev.adellaghmari.boundarymesh.domain.egress.EgressEvaluation;
 import dev.adellaghmari.boundarymesh.domain.identity.BoundaryPermission;
 import dev.adellaghmari.boundarymesh.domain.identity.BoundaryPrincipal;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -23,11 +39,38 @@ public final class CrossingComposer {
     private final BoundaryEnforcementEngine engine;
     private final ContractEvaluator contracts;
     private final EgressEvaluator egress;
+    private final CredentialEvaluator credentials;
+    private final ConsentEvaluator consents;
+    private final ConnectorSafetyEvaluator connectors;
+    private final Clock clock;
 
     public CrossingComposer(BoundaryEnforcementEngine engine, ContractEvaluator contracts, EgressEvaluator egress) {
+        this(
+                engine,
+                contracts,
+                egress,
+                new CredentialEvaluator(
+                        InMemoryCredentialCatalog.veloraDefaults(Instant.parse("2026-09-10T00:00:00Z"))),
+                new ConsentEvaluator(InMemoryConsentCatalog.veloraDefaults()),
+                new ConnectorSafetyEvaluator(new LocalConnectorSafetyPort()),
+                Clock.fixed(Instant.parse("2026-09-10T00:00:00Z"), ZoneOffset.UTC));
+    }
+
+    public CrossingComposer(
+            BoundaryEnforcementEngine engine,
+            ContractEvaluator contracts,
+            EgressEvaluator egress,
+            CredentialEvaluator credentials,
+            ConsentEvaluator consents,
+            ConnectorSafetyEvaluator connectors,
+            Clock clock) {
         this.engine = Objects.requireNonNull(engine);
         this.contracts = Objects.requireNonNull(contracts);
         this.egress = Objects.requireNonNull(egress);
+        this.credentials = Objects.requireNonNull(credentials);
+        this.consents = Objects.requireNonNull(consents);
+        this.connectors = Objects.requireNonNull(connectors);
+        this.clock = Objects.requireNonNull(clock);
     }
 
     public CrossingResult compose(CrossingCommand command) {
@@ -48,6 +91,10 @@ public final class CrossingComposer {
         EgressEvaluation egressEvaluation = skipEgress(contract)
                 ? skippedEgress(command.destination())
                 : egress.evaluate(command.destination(), command.payloadJson());
+        ControlResult credential = credentials.evaluate(command.destination(), command.credentialScenario());
+        ConsentEvaluation consent = consents.evaluate(
+                command.destination(), operationFor(command.destination()), command.consentScenario());
+        ControlResult connector = connectors.evaluate(command.destination(), command.connectorScenario());
         ControlVector vector = ControlVector.of(
                 identity,
                 authorization,
@@ -56,10 +103,39 @@ public final class CrossingComposer {
                 command.replay(),
                 contract.control(),
                 egressEvaluation.control(),
-                ControlResult.pass(ControlKind.CREDENTIAL_RESOLVABILITY),
-                ControlResult.pass(ControlKind.CONNECTOR_SAFETY));
-        BoundaryDecision decision = engine.decide(transactionId, vector);
-        return new CrossingResult(decision, vector, contract, egressEvaluation, EnforcementTrace.from(vector));
+                credential,
+                connector);
+        BoundaryDecision decision = applyConsent(engine.decide(transactionId, vector), consent, vector);
+        return new CrossingResult(
+                decision,
+                vector,
+                contract,
+                egressEvaluation,
+                consent,
+                credentials
+                        .reference(command.destination())
+                        .map(item -> item.reference())
+                        .orElse(null),
+                EnforcementTrace.from(vector));
+    }
+
+    private BoundaryDecision applyConsent(BoundaryDecision decision, ConsentEvaluation consent, ControlVector vector) {
+        if (!consent.blocksCrossing()) {
+            return decision;
+        }
+        if (decision.outcome() == BoundaryOutcome.REJECT) {
+            return decision;
+        }
+        if (decision.outcome() == BoundaryOutcome.QUARANTINE) {
+            return decision;
+        }
+        return new BoundaryDecision(
+                decision.transactionId(),
+                BoundaryOutcome.QUARANTINE,
+                List.of(consent.reason()),
+                BoundaryDecision.summaryOf(vector),
+                clock.instant(),
+                decision.policyVersion() == null ? PolicyVersion.PHASE_10 : decision.policyVersion());
     }
 
     public static CrossingCommand webhookAfterSecurity(
@@ -84,7 +160,18 @@ public final class CrossingComposer {
                 payloadJson,
                 "RIVERTIDE",
                 false,
-                null);
+                null,
+                "active",
+                "valid",
+                "closed");
+    }
+
+    public static ConnectorOperation operationFor(String destination) {
+        return switch (destination == null ? "" : destination.trim().toUpperCase(Locale.ROOT)) {
+            case "COVECRM" -> ConnectorOperation.ACTIVITY_WRITE;
+            case "LUMENWAY" -> ConnectorOperation.FULFILLMENT_CREATE;
+            default -> ConnectorOperation.SETTLEMENT_WRITE;
+        };
     }
 
     private static boolean skipEgress(ContractEvaluation contract) {
@@ -114,7 +201,10 @@ public final class CrossingComposer {
             String payloadJson,
             String destination,
             boolean forceContractUnavailable,
-            TransactionId transactionId) {
+            TransactionId transactionId,
+            String credentialScenario,
+            String consentScenario,
+            String connectorScenario) {
 
         public CrossingCommand {
             if (principal == null) {
@@ -125,24 +215,20 @@ public final class CrossingComposer {
             Objects.requireNonNull(replay, "replay");
             Objects.requireNonNull(payloadJson, "payloadJson");
             Objects.requireNonNull(destination, "destination");
+            credentialScenario = credentialScenario == null ? "active" : credentialScenario;
+            consentScenario = consentScenario == null ? "valid" : consentScenario;
+            connectorScenario = connectorScenario == null ? "closed" : connectorScenario;
         }
 
         public CrossingCommand withPrincipal(BoundaryPrincipal next) {
-            return new CrossingCommand(
-                    next,
-                    identity,
-                    authenticity,
-                    freshness,
-                    replay,
-                    integrationId,
-                    contractVersion,
-                    payloadJson,
-                    destination,
-                    forceContractUnavailable,
-                    transactionId);
+            return copy(next, identity, authenticity, freshness, replay, transactionId);
         }
 
         public CrossingCommand withTransaction(TransactionId id) {
+            return copy(principal, identity, authenticity, freshness, replay, id);
+        }
+
+        public CrossingCommand withProfiles(String credential, String consent, String connector) {
             return new CrossingCommand(
                     principal,
                     identity,
@@ -154,7 +240,34 @@ public final class CrossingComposer {
                     payloadJson,
                     destination,
                     forceContractUnavailable,
-                    id);
+                    transactionId,
+                    credential,
+                    consent,
+                    connector);
+        }
+
+        private CrossingCommand copy(
+                BoundaryPrincipal nextPrincipal,
+                ControlResult nextIdentity,
+                ControlResult nextAuthenticity,
+                ControlResult nextFreshness,
+                ControlResult nextReplay,
+                TransactionId id) {
+            return new CrossingCommand(
+                    nextPrincipal,
+                    nextIdentity,
+                    nextAuthenticity,
+                    nextFreshness,
+                    nextReplay,
+                    integrationId,
+                    contractVersion,
+                    payloadJson,
+                    destination,
+                    forceContractUnavailable,
+                    id,
+                    credentialScenario,
+                    consentScenario,
+                    connectorScenario);
         }
 
         public ControlResult authorization() {
@@ -169,6 +282,8 @@ public final class CrossingComposer {
             ControlVector vector,
             ContractEvaluation contract,
             EgressEvaluation egress,
+            ConsentEvaluation consent,
+            CredentialReference credentialReference,
             EnforcementTrace trace) {}
 
     public static String utf8(byte[] raw) {

@@ -1,0 +1,22 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+
+server:
+  port: 0
+
+boundarymesh:
+  worker:
+    wiremock-port: 0
+    retry-max-attempts: 3
+    retry-wait: 1ms
+    retry-after-cap: 5ms
+    timeout: 200ms
+    circuit-window: 4
+    circuit-open-wait: 80ms
+
+logging:
+  level:
+    root: WARN
+    dev.adellaghmari.boundarymesh: INFO

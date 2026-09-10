@@ -48,7 +48,10 @@ public class LocalDevelopmentSecurityConfig {
                                 "/api/v1/dev/identity-lab/**",
                                 "/api/v1/dev/webhook-lab/**",
                                 "/api/v1/dev/contract-lab/**",
-                                "/api/v1/dev/egress-lab/**")
+                                "/api/v1/dev/egress-lab/**",
+                                "/api/v1/dev/credential-lab/**")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/quarantine", "/api/v1/quarantine/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/quayforge")
                         .permitAll()
@@ -60,6 +63,10 @@ public class LocalDevelopmentSecurityConfig {
                         .hasAuthority("SCOPE_boundary.evaluate")
                         .requestMatchers(HttpMethod.POST, "/api/v1/dev/crossings/evaluate")
                         .hasAuthority("SCOPE_boundary.evaluate")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/dev/delivery-lab/**")
+                        .hasAuthority("SCOPE_boundary.evaluate")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/quarantine/*/reprocess")
+                        .hasAuthority("SCOPE_boundary.admin")
                         .anyRequest()
                         .denyAll())
                 .exceptionHandling(exceptions -> exceptions

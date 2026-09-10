@@ -2,7 +2,8 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 
 Write-Host 'Starting BoundaryMesh local full stack.'
-Write-Host 'Backend: http://127.0.0.1:8080'
+Write-Host 'API: http://127.0.0.1:8080'
+Write-Host 'Worker: http://127.0.0.1:8081'
 Write-Host 'Frontend: http://127.0.0.1:5173'
 Write-Host 'VITE_* variables are public browser configuration. Do not put secrets there.'
 

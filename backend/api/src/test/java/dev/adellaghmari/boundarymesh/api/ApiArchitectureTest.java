@@ -21,5 +21,20 @@ class ApiArchitectureTest {
                     "com.google.cloud..",
                     "com.microsoft..",
                     "org.apache.camel..",
+                    "io.github.resilience4j..",
+                    "com.github.tomakehurst.wiremock..",
+                    "org.wiremock..",
                     "com.networknt..");
+
+    @ArchTest
+    static final ArchRule apiMustNotDependOnCamelOrWorkerAdapters = noClasses()
+            .that()
+            .resideInAPackage("dev.adellaghmari.boundarymesh.api..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage(
+                    "org.apache.camel..",
+                    "io.github.resilience4j..",
+                    "org.wiremock..",
+                    "dev.adellaghmari.boundarymesh.worker..");
 }

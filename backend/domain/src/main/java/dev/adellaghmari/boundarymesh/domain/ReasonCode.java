@@ -81,8 +81,36 @@ public record ReasonCode(String code, String description) {
             new ReasonCode("EGRESS_POLICY_INVALID", "The loaded egress policy is invalid and was not applied.");
     public static final ReasonCode CREDENTIAL_UNAVAILABLE = new ReasonCode(
             "CREDENTIAL_UNAVAILABLE", "A required connector credential reference could not be resolved.");
+    public static final ReasonCode CREDENTIAL_MISSING = new ReasonCode(
+            "CREDENTIAL_MISSING", "No credential reference is configured for this destination connector.");
+    public static final ReasonCode CREDENTIAL_REVOKED =
+            new ReasonCode("CREDENTIAL_REVOKED", "The referenced credential version is retired or revoked.");
+    public static final ReasonCode CREDENTIAL_PROVIDER_UNAVAILABLE = new ReasonCode(
+            "CREDENTIAL_PROVIDER_UNAVAILABLE",
+            "The credential provider could not resolve an otherwise configured reference.");
+    public static final ReasonCode CONSENT_MISSING =
+            new ReasonCode("CONSENT_MISSING", "No consent grant authorizes this connector operation.");
+    public static final ReasonCode CONSENT_REVOKED =
+            new ReasonCode("CONSENT_REVOKED", "The consent grant for this connector operation is revoked.");
+    public static final ReasonCode CONSENT_INVALID = new ReasonCode(
+            "CONSENT_INVALID", "The connector identity is not permitted for this destination operation.");
     public static final ReasonCode CONNECTOR_UNAVAILABLE =
             new ReasonCode("CONNECTOR_UNAVAILABLE", "The destination connector is not currently safe to receive work.");
+    public static final ReasonCode CONNECTOR_CIRCUIT_OPEN = new ReasonCode(
+            "CONNECTOR_CIRCUIT_OPEN", "The connector circuit breaker is open; outbound delivery is held.");
+    public static final ReasonCode CONNECTOR_UNKNOWN =
+            new ReasonCode("CONNECTOR_UNKNOWN", "The destination is not a configured connector route.");
+    public static final ReasonCode DELIVERY_RETRIES_EXHAUSTED = new ReasonCode(
+            "DELIVERY_RETRIES_EXHAUSTED", "Bounded provider retries were exhausted without a successful delivery.");
+    public static final ReasonCode PROVIDER_RATE_LIMITED =
+            new ReasonCode("PROVIDER_RATE_LIMITED", "The destination provider rate-limited the connector.");
+    public static final ReasonCode PROVIDER_TEMPORARY_FAILURE =
+            new ReasonCode("PROVIDER_TEMPORARY_FAILURE", "The destination provider returned a temporary failure.");
+    public static final ReasonCode PROVIDER_PERMANENT_REJECTION = new ReasonCode(
+            "PROVIDER_PERMANENT_REJECTION", "The destination provider permanently rejected the delivery.");
+    public static final ReasonCode DELIVERY_DUPLICATE_SUPPRESSED = new ReasonCode(
+            "DELIVERY_DUPLICATE_SUPPRESSED",
+            "The delivery instruction was already consumed; the provider was not called again.");
 
     public ReasonCode {
         Objects.requireNonNull(code, "code");

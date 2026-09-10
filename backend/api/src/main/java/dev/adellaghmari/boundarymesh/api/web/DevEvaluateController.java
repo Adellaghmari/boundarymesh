@@ -159,7 +159,18 @@ public class DevEvaluateController {
             case "EGRESS_POLICY_UNAVAILABLE" -> ReasonCode.EGRESS_POLICY_UNAVAILABLE;
             case "EGRESS_POLICY_INVALID" -> ReasonCode.EGRESS_POLICY_INVALID;
             case "CREDENTIAL_UNAVAILABLE" -> ReasonCode.CREDENTIAL_UNAVAILABLE;
+            case "CREDENTIAL_MISSING" -> ReasonCode.CREDENTIAL_MISSING;
+            case "CREDENTIAL_REVOKED" -> ReasonCode.CREDENTIAL_REVOKED;
+            case "CREDENTIAL_PROVIDER_UNAVAILABLE" -> ReasonCode.CREDENTIAL_PROVIDER_UNAVAILABLE;
+            case "CONSENT_MISSING" -> ReasonCode.CONSENT_MISSING;
+            case "CONSENT_REVOKED" -> ReasonCode.CONSENT_REVOKED;
+            case "CONSENT_INVALID" -> ReasonCode.CONSENT_INVALID;
             case "CONNECTOR_UNAVAILABLE" -> ReasonCode.CONNECTOR_UNAVAILABLE;
+            case "CONNECTOR_CIRCUIT_OPEN" -> ReasonCode.CONNECTOR_CIRCUIT_OPEN;
+            case "CONNECTOR_UNKNOWN" -> ReasonCode.CONNECTOR_UNKNOWN;
+            case "DELIVERY_RETRIES_EXHAUSTED" -> ReasonCode.DELIVERY_RETRIES_EXHAUSTED;
+            case "PROVIDER_RATE_LIMITED" -> ReasonCode.PROVIDER_RATE_LIMITED;
+            case "PROVIDER_TEMPORARY_FAILURE" -> ReasonCode.PROVIDER_TEMPORARY_FAILURE;
             default -> ReasonCode.of(code, "Synthetic reason code.");
         };
     }

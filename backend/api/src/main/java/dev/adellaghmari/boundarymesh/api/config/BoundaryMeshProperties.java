@@ -17,6 +17,7 @@ public record BoundaryMeshProperties(
         boolean devEvaluateEnabled,
         boolean devSecurityToolsEnabled,
         @Pattern(regexp = "[a-z0-9._-]+") String policyVersion,
+        String workerBaseUrl,
         @Valid @NotNull Security security,
         @Valid @NotNull Webhook webhook) {
 

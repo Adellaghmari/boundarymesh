@@ -10,6 +10,7 @@ public record PolicyVersion(String value) {
 
     public static final PolicyVersion PHASE_1 = new PolicyVersion("boundary-enforcement.phase1.v1");
     public static final PolicyVersion PHASE_7 = new PolicyVersion("boundary-enforcement.phase7.v1");
+    public static final PolicyVersion PHASE_10 = new PolicyVersion("boundary-enforcement.phase10.v1");
 
     public PolicyVersion {
         Objects.requireNonNull(value, "policy version");

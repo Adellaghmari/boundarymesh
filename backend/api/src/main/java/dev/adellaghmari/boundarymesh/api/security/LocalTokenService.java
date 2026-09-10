@@ -47,6 +47,8 @@ public class LocalTokenService {
             case UNKNOWN_KID -> signingKey = unknownKey();
             case MISSING_PERMISSION -> scope = BoundaryPermission.BOUNDARY_READ.scope();
             case FUTURE_NBF -> nbf = now.plusSeconds(600);
+            case VALID_ADMIN ->
+                scope = BoundaryPermission.BOUNDARY_EVALUATE.scope() + " " + BoundaryPermission.BOUNDARY_ADMIN.scope();
             case VALID_MACHINE, INVALID_SIGNATURE -> {
                 // defaults
             }

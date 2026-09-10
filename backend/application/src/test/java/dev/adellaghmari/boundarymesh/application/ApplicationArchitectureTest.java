@@ -25,5 +25,10 @@ class ApplicationArchitectureTest {
                     "com.google.cloud..",
                     "com.microsoft..",
                     "org.apache.camel..",
-                    "com.networknt..");
+                    "io.github.resilience4j..",
+                    "com.github.tomakehurst.wiremock..",
+                    "org.wiremock..",
+                    "com.networknt..",
+                    "dev.adellaghmari.boundarymesh.worker..",
+                    "dev.adellaghmari.boundarymesh.api..");
 }
