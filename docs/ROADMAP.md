@@ -12,9 +12,9 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 | **5** | Contract Drift Firewall | OpenAPI 3.1, AsyncAPI, JSON Schema runtime, quarantine on drift |
 | **6** | Data Boundary Firewall | versioned policies, public field-path evidence |
 | **7** | Boundary Enforcement Engine | ControlVector → EnforcementDecision, decision-table tests, API wiring |
-| **8** | Apache Camel routes | Worker process local, EIP tests, Resilience4j on stubs |
-| **9** | Credential & Consent Vault | Secret Manager **adapter** with local fake; Firestore reference shape; rotation use-case |
-| **10** | Quarantine & Recovery | workflow, reprocess, circuit snapshot |
+| **8** | Apache Camel routes | **COMPLETE** local worker, EIPs, Resilience4j, WireMock. Pub/Sub PLANNED |
+| **9** | Credential & Consent Vault | **COMPLETE** local security model. Secret Manager adapter PLANNED |
+| **10** | Quarantine & Recovery | **COMPLETE** local orchestrator. Firestore persistence PLANNED |
 | **11** | Tamper-evident audit chain | append + verify |
 | **12** | Cryptographic Exchange Attestation | JCS + KMS port + local signing stub; live KMS later |
 | **13** | Integration Boundary Graph | Vue SVG graph on real transaction view-model |

@@ -40,7 +40,7 @@ Question: *What changed in a release, what might be affected, how should ops und
 | Async | EventBridge/SQS analysis | Pub/Sub **delivery after allow** | Superficial only |
 | Recruiter story | Change / risk / recovery | Can this crossing happen, with proof | No |
 
-**Similarity score: 2 / 10.** Async messaging + CI OIDC/WIF are **allowed overlap** and do not dominate. Target ≤ 3. **Pass.**
+**Similarity score: 2 / 10.** Project B also has retries, DLQ, and operational failure handling. That is acceptable infrastructure-pattern overlap. BoundaryMesh remains distinct because the **product problem** is secure cross-system integration and connector delivery, not release causality or SRE analysis. Target ≤ 3. **Pass.**
 
 Forbidden in C: release replay as the product, blast radius of services, rollback readiness, DevOps dashboards as the center, EventBridge→Pub/Sub clone.
 

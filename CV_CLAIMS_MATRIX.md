@@ -1,6 +1,6 @@
 # CV claims matrix
 
-**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 7.
+**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 10.
 
 Statuses: `PLANNED` → `IMPLEMENTED` → `TESTED` → `LIVE VERIFIED`
 
@@ -44,8 +44,13 @@ This is portfolio work, not professional employment.
 | Microsoft Graph Calendar connector | PLANNED | |
 | Microsoft Graph Java SDK | PLANNED | |
 | Calendars.Read least privilege | PLANNED | |
-| Apache Camel 4.22 routes | PLANNED | No Camel dependency |
-| EIP: router, translator, DLC, idempotent consumer, CB, wire tap | PLANNED | |
+| Apache Camel 4.22 routes | **TESTED** | Worker-only 4.22.0. API artifact has no Camel |
+| EIP: Content-Based Router | **TESTED** | Destination discriminator |
+| EIP: Message Translator | **TESTED** | Lumenway fulfillment mapping |
+| EIP: Idempotent Consumer | **TESTED** | Delivery instruction id |
+| EIP: Dead Letter Channel | **TESTED** | Unknown destination / terminal route |
+| EIP: Wire Tap | **TESTED** | Metadata only |
+| connector delivery | **TESTED** | Synthetic CoveCRM / Lumenway / Rivertide + WireMock |
 | OpenAPI 3.1 | **TESTED** | Partner artifact `contracts/openapi/` plus springdoc. Runtime uses referenced JSON Schema |
 | AsyncAPI delivery instructions | **TESTED** | Validated AsyncAPI 3 artifact. Pub/Sub runtime still PLANNED |
 | JSON Schema runtime validation | **TESTED** | networknt 3.0.6, dialect 2020-12 |
@@ -56,18 +61,25 @@ This is portfolio work, not professional employment.
 | data minimization | **TESTED** | Implicit deny + destination allow-lists |
 | Data Boundary Firewall | **TESTED** | Real transformation, not UI masking |
 | Boundary Enforcement Engine foundation | **TESTED** | Synthetic ControlVector plus real contract/egress |
-| expanded Boundary Enforcement Engine | **TESTED** | Seven real controls composed |
+| expanded Boundary Enforcement Engine | **TESTED** | All nine ControlVector fields real and tested |
 | integrated multi-control boundary crossing | **TESTED** | `POST /api/v1/dev/crossings/evaluate` |
 | Outcomes ALLOW / TRANSFORM / QUARANTINE / REJECT | **TESTED** | |
 | JUnit 5 | **TESTED** | Identity + webhook + engine suites |
 | ArchUnit | **TESTED** | Domain/application must not depend on Spring/cloud |
 | Spotless | **TESTED** | Bound to `verify` |
 | Spring Actuator health | **TESTED** | `/api/v1/health` and `/api/v1/ready` |
-| Credential & Consent Vault | PLANNED | |
+| Credential & Consent Vault (local model) | **TESTED** | References, versions, consent. Not a managed vault |
+| CredentialReference / version / rotation | **TESTED** | Active version only; no silent retired fallback |
+| consent / permission model | **TESTED** | Distinct from credential availability |
+| credential resolvability control | **TESTED** | PASS / FAIL / UNAVAILABLE |
+| connector safety control | **TESTED** | Circuit / configured destination |
 | Google Secret Manager | PLANNED | No GCP project |
-| Secret rotation | PLANNED | |
-| Quarantine & Recovery | PLANNED | Outcome exists; no orchestrator |
-| Resilience4j outbound | PLANNED | |
+| Quarantine & Recovery Orchestrator (local) | **TESTED** | State machine, eligibility, admin reprocess |
+| bounded reprocess | **TESTED** | Cap 3; `boundary.admin` |
+| delivery idempotency | **TESTED** | Distinct from inbound webhook replay |
+| Resilience4j Retry | **TESTED** | 3 total attempts; 400/401/403 never retried |
+| Resilience4j Circuit Breaker | **TESTED** | CLOSED / OPEN / HALF_OPEN |
+| WireMock | **TESTED** | External connector simulation |
 | Pub/Sub delivery decoupling | PLANNED | |
 | Firestore Native access patterns | PLANNED | |
 | Cloud Run API + worker | PLANNED | |
@@ -83,16 +95,15 @@ This is portfolio work, not professional employment.
 | OWASP Dependency-Check | PLANNED | |
 | OWASP ZAP | PLANNED | |
 | Dependabot | PLANNED | |
-| WireMock | PLANNED | |
 | Pact | PLANNED | |
 | Testcontainers emulators | PLANNED | |
-| Camel tests | PLANNED | |
+| Camel tests | **TESTED** | Worker `CamelDeliveryPipelineTest` + `ResilienceAndCircuitTest` against WireMock |
 | Frontend API integration | **TESTED** | health, ready, JWT evaluate, webhook lab |
-| OpenTelemetry / Micrometer | PLANNED | Actuator health only |
+| Micrometer | **TESTED** | `boundarymesh.delivery.*`, quarantine/reprocess counters, R4j tagged metrics. No GCP export |
 | Cloud Logging / Monitoring / Trace | PLANNED | |
 | Firebase Hosting | PLANNED | |
 | Public recruiter demo | PLANNED | |
-| Protected admin mutations | PLANNED | |
+| Protected admin mutations | **TESTED** | Local `boundary.admin` reprocess. Entra admin PLANNED |
 | Self-dogfood Git SHA / revision | PLANNED | |
 | LIVE Graph tenant call | PLANNED | Explicitly not claimed |
 

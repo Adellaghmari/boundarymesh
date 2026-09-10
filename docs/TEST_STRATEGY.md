@@ -21,12 +21,29 @@ JUnit 5. Mockito only at adapter edges.
 - Operator cannot rotate → 403
 - Public GET transactions 200
 
-## Camel
+## Camel (Phase 8, worker module)
 
-- Content-based router
-- Translator drops denied fields
-- DLC after failures
-- Idempotent consumer second message
+- Content-based router (CoveCRM / Lumenway / Rivertide / unknown → DLC)
+- Lumenway translator uses approved JSON, not the original email
+- Idempotent consumer / adapter store suppresses the second provider call
+- Camel headers do not carry secret values
+- WireMock simulates 200 / 400 / 401 / 403 / 429 / 500 / 503 / timeout
+
+## Resilience4j (Phase 8)
+
+- 200 / 400 / 401 / 403: no retry
+- 429 / 500 / 503 / timeout: exactly 3 total attempts
+- Circuit CLOSED → OPEN, OPEN fail-fast, HALF_OPEN probe
+- Retry-After parsed and capped
+
+## Credential / quarantine (Phases 9–10)
+
+- Active, missing, revoked, rotated, unavailable references
+- Consent missing vs credential missing
+- Secret marker absent from API JSON
+- Reprocess requires `boundary.admin`
+- Security REJECT does not create a quarantine item
+- State machine rejects invalid transitions
 
 ## Contract
 
@@ -54,7 +71,7 @@ Vitest + Vue Test Utils. MSW mocks HTTP for the typed API client only. MSW is no
 
 ## Frontend E2E
 
-Phase 2 Playwright smoke: overview, local health/ready, four synthetic evaluate outcomes, event detail. Playwright starts the real local Java backend. Later phases add Entra/Graph/attestation paths.
+Playwright starts the local **worker + API** and the Vite app. It now also covers Delivery Lab (transformed success, credential/consent hold, provider outage → quarantine → admin reprocess, duplicate suppression) and Credential Lab references. Later phases add Entra/Graph/attestation paths.
 
 ## Live (Phase 18)
 

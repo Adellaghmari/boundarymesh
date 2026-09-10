@@ -3,6 +3,19 @@
 Scope: BoundaryMesh API, worker, Vue demo, GCP project, Entra/Graph connector, partner webhooks.  
 Out of scope: compromising Google or Microsoft as vendors; physical datacenter.
 
+## Phase 8–10 implemented mitigations
+
+| Threat | Implemented now | Still planned |
+| --- | --- | --- |
+| Information disclosure (secrets) | References only in API/UI/ControlVector; worker JIT resolve; leak tests | Secret Manager IAM, Gitleaks CI |
+| Elevation of privilege (reprocess) | `boundary.admin` on quarantine reprocess | Entra app roles |
+| Replay (inbound) | HMAC nonce window | Firestore TTL nonce |
+| Replay (outbound) | Delivery idempotent consumer | Firestore idempotency |
+| Tampering | Existing JWT/HMAC/contracts/egress | Attestation + audit chain |
+| Denial / dependency failure | Bounded R4j retry, circuit breaker, quarantine | Pub/Sub redelivery budget |
+
+Do not mark Secret Manager / IAM / KMS / Firestore as implemented.
+
 ## Phase 3–4 implemented mitigations
 
 | Threat | Implemented now | Still planned |

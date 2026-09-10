@@ -2,6 +2,8 @@
 
 Flagship capability #6.
 
+**Local implementation: see [QUARANTINE_RECOVERY.md](QUARANTINE_RECOVERY.md).** This page keeps the original target design, including Firestore and Pub/Sub, which remain PLANNED.
+
 Integration failure is a **controllable operational state**, not an infinite retry loop and not a silent drop.
 
 ## When we quarantine vs reject

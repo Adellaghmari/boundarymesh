@@ -22,36 +22,36 @@ BoundaryMesh is two Cloud Run workloads, one enforcement engine, and a delivery 
 | Graph | Outlook Calendar, one deep connector | Live mode **or** contract harness |
 | AI | None | Deterministic policy is the product |
 
-## High-level flow
+## High-level flow (local now / cloud later)
 
 ```text
-EXTERNAL SYSTEM  (Helix 365 Graph notification | QuayForge HMAC webhook | JWT machine call)
+EXTERNAL SYSTEM  (QuayForge HMAC | JWT machine call | future Graph notification)
         │
         ▼
-PUBLIC CLOUD RUN  —  boundary-api
-        │  authenticate / authorize / authenticity / freshness / replay
-        │  contract / data egress / connector availability
+PUBLIC BOUNDARY API  —  boundarymesh-api  (:8080)
+        │  identity / authorization / authenticity / freshness / replay
+        │  contract / data egress
+        │  credential resolvability (metadata) / connector safety
         │  Boundary Enforcement Engine
-        │  persist evidence  →  Firestore
-        │  append audit chain
-        │  sign Cryptographic Exchange Attestation (KMS)
         │
-        ├─ REJECT      →  4xx + evidence  (no Pub/Sub)
-        ├─ QUARANTINE  →  quarantine document  (no trusted delivery)
+        ├─ REJECT      →  evidence only  (no DeliveryInstruction)
+        ├─ QUARANTINE  →  local quarantine item  (no Camel)
         └─ ALLOW / ALLOW_WITH_TRANSFORMATION
                 │
                 ▼
-        Pub/Sub topic  delivery-instructions
+        DeliveryInstruction  (approved payload only)
                 │
-                ▼
-PRIVATE CLOUD RUN  —  delivery-worker  (no public ingress)
-        │  idempotency check
-        │  resolve Secret Manager reference
-        │  Resilience4j around outbound call
-        │  Apache Camel connector route
-        │  Graph / CRM / settlements / fulfillment
-        │  record delivery or quarantine
+                ▼  local HTTP ingest today; Pub/Sub PLANNED
+LOCAL DELIVERY WORKER  —  boundarymesh-worker  (:8081)
+        │  just-in-time credential resolve (local provider)
+        │  consent already decided on the API
+        │  Camel CBR + translator
+        │  Resilience4j around outbound HTTP
+        │  WireMock synthetic CoveCRM / Lumenway / Rivertide
+        │  DELIVERED | DUPLICATE_SUPPRESSED | QUARANTINED
 ```
+
+Firestore, Pub/Sub, Secret Manager, KMS, and Cloud Run remain **target architecture**, not current runtime.
 
 ## Why this is not an API gateway
 

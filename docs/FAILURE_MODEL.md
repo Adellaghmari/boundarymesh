@@ -35,11 +35,19 @@ Legend: **FC** fail closed, **FO** fail open (documented), **Q** quarantine, **R
 | Audit append failure | detective | BR | security event | no | AUDIT_CHAIN_APPEND_FAILED | Posture warning |
 | Graph validation timeout | FC handshake | NR | Graph unsubscribes | | | Harness simulates |
 
-## Combined retry budget
+## Combined retry budget (Phase 10 local lock)
 
-In-route Resilience4j: max 3.  
-Pub/Sub: max 5 deliveries.  
-Worst case outbound attempts ≤ 15 only if misconfigured — **lock: disable in-route retry when Pub/Sub will retry**, **or** in-route retry=3 and Pub/Sub maxAttempts=3. **Lock: Pub/Sub maxAttempts=5, in-route retry=2 for 429/5xx, circuit breaker counts all.** Document the product on the quarantine item as `attempt_budget`.
+| Layer | Owner | Bound |
+| --- | --- | --- |
+| Outbound HTTP | Resilience4j | **3 total attempts**. Only retryable categories. |
+| Camel | routing / DLC | **0** redeliveries |
+| Pub/Sub | PLANNED | Must not silently multiply the Resilience4j budget |
+
+`maxAttempts = 3` = first attempt + 2 retries. Tests assert exact counts with millisecond waits.
+
+Retry-After is honored only up to a configured cap. Overflow / multi-hour values are ignored.
+
+Circuit breaker: count window 4, 50% failure rate, 80ms open wait in tests / 150ms locally, one HALF_OPEN probe. Only **retryable** provider exceptions (timeout, 429, 5xx) count toward opening the circuit. HTTP 400/401/403 do not. Open circuit → no provider call → `connectorSafety` UNAVAILABLE → QUARANTINE.
 
 ## Demo-reproducible failures
 

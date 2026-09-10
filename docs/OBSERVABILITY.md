@@ -18,8 +18,12 @@ Never: raw JWT, Authorization, cookies, secret values, HMAC, OAuth client creden
 - `boundarymesh.transactions.quarantined`
 - `boundarymesh.replay.attempts`
 - `boundarymesh.contract.drift`
-- `boundarymesh.delivery.failures`
-- `boundarymesh.circuit.state` (gauge per connector)
+- `boundarymesh.delivery.attempts`
+- `boundarymesh.delivery.success`
+- `boundarymesh.delivery.failure`
+- `boundarymesh.quarantine.open`
+- `boundarymesh.reprocess.total`
+- Resilience4j tagged circuit-breaker and retry meters (local Micrometer only)
 
 Cardinality: outcome and connector_id allowed; **no** subject ids as labels.
 

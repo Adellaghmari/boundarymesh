@@ -17,7 +17,7 @@ BoundaryMesh is an **application-security and integration-security** product. Su
 
 **Public (local):** health, ready, OpenAPI docs, local JWKS/issuer, token mint (local/test), webhook lab helper, QuayForge webhook ingest (HMAC, not anonymous-arbitrary).
 
-**Protected (local):** `GET /api/v1/security/me` (authenticated), `POST /api/v1/identity/evaluate` (authenticated), `POST /api/v1/dev/evaluate` (`SCOPE_boundary.evaluate`). Production profile does not expose `/api/v1/dev/**`.
+**Protected (local):** `GET /api/v1/security/me` (authenticated), `POST /api/v1/identity/evaluate` (authenticated), `POST /api/v1/dev/evaluate` and delivery lab (`SCOPE_boundary.evaluate`). `POST /api/v1/quarantine/{id}/reprocess` requires `boundary.admin`. Production profile does not expose `/api/v1/dev/**`.
 
 ## Principles
 
@@ -25,7 +25,7 @@ BoundaryMesh is an **application-security and integration-security** product. Su
 2. **Separate AuthN from AuthZ.** A valid token can still be rejected.
 3. **Least privilege** per workload identity and per Graph permission.
 4. **No secret values** in Firestore, Git, frontend, logs, audit, or attestations.
-5. **Public demo is read-only.** Mutations require Entra.
+5. **Public demo is read-only.** Local reprocess uses a server-minted admin JWT. Entra remains PLANNED.
 6. **Provider-specific webhook rules stay provider-specific.**
 7. **Deterministic policy only.** No AI classification of PII or risk.
 

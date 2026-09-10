@@ -12,7 +12,7 @@ It is **not** an API dashboard, an iPaaS clone, an AI copilot, or a release-inte
 
 ## Product in one paragraph
 
-An untrusted system transaction arrives. BoundaryMesh authenticates identity, authorizes the specific action, verifies message authenticity, distinguishes malicious replay from legitimate duplicate delivery, validates the integration contract, governs which fields may leave the source boundary, then **enforces** a deterministic outcome: `ALLOW`, `ALLOW_WITH_TRANSFORMATION`, `QUARANTINE`, or `REJECT`. Allowed work is delivered asynchronously through Apache Camel connector routes. Every enforcement produces a **Cryptographic Exchange Attestation** and a tamper-evident audit chain entry.
+An untrusted system transaction arrives. BoundaryMesh authenticates identity, authorizes the specific action, verifies message authenticity, distinguishes malicious replay from legitimate duplicate delivery, validates the integration contract, governs which fields may leave the source boundary, then **enforces** a deterministic outcome: `ALLOW`, `ALLOW_WITH_TRANSFORMATION`, `QUARANTINE`, or `REJECT`. Allowed work becomes a `DeliveryInstruction`, passes credential/consent checks, and is routed by Apache Camel with Resilience4j around the connector. Recoverable failures become quarantine items that an authorized operator can reprocess. Cryptographic attestations remain a later phase.
 
 ## Flagship capabilities
 
@@ -20,8 +20,8 @@ An untrusted system transaction arrives. BoundaryMesh authenticates identity, au
 2. **Webhook & Subscription Defense** — HMAC and provider-specific Graph notification security
 3. **Contract Drift Firewall** — versioned OpenAPI / AsyncAPI / JSON Schema as runtime enforcement
 4. **Data Boundary Firewall** — destination-specific allow / redact / deny, no AI PII guessing
-5. **Credential & Consent Vault** — Secret Manager references, never plaintext secrets in data stores
-6. **Quarantine & Recovery Orchestrator** — bounded retry, circuit breaker, safe reprocess
+5. **Credential & Consent Vault** — local reference/version/consent model now; Secret Manager later
+6. **Quarantine & Recovery Orchestrator** — local workflow now; Firestore later
 
 Core systems: **Boundary Enforcement Engine**, **Cryptographic Exchange Attestation**, **Integration Boundary Graph**.
 
@@ -45,31 +45,39 @@ Do not describe BoundaryMesh as professional security employment, paid Microsoft
 
 Do not modify **Project A** (AI Operations Copilot) or **Project B** (CloudOps Release Intelligence). Both are frozen.
 
-## What exists now (Phases 0–7)
+## What exists now (Phases 0–10)
 
-Local Java 25 / Spring Boot 4.1.1 / Spring Security resource server with a testable Boundary Enforcement Engine, plus a Vue 3 recruiter console.
+Local Java 25 / Spring Boot 4.1.1 / Spring Security resource server, a separate Camel delivery worker, and a Vue 3 recruiter console.
 
-Phase 3 proves **local** JWT/JWKS identity federation (not Entra, not interactive OIDC login).  
-Phase 4 proves **QuayForge** HMAC webhook defense, freshness, replay, and duplicate delivery (not Graph subscriptions).  
-Phase 5 proves **Contract Drift Firewall**: versioned OpenAPI 3.1 / AsyncAPI / JSON Schema artifacts and runtime payload validation.  
-Phase 6 proves **Data Boundary Firewall**: destination-specific ALLOW / REDACT / DENY with a real transformed outbound payload.  
-Phase 7 composes those controls in the Boundary Enforcement Engine. All four outcomes are produced by implemented mechanisms.
+Phase 3 proves **local** JWT/JWKS identity federation (not Entra).  
+Phase 4 proves **QuayForge** HMAC webhook defense (not Graph subscriptions).  
+Phase 5–7 prove contract drift, data-boundary transformation, and the composed engine.  
+Phase 8 delivers approved crossings through **Apache Camel 4.22.0** and **Resilience4j 2.4.0** against WireMock providers.  
+Phase 9 adds a **local credential/consent boundary** (not Secret Manager).  
+Phase 10 makes quarantine a real **recovery workflow** with admin-scoped reprocess (not Firestore).
 
-A valid JWT, scope, HMAC, freshness window, and unused nonce still do **not** automatically allow a crossing.
+### One-minute story
 
-Synthetic evaluate and composed crossing are JWT-protected (`boundary.evaluate`). Labs call the real Java backend. Boundary events are browser-session memory. **Not** Entra, Graph, Camel, GCP, or a public deploy.
+A QuayForge order arrives. Identity, authorization, authenticity, freshness, and replay **PASS**. The contract is **VALID**. The Data Boundary Firewall redacts governed fields. The engine emits **ALLOW_WITH_TRANSFORMATION**. Credential version 2 is resolvable. Consent is granted. The connector circuit is **CLOSED**. Camel routes to Lumenway or CoveCRM. The provider receives the transformed body. Result: **DELIVERED**.
 
-Still **PLANNED:** Entra, Microsoft Graph, Apache Camel, GCP, Firestore, Pub/Sub, Secret Manager, KMS, Pulumi, Credential & Consent Vault, Quarantine & Recovery Orchestrator beyond the QUARANTINE outcome.
+Then the same integration hits repeated 503s. Resilience4j retries at most three times. The circuit opens. The next crossing is quarantined without another provider call. The destination recovers. An operator with `boundary.admin` reprocesses. The item becomes **RESOLVED**.
 
-## How to run (Phases 3–7)
+A valid JWT still does **not** automatically allow a crossing.
+
+Still **PLANNED:** Entra, Microsoft Graph, GCP, Firestore, Pub/Sub, Secret Manager, KMS, Pulumi, attestations, Integration Boundary Graph.
+
+## How to run (Phases 3–10)
 
 Requires **JDK 25** and **Node 22**. No secrets. `VITE_*` values are public browser configuration.
 
 ```powershell
 cd backend
 .\mvnw.cmd verify
+.\mvnw.cmd -pl worker -am spring-boot:run
 .\mvnw.cmd -pl api -am spring-boot:run
 ```
+
+`scripts/start-backend.ps1` starts the worker (8081) then the API (8080).
 
 ```powershell
 cd frontend
@@ -85,15 +93,14 @@ Full-stack helper: `scripts/dev-local.ps1`.
 
 ```text
 Frontend  http://localhost:5173
-GET       http://localhost:8080/api/v1/health
-GET       http://localhost:8080/api/v1/ready
-GET       http://localhost:8080/api/v1/dev/jwks
-POST      http://localhost:8080/api/v1/dev/tokens
-POST      http://localhost:8080/api/v1/identity/evaluate
-POST      http://localhost:8080/api/v1/webhooks/quayforge
-POST      http://localhost:8080/api/v1/dev/contract-lab/{scenario}
-POST      http://localhost:8080/api/v1/dev/egress-lab/{destination}/{scenario}
-POST      http://localhost:8080/api/v1/dev/crossings/evaluate
+API       http://localhost:8080
+Worker    http://localhost:8081
+GET       /api/v1/health
+GET       /api/v1/ready
+POST      /api/v1/dev/delivery-lab/{scenario}
+GET       /api/v1/dev/credential-lab
+GET       /api/v1/quarantine
+POST      /api/v1/quarantine/{id}/reprocess   (boundary.admin)
 ```
 
 `POST /api/v1/dev/evaluate` and `POST /api/v1/dev/crossings/evaluate` require a local bearer JWT with `boundary.evaluate`. Labs mint or sign on the Java side — do not paste tokens or HMAC secrets into the UI.
@@ -104,7 +111,7 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — NOT COMPLETE.** Phase 0–7 COMPLETE locally. Identity #1 is local only (Entra future). Webhook #2 is generic HMAC (Graph subscriptions future). Contract Drift #3 TESTED. Data Boundary #4 TESTED. Credential Vault #5 PLANNED. Quarantine Orchestrator #6 PLANNED beyond the QUARANTINE outcome. Nothing is LIVE VERIFIED. No GCP, no Microsoft credentials.
+**PROJECT C — NOT COMPLETE.** Phase 0–10 COMPLETE locally. Identity #1 local only (Entra future). Webhook #2 generic HMAC (Graph future). Contract Drift #3 TESTED. Data Boundary #4 TESTED. Credential & Consent #5 local model TESTED (Secret Manager PLANNED). Quarantine #6 local TESTED (Firestore PLANNED). Nothing is LIVE VERIFIED. No GCP, no Microsoft credentials.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 
@@ -141,6 +148,12 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_M
 | [docs/PHASE1.md](docs/PHASE1.md) | Phase 1 implementation record |
 | [docs/PHASE2.md](docs/PHASE2.md) | Phase 2 Vue console record |
 | [docs/PHASE3.md](docs/PHASE3.md) | Phase 3 local identity gateway |
+| [docs/DELIVERY_MODEL.md](docs/DELIVERY_MODEL.md) | DeliveryInstruction and DeliveryPort |
+| [docs/CREDENTIAL_MODEL.md](docs/CREDENTIAL_MODEL.md) | References, rotation, consent |
+| [docs/QUARANTINE_RECOVERY.md](docs/QUARANTINE_RECOVERY.md) | Local orchestrator |
+| [docs/PHASE8.md](docs/PHASE8.md) | Camel worker delivery |
+| [docs/PHASE9.md](docs/PHASE9.md) | Credential and consent boundary |
+| [docs/PHASE10.md](docs/PHASE10.md) | Quarantine and recovery |
 | [docs/PHASE4.md](docs/PHASE4.md) | Phase 4 QuayForge webhook defense |
 | [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Records |
 

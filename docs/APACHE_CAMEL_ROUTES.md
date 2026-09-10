@@ -2,89 +2,68 @@
 
 Apache Camel is a **first-class integration framework** on the **delivery worker**. It is not a keyword and not the policy engine.
 
+Resolved version: **Camel 4.22.0 LTS** via `camel-spring-boot-bom`. Java 25 and Spring Boot 4.1.1 were not downgraded.
+
 The Boundary Enforcement Engine decides **whether and how** a transaction may cross. Camel then:
 
-- translates the normalized delivery instruction into a connector-specific request
-- routes to the correct endpoint
-- applies integration patterns for failure, idempotency, and safe audit metadata
-- isolates HTTP/Graph SDK details behind endpoints
+- routes the already-approved `DeliveryInstruction` to a destination connector
+- translates the approved body into a provider-specific schema (Lumenway)
+- applies idempotent consumption and dead-letter handling
+- never sees JWT, HMAC secrets, or unredacted rejected payloads
 
-## Why Camel is justified
-
-BoundaryMesh is an **enterprise integration product**. After enforcement, work must be delivered to heterogeneous systems (Graph, CRM HTTP, settlements HTTP) with translation, dead-lettering, and idempotent consumers. That is Camel’s job. Putting those patterns in ad-hoc RestClient wrappers would hide the integration story and duplicate EIP.
-
-Camel is **not** justified for JWT validation, HMAC, or egress policy. Those stay in explicit Java.
-
-## Process rule
+## Process rule (current local)
 
 ```text
-Pub/Sub delivery instruction (already ALLOW / ALLOW_WITH_TRANSFORMATION)
-        → Camel consumer (direct:delivery)
+ALLOW / ALLOW_WITH_TRANSFORMATION
+        → DeliveryInstruction (approved payload only)
+        → DeliveryPort
+        → local HTTP worker ingest  (Pub/Sub PLANNED)
+        → Camel direct:delivery
         → Content-Based Router on destination_system
-        → Message Translator (instruction → connector body)
-        → Resilience4j / HTTP / Graph producer
-        → success evidence  |  Dead Letter Channel
+        → Message Translator where required
+        → Resilience4j-protected HTTP connector
+        → WireMock synthetic provider  (live providers PLANNED)
+        → DELIVERED | DLC / quarantine
 ```
 
-`.choice().when(header("authorized"))` for security is **forbidden**. The worker refuses instructions that lack a persisted `EnforcementDecision` with ALLOW*.
+Security `choice().when(header("authorized"))` is **forbidden**. REJECT and pre-delivery QUARANTINE never create an instruction.
 
 ## Enterprise Integration Patterns used
 
 | Pattern | Where | Why |
 | --- | --- | --- |
-| **Message Router / Content-Based Router** | `destination_system` | Helix/CoveCRM vs QuayForge/Rivertide vs Lumenway |
-| **Message Translator** | before each producer | Delivery instruction schema ≠ destination schema |
-| **Dead Letter Channel** | after bounded retries | Poison / exhausted work → quarantine, not infinite loop |
-| **Idempotent Consumer** | on `idempotency_key` | Legitimate Pub/Sub and Graph duplicates |
-| **Circuit Breaker** | Camel + Resilience4j around outbound | Protect worker from downstream collapse; open circuit → quarantine |
-| **Wire Tap** | after translation, **metadata only** | Safe field lists, hashes, correlation IDs to audit — **no** Restricted raw values |
+| **Content-Based Router** | `destination_system` | CoveCRM / Lumenway / Rivertide. Unknown → no default sink |
+| **Message Translator** | Lumenway route | Internal approved schema ≠ fulfillment API schema. Separate from Data Boundary Firewall |
+| **Idempotent Consumer** | delivery instruction id | Second consume must not create a second provider side effect |
+| **Dead Letter Channel** | unknown destination / terminal route | Quarantine handoff. Camel does **not** retry |
+| **Wire Tap** | inbound route, metadata only | route id, destination, delivery id. No secrets, no payload |
 
-Patterns **not** used in v1 (no real need): Aggregator, Saga, Claim Check (unless payload size forces it later), Durable Subscriber, Message Bus-as-Kafka.
+Not used: Aggregator, Saga, Claim Check, Kafka, every EIP in the catalog.
 
-## Route catalog (target)
+Circuit breaker is **Resilience4j**, composed around the HTTP client, not a decorative Camel policy.
+
+## Route catalog
 
 | Route id | From | To | Notes |
 | --- | --- | --- | --- |
-| `delivery.inbound` | `direct:delivery` | cbr | Worker entry |
-| `sink.covecrm.activity` | cbr | HTTP CoveCRM | Calendar → CRM |
-| `sink.rivertide.instruction` | cbr | HTTP Rivertide | Order → settlement |
-| `sink.lumenway.fulfillment` | cbr | HTTP Lumenway | Optional third sink |
-| `error.dlc` | dead letter | quarantine writer | Always |
+| `delivery.inbound` | `direct:delivery` | CBR | Worker entry + wire tap |
+| `sink.covecrm.activity` | CBR | HTTP CoveCRM | Simple JSON REST |
+| `sink.lumenway.fulfillment` | CBR | translator → HTTP | Requires mapping |
+| `sink.rivertide.instruction` | CBR | HTTP Rivertide | Stricter credential/consent demo |
+| `error.dlc` | dead letter | quarantine result | No accidental default delivery |
 
-Graph **fetch** (if pointer-style notifications) is a worker use-case **before** Camel or a dedicated `source.helix.event.fetch` route. Fetch still goes through Resilience4j. Fetched payload is contract-validated **before** Camel sink.
+## Retry ownership
 
-## Idempotent consumer
+| Layer | Retries |
+| --- | --- |
+| Resilience4j | **3 total attempts** on retryable provider failures (timeout, 429, 500, 503) |
+| Camel | **zero** redeliveries |
+| Pub/Sub | PLANNED, must stay a separate bounded budget |
 
-- Key: `integration_id + destination + idempotency_key`
-- Store: Firestore `idempotency/{hash}` with TTL ≥ 7 days (Phase 15 tunes TTL)
-- Concurrent duplicate: first writer wins; second returns previous delivery result
-- This is **not** the replay window
+`maxAttempts = 3` means first try + two retries, not three retries after success.
 
-## Error handling
+Retry-After is parsed and capped (`retry-after-cap`, local default 50ms) so a provider cannot force hours-long sleep.
 
-Camel `OnException`:
+## API classpath
 
-- `SignatureException` / policy exceptions: **never retry** (should not appear on worker if API did its job; treat as poison → security event)
-- HTTP 401/403: no retry, quarantine
-- HTTP 429: retry with `Retry-After` if present
-- HTTP 5xx / timeout: bounded retry (max 3 in-route) then DLC
-- Circuit open: do not pile retries; quarantine `CONNECTOR_CIRCUIT_OPEN`
-
-Pub/Sub redelivery is a **second** retry layer. Combined budget is documented in [FAILURE_MODEL.md](FAILURE_MODEL.md). In-route retries + Pub/Sub max attempts must remain bounded (target: ≤ 8 total outbound tries).
-
-## Testing
-
-Camel `CamelTestSupport` / Spring Camel test:
-
-- router selects sink
-- translator omits denied fields
-- DLC invoked on 500 after retries
-- idempotent consumer skips second send
-- wire tap does not contain email plaintext in test fixtures that assert log/audit payloads
-
-## Explicit non-goals
-
-- Camel as HTTP inbound gateway
-- YAML-only routes hiding Java policy
-- Kafka component
-- Hundreds of Kamelets
+`boundarymesh-api` must not depend on Camel. ArchUnit and the module POM enforce this. Camel stays in `boundarymesh-worker`.

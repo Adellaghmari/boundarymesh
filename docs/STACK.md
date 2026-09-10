@@ -24,7 +24,7 @@ Java 21 remains an emergency fallback only if a transitive library later proves 
 | Spring Framework | **7.x** (BOM-managed) | Jakarta EE 11, Jackson 3, JSpecify nullness. |
 | Spring Security | **7.1.x** (BOM-managed) | OAuth2 resource server, OIDC client, method security. |
 | Apache Camel | **4.22.0 LTS** | Current Camel LTS with Spring Boot 4 and Java 25. |
-| Resilience4j | **2.3.x** (`resilience4j-spring-boot3` or Boot 4-compatible equivalent verified in Phase 8) | Circuit breaker, time limiter, Retry-After-aware retry on **outbound connectors only**. Spring Framework 7 `@Retryable` is **not** stacked on the same methods. |
+| Resilience4j | **2.4.0** (`resilience4j-spring-boot4` pinned explicitly; BOM does not manage that artifact) | Retry + CircuitBreaker on **outbound connectors only**. Timeouts via RestClient read timeout. Spring `@Retryable` is **not** stacked. |
 | JSON Schema | `com.networknt:json-schema-validator` **3.0.6** | Runtime JSON Schema 2020-12 / OpenAPI 3.1 dialect. Jackson 3 / Java 17+. Apache 2.0. Selected after checking maintenance and Java 25 compatibility. Adapter lives in `api`, not domain. |
 | JSON Canonicalization | RFC 8785 (JCS) library, verified in Phase 12 | Attestation bytes. Never default Jackson serialization. |
 | Microsoft Graph | `microsoft-graph` **6.66.1** | Current Graph Java SDK line. |

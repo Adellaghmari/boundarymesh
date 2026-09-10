@@ -2,7 +2,9 @@
 
 Flagship capability #5.
 
-Secrets live in **Google Secret Manager**. Application persistence stores **references**, never values.
+**Current (Phase 9):** local credential references, versions, and a worker-only `SecretValueProvider`. This is not Secret Manager.
+
+**Future:** secrets live in **Google Secret Manager**. Application persistence stores **references**, never values.
 
 ## What is stored where
 
