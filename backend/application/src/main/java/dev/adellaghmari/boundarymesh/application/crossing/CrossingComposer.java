@@ -170,6 +170,7 @@ public final class CrossingComposer {
         return switch (destination == null ? "" : destination.trim().toUpperCase(Locale.ROOT)) {
             case "COVECRM" -> ConnectorOperation.ACTIVITY_WRITE;
             case "LUMENWAY" -> ConnectorOperation.FULFILLMENT_CREATE;
+            case "M365_CALENDAR" -> ConnectorOperation.CALENDAR_READ;
             default -> ConnectorOperation.SETTLEMENT_WRITE;
         };
     }

@@ -11,6 +11,7 @@ public record ConnectorOperation(String value) {
     public static final ConnectorOperation ACTIVITY_WRITE = new ConnectorOperation("activity.write");
     public static final ConnectorOperation FULFILLMENT_CREATE = new ConnectorOperation("fulfillment.create");
     public static final ConnectorOperation SETTLEMENT_WRITE = new ConnectorOperation("settlement.write");
+    public static final ConnectorOperation CALENDAR_READ = new ConnectorOperation("calendar.read");
 
     public ConnectorOperation {
         Objects.requireNonNull(value, "operation");

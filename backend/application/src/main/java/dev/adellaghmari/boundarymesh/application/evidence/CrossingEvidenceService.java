@@ -105,10 +105,10 @@ public final class CrossingEvidenceService {
         AuditChainHead head = auditRepository.head(chainId).orElse(AuditChainHead.empty(chainId));
         ExchangeAttestation attestation = attestations.create(
                 crossing,
-                "QUAYFORGE",
+                sourceSystem(command),
                 command.destination(),
                 principal == null ? null : principal.id().value(),
-                principal == null ? "WEBHOOK_HMAC" : "JWT_BEARER",
+                authMethod(principal, command),
                 delivery,
                 chainId,
                 head);
@@ -128,7 +128,7 @@ public final class CrossingEvidenceService {
                 : auditRepository.entries(chainId, 1).getLast();
         observations.record(new ObservedCrossingStore.Observation(
                 command.integrationId(),
-                "QUAYFORGE",
+                sourceSystem(command),
                 command.destination(),
                 crossing.decision().outcome().name(),
                 delivery == null ? "NOT_ATTEMPTED" : delivery.kind().name(),
@@ -137,6 +137,17 @@ public final class CrossingEvidenceService {
                 quarantine != null && !quarantine.status().name().equals("RESOLVED"),
                 attestation.occurredAt()));
         return new Evidence(chainId, last, attestation);
+    }
+
+    private static String sourceSystem(CrossingCommand command) {
+        return "m365-calendar".equals(command.integrationId()) ? "MICROSOFT_365_CALENDAR" : "QUAYFORGE";
+    }
+
+    private static String authMethod(BoundaryPrincipal principal, CrossingCommand command) {
+        if ("m365-calendar".equals(command.integrationId())) {
+            return "OIDC";
+        }
+        return principal == null ? "WEBHOOK_HMAC" : "JWT_BEARER";
     }
 
     private static Map<String, String> decisionAttributes(

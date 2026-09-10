@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boundarymesh.local/contracts/m365-calendar/v1",
+  "title": "Normalized Microsoft 365 calendar event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_reference", "start_time", "end_time"],
+  "properties": {
+    "event_reference": { "type": "string", "minLength": 16, "maxLength": 64 },
+    "start_time": { "type": "string", "minLength": 10, "maxLength": 64 },
+    "end_time": { "type": "string", "minLength": 10, "maxLength": 64 },
+    "subject": { "type": "string", "maxLength": 256 },
+    "availability": { "type": "string", "maxLength": 32 },
+    "attendees": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "online_meeting_url": { "type": "string" },
+    "body": { "type": "string" }
+  }
+}

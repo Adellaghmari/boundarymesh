@@ -27,6 +27,13 @@ class ConsentEvaluatorTest {
     }
 
     @Test
+    void m365DelegatedCalendarReadIsGranted() {
+        var result = evaluator.evaluate("M365_CALENDAR", ConnectorOperation.CALENDAR_READ, "valid");
+        assertThat(result.status()).isEqualTo(ConsentStatus.GRANTED);
+        assertThat(result.blocksCrossing()).isFalse();
+    }
+
+    @Test
     void missingConsentBlocksEvenWhenCredentialWouldExist() {
         var result = evaluator.evaluate("RIVERTIDE", ConnectorOperation.SETTLEMENT_WRITE, "missing");
         assertThat(result.status()).isEqualTo(ConsentStatus.MISSING);

@@ -24,6 +24,8 @@ public final class InMemoryCredentialCatalog implements CredentialCatalog {
         catalog.put(record("lumenway-api", "1", CredentialStatus.ACTIVE, "lumenway-connector", "LUMENWAY", rotatedAt));
         catalog.put(
                 record("rivertide-api", "1", CredentialStatus.ACTIVE, "rivertide-connector", "RIVERTIDE", rotatedAt));
+        catalog.put(record(
+                "m365-graph", "1", CredentialStatus.ACTIVE, "m365-calendar-connector", "M365_CALENDAR", rotatedAt));
         return catalog;
     }
 

@@ -32,8 +32,8 @@ class BoundaryGraphAssemblerTest {
         var graph = assembler.assemble();
         assertThat(graph.nodes())
                 .extracting(node -> node.id())
-                .containsExactly("QUAYFORGE", "HELIX365", "BOUNDARYMESH", "COVECRM", "LUMENWAY", "RIVERTIDE");
-        assertThat(graph.edges()).hasSize(4);
+                .containsExactly("QUAYFORGE", "M365", "HELIX365", "BOUNDARYMESH", "COVECRM", "LUMENWAY", "RIVERTIDE");
+        assertThat(graph.edges()).hasSize(5);
         assertThat(edge(graph.edges().getFirst()).status()).isEqualTo(BoundaryEdgeStatus.CONFIGURED);
         assertThat(edge(graph.edges().getFirst()).observed()).isFalse();
         assertThat(helix().status()).isEqualTo(BoundaryEdgeStatus.NO_RECENT_ACTIVITY);
@@ -87,6 +87,7 @@ class BoundaryGraphAssemblerTest {
         return assembler.assemble().edges().stream()
                 .filter(edge -> "COVECRM".equals(edge.destination()))
                 .filter(edge -> !"helix365-calendar".equals(edge.id()))
+                .filter(edge -> !"m365-calendar".equals(edge.id()))
                 .findFirst()
                 .orElseThrow();
     }

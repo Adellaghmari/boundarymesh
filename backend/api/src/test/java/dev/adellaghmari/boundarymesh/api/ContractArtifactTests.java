@@ -56,7 +56,8 @@ class ContractArtifactTests {
         for (String path : new String[] {
             "contracts/policies/rivertide.egress.v1.json",
             "contracts/policies/covecrm.egress.v1.json",
-            "contracts/policies/lumenway.egress.v1.json"
+            "contracts/policies/lumenway.egress.v1.json",
+            "contracts/policies/m365-calendar.egress.v1.json"
         }) {
             JsonNode node = mapper.readTree(bytes(path));
             assertThat(node.get("id").stringValue()).isNotBlank();

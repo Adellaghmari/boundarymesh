@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class LocalConnectorSafetyPort implements ConnectorSafetyPort {
 
-    private static final Set<String> CONFIGURED = Set.of("COVECRM", "LUMENWAY", "RIVERTIDE");
+    private static final Set<String> CONFIGURED = Set.of("COVECRM", "LUMENWAY", "RIVERTIDE", "M365_CALENDAR");
     private final ConcurrentHashMap<String, CircuitState> states = new ConcurrentHashMap<>();
 
     public void setState(String destination, CircuitState state) {

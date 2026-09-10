@@ -24,6 +24,7 @@ public final class BoundaryGraphAssembler {
     public BoundaryGraph assemble() {
         List<SystemNode> nodes = List.of(
                 new SystemNode("QUAYFORGE", "QuayForge Orders", NodeKind.SYSTEM, true),
+                new SystemNode("M365", "Microsoft 365 Calendar", NodeKind.SYSTEM, false),
                 new SystemNode("HELIX365", "Helix 365", NodeKind.SYSTEM, true),
                 new SystemNode("BOUNDARYMESH", "BoundaryMesh", NodeKind.CONTROL_PLANE, true),
                 new SystemNode("COVECRM", "CoveCRM", NodeKind.SYSTEM, true),
@@ -64,12 +65,22 @@ public final class BoundaryGraphAssembler {
                         "helix365-calendar",
                         "HELIX365",
                         "COVECRM",
-                        "Entra (PLANNED)",
+                        "Entra (synthetic Helix 365 only)",
                         "helix365-calendar:v1",
                         "covecrm",
                         "none",
                         "UNCONFIGURED",
-                        null));
+                        null),
+                edge(
+                        "m365-calendar",
+                        "M365",
+                        "BOUNDARYMESH",
+                        "ENTRA OIDC / GRAPH",
+                        "m365-calendar:v1",
+                        "m365-calendar-egress/v1",
+                        "m365-graph:1",
+                        "DELEGATED Calendars.Read",
+                        "graph.calendar.read"));
         return new BoundaryGraph(
                 "LOCAL / SYNTHETIC SESSION DATA. Graph is derived from configured integrations plus observed crossings. Not Firestore.",
                 nodes,
@@ -87,13 +98,15 @@ public final class BoundaryGraphAssembler {
             String consent,
             String route) {
         boolean helix = "helix365-calendar".equals(integrationId);
+        boolean m365 = "m365-calendar".equals(integrationId);
         var observed = helix
                 ? Optional.<ObservedCrossingStore.Observation>empty()
-                : observations.findByDestination(destination);
+                : m365 ? observations.find(integrationId) : observations.findByDestination(destination);
         int quarantineCount = helix
                 ? 0
                 : (int) quarantine.list().stream()
-                        .filter(item -> destination.equalsIgnoreCase(item.destinationSystem()))
+                        .filter(item ->
+                                (m365 ? "M365_CALENDAR" : destination).equalsIgnoreCase(item.destinationSystem()))
                         .filter(item -> item.status().name().equals("OPEN")
                                 || item.status().name().equals("REPROCESSING"))
                         .count();
@@ -104,6 +117,8 @@ public final class BoundaryGraphAssembler {
         boolean seen = observed.isPresent();
         if (helix) {
             status = BoundaryEdgeStatus.NO_RECENT_ACTIVITY;
+        } else if (m365 && observed.isEmpty()) {
+            status = BoundaryEdgeStatus.CONFIGURED;
         } else if (observed.isPresent() && "REJECT".equals(observed.get().outcome())) {
             status = BoundaryEdgeStatus.BLOCKED;
             outcome = observed.get().outcome();

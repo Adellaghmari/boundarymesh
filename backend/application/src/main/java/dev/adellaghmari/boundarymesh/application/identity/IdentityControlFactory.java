@@ -3,6 +3,7 @@ package dev.adellaghmari.boundarymesh.application.identity;
 import dev.adellaghmari.boundarymesh.domain.ControlKind;
 import dev.adellaghmari.boundarymesh.domain.ControlResult;
 import dev.adellaghmari.boundarymesh.domain.ReasonCode;
+import dev.adellaghmari.boundarymesh.domain.identity.AuthenticationMethod;
 import dev.adellaghmari.boundarymesh.domain.identity.BoundaryPermission;
 import dev.adellaghmari.boundarymesh.domain.identity.BoundaryPrincipal;
 import java.util.Objects;
@@ -14,11 +15,14 @@ public final class IdentityControlFactory {
 
     public static ControlResult identity(BoundaryPrincipal principal) {
         Objects.requireNonNull(principal, "principal");
+        String explanation = principal.method() == AuthenticationMethod.OIDC
+                ? "Microsoft Entra OIDC identity authenticated."
+                : "Issuer accepted and machine identity authenticated.";
         return new ControlResult(
                 ControlKind.IDENTITY,
                 dev.adellaghmari.boundarymesh.domain.ControlStatus.PASS,
                 java.util.List.of(),
-                "Issuer accepted and machine identity authenticated.",
+                explanation,
                 principal.keyId());
     }
 

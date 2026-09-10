@@ -45,6 +45,19 @@ public final class CrossingDeliveryService {
         this.evidence = Objects.requireNonNull(evidence);
     }
 
+    public CrossingDeliveryResult evaluateWithoutDelivery(CrossingCommand command, BoundaryPrincipal principal) {
+        CrossingResult crossing = composer.compose(command);
+        DeliveryResult skipped = DeliveryResult.notAttempted("Microsoft Graph calendar read is not a CRM delivery.");
+        QuarantineItem item = null;
+        if (crossing.decision().outcome() == BoundaryOutcome.QUARANTINE) {
+            item = open(crossing, command, ProviderScenario.SUCCESS, "pre-delivery");
+        }
+        if (crossing.decision().outcome() == BoundaryOutcome.REJECT) {
+            return finish(command, crossing, Optional.empty(), skipped, null, principal, false);
+        }
+        return finish(command, crossing, Optional.empty(), skipped, item, principal, false);
+    }
+
     public CrossingDeliveryResult execute(CrossingCommand command, ProviderScenario providerScenario) {
         return execute(command, providerScenario, command.principal(), false);
     }

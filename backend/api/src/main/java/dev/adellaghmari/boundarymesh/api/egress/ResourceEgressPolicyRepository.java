@@ -29,6 +29,7 @@ public class ResourceEgressPolicyRepository implements EgressPolicyRepository {
         register(load("contracts/policies/rivertide.egress.v1.json"));
         register(load("contracts/policies/covecrm.egress.v1.json"));
         register(load("contracts/policies/lumenway.egress.v1.json"));
+        register(load("contracts/policies/m365-calendar.egress.v1.json"));
     }
 
     @Override

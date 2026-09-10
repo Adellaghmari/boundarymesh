@@ -37,6 +37,15 @@ public final class InMemoryConsentCatalog implements ConsentCatalog {
                 "RIVERTIDE",
                 ConnectorOperation.SETTLEMENT_WRITE,
                 "settlement.write"));
+        catalog.put(new ConsentGrant(
+                new ConsentId("m365-calendar-read"),
+                new ConnectorIdentity("m365-calendar-connector"),
+                "M365_CALENDAR",
+                ConnectorOperation.CALENDAR_READ,
+                Set.of(new Permission("Calendars.Read")),
+                ConsentStatus.GRANTED,
+                GrantKind.DELEGATED,
+                "entra-tenant"));
         return catalog;
     }
 

@@ -1,0 +1,16 @@
+{
+  "id": "m365-calendar-egress",
+  "version": "v1",
+  "destination": "M365_CALENDAR",
+  "implicit_deny": true,
+  "rules": [
+    { "rule_id": "EGRESS-M365-001", "path": "/event_reference", "action": "ALLOW" },
+    { "rule_id": "EGRESS-M365-002", "path": "/start_time", "action": "ALLOW" },
+    { "rule_id": "EGRESS-M365-003", "path": "/end_time", "action": "ALLOW" },
+    { "rule_id": "EGRESS-M365-004", "path": "/availability", "action": "ALLOW" },
+    { "rule_id": "EGRESS-M365-005", "path": "/subject", "action": "REDACT" },
+    { "rule_id": "EGRESS-M365-006", "path": "/attendees", "action": "DENY", "deny_mode": "STRIP" },
+    { "rule_id": "EGRESS-M365-007", "path": "/online_meeting_url", "action": "DENY", "deny_mode": "STRIP" },
+    { "rule_id": "EGRESS-M365-008", "path": "/body", "action": "DENY", "deny_mode": "STRIP" }
+  ]
+}

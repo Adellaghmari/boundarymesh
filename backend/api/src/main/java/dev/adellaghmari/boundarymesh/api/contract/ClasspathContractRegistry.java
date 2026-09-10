@@ -39,6 +39,11 @@ public class ClasspathContractRegistry implements ContractRegistry {
                 "v3",
                 ContractStatus.UNSUPPORTED,
                 "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\"}");
+        register(
+                "m365-calendar",
+                "v1",
+                ContractStatus.SUPPORTED,
+                read("contracts/json-schema/m365-calendar.v1.schema.json"));
     }
 
     @Override
