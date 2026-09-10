@@ -11,7 +11,7 @@ import TruthBanner from '@/components/TruthBanner.vue'
         <TruthBanner label="CURRENT VERSUS PLANNED" />
       </div>
       <p>
-        This page describes what Phases 1–4 actually run locally. It does not present the final
+        This page describes what Phases 1–10 actually run locally. It does not present the final
         cloud architecture as deployed.
       </p>
     </header>
@@ -26,6 +26,10 @@ import TruthBanner from '@/components/TruthBanner.vue'
           <li>Synthetic local evaluate API</li>
           <li>Spring Security JWT resource server (local issuer / JWKS)</li>
           <li>QuayForge HMAC webhook defense, freshness, and replay</li>
+          <li>Contract Drift and Data Boundary Firewalls</li>
+          <li>Local credential/consent boundary</li>
+          <li>Separate Camel delivery worker with Resilience4j</li>
+          <li>Local quarantine and admin reprocess</li>
         </ul>
       </article>
       <article class="card stack">
@@ -33,7 +37,6 @@ import TruthBanner from '@/components/TruthBanner.vue'
         <ul>
           <li>Microsoft Entra ID</li>
           <li>Microsoft Graph</li>
-          <li>Apache Camel</li>
           <li>GCP, Pub/Sub, Firestore</li>
           <li>Secret Manager, Cloud KMS</li>
           <li>Pulumi</li>

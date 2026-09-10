@@ -11,6 +11,10 @@ export const ROUTE_NAMES = {
   contracts: 'contracts',
   dataBoundary: 'data-boundary',
   crossing: 'crossing',
+  delivery: 'delivery',
+  credentials: 'credentials',
+  quarantine: 'quarantine',
+  quarantineDetail: 'quarantine-detail',
   status: 'status',
   notFound: 'not-found',
 } as const
@@ -76,6 +80,31 @@ export const routes: RouteRecordRaw[] = [
     name: ROUTE_NAMES.crossing,
     component: () => import('@/views/CrossingLabView.vue'),
     meta: { title: 'Full Crossing' },
+  },
+  {
+    path: '/delivery',
+    name: ROUTE_NAMES.delivery,
+    component: () => import('@/views/DeliveryLabView.vue'),
+    meta: { title: 'Delivery Lab' },
+  },
+  {
+    path: '/credentials',
+    name: ROUTE_NAMES.credentials,
+    component: () => import('@/views/CredentialLabView.vue'),
+    meta: { title: 'Credential & Consent' },
+  },
+  {
+    path: '/quarantine',
+    name: ROUTE_NAMES.quarantine,
+    component: () => import('@/views/QuarantineView.vue'),
+    meta: { title: 'Quarantine' },
+  },
+  {
+    path: '/quarantine/:id',
+    name: ROUTE_NAMES.quarantineDetail,
+    component: () => import('@/views/QuarantineDetailView.vue'),
+    meta: { title: 'Quarantine item' },
+    props: true,
   },
   {
     path: '/status',

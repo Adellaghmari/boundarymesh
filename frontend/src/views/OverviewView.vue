@@ -20,11 +20,10 @@ import { OUTCOME_COPY } from '@/domain/labels'
       <p class="question">Can this transaction cross this security boundary?</p>
       <p>
         BoundaryMesh sits in front of system-to-system integrations. It is not an assistant, not a
-        release board, and not a generic API client. Phase 2 evaluates synthetic Velora Interchange
-        crossings against the local Java Boundary Enforcement Engine. Identity Lab and Webhook Lab
-        exercise Spring Security JWT checks and signed-webhook defense. Microsoft Entra and Graph
-        remain planned. Contract Drift Lab and Data Boundary Lab now evaluate real Java contract and
-        egress controls. A valid identity is not an automatic crossing.
+        release board, and not a generic API client. A transaction is authenticated, authorized,
+        verified, contract-checked, and data-governed before a delivery instruction can reach Apache
+        Camel. Credential and consent checks sit in front of the connector. Microsoft Entra, Graph,
+        Secret Manager, and Pub/Sub remain planned. A valid identity is not an automatic crossing.
       </p>
     </section>
 
@@ -33,8 +32,8 @@ import { OUTCOME_COPY } from '@/domain/labels'
     <section class="card stack">
       <h2>Deterministic pipeline</h2>
       <p class="muted">
-        Every crossing is evaluated in this order. Later phases add delivery, quarantine workflow,
-        and signed attestations. Those are not implemented here.
+        Every crossing is evaluated in this order. Credential and consent checks, Camel delivery,
+        and quarantine recovery are local. Cryptographic attestations remain planned.
       </p>
       <PipelineSteps />
     </section>

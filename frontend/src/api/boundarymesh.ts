@@ -1,9 +1,19 @@
 import { apiClient, type ApiResponse } from '@/api/client'
-import { assertEvaluateResponse } from '@/domain/mappers'
+import {
+  assertCredentialCatalog,
+  assertDeliveryLabResponse,
+  assertEvaluateResponse,
+  assertQuarantineItem,
+  assertQuarantineList,
+} from '@/domain/mappers'
 import type {
+  CredentialCatalog,
+  DeliveryLabRecord,
   EvaluateRequest,
   EvaluateResponse,
   HealthResponse,
+  QuarantineItemRecord,
+  QuarantineListRecord,
   ReadyResponse,
 } from '@/domain/types'
 import { BoundaryMeshApiError } from '@/api/errors'
@@ -132,6 +142,96 @@ function asDecision(
     return { ...response, data: assertEvaluateResponse(response.data) }
   } catch {
     throw new BoundaryMeshApiError('malformed', message, {
+      requestId: response.requestId,
+      status: response.status,
+    })
+  }
+}
+
+export async function runDeliveryLab(scenario: string): Promise<DeliveryLabRecord> {
+  const token = await issueLocalToken('VALID_MACHINE')
+  const response = await apiClient.request<unknown>(`/api/v1/dev/delivery-lab/${scenario}`, {
+    method: 'POST',
+    body: {},
+    authorization: `Bearer ${token}`,
+  })
+  try {
+    return assertDeliveryLabResponse(response.data, response.requestId)
+  } catch {
+    throw new BoundaryMeshApiError('malformed', 'The delivery lab response was not valid.', {
+      requestId: response.requestId,
+      status: response.status,
+    })
+  }
+}
+
+export async function fetchCredentialCatalog(): Promise<CredentialCatalog> {
+  const response = await apiClient.request<unknown>('/api/v1/dev/credential-lab')
+  try {
+    return assertCredentialCatalog(response.data)
+  } catch {
+    throw new BoundaryMeshApiError('malformed', 'The credential catalog was not valid.', {
+      requestId: response.requestId,
+      status: response.status,
+    })
+  }
+}
+
+export async function runCredentialLab(scenario: string): Promise<ApiResponse<EvaluateResponse>> {
+  const response = await apiClient.request<unknown>(`/api/v1/dev/credential-lab/${scenario}`, {
+    method: 'POST',
+  })
+  return asDecision(response, 'The credential lab response was not valid.')
+}
+
+export async function rotateCoveCredential(): Promise<CredentialCatalog> {
+  const response = await apiClient.request<unknown>('/api/v1/dev/credential-lab/rotate/covecrm', {
+    method: 'POST',
+  })
+  try {
+    return assertCredentialCatalog(response.data)
+  } catch {
+    throw new BoundaryMeshApiError('malformed', 'The rotation response was not valid.', {
+      requestId: response.requestId,
+      status: response.status,
+    })
+  }
+}
+
+export async function fetchQuarantineList(): Promise<QuarantineListRecord> {
+  const response = await apiClient.request<unknown>('/api/v1/quarantine')
+  try {
+    return assertQuarantineList(response.data)
+  } catch {
+    throw new BoundaryMeshApiError('malformed', 'The quarantine list was not valid.', {
+      requestId: response.requestId,
+      status: response.status,
+    })
+  }
+}
+
+export async function fetchQuarantineItem(id: string): Promise<QuarantineItemRecord> {
+  const response = await apiClient.request<unknown>(`/api/v1/quarantine/${id}`)
+  try {
+    return assertQuarantineItem(response.data)
+  } catch {
+    throw new BoundaryMeshApiError('malformed', 'The quarantine item was not valid.', {
+      requestId: response.requestId,
+      status: response.status,
+    })
+  }
+}
+
+export async function reprocessQuarantine(id: string): Promise<DeliveryLabRecord> {
+  const token = await issueLocalToken('VALID_ADMIN')
+  const response = await apiClient.request<unknown>(`/api/v1/quarantine/${id}/reprocess`, {
+    method: 'POST',
+    authorization: `Bearer ${token}`,
+  })
+  try {
+    return assertDeliveryLabResponse(response.data, response.requestId)
+  } catch {
+    throw new BoundaryMeshApiError('malformed', 'The reprocess response was not valid.', {
       requestId: response.requestId,
       status: response.status,
     })

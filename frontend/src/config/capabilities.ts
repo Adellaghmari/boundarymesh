@@ -1,7 +1,7 @@
 import type { CapabilityClaim } from '@/domain/types'
 
 /**
- * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 7.
+ * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 10.
  * Not fetched from Git. Do not invent progress.
  */
 export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
@@ -15,7 +15,7 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     id: 'enforcement-engine',
     label: 'Boundary Enforcement Engine',
     status: 'TESTED',
-    notes: 'Deterministic ControlVector decisions including real contract and egress controls.',
+    notes: 'All nine ControlVector fields are real local controls, including credential and connector safety.',
   },
   {
     id: 'vue-frontend',
@@ -52,20 +52,21 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
   {
     id: 'credential-vault',
     label: 'Credential & Consent Vault',
-    status: 'PLANNED',
-    notes: 'No Secret Manager and no stored credentials.',
+    status: 'TESTED',
+    notes:
+      'Local reference/version/consent model. Google Secret Manager-backed vault remains PLANNED.',
   },
   {
     id: 'quarantine-orchestrator',
     label: 'Quarantine & Recovery',
-    status: 'PLANNED',
-    notes: 'QUARANTINE is an engine outcome only. No queue or reprocess.',
+    status: 'TESTED',
+    notes: 'Local in-memory orchestrator and admin reprocess. Firestore persistence remains PLANNED.',
   },
   {
     id: 'apache-camel',
     label: 'Apache Camel',
-    status: 'PLANNED',
-    notes: 'No Camel dependency or routes.',
+    status: 'TESTED',
+    notes: 'Worker-only Camel 4.22.0 routes. The public API artifact does not depend on Camel.',
   },
   {
     id: 'm365-graph',

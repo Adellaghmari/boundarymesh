@@ -202,3 +202,113 @@ export interface CapabilityClaim {
   status: CapabilityStatus
   notes: string
 }
+
+export const DELIVERY_RESULT_KINDS = [
+  'DELIVERED',
+  'DUPLICATE_SUPPRESSED',
+  'QUARANTINED',
+  'PERMANENT_FAILURE',
+  'NOT_ATTEMPTED',
+] as const
+
+export type DeliveryResultKind = (typeof DELIVERY_RESULT_KINDS)[number]
+
+export interface DeliveryInstructionView {
+  eventId: string
+  transactionId: string
+  destination: string
+  outcome: string
+  payloadJson: string
+  contractReference: string
+}
+
+export interface DeliveryView {
+  kind: DeliveryResultKind
+  attemptCount: number
+  providerCategory: string
+  reason?: string | null
+  explanation: string
+  connectorId?: string | null
+  routeId?: string | null
+  circuitState?: string | null
+  httpStatus?: number | null
+  providerCalled: boolean
+}
+
+export interface CredentialEvidenceView {
+  reference?: string | null
+  status: string
+  explanation: string
+}
+
+export interface ConsentEvidenceView {
+  id?: string | null
+  status: string
+  permissions: string[]
+  explanation: string
+}
+
+export interface QuarantineSummaryView {
+  id: string
+  reason: string
+  status: string
+  attempts: number
+  eligible: boolean
+  destination: string
+}
+
+export interface DeliveryLabRecord {
+  banner: string
+  stages: string[]
+  decision: EvaluateResponse
+  instruction?: DeliveryInstructionView | null
+  delivery?: DeliveryView | null
+  credential: CredentialEvidenceView
+  consent: ConsentEvidenceView
+  quarantine?: QuarantineSummaryView | null
+  requestId: string
+}
+
+export interface CredentialCatalogRow {
+  id: string
+  version: string
+  status: string
+  destination: string
+  connector: string
+  rotatedAt: string
+}
+
+export interface ConsentCatalogRow {
+  id: string
+  destination: string
+  operation: string
+  status: string
+  kind: string
+  permissions: string[]
+}
+
+export interface CredentialCatalog {
+  banner: string
+  credentials: CredentialCatalogRow[]
+  consents: ConsentCatalogRow[]
+}
+
+export interface QuarantineItemRecord {
+  id: string
+  transactionId: string
+  destination: string
+  reason: string
+  status: string
+  attempts: number
+  maxAttempts: number
+  eligible: boolean
+  credentialReference?: string | null
+  connectorState?: string | null
+  createdAt: string
+}
+
+export interface QuarantineListRecord {
+  banner: string
+  count: number
+  items: QuarantineItemRecord[]
+}

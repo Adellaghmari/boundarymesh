@@ -7,7 +7,8 @@ const steps = [
   'Validate contract',
   'Govern data',
   'Enforce boundary',
-  'Deliver / quarantine / reject',
+  'Resolve credential / consent',
+  'Deliver or quarantine',
 ]
 </script>
 

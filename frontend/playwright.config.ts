@@ -27,7 +27,7 @@ export default defineConfig({
     {
       command: 'powershell -NoProfile -ExecutionPolicy Bypass -File ../scripts/start-backend.ps1',
       url: 'http://127.0.0.1:8080/api/v1/health',
-      timeout: 180_000,
+      timeout: 300_000,
       reuseExistingServer: !isCi,
       stdout: 'pipe',
       stderr: 'pipe',

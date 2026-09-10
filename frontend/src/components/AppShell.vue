@@ -15,6 +15,9 @@ const links = [
   { name: ROUTE_NAMES.contracts, to: '/contracts', label: 'Contract Lab' },
   { name: ROUTE_NAMES.dataBoundary, to: '/data-boundary', label: 'Data Boundary' },
   { name: ROUTE_NAMES.crossing, to: '/crossing', label: 'Full Crossing' },
+  { name: ROUTE_NAMES.delivery, to: '/delivery', label: 'Delivery Lab' },
+  { name: ROUTE_NAMES.credentials, to: '/credentials', label: 'Credentials' },
+  { name: ROUTE_NAMES.quarantine, to: '/quarantine', label: 'Quarantine' },
   { name: ROUTE_NAMES.status, to: '/status', label: 'Status' },
 ] as const
 
@@ -23,6 +26,9 @@ function isActive(name: string): boolean {
     return (
       route.name === ROUTE_NAMES.boundaryEvents || route.name === ROUTE_NAMES.boundaryEventDetail
     )
+  }
+  if (name === ROUTE_NAMES.quarantine) {
+    return route.name === ROUTE_NAMES.quarantine || route.name === ROUTE_NAMES.quarantineDetail
   }
   return route.name === name
 }

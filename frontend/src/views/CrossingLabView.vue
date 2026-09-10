@@ -28,7 +28,8 @@ async function run(): Promise<void> {
       </div>
       <p>
         SYNTHETIC DEMO. Real local JWT identity plus contract and egress evaluation. The Java
-        Boundary Enforcement Engine composes the final outcome. Entra, Graph, and Camel remain planned.
+        Boundary Enforcement Engine composes the final outcome. Connector delivery lives in Delivery
+        Lab. Entra and Graph remain planned.
       </p>
     </header>
 

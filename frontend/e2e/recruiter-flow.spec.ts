@@ -118,6 +118,70 @@ test('full crossing inspection shows real composed stages', async ({ page }) => 
   await expect(page.getByText('PASS').first()).toBeVisible()
 })
 
+test('delivery lab delivers a transformed payload without secrets', async ({ page }) => {
+  await page.goto('/delivery')
+  await expect(page.getByRole('heading', { name: 'Delivery Lab' })).toBeVisible()
+  await page.getByRole('radio', { name: /Successful transformed delivery/ }).check()
+  await page.getByRole('button', { name: 'Run delivery' }).click()
+  await expect(page.getByTestId('delivery-kind')).toHaveText('DELIVERED', { timeout: 20_000 })
+  await expect(page.getByText('ALLOW WITH TRANSFORMATION').first()).toBeVisible()
+  await expect(page.getByText('[REDACTED]').first()).toBeVisible()
+  await expect(page.getByLabel('Approved delivery body')).not.toContainText(
+    'ada.lovelace@example.test',
+  )
+  await expect(page.locator('body')).not.toContainText('TEST-SECRET-')
+})
+
+test('delivery lab holds credential and consent failures without routing', async ({ page }) => {
+  await page.goto('/delivery')
+  await page.getByRole('radio', { name: /Missing credential/ }).check()
+  await page.getByRole('button', { name: 'Run delivery' }).click()
+  await expect(page.getByTestId('delivery-kind')).toHaveText('NOT_ATTEMPTED', { timeout: 20_000 })
+  await expect(page.getByText('not routed')).toBeVisible()
+
+  await page.getByRole('radio', { name: /Missing consent/ }).check()
+  await page.getByRole('button', { name: 'Run delivery' }).click()
+  await expect(page.getByText('Consent MISSING')).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByTestId('delivery-kind')).toHaveText('NOT_ATTEMPTED')
+})
+
+test('quarantine recovery reprocesses after a hold', async ({ page }) => {
+  await page.goto('/delivery')
+  await page.getByRole('radio', { name: /Missing credential/ }).check()
+  await page.getByRole('button', { name: 'Run delivery' }).click()
+  await expect(page.getByTestId('delivery-kind')).toHaveText('NOT_ATTEMPTED', { timeout: 20_000 })
+  await expect(page.getByRole('link', { name: 'Open quarantine item' })).toBeVisible()
+  const quarantineHref = await page.getByRole('link', { name: 'Open quarantine item' }).getAttribute('href')
+  await page.goto(quarantineHref ?? '/quarantine')
+  await expect(page.getByRole('heading', { name: 'Quarantine item' })).toBeVisible()
+  await page.getByRole('button', { name: 'Reprocess as operator' }).click()
+  await expect(page.getByText('Recovery result')).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByText('Delivery DELIVERED')).toBeVisible()
+  await expect(page.getByText('RESOLVED').first()).toBeVisible()
+})
+
+test('delivery lab suppresses a duplicate instruction', async ({ page }) => {
+  await page.goto('/delivery')
+  await page.getByRole('radio', { name: /Duplicate delivery instruction/ }).check()
+  await page.getByRole('button', { name: 'Run delivery' }).click()
+  await expect(page.getByTestId('delivery-kind')).toHaveText('DUPLICATE_SUPPRESSED', {
+    timeout: 20_000,
+  })
+  await expect(page.getByText('provider called no')).toBeVisible()
+})
+
+test('credential lab shows references and never secret values', async ({ page }) => {
+  await page.goto('/credentials')
+  await expect(page.getByRole('heading', { name: 'Credential & Consent' })).toBeVisible()
+  await expect(page.getByText('LOCAL SECURITY MODEL / SYNTHETIC DEMO').first()).toBeVisible()
+  await expect(page.getByText('covecrm-api').first()).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByText('ACTIVE').first()).toBeVisible()
+  await page.getByRole('radio', { name: /Valid credential \+ missing consent/ }).check()
+  await page.getByRole('button', { name: 'Evaluate credential boundary' }).click()
+  await expect(page.getByText('QUARANTINE').first()).toBeVisible({ timeout: 20_000 })
+  await expect(page.locator('body')).not.toContainText('TEST-SECRET-')
+})
+
 test('unknown routes show the 404 page', async ({ page }) => {
   await page.goto('/no-such-console-route')
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()

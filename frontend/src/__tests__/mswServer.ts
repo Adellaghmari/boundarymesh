@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
-import { allowResponse } from './fixtures'
+import { allowResponse, credentialCatalog, deliverySuccess, quarantineItem } from './fixtures'
 
 export const handlers = [
   http.get('/api/v1/health', () =>
@@ -132,6 +132,188 @@ export const handlers = [
         transformation_count: 2,
       },
       transformed_payload: '{"email":"[REDACTED]"}',
+    }),
+  ),
+  http.post('/api/v1/dev/delivery-lab/:scenario', ({ params }) => {
+    const scenario = String(params.scenario)
+    if (scenario === 'credential-missing') {
+      return HttpResponse.json({
+        ...deliverySuccess,
+        decision: {
+          ...deliverySuccess.decision,
+          outcome: 'QUARANTINE',
+          applied_controls: {
+            ...deliverySuccess.decision.applied_controls,
+            CREDENTIAL_RESOLVABILITY: 'FAIL',
+          },
+        },
+        instruction: null,
+        delivery: {
+          ...deliverySuccess.delivery,
+          kind: 'NOT_ATTEMPTED',
+          route_id: null,
+          connector_id: null,
+          provider_called: false,
+          explanation: 'QUARANTINE before delivery never reaches Camel.',
+        },
+        credential: {
+          reference: null,
+          status: 'FAIL',
+          explanation: 'Credential reference is missing.',
+        },
+        quarantine: {
+          id: 'q-cred',
+          reason: 'CREDENTIAL_UNAVAILABLE',
+          status: 'OPEN',
+          attempts: 0,
+          eligible: true,
+          destination: 'COVECRM',
+        },
+      })
+    }
+    if (scenario === 'consent-missing') {
+      return HttpResponse.json({
+        ...deliverySuccess,
+        decision: { ...deliverySuccess.decision, outcome: 'QUARANTINE' },
+        instruction: null,
+        delivery: {
+          ...deliverySuccess.delivery,
+          kind: 'NOT_ATTEMPTED',
+          route_id: null,
+          connector_id: null,
+          provider_called: false,
+          explanation: 'QUARANTINE before delivery never reaches Camel.',
+        },
+        consent: {
+          id: null,
+          status: 'MISSING',
+          permissions: [],
+          explanation: 'Connector permission is not granted.',
+        },
+        quarantine: {
+          id: 'q-consent',
+          reason: 'CONSENT_INVALID',
+          status: 'OPEN',
+          attempts: 0,
+          eligible: true,
+          destination: 'RIVERTIDE',
+        },
+      })
+    }
+    if (scenario === 'circuit-open') {
+      return HttpResponse.json({
+        ...deliverySuccess,
+        decision: {
+          ...deliverySuccess.decision,
+          outcome: 'QUARANTINE',
+          applied_controls: {
+            ...deliverySuccess.decision.applied_controls,
+            CONNECTOR_SAFETY: 'UNAVAILABLE',
+          },
+        },
+        instruction: null,
+        delivery: {
+          ...deliverySuccess.delivery,
+          kind: 'NOT_ATTEMPTED',
+          route_id: null,
+          connector_id: null,
+          circuit_state: 'OPEN',
+          provider_called: false,
+        },
+        quarantine: {
+          id: 'q-circuit',
+          reason: 'CONNECTOR_UNAVAILABLE',
+          status: 'OPEN',
+          attempts: 0,
+          eligible: true,
+          destination: 'COVECRM',
+        },
+      })
+    }
+    if (scenario === 'server-error') {
+      return HttpResponse.json({
+        ...deliverySuccess,
+        delivery: {
+          ...deliverySuccess.delivery,
+          kind: 'QUARANTINED',
+          attempt_count: 3,
+          provider_category: 'TEMPORARY_FAILURE',
+          http_status: 503,
+          explanation: 'Bounded retries exhausted.',
+        },
+        quarantine: {
+          id: 'q-503',
+          reason: 'DELIVERY_RETRIES_EXHAUSTED',
+          status: 'OPEN',
+          attempts: 0,
+          eligible: true,
+          destination: 'COVECRM',
+        },
+      })
+    }
+    if (scenario === 'duplicate') {
+      return HttpResponse.json({
+        ...deliverySuccess,
+        delivery: {
+          ...deliverySuccess.delivery,
+          kind: 'DUPLICATE_SUPPRESSED',
+          provider_called: false,
+          explanation: 'Idempotent consumer recognized a duplicate delivery instruction.',
+        },
+      })
+    }
+    return HttpResponse.json(deliverySuccess)
+  }),
+  http.get('/api/v1/dev/credential-lab', () => HttpResponse.json(credentialCatalog)),
+  http.post('/api/v1/dev/credential-lab/rotate/covecrm', () =>
+    HttpResponse.json({
+      ...credentialCatalog,
+      credentials: [
+        ...credentialCatalog.credentials,
+        {
+          id: 'covecrm-api',
+          version: '3',
+          status: 'ACTIVE',
+          destination: 'COVECRM',
+          connector: 'covecrm',
+          rotated_at: '2026-09-10T00:00:00Z',
+        },
+      ],
+    }),
+  ),
+  http.post('/api/v1/dev/credential-lab/:scenario', ({ params }) => {
+    const scenario = String(params.scenario)
+    const outcome =
+      scenario === 'transformed-delivery' || scenario === 'credential-rotated' ? 'ALLOW' : 'QUARANTINE'
+    return HttpResponse.json({
+      ...allowResponse,
+      outcome,
+      applied_controls: {
+        ...allowResponse.applied_controls,
+        CREDENTIAL_RESOLVABILITY: scenario.startsWith('credential') && scenario !== 'credential-rotated' ? 'FAIL' : 'PASS',
+      },
+    })
+  }),
+  http.get('/api/v1/quarantine', () =>
+    HttpResponse.json({
+      banner: 'LOCAL / SYNTHETIC SESSION DATA. Not Firestore. Does not survive restart.',
+      count: 1,
+      items: [quarantineItem],
+    }),
+  ),
+  http.get('/api/v1/quarantine/:id', () => HttpResponse.json(quarantineItem)),
+  http.post('/api/v1/quarantine/:id/reprocess', () =>
+    HttpResponse.json({
+      ...deliverySuccess,
+      delivery: { ...deliverySuccess.delivery, kind: 'DELIVERED' },
+      quarantine: {
+        id: quarantineItem.id,
+        reason: quarantineItem.reason,
+        status: 'RESOLVED',
+        attempts: 1,
+        eligible: false,
+        destination: 'COVECRM',
+      },
     }),
   ),
   http.post('/api/v1/dev/webhook-lab/:scenario', () =>

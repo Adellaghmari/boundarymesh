@@ -86,3 +86,69 @@ export const CROSSING_LAB_SCENARIOS = [
     summary: 'Contract-valid payload. Critical egress deny. REJECT.',
   },
 ] as const
+
+export const DELIVERY_LAB_SCENARIOS = [
+  {
+    id: 'transformed-delivery',
+    label: 'Successful transformed delivery',
+    summary: 'Allow with redaction, credential v2, consent granted, Camel Lumenway route.',
+  },
+  {
+    id: 'credential-missing',
+    label: 'Missing credential',
+    summary: 'Consent exists. Credential reference is missing. No provider call.',
+  },
+  {
+    id: 'consent-missing',
+    label: 'Missing consent',
+    summary: 'Credential exists. Connector permission is missing. No provider call.',
+  },
+  {
+    id: 'circuit-open',
+    label: 'Circuit open',
+    summary: 'Connector safety UNAVAILABLE. Delivery is not attempted.',
+  },
+  {
+    id: 'server-error',
+    label: 'Provider outage',
+    summary: 'Bounded 503 retries, then quarantine. Worker + WireMock.',
+  },
+  {
+    id: 'duplicate',
+    label: 'Duplicate delivery instruction',
+    summary: 'Same instruction delivered twice. Second result is DUPLICATE_SUPPRESSED.',
+  },
+] as const
+
+export const CREDENTIAL_LAB_SCENARIOS = [
+  {
+    id: 'transformed-delivery',
+    label: 'Active credential + valid consent',
+    summary: 'Reference resolves. Operation is permitted.',
+  },
+  {
+    id: 'credential-missing',
+    label: 'Missing credential',
+    summary: 'No resolvable reference. QUARANTINE.',
+  },
+  {
+    id: 'credential-revoked',
+    label: 'Revoked credential version',
+    summary: 'Retired version is not used. QUARANTINE.',
+  },
+  {
+    id: 'credential-rotated',
+    label: 'Rotated credential',
+    summary: 'New deliveries use the active version reference only.',
+  },
+  {
+    id: 'consent-missing',
+    label: 'Valid credential + missing consent',
+    summary: 'Secret availability is not permission.',
+  },
+  {
+    id: 'consent-revoked',
+    label: 'Consent revoked',
+    summary: 'Previously granted connector permission is no longer valid.',
+  },
+] as const
