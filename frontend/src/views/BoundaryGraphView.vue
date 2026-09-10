@@ -8,7 +8,8 @@ import { CONTROL_CATALOG } from '@/domain/labels'
 import { useEvidenceStore } from '@/stores/evidence'
 
 const LAYOUT: Record<string, { x: number; y: number }> = {
-  QUAYFORGE: { x: 90, y: 70 },
+  QUAYFORGE: { x: 90, y: 50 },
+  M365: { x: 90, y: 140 },
   HELIX365: { x: 90, y: 230 },
   BOUNDARYMESH: { x: 360, y: 150 },
   COVECRM: { x: 640, y: 50 },

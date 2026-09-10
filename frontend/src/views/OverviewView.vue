@@ -22,8 +22,9 @@ import { OUTCOME_COPY } from '@/domain/labels'
         BoundaryMesh sits in front of system-to-system integrations. It is not an assistant, not a
         release board, and not a generic API client. A transaction is authenticated, authorized,
         verified, contract-checked, and data-governed before a delivery instruction can reach Apache
-        Camel. Credential and consent checks sit in front of the connector. Microsoft Entra, Graph,
-        Secret Manager, and Pub/Sub remain planned. A valid identity is not an automatic crossing.
+        Camel. Credential and consent checks sit in front of the connector. Microsoft Entra OIDC and
+        Microsoft Graph Calendar are implemented locally as a harness, with
+        live tenant verification only when configured. Secret Manager and Pub/Sub remain planned. A valid identity is not an automatic crossing.
       </p>
     </section>
 

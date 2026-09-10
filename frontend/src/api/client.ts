@@ -22,6 +22,15 @@ function createRequestId(): string {
   return `bm-${Date.now()}`
 }
 
+function readCookie(name: string): string | undefined {
+  if (typeof document === 'undefined') {
+    return undefined
+  }
+  const prefix = `${name}=`
+  const found = document.cookie.split('; ').find((part) => part.startsWith(prefix))
+  return found ? decodeURIComponent(found.slice(prefix.length)) : undefined
+}
+
 export function resolveApiUrl(path: string, baseUrl = frontendEnv.apiBaseUrl): string {
   if (!path.startsWith('/')) {
     throw new BoundaryMeshApiError('malformed', 'API paths must start with /.')
@@ -112,6 +121,10 @@ export class BoundaryMeshApiClient {
         Accept: 'application/json',
         'X-Request-Id': requestId,
       }
+      const csrf = readCookie('XSRF-TOKEN')
+      if (csrf) {
+        headers['X-XSRF-TOKEN'] = csrf
+      }
       if (options.body !== undefined) {
         headers['Content-Type'] = 'application/json'
       }
@@ -122,6 +135,7 @@ export class BoundaryMeshApiClient {
       const response = await fetch(resolveApiUrl(path, this.baseUrl), {
         method: options.method ?? 'GET',
         headers,
+        credentials: 'same-origin',
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
         signal: controller.signal,
       })

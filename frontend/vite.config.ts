@@ -7,6 +7,9 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 const proxy = {
   '/api': { target: 'http://127.0.0.1:8080', changeOrigin: true },
   '/v3': { target: 'http://127.0.0.1:8080', changeOrigin: true },
+  '/oauth2': { target: 'http://127.0.0.1:8080', changeOrigin: true },
+  '/login': { target: 'http://127.0.0.1:8080', changeOrigin: true },
+  '/logout': { target: 'http://127.0.0.1:8080', changeOrigin: true },
 }
 
 export default defineConfig({

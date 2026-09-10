@@ -1,7 +1,7 @@
 import type { CapabilityClaim } from '@/domain/types'
 
 /**
- * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 13.
+ * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 14.
  * Not fetched from Git. Do not invent progress.
  */
 export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
@@ -28,7 +28,7 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     label: 'Identity Federation Gateway',
     status: 'TESTED',
     notes:
-      'Local JWT/JWKS resource server and AuthN vs AuthZ evidence. Microsoft Entra remains PLANNED.',
+      'Local JWT/JWKS resource server plus Entra OIDC BFF architecture. Live tenant login is not claimed until configured.',
   },
   {
     id: 'webhook-defense',
@@ -89,8 +89,9 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
   {
     id: 'm365-graph',
     label: 'M365 / Graph',
-    status: 'PLANNED',
-    notes: 'Helix 365 is fictional demo context. Graph is not integrated.',
+    status: 'TESTED',
+    notes:
+      'Outlook Calendar connector through Graph SDK + contract harness. Live tenant not claimed. Graph subscriptions remain PLANNED.',
   },
   {
     id: 'gcp',

@@ -32,14 +32,14 @@ import TruthBanner from '@/components/TruthBanner.vue'
           <li>Local quarantine and admin reprocess</li>
           <li>Tamper-evident SHA-256 audit chain</li>
           <li>Local ECDSA P-256 exchange attestations</li>
-          <li>State-driven Integration Boundary Graph</li>
+          <li>Microsoft Entra OIDC session architecture + Graph Calendar harness</li>
         </ul>
       </article>
       <article class="card stack">
         <h2>Planned</h2>
         <ul>
-          <li>Microsoft Entra ID</li>
-          <li>Microsoft Graph</li>
+          <li>Live Microsoft tenant verification (when credentials exist)</li>
+          <li>Microsoft Graph change notifications</li>
           <li>GCP, Pub/Sub, Firestore</li>
           <li>Secret Manager, Cloud KMS</li>
           <li>Pulumi</li>

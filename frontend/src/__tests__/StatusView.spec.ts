@@ -9,7 +9,7 @@ describe('StatusView', () => {
     expect(wrapper.text()).toContain('TESTED')
     expect(wrapper.text()).toContain('Identity Federation Gateway')
     expect(wrapper.text()).toContain('M365 / Graph')
-    expect(wrapper.text()).toContain('PLANNED')
+    expect(wrapper.text()).toContain('TESTED')
     expect(wrapper.findAll('[data-status="LIVE VERIFIED"]')).toHaveLength(0)
   })
 })

@@ -387,6 +387,47 @@ export const handlers = [
   ),
   http.get('/api/v1/attestations/:id', () => HttpResponse.json(attestationItem)),
   http.get('/api/v1/boundary-graph', () => HttpResponse.json(boundaryGraph)),
+  http.get('/api/v1/admin/session', () =>
+    HttpResponse.json({
+      entra_enabled: false,
+      authenticated: false,
+      login_url: '/oauth2/authorization/entra',
+      logout_url: '/logout',
+      graph_mode: 'HARNESS',
+      graph_mode_label: 'Microsoft Graph contract harness',
+      role_label: 'Recruiter',
+      provider: 'NONE',
+      subject_present: false,
+    }),
+  ),
+  http.get('/api/v1/microsoft/connector', () =>
+    HttpResponse.json({
+      mode: 'CONTRACT_HARNESS',
+      live: false,
+      permission: 'Calendars.Read',
+      permission_kind: 'delegated',
+      banner: 'CONTRACT HARNESS. Microsoft Graph Calendar is exercised through BoundaryMesh contracts without a live tenant.',
+      subscriptions: 'PLANNED',
+      entra_configured: false,
+    }),
+  ),
+  http.post('/api/v1/dev/microsoft-lab/harness-crossing', () =>
+    HttpResponse.json({
+      mode: 'CONTRACT_HARNESS',
+      live: false,
+      provider_status: 200,
+      connector_ok: true,
+      count: 2,
+      boundary_outcome: 'ALLOW_WITH_TRANSFORMATION',
+      contract_id: 'm365-calendar',
+      contract_version: 'v1',
+      egress_policy_id: 'm365-calendar-egress',
+      transformation_count: 2,
+      attestation_id: 'att-m365-1',
+      audit_chain_id: 'm365-calendar',
+      banner: 'CONTRACT HARNESS. Subjects and attendees are not shown.',
+    }),
+  ),
   http.get('/api/v1/dev/audit-lab/tamper-demo', () =>
     HttpResponse.json({
       banner: 'SYNTHETIC DEMO. Isolated copy only. The live audit repository was not mutated.',

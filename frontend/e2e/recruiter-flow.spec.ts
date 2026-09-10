@@ -190,11 +190,10 @@ test('boundary graph, audit chain, and attestation follow a real crossing', asyn
   await expect(page.getByText('ALLOW_WITH_TRANSFORMATION').first()).toBeVisible()
   await expect(page.getByText('DELIVERED').first()).toBeVisible()
   await expect(page.getByLabel('Enforcement stages')).toContainText('Identity')
-  const attestationHref = await page
-    .getByTestId('edge-detail')
-    .locator('a[href^="/attestations/"]')
-    .getAttribute('href')
-  expect(attestationHref).toBeTruthy()
+  const attestationLink = page.getByTestId('edge-detail').locator('a[href^="/attestations/"]')
+  await expect(attestationLink).toBeVisible()
+  const attestationHref = attestationLink
+  await expect(attestationHref).toHaveAttribute('href', )
   await page.getByTestId('edge-detail').getByRole('link', { name: 'quayforge-orders' }).click()
   await expect(page.getByRole('heading', { name: /Audit chain/ })).toBeVisible()
   await page.getByRole('button', { name: 'Verify chain' }).click()
@@ -206,7 +205,7 @@ test('boundary graph, audit chain, and attestation follow a real crossing', asyn
   await page.goto('/attestations')
   await expect(page.getByRole('heading', { name: 'Exchange Attestations' })).toBeVisible()
   await expect(page.getByRole('link', { name: /QUAYFORGE → LUMENWAY/ }).first()).toBeVisible()
-  await page.goto(attestationHref!)
+  await page.goto(attestationHref as string)
   await expect(page.getByTestId('attestation-status')).toContainText('SIGNED')
   await page.getByRole('button', { name: 'Verify signature' }).click()
   await expect(page.getByTestId('attestation-verify')).toContainText('VALID', { timeout: 20_000 })
@@ -225,4 +224,45 @@ test('graph reflects quarantine and replay reject', async ({ page }) => {
   await expect(page.getByTestId('edge-status')).toContainText('BLOCKED', { timeout: 20_000 })
   await expect(page.getByTestId('edge-detail')).toContainText('REJECT')
   await expect(page.getByTestId('edge-detail')).toContainText('NOT_ATTEMPTED')
+})
+
+test('premium navigation reaches labs, operations, evidence, and graph', async ({ page }) => {
+  await page.goto('/')
+  const primary = page.locator('nav[aria-label="Primary"]')
+  await expect(primary.locator('a[aria-current="page"]')).toContainText('Overview')
+  await primary.getByRole('link', { name: 'Boundary Events' }).click()
+  await expect(page.getByRole('heading', { name: 'Boundary events' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Labs' }).click()
+  await page.getByRole('menuitem', { name: /Identity Lab/ }).click()
+  await expect(page).toHaveURL(/\/identity/)
+
+  await page.getByRole('button', { name: 'Operations' }).click()
+  await page.getByRole('menuitem', { name: /Quarantine/ }).click()
+  await expect(page).toHaveURL(/\/quarantine/)
+
+  await page.getByRole('button', { name: 'Evidence' }).click()
+  await page.getByRole('menuitem', { name: /Attestations/ }).click()
+  await expect(page).toHaveURL(/\/attestations/)
+
+  await primary.getByRole('link', { name: 'Boundary Graph' }).click()
+  await expect(page.getByRole('heading', { name: 'Integration Boundary Graph' })).toBeVisible()
+
+  await page.goto('/connections')
+  await expect(page.getByTestId('m365-mode')).toContainText('CONTRACT_HARNESS')
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Connections' })).toBeVisible()
+})
+
+test('mobile navigation lists grouped routes', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  const menu = page.getByRole('button', { name: 'Open navigation' })
+  await expect(menu).toBeVisible()
+  await expect(menu).toBeInViewport()
+  await menu.click()
+  await expect(page.getByRole('heading', { name: 'Navigate' })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Mobile' }).getByTestId('auth-mode')).toBeVisible()
+  await page.getByRole('link', { name: 'Quarantine' }).click()
+  await expect(page).toHaveURL(/\/quarantine/)
 })
