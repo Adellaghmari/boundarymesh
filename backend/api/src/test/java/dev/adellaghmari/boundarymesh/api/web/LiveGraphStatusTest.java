@@ -23,4 +23,10 @@ class LiveGraphStatusTest {
         assertThat(LiveGraphStatus.pullMode(false, 200)).isEqualTo(LiveGraphStatus.CONTRACT_HARNESS);
         assertThat(LiveGraphStatus.pullLive(false, 200)).isFalse();
     }
+
+    @Test
+    void emptyCalendarDoesNotBlockLiveVerified() {
+        assertThat(LiveGraphStatus.pullLive(true, 200)).isTrue();
+        assertThat(LiveGraphStatus.connectorMode(true)).isEqualTo(LiveGraphStatus.LIVE_CONFIGURED);
+    }
 }

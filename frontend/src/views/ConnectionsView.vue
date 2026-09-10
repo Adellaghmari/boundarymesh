@@ -40,8 +40,10 @@ async function runHarness(): Promise<void> {
         Outlook Calendar is read through Microsoft Graph, normalized to
         <code>m365-calendar/v1</code>, then evaluated by the Data Boundary Firewall
         (<code>m365-calendar-egress/v1</code>). Delegated permission:
-        <strong>Calendars.Read</strong>. Live verification requires a Microsoft Graph HTTP 2xx.
-        A personal Microsoft account is not an enterprise Exchange Online mailbox.
+        <strong>Calendars.Read</strong>. This page reads GET connector status and does
+        not call Graph. <code>LIVE_VERIFIED</code> is returned only by the Operator
+        calendar pull after Microsoft Graph HTTP 2xx. A personal Microsoft account is
+        not an enterprise Exchange Online mailbox. Helix 365 remains SYNTHETIC DEMO.
         Graph change notifications remain planned.
       </p>
       <dl class="meta">

@@ -2,6 +2,8 @@
 
 Every scenario is **deterministic and reproducible** via seed id. Label **SYNTHETIC DEMO** unless a later live Graph row is proven.
 
+Live Microsoft Graph calendar pull (2026-09-10, local): Graph HTTP 200 with `count=0` is **LIVE PROVIDER VERIFIED**, not live event-payload transformation. Helix 365 remains SYNTHETIC DEMO.
+
 | ID | Scenario | Expected outcome |
 | --- | --- | --- |
 | S01 | Valid **local** machine JWT, all controls pass | ALLOW — Identity Lab |

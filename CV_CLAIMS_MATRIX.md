@@ -1,8 +1,8 @@
 # CV claims matrix
 
-**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 14.
+**Rule:** promote only what is actually supported. `LIVE VERIFIED LOCALLY` requires dated evidence in PROJECT_STATUS.md.
 
-Statuses: `PLANNED` → `IMPLEMENTED` → `TESTED` → `LIVE VERIFIED`
+Statuses: `PLANNED` → `IMPLEMENTED` → `TESTED` → `LIVE VERIFIED LOCALLY` / `LIVE VERIFIED`
 
 This is portfolio work, not professional employment.
 
@@ -25,15 +25,15 @@ This is portfolio work, not professional employment.
 | Spring Boot 4.1.1 | **TESTED** | Context load + HTTP tests |
 | Spring Security (local filter chain) | **TESTED** | Two chains: admin session CSRF + bearer JWT resource server |
 | Spring Security OAuth2 resource server | **TESTED** | Local JWT decoder + JWKS. Machine identity unchanged |
-| Spring Security OIDC BFF | **TESTED** | Authorization Code `oauth2Login` when Entra is configured; disabled when blank |
-| Identity Federation Gateway | **TESTED** | Local issuer TESTED. Entra OIDC TESTED without live tenant |
+| Spring Security OIDC BFF | **LIVE VERIFIED LOCALLY** | Authorization Code `oauth2Login`, server-side session, SPA CSRF. Vue never receives Microsoft tokens |
+| Identity Federation Gateway | **TESTED** / **LIVE VERIFIED LOCALLY** | Local issuer TESTED. Operator Entra OIDC login LIVE VERIFIED LOCALLY (common authority, personal Microsoft account) |
 | AuthN vs AuthZ evidence | **TESTED** | HTTP 401/403 and domain identity/authorization controls |
 | JWT validation (iss/aud/exp/nbf/sig) | **TESTED** | Asymmetric RS256 |
 | JWKS validation / key rotation tests | **TESTED** | In-process JWKS |
 | Scope/role authorization | **TESTED** | `boundary.read` / `boundary.evaluate` / `boundary.admin` / `SCOPE_Calendars.Read` |
-| Microsoft Entra ID (admin) | **TESTED** | Implemented + security tests. LIVE VERIFIED LOCALLY blocked (no tenant) |
+| Microsoft Entra ID (admin) | **LIVE VERIFIED LOCALLY** | Common v2 authority. Work/school and personal Microsoft accounts. Not an enterprise Exchange Online mailbox |
 | Entra client-credentials JWT | PLANNED | Machine identity remains the local resource server |
-| OIDC Authorization Code / browser login | **TESTED** | Spring Security oauth2Login; live tenant blocked |
+| OIDC Authorization Code / browser login | **LIVE VERIFIED LOCALLY** | Human Operator browser; server-side session; delegated `Calendars.Read` |
 | Webhook HMAC-SHA256 | **TESTED** | QuayForge raw-body contract |
 | Constant-time signature comparison | **TESTED** | `MessageDigest.isEqual` |
 | Timestamp freshness | **TESTED** | ±300s via `Clock` |
@@ -42,10 +42,10 @@ This is portfolio work, not professional employment.
 | Replay vs duplicate distinction | **TESTED** | Same nonce ≠ same event_id |
 | Graph notification validation (harness) | PLANNED | |
 | Graph subscription lifecycle | PLANNED | |
-| Microsoft Graph Calendar connector | **TESTED** | Bounded calendarView via SDK adapter + WireMock harness. Not LIVE |
-| Microsoft Graph Java SDK | **TESTED** | `com.microsoft.graph:microsoft-graph:6.67.0` used in `MicrosoftGraphCalendarAdapter` |
-| Calendars.Read least privilege | **TESTED** | Delegated permission mapped to ConsentGrant. Not a standalone skill |
-| Microsoft 365 integration | **TESTED** | Normalized `m365-calendar/v1` through engine. Live tenant blocked |
+| Microsoft Graph Calendar connector | **LIVE VERIFIED LOCALLY** | Real Graph `calendarView` HTTP 200 via `MicrosoftGraphCalendarAdapter`. Empty calendar (`count=0`) is provider-verified, not event-transformation-verified |
+| Microsoft Graph Java SDK | **LIVE VERIFIED LOCALLY** | `com.microsoft.graph:microsoft-graph:6.67.0` used on the live 2xx path |
+| Calendars.Read least privilege | **LIVE VERIFIED LOCALLY** | Delegated `Calendars.Read` only. `SCOPE_Calendars.Read` still required for admin pull |
+| Microsoft 365 integration | **LIVE VERIFIED LOCALLY** | Live Microsoft Graph calendar integration using delegated `Calendars.Read` with a personal Microsoft account, server-side OIDC session handling, and BoundaryMesh security controls. Helix 365 remains SYNTHETIC DEMO. Not an enterprise Exchange Online mailbox |
 | Apache Camel 4.22 routes | **TESTED** | Worker-only 4.22.0. API artifact has no Camel |
 | EIP: Content-Based Router | **TESTED** | Destination discriminator |
 | EIP: Message Translator | **TESTED** | Lumenway fulfillment mapping |
@@ -113,6 +113,6 @@ This is portfolio work, not professional employment.
 | Public recruiter demo | PLANNED | |
 | Protected admin mutations | **TESTED** | Session CSRF on `/api/v1/admin/**`. Local `boundary.admin` reprocess remains |
 | Self-dogfood Git SHA / revision | PLANNED | |
-| LIVE Graph tenant call | PLANNED | Explicitly not claimed. Harness is TESTED |
+| LIVE Graph tenant call | **LIVE VERIFIED LOCALLY** | Operator `POST /api/v1/admin/microsoft/calendar/pull` returned Graph HTTP 200. Contract harness is not this evidence |
 
-No row may move to LIVE VERIFIED without dated evidence in PROJECT_STATUS.md.
+No row may move to LIVE VERIFIED or LIVE VERIFIED LOCALLY without dated evidence in PROJECT_STATUS.md.

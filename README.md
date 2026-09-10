@@ -58,7 +58,7 @@ Phase 10 makes quarantine a real **recovery workflow** with admin-scoped reproce
 Phase 11 adds a **SHA-256 tamper-evident audit chain** (in-memory, not immutable).  
 Phase 12 signs a **Cryptographic Exchange Attestation** with local ECDSA P-256 (Cloud KMS PLANNED).  
 Phase 13 renders an **Integration Boundary Graph** from live local repositories (not a blast-radius graph).  
-Phase 14 adds a **premium navigation shell** plus **Microsoft Entra OIDC BFF architecture** and a **bounded Outlook Calendar Graph connector** (contract harness TESTED; live tenant not claimed).
+Phase 14 adds a **premium navigation shell** plus **Microsoft Entra OIDC BFF** and a **bounded Outlook Calendar Graph connector**. Local live verification: delegated `Calendars.Read` with a personal Microsoft account (Graph HTTP 200, empty calendar). Helix 365 remains SYNTHETIC DEMO. Graph change notifications remain **PLANNED**.
 
 ### One-minute story
 
@@ -68,7 +68,7 @@ Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** Co
 
 A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Still **PLANNED:** live Microsoft tenant verification, Graph change notifications, GCP, Firestore, Pub/Sub, Secret Manager, Cloud KMS, Pulumi.
+Still **PLANNED:** Graph change notifications, GCP, Firestore, Pub/Sub, Secret Manager, Cloud KMS, Pulumi.
 
 ## Navigation
 
@@ -128,7 +128,7 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — NOT COMPLETE.** Phase 0–14 COMPLETE locally except live Microsoft tenant verification. Identity #1 local JWT **TESTED**; Entra OIDC **TESTED** (harness); live Entra **BLOCKED** until credentials exist. Webhook #2 generic HMAC **TESTED**; Graph subscriptions **PLANNED**. Contract Drift #3 TESTED. Data Boundary #4 TESTED (including `m365-calendar-egress/v1`). Credential & Consent #5 local model TESTED with delegated `Calendars.Read` mapped. Quarantine #6 local TESTED. Tamper-Evident Audit Chain TESTED. Cryptographic Exchange Attestation TESTED locally. Integration Boundary Graph TESTED (includes Microsoft 365 Calendar node). Graph Java SDK 6.67.0 used in the live adapter. Nothing is LIVE VERIFIED. No GCP.
+**PROJECT C — NOT COMPLETE.** Phase 14B local Microsoft Graph provider verification is recorded. Identity #1 local JWT **TESTED**; Entra OIDC Operator login **LIVE VERIFIED LOCALLY** (common authority, personal Microsoft account). Webhook #2 generic HMAC **TESTED**; Graph subscriptions **PLANNED**. Contract Drift #3 TESTED. Data Boundary #4 TESTED (including `m365-calendar-egress/v1`; live event transformation not verified because the live calendar was empty). Credential & Consent #5 local model TESTED with delegated `Calendars.Read` **LIVE VERIFIED LOCALLY**. Quarantine #6 local TESTED. Tamper-Evident Audit Chain TESTED (`CONNECTOR_READ` for the live Graph call). Cryptographic Exchange Attestation TESTED locally (not created for the empty live pull). Integration Boundary Graph TESTED (Microsoft 365 Calendar edge remains CONFIGURED, not OBSERVED, for the empty live pull). Graph Java SDK **LIVE VERIFIED LOCALLY**. No GCP.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 
