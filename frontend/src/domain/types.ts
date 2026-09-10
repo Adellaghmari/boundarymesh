@@ -266,7 +266,125 @@ export interface DeliveryLabRecord {
   credential: CredentialEvidenceView
   consent: ConsentEvidenceView
   quarantine?: QuarantineSummaryView | null
+  evidence?: EvidenceSummaryView | null
   requestId: string
+}
+
+export interface EvidenceSummaryView {
+  attestationId: string
+  attestationStatus: string
+  auditChainId: string
+}
+
+export interface AuditChainListRecord {
+  banner: string
+  chains: string[]
+}
+
+export interface AuditEntryRecord {
+  sequence: number
+  occurredAt: string
+  eventType: string
+  attributes: Record<string, string>
+  previousHash: string
+  previousHashShort: string
+  currentHash: string
+  currentHashShort: string
+}
+
+export interface AuditChainRecord {
+  banner: string
+  chainId: string
+  entryCount: number
+  continuity: string
+  entries: AuditEntryRecord[]
+}
+
+export interface AuditVerifyRecord {
+  banner: string
+  chainId: string
+  status: string
+  entriesChecked: number
+  breakSequence: number | null
+  explanation: string
+}
+
+export interface AttestationRecord {
+  id: string
+  transactionId: string
+  integrationId: string
+  source: string
+  destination: string
+  boundaryOutcome: string
+  contractId: string | null
+  contractVersion: string | null
+  egressPolicyId: string | null
+  transformationCount: number
+  credentialReference: string | null
+  consentResult: string | null
+  connectorRoute: string | null
+  deliveryResult: string | null
+  auditChainId: string
+  auditSequence: number
+  auditHeadShort: string
+  algorithm: string
+  keyId: string
+  keyVersion: string
+  status: string
+  signaturePresent: boolean
+  controlResults: Record<string, string>
+  claim: string
+}
+
+export interface AttestationListRecord {
+  banner: string
+  items: AttestationRecord[]
+}
+
+export interface AttestationVerifyRecord {
+  id: string
+  status: string
+  explanation: string
+}
+
+export interface TamperDemoRecord {
+  banner: string
+  original: AuditVerifyRecord | AttestationVerifyRecord | null
+  tampered: AuditVerifyRecord | AttestationVerifyRecord | null
+}
+
+export interface BoundaryGraphNode {
+  id: string
+  label: string
+  kind: string
+  synthetic: boolean
+}
+
+export interface BoundaryGraphEdge {
+  id: string
+  source: string
+  destination: string
+  integrationId: string
+  identityMechanism: string
+  contractReference: string
+  egressPolicy: string
+  credentialReference: string
+  consentState: string
+  connectorRoute: string | null
+  status: string
+  configured: boolean
+  observed: boolean
+  recentOutcome: string | null
+  recentDelivery: string | null
+  quarantineCount: number
+  auditChainId: string
+  attestationId: string | null
+}
+
+export interface BoundaryGraphRecord {
+  banner: string
+  nodes: BoundaryGraphNode[]
+  edges: BoundaryGraphEdge[]
 }
 
 export interface CredentialCatalogRow {

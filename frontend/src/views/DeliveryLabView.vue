@@ -122,6 +122,10 @@ const decisionEvent = computed(() => {
             {{ lastDelivery.delivery?.attemptCount ?? 0 }} · HTTP
             {{ lastDelivery.delivery?.httpStatus ?? 'none' }}
           </p>
+          <p v-else-if="stage === 'Audit / Attestation'">
+            Chain {{ lastDelivery.evidence?.auditChainId ?? 'none' }} · attestation
+            {{ lastDelivery.evidence?.attestationStatus ?? 'none' }}
+          </p>
           <p v-else>
             {{ lastDelivery.delivery?.kind }} — {{ lastDelivery.delivery?.explanation }}
           </p>
@@ -143,6 +147,23 @@ const decisionEvent = computed(() => {
           eligible {{ lastDelivery.quarantine.eligible ? 'yes' : 'no' }}
         </p>
         <RouterLink :to="`/quarantine/${lastDelivery.quarantine.id}`">Open quarantine item</RouterLink>
+      </section>
+
+      <section v-if="lastDelivery.evidence" class="card stack">
+        <h2>Audit and attestation</h2>
+        <p>
+          {{ lastDelivery.evidence.attestationStatus }} on chain
+          {{ lastDelivery.evidence.auditChainId }}
+        </p>
+        <p>
+          <RouterLink :to="`/audit/${lastDelivery.evidence.auditChainId}`">Open audit chain</RouterLink>
+          ·
+          <RouterLink :to="`/attestations/${lastDelivery.evidence.attestationId}`">
+            Open attestation
+          </RouterLink>
+          ·
+          <RouterLink to="/boundary-graph">Open boundary graph</RouterLink>
+        </p>
       </section>
 
       <PayloadCompare

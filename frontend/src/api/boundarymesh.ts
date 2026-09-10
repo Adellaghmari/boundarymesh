@@ -1,5 +1,12 @@
 import { apiClient, type ApiResponse } from '@/api/client'
 import {
+  assertAttestation,
+  assertAttestationList,
+  assertAttestationVerify,
+  assertAuditChain,
+  assertAuditChainList,
+  assertAuditVerify,
+  assertBoundaryGraph,
   assertCredentialCatalog,
   assertDeliveryLabResponse,
   assertEvaluateResponse,
@@ -7,6 +14,13 @@ import {
   assertQuarantineList,
 } from '@/domain/mappers'
 import type {
+  AttestationListRecord,
+  AttestationRecord,
+  AttestationVerifyRecord,
+  AuditChainListRecord,
+  AuditChainRecord,
+  AuditVerifyRecord,
+  BoundaryGraphRecord,
   CredentialCatalog,
   DeliveryLabRecord,
   EvaluateRequest,
@@ -249,5 +263,70 @@ export async function runWebhookLab(scenario: string): Promise<ApiResponse<Evalu
       requestId: response.requestId,
       status: response.status,
     })
+  }
+}
+
+export async function fetchAuditChains(): Promise<AuditChainListRecord> {
+  const response = await apiClient.request<unknown>('/api/v1/audit/chains')
+  return assertAuditChainList(response.data)
+}
+
+export async function fetchAuditChain(integrationId: string): Promise<AuditChainRecord> {
+  const response = await apiClient.request<unknown>(`/api/v1/audit/chains/${integrationId}`)
+  return assertAuditChain(response.data)
+}
+
+export async function verifyAuditChain(integrationId: string): Promise<AuditVerifyRecord> {
+  const response = await apiClient.request<unknown>(`/api/v1/audit/chains/${integrationId}/verify`)
+  return assertAuditVerify(response.data)
+}
+
+export async function fetchAttestations(): Promise<AttestationListRecord> {
+  const response = await apiClient.request<unknown>('/api/v1/attestations')
+  return assertAttestationList(response.data)
+}
+
+export async function fetchAttestation(id: string): Promise<AttestationRecord> {
+  const response = await apiClient.request<unknown>(`/api/v1/attestations/${id}`)
+  return assertAttestation(response.data)
+}
+
+export async function verifyAttestation(id: string): Promise<AttestationVerifyRecord> {
+  const response = await apiClient.request<unknown>(`/api/v1/attestations/${id}/verify`, {
+    method: 'POST',
+  })
+  return assertAttestationVerify(response.data)
+}
+
+export async function fetchBoundaryGraph(): Promise<BoundaryGraphRecord> {
+  const response = await apiClient.request<unknown>('/api/v1/boundary-graph')
+  return assertBoundaryGraph(response.data)
+}
+
+export async function fetchAuditTamperDemo(): Promise<{
+  banner: string
+  original: AuditVerifyRecord
+  tampered: AuditVerifyRecord
+}> {
+  const response = await apiClient.request<unknown>('/api/v1/dev/audit-lab/tamper-demo')
+  const body = response.data as Record<string, unknown>
+  return {
+    banner: typeof body.banner === 'string' ? body.banner : 'SYNTHETIC DEMO',
+    original: assertAuditVerify(body.original),
+    tampered: assertAuditVerify(body.tampered),
+  }
+}
+
+export async function fetchAttestationTamperDemo(): Promise<{
+  banner: string
+  original: AttestationVerifyRecord | null
+  tampered: AttestationVerifyRecord | null
+}> {
+  const response = await apiClient.request<unknown>('/api/v1/dev/attestation-lab/tamper-demo')
+  const body = response.data as Record<string, unknown>
+  return {
+    banner: typeof body.banner === 'string' ? body.banner : 'SYNTHETIC DEMO',
+    original: body.original ? assertAttestationVerify(body.original) : null,
+    tampered: body.tampered ? assertAttestationVerify(body.tampered) : null,
   }
 }

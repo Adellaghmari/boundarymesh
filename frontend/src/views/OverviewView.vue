@@ -33,7 +33,8 @@ import { OUTCOME_COPY } from '@/domain/labels'
       <h2>Deterministic pipeline</h2>
       <p class="muted">
         Every crossing is evaluated in this order. Credential and consent checks, Camel delivery,
-        and quarantine recovery are local. Cryptographic attestations remain planned.
+        quarantine recovery, tamper-evident audit, and local cryptographic attestations are
+        implemented locally. Cloud KMS and Firestore remain planned.
       </p>
       <PipelineSteps />
     </section>

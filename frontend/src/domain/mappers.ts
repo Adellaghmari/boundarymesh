@@ -16,9 +16,20 @@ import type {
   DeliveryView,
   EvaluateRequest,
   EvaluateResponse,
+  EvidenceSummaryView,
   QuarantineItemRecord,
   QuarantineListRecord,
   QuarantineSummaryView,
+  AttestationListRecord,
+  AttestationRecord,
+  AttestationVerifyRecord,
+  AuditChainListRecord,
+  AuditChainRecord,
+  AuditEntryRecord,
+  AuditVerifyRecord,
+  BoundaryGraphEdge,
+  BoundaryGraphNode,
+  BoundaryGraphRecord,
 } from '@/domain/types'
 import {
   BOUNDARY_OUTCOMES,
@@ -415,7 +426,20 @@ export function assertDeliveryLabResponse(value: unknown, requestId: string): De
     credential: parseCredentialEvidence(body.credential),
     consent: parseConsentEvidence(body.consent),
     quarantine: parseQuarantineSummary(body.quarantine),
+    evidence: parseEvidence(body.evidence),
     requestId,
+  }
+}
+
+function parseEvidence(raw: unknown): EvidenceSummaryView | null {
+  const body = asRecord(raw)
+  if (!body || typeof body.attestation_id !== 'string') {
+    return null
+  }
+  return {
+    attestationId: body.attestation_id,
+    attestationStatus: typeof body.attestation_status === 'string' ? body.attestation_status : '',
+    auditChainId: typeof body.audit_chain_id === 'string' ? body.audit_chain_id : '',
   }
 }
 
@@ -588,5 +612,206 @@ function parseAuthorization(raw: unknown): EvaluateResponse['authorization'] {
       ? body.grantedScopes.filter((item): item is string => typeof item === 'string')
       : [],
     explanation: typeof body.explanation === 'string' ? body.explanation : null,
+  }
+}
+
+export function assertAuditChainList(value: unknown): AuditChainListRecord {
+  const body = asRecord(value)
+  if (!body) {
+    throw new Error('MALFORMED_RESPONSE')
+  }
+  assertNoSecretMarker(body)
+  return {
+    banner: typeof body.banner === 'string' ? body.banner : 'LOCAL / SYNTHETIC SESSION DATA',
+    chains: Array.isArray(body.chains)
+      ? body.chains.filter((item): item is string => typeof item === 'string')
+      : [],
+  }
+}
+
+export function assertAuditChain(value: unknown): AuditChainRecord {
+  const body = asRecord(value)
+  if (!body || typeof body.chain_id !== 'string') {
+    throw new Error('MALFORMED_RESPONSE')
+  }
+  assertNoSecretMarker(body)
+  return {
+    banner: typeof body.banner === 'string' ? body.banner : 'LOCAL / SYNTHETIC SESSION DATA',
+    chainId: body.chain_id,
+    entryCount: typeof body.entry_count === 'number' ? body.entry_count : 0,
+    continuity: typeof body.continuity === 'string' ? body.continuity : '',
+    entries: Array.isArray(body.entries) ? body.entries.flatMap((item) => parseAuditEntry(item) ?? []) : [],
+  }
+}
+
+export function assertAuditVerify(value: unknown): AuditVerifyRecord {
+  const body = asRecord(value)
+  if (!body || typeof body.status !== 'string') {
+    throw new Error('MALFORMED_RESPONSE')
+  }
+  return {
+    banner: typeof body.banner === 'string' ? body.banner : '',
+    chainId: typeof body.chain_id === 'string' ? body.chain_id : '',
+    status: body.status,
+    entriesChecked: typeof body.entries_checked === 'number' ? body.entries_checked : 0,
+    breakSequence: typeof body.break_sequence === 'number' ? body.break_sequence : null,
+    explanation: typeof body.explanation === 'string' ? body.explanation : '',
+  }
+}
+
+function parseAuditEntry(raw: unknown): AuditEntryRecord | null {
+  const body = asRecord(raw)
+  if (!body || typeof body.sequence !== 'number') {
+    return null
+  }
+  const attributes: Record<string, string> = {}
+  const rawAttributes = asRecord(body.attributes)
+  if (rawAttributes) {
+    for (const [key, value] of Object.entries(rawAttributes)) {
+      if (typeof value === 'string') {
+        attributes[key] = value
+      }
+    }
+  }
+  return {
+    sequence: body.sequence,
+    occurredAt: typeof body.occurred_at === 'string' ? body.occurred_at : '',
+    eventType: typeof body.event_type === 'string' ? body.event_type : '',
+    attributes,
+    previousHash: typeof body.previous_hash === 'string' ? body.previous_hash : '',
+    previousHashShort: typeof body.previous_hash_short === 'string' ? body.previous_hash_short : '',
+    currentHash: typeof body.current_hash === 'string' ? body.current_hash : '',
+    currentHashShort: typeof body.current_hash_short === 'string' ? body.current_hash_short : '',
+  }
+}
+
+export function assertAttestationList(value: unknown): AttestationListRecord {
+  const body = asRecord(value)
+  if (!body) {
+    throw new Error('MALFORMED_RESPONSE')
+  }
+  assertNoSecretMarker(body)
+  return {
+    banner: typeof body.banner === 'string' ? body.banner : 'LOCAL / SYNTHETIC SESSION DATA',
+    items: Array.isArray(body.items) ? body.items.flatMap((item) => parseAttestation(item) ?? []) : [],
+  }
+}
+
+export function assertAttestation(value: unknown): AttestationRecord {
+  const item = parseAttestation(value)
+  if (!item) {
+    throw new Error('MALFORMED_RESPONSE')
+  }
+  assertNoSecretMarker(item)
+  return item
+}
+
+export function assertAttestationVerify(value: unknown): AttestationVerifyRecord {
+  const body = asRecord(value)
+  if (!body || typeof body.status !== 'string') {
+    throw new Error('MALFORMED_RESPONSE')
+  }
+  return {
+    id: typeof body.id === 'string' ? body.id : '',
+    status: body.status,
+    explanation: typeof body.explanation === 'string' ? body.explanation : '',
+  }
+}
+
+function parseAttestation(raw: unknown): AttestationRecord | null {
+  const body = asRecord(raw)
+  if (!body || typeof body.id !== 'string') {
+    return null
+  }
+  const controls: Record<string, string> = {}
+  const rawControls = asRecord(body.control_results)
+  if (rawControls) {
+    for (const [key, value] of Object.entries(rawControls)) {
+      if (typeof value === 'string') {
+        controls[key] = value
+      }
+    }
+  }
+  return {
+    id: body.id,
+    transactionId: typeof body.transaction_id === 'string' ? body.transaction_id : '',
+    integrationId: typeof body.integration_id === 'string' ? body.integration_id : '',
+    source: typeof body.source === 'string' ? body.source : '',
+    destination: typeof body.destination === 'string' ? body.destination : '',
+    boundaryOutcome: typeof body.boundary_outcome === 'string' ? body.boundary_outcome : '',
+    contractId: typeof body.contract_id === 'string' ? body.contract_id : null,
+    contractVersion: typeof body.contract_version === 'string' ? body.contract_version : null,
+    egressPolicyId: typeof body.egress_policy_id === 'string' ? body.egress_policy_id : null,
+    transformationCount: typeof body.transformation_count === 'number' ? body.transformation_count : 0,
+    credentialReference: typeof body.credential_reference === 'string' ? body.credential_reference : null,
+    consentResult: typeof body.consent_result === 'string' ? body.consent_result : null,
+    connectorRoute: typeof body.connector_route === 'string' ? body.connector_route : null,
+    deliveryResult: typeof body.delivery_result === 'string' ? body.delivery_result : null,
+    auditChainId: typeof body.audit_chain_id === 'string' ? body.audit_chain_id : '',
+    auditSequence: typeof body.audit_sequence === 'number' ? body.audit_sequence : 0,
+    auditHeadShort: typeof body.audit_head_short === 'string' ? body.audit_head_short : '',
+    algorithm: typeof body.algorithm === 'string' ? body.algorithm : '',
+    keyId: typeof body.key_id === 'string' ? body.key_id : '',
+    keyVersion: typeof body.key_version === 'string' ? body.key_version : '',
+    status: typeof body.status === 'string' ? body.status : '',
+    signaturePresent: body.signature_present === true,
+    controlResults: controls,
+    claim:
+      typeof body.claim === 'string'
+        ? body.claim
+        : 'Proves this enforcement artifact was signed and has not been modified without detection.',
+  }
+}
+
+export function assertBoundaryGraph(value: unknown): BoundaryGraphRecord {
+  const body = asRecord(value)
+  if (!body) {
+    throw new Error('MALFORMED_RESPONSE')
+  }
+  assertNoSecretMarker(body)
+  return {
+    banner: typeof body.banner === 'string' ? body.banner : 'LOCAL / SYNTHETIC SESSION DATA',
+    nodes: Array.isArray(body.nodes) ? body.nodes.flatMap((item) => parseGraphNode(item) ?? []) : [],
+    edges: Array.isArray(body.edges) ? body.edges.flatMap((item) => parseGraphEdge(item) ?? []) : [],
+  }
+}
+
+function parseGraphNode(raw: unknown): BoundaryGraphNode | null {
+  const body = asRecord(raw)
+  if (!body || typeof body.id !== 'string' || typeof body.label !== 'string') {
+    return null
+  }
+  return {
+    id: body.id,
+    label: body.label,
+    kind: typeof body.kind === 'string' ? body.kind : 'SYSTEM',
+    synthetic: body.synthetic === true,
+  }
+}
+
+function parseGraphEdge(raw: unknown): BoundaryGraphEdge | null {
+  const body = asRecord(raw)
+  if (!body || typeof body.id !== 'string' || typeof body.source !== 'string') {
+    return null
+  }
+  return {
+    id: body.id,
+    source: body.source,
+    destination: typeof body.destination === 'string' ? body.destination : '',
+    integrationId: typeof body.integration_id === 'string' ? body.integration_id : body.id,
+    identityMechanism: typeof body.identity_mechanism === 'string' ? body.identity_mechanism : '',
+    contractReference: typeof body.contract_reference === 'string' ? body.contract_reference : '',
+    egressPolicy: typeof body.egress_policy === 'string' ? body.egress_policy : '',
+    credentialReference: typeof body.credential_reference === 'string' ? body.credential_reference : '',
+    consentState: typeof body.consent_state === 'string' ? body.consent_state : '',
+    connectorRoute: typeof body.connector_route === 'string' ? body.connector_route : null,
+    status: typeof body.status === 'string' ? body.status : 'CONFIGURED',
+    configured: body.configured !== false,
+    observed: body.observed === true,
+    recentOutcome: typeof body.recent_outcome === 'string' ? body.recent_outcome : null,
+    recentDelivery: typeof body.recent_delivery === 'string' ? body.recent_delivery : null,
+    quarantineCount: typeof body.quarantine_count === 'number' ? body.quarantine_count : 0,
+    auditChainId: typeof body.audit_chain_id === 'string' ? body.audit_chain_id : '',
+    attestationId: typeof body.attestation_id === 'string' ? body.attestation_id : null,
   }
 }

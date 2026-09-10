@@ -1,7 +1,7 @@
 import type { CapabilityClaim } from '@/domain/types'
 
 /**
- * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 10.
+ * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 13.
  * Not fetched from Git. Do not invent progress.
  */
 export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
@@ -63,6 +63,24 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     notes: 'Local in-memory orchestrator and admin reprocess. Firestore persistence remains PLANNED.',
   },
   {
+    id: 'audit-chain',
+    label: 'Tamper-Evident Audit Chain',
+    status: 'TESTED',
+    notes: 'SHA-256 hash chain with RFC 8785 canonicalization. Local in-memory. Not immutable. Not Firestore.',
+  },
+  {
+    id: 'exchange-attestation',
+    label: 'Cryptographic Exchange Attestation',
+    status: 'TESTED',
+    notes: 'Local JCA ECDSA P-256. Cloud KMS remains PLANNED. Does not prove business data is true.',
+  },
+  {
+    id: 'boundary-graph',
+    label: 'Integration Boundary Graph',
+    status: 'TESTED',
+    notes: 'Vue SVG from the Java graph API. Configured plus observed crossings. Not a blast-radius graph.',
+  },
+  {
     id: 'apache-camel',
     label: 'Apache Camel',
     status: 'TESTED',
@@ -78,6 +96,6 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     id: 'gcp',
     label: 'GCP',
     status: 'PLANNED',
-    notes: 'No Cloud Run, Pub/Sub, Firestore, Secret Manager, or KMS.',
+    notes: 'No Cloud Run, Pub/Sub, Firestore, Secret Manager, or KMS. Local JCA signer only.',
   },
 ]

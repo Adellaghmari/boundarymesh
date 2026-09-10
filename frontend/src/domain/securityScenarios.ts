@@ -94,6 +94,21 @@ export const DELIVERY_LAB_SCENARIOS = [
     summary: 'Allow with redaction, credential v2, consent granted, Camel Lumenway route.',
   },
   {
+    id: 'covecrm-delivery',
+    label: 'QuayForge to CoveCRM',
+    summary: 'Allowed delivery to CoveCRM. Email may leave that destination.',
+  },
+  {
+    id: 'contract-drift',
+    label: 'Contract drift hold',
+    summary: 'Unsupported payload shape. QUARANTINE. No provider call.',
+  },
+  {
+    id: 'replay-reject',
+    label: 'Replay reject',
+    summary: 'Replay control FAIL. REJECT. Delivery is not attempted.',
+  },
+  {
     id: 'credential-missing',
     label: 'Missing credential',
     summary: 'Consent exists. Credential reference is missing. No provider call.',

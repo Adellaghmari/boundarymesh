@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
-import { allowResponse, credentialCatalog, deliverySuccess, quarantineItem } from './fixtures'
+import { allowResponse, attestationItem, auditChain, boundaryGraph, credentialCatalog, deliverySuccess, quarantineItem } from './fixtures'
 
 export const handlers = [
   http.get('/api/v1/health', () =>
@@ -346,6 +346,74 @@ export const handlers = [
           safeExplanation: 'No prior nonce within the protected replay window.',
         },
       ],
+    }),
+  ),
+  http.get('/api/v1/audit/chains', () =>
+    HttpResponse.json({
+      banner: 'LOCAL / SYNTHETIC SESSION DATA. One hash chain per integration. Not Firestore.',
+      chains: ['quayforge-orders'],
+    }),
+  ),
+  http.get('/api/v1/audit/chains/:id/verify', () =>
+    HttpResponse.json({
+      banner: 'Verification is computed by Java SHA-256 over RFC 8785 canonical bytes.',
+      chain_id: 'quayforge-orders',
+      status: 'VALID',
+      entries_checked: 2,
+      break_sequence: null,
+      explanation: 'Sequence, previous-hash linkage, and SHA-256 hashes match.',
+    }),
+  ),
+  http.get('/api/v1/audit/chains/:id', () => HttpResponse.json(auditChain)),
+  http.get('/api/v1/attestations', () =>
+    HttpResponse.json({
+      banner: 'LOCAL / SYNTHETIC SESSION DATA. Local JCA P-256 signatures. Cloud KMS remains PLANNED.',
+      items: [attestationItem],
+    }),
+  ),
+  http.get('/api/v1/attestations/:id/verify', () =>
+    HttpResponse.json({
+      id: 'att-test-1',
+      status: 'VALID',
+      explanation: 'ECDSA P-256 signature matches the canonical attestation bytes.',
+    }),
+  ),
+  http.post('/api/v1/attestations/:id/verify', () =>
+    HttpResponse.json({
+      id: 'att-test-1',
+      status: 'VALID',
+      explanation: 'ECDSA P-256 signature matches the canonical attestation bytes.',
+    }),
+  ),
+  http.get('/api/v1/attestations/:id', () => HttpResponse.json(attestationItem)),
+  http.get('/api/v1/boundary-graph', () => HttpResponse.json(boundaryGraph)),
+  http.get('/api/v1/dev/audit-lab/tamper-demo', () =>
+    HttpResponse.json({
+      banner: 'SYNTHETIC DEMO. Isolated copy only. The live audit repository was not mutated.',
+      original: {
+        banner: 'Verification is computed by Java SHA-256 over RFC 8785 canonical bytes.',
+        chain_id: 'quayforge-orders',
+        status: 'VALID',
+        entries_checked: 2,
+        break_sequence: null,
+        explanation: 'ok',
+      },
+      tampered: {
+        banner: 'Verification is computed by Java SHA-256 over RFC 8785 canonical bytes.',
+        chain_id: 'quayforge-orders',
+        status: 'HASH_MISMATCH',
+        entries_checked: 0,
+        break_sequence: 1,
+        explanation: 'Recalculated SHA-256 does not match stored current_hash.',
+      },
+    }),
+  ),
+  http.get('/api/v1/dev/attestation-lab/tamper-demo', () =>
+    HttpResponse.json({
+      banner: 'SYNTHETIC DEMO. Isolated copy only. The live attestation repository was not mutated.',
+      original: { id: 'att-test-1', status: 'VALID', explanation: 'ok' },
+      tampered: { id: 'att-test-1', status: 'INVALID', explanation: 'changed destination' },
+      attestation_id: 'att-test-1',
     }),
   ),
 ]

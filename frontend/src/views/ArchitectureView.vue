@@ -11,7 +11,7 @@ import TruthBanner from '@/components/TruthBanner.vue'
         <TruthBanner label="CURRENT VERSUS PLANNED" />
       </div>
       <p>
-        This page describes what Phases 1–10 actually run locally. It does not present the final
+        This page describes what Phases 1–13 actually run locally. It does not present the final
         cloud architecture as deployed.
       </p>
     </header>
@@ -30,6 +30,9 @@ import TruthBanner from '@/components/TruthBanner.vue'
           <li>Local credential/consent boundary</li>
           <li>Separate Camel delivery worker with Resilience4j</li>
           <li>Local quarantine and admin reprocess</li>
+          <li>Tamper-evident SHA-256 audit chain</li>
+          <li>Local ECDSA P-256 exchange attestations</li>
+          <li>State-driven Integration Boundary Graph</li>
         </ul>
       </article>
       <article class="card stack">
@@ -47,8 +50,8 @@ import TruthBanner from '@/components/TruthBanner.vue'
     <section class="card stack">
       <h2>Current pipeline structure</h2>
       <p class="muted">
-        Static Phase 2 pipeline. This is not the Integration Boundary Graph. That flagship remains
-        PLANNED until real state-driven graph logic exists.
+        Static Phase 2 pipeline. The Integration Boundary Graph is a separate live-state view at
+        /boundary-graph. Project B blast-radius graphs are not used here.
       </p>
       <PipelineSteps />
     </section>

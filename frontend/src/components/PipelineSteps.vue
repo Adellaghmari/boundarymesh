@@ -9,6 +9,8 @@ const steps = [
   'Enforce boundary',
   'Resolve credential / consent',
   'Deliver or quarantine',
+  'Record audit chain',
+  'Sign exchange attestation',
 ]
 </script>
 

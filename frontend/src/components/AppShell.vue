@@ -18,6 +18,9 @@ const links = [
   { name: ROUTE_NAMES.delivery, to: '/delivery', label: 'Delivery Lab' },
   { name: ROUTE_NAMES.credentials, to: '/credentials', label: 'Credentials' },
   { name: ROUTE_NAMES.quarantine, to: '/quarantine', label: 'Quarantine' },
+  { name: ROUTE_NAMES.audit, to: '/audit', label: 'Audit Chain' },
+  { name: ROUTE_NAMES.attestations, to: '/attestations', label: 'Attestations' },
+  { name: ROUTE_NAMES.boundaryGraph, to: '/boundary-graph', label: 'Boundary Graph' },
   { name: ROUTE_NAMES.status, to: '/status', label: 'Status' },
 ] as const
 
@@ -29,6 +32,12 @@ function isActive(name: string): boolean {
   }
   if (name === ROUTE_NAMES.quarantine) {
     return route.name === ROUTE_NAMES.quarantine || route.name === ROUTE_NAMES.quarantineDetail
+  }
+  if (name === ROUTE_NAMES.audit) {
+    return route.name === ROUTE_NAMES.audit || route.name === ROUTE_NAMES.auditDetail
+  }
+  if (name === ROUTE_NAMES.attestations) {
+    return route.name === ROUTE_NAMES.attestations || route.name === ROUTE_NAMES.attestationDetail
   }
   return route.name === name
 }
