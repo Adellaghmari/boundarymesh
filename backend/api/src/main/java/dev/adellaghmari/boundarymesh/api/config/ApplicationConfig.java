@@ -1,6 +1,15 @@
 package dev.adellaghmari.boundarymesh.api.config;
 
 import dev.adellaghmari.boundarymesh.application.BoundaryEnforcementEngine;
+import dev.adellaghmari.boundarymesh.application.attestation.AttestationFactory;
+import dev.adellaghmari.boundarymesh.application.attestation.AttestationRepository;
+import dev.adellaghmari.boundarymesh.application.attestation.AttestationService;
+import dev.adellaghmari.boundarymesh.application.attestation.InMemoryAttestationRepository;
+import dev.adellaghmari.boundarymesh.application.attestation.JcaP256AttestationCrypto;
+import dev.adellaghmari.boundarymesh.application.audit.AuditAppender;
+import dev.adellaghmari.boundarymesh.application.audit.AuditChainVerifier;
+import dev.adellaghmari.boundarymesh.application.audit.AuditRepository;
+import dev.adellaghmari.boundarymesh.application.audit.InMemoryAuditRepository;
 import dev.adellaghmari.boundarymesh.application.connector.ConnectorSafetyEvaluator;
 import dev.adellaghmari.boundarymesh.application.connector.ConnectorSafetyPort;
 import dev.adellaghmari.boundarymesh.application.connector.LocalConnectorSafetyPort;
@@ -18,6 +27,9 @@ import dev.adellaghmari.boundarymesh.application.delivery.DeliveryPort;
 import dev.adellaghmari.boundarymesh.application.delivery.RecordingDeliveryPort;
 import dev.adellaghmari.boundarymesh.application.egress.EgressEvaluator;
 import dev.adellaghmari.boundarymesh.application.egress.EgressPolicyRepository;
+import dev.adellaghmari.boundarymesh.application.evidence.CrossingEvidenceService;
+import dev.adellaghmari.boundarymesh.application.graph.BoundaryGraphAssembler;
+import dev.adellaghmari.boundarymesh.application.graph.ObservedCrossingStore;
 import dev.adellaghmari.boundarymesh.application.quarantine.InMemoryQuarantineRepository;
 import dev.adellaghmari.boundarymesh.application.quarantine.QuarantineOrchestrator;
 import dev.adellaghmari.boundarymesh.application.quarantine.QuarantineRepository;
@@ -136,8 +148,64 @@ public class ApplicationConfig {
             DeliveryInstructionFactory instructions,
             DeliveryPort deliveryPort,
             QuarantineOrchestrator quarantine,
-            ReprocessPayloadStore payloads) {
-        return new CrossingDeliveryService(composer, instructions, deliveryPort, quarantine, payloads);
+            ReprocessPayloadStore payloads,
+            CrossingEvidenceService evidence) {
+        return new CrossingDeliveryService(composer, instructions, deliveryPort, quarantine, payloads, evidence);
+    }
+
+    @Bean
+    InMemoryAuditRepository auditRepository() {
+        return new InMemoryAuditRepository();
+    }
+
+    @Bean
+    AuditAppender auditAppender(AuditRepository auditRepository, Clock clock) {
+        return new AuditAppender(auditRepository, clock);
+    }
+
+    @Bean
+    AuditChainVerifier auditChainVerifier() {
+        return new AuditChainVerifier();
+    }
+
+    @Bean
+    JcaP256AttestationCrypto jcaP256AttestationCrypto() {
+        return new JcaP256AttestationCrypto();
+    }
+
+    @Bean
+    InMemoryAttestationRepository attestationRepository() {
+        return new InMemoryAttestationRepository();
+    }
+
+    @Bean
+    AttestationFactory attestationFactory(Clock clock, JcaP256AttestationCrypto crypto) {
+        return new AttestationFactory(clock, crypto);
+    }
+
+    @Bean
+    AttestationService attestationService(AttestationRepository repository, JcaP256AttestationCrypto crypto) {
+        return new AttestationService(repository, crypto);
+    }
+
+    @Bean
+    ObservedCrossingStore observedCrossingStore() {
+        return new ObservedCrossingStore();
+    }
+
+    @Bean
+    CrossingEvidenceService crossingEvidenceService(
+            AuditAppender audit,
+            AuditRepository auditRepository,
+            AttestationFactory attestations,
+            AttestationRepository attestationRepository,
+            ObservedCrossingStore observations) {
+        return new CrossingEvidenceService(audit, auditRepository, attestations, attestationRepository, observations);
+    }
+
+    @Bean
+    BoundaryGraphAssembler boundaryGraphAssembler(ObservedCrossingStore observations, QuarantineRepository quarantine) {
+        return new BoundaryGraphAssembler(observations, quarantine);
     }
 
     @Bean

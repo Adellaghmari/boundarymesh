@@ -6,14 +6,17 @@ import dev.adellaghmari.boundarymesh.application.delivery.DeliveryInstructionFac
 import dev.adellaghmari.boundarymesh.application.delivery.DeliveryPort;
 import dev.adellaghmari.boundarymesh.application.delivery.DeliveryRequest;
 import dev.adellaghmari.boundarymesh.application.delivery.ProviderScenario;
+import dev.adellaghmari.boundarymesh.application.evidence.CrossingEvidenceService;
 import dev.adellaghmari.boundarymesh.application.quarantine.QuarantineOrchestrator;
 import dev.adellaghmari.boundarymesh.application.quarantine.ReprocessPayloadStore;
 import dev.adellaghmari.boundarymesh.domain.BoundaryOutcome;
 import dev.adellaghmari.boundarymesh.domain.ReasonCode;
+import dev.adellaghmari.boundarymesh.domain.attestation.ExchangeAttestation;
 import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryInstruction;
 import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryResult;
 import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryResultKind;
 import dev.adellaghmari.boundarymesh.domain.exception.InvariantViolationException;
+import dev.adellaghmari.boundarymesh.domain.identity.BoundaryPrincipal;
 import dev.adellaghmari.boundarymesh.domain.quarantine.QuarantineItem;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,33 +28,42 @@ public final class CrossingDeliveryService {
     private final DeliveryPort deliveryPort;
     private final QuarantineOrchestrator quarantine;
     private final ReprocessPayloadStore payloads;
+    private final CrossingEvidenceService evidence;
 
     public CrossingDeliveryService(
             CrossingComposer composer,
             DeliveryInstructionFactory instructions,
             DeliveryPort deliveryPort,
             QuarantineOrchestrator quarantine,
-            ReprocessPayloadStore payloads) {
+            ReprocessPayloadStore payloads,
+            CrossingEvidenceService evidence) {
         this.composer = Objects.requireNonNull(composer);
         this.instructions = Objects.requireNonNull(instructions);
         this.deliveryPort = Objects.requireNonNull(deliveryPort);
         this.quarantine = Objects.requireNonNull(quarantine);
         this.payloads = Objects.requireNonNull(payloads);
+        this.evidence = Objects.requireNonNull(evidence);
     }
 
     public CrossingDeliveryResult execute(CrossingCommand command, ProviderScenario providerScenario) {
+        return execute(command, providerScenario, command.principal(), false);
+    }
+
+    public CrossingDeliveryResult execute(
+            CrossingCommand command,
+            ProviderScenario providerScenario,
+            BoundaryPrincipal principal,
+            boolean reprocess) {
         CrossingResult crossing = composer.compose(command);
         BoundaryOutcome outcome = crossing.decision().outcome();
         if (outcome == BoundaryOutcome.REJECT) {
-            return new CrossingDeliveryResult(
-                    crossing, Optional.empty(), DeliveryResult.notAttempted("REJECT never reaches delivery."), null);
+            DeliveryResult skipped = DeliveryResult.notAttempted("REJECT never reaches delivery.");
+            return finish(command, crossing, Optional.empty(), skipped, null, principal, reprocess);
         }
         if (outcome == BoundaryOutcome.QUARANTINE) {
-            return new CrossingDeliveryResult(
-                    crossing,
-                    Optional.empty(),
-                    DeliveryResult.notAttempted("QUARANTINE before delivery never reaches Camel."),
-                    open(crossing, command, providerScenario, "pre-delivery"));
+            DeliveryResult skipped = DeliveryResult.notAttempted("QUARANTINE before delivery never reaches Camel.");
+            QuarantineItem item = open(crossing, command, providerScenario, "pre-delivery");
+            return finish(command, crossing, Optional.empty(), skipped, item, principal, reprocess);
         }
         DeliveryInstruction instruction = instructions
                 .from(crossing, command)
@@ -68,7 +80,7 @@ public final class CrossingDeliveryService {
                 || delivered.kind() == DeliveryResultKind.PERMANENT_FAILURE) {
             item = open(crossing, command, ProviderScenario.SUCCESS, "delivery-failure");
         }
-        return new CrossingDeliveryResult(crossing, Optional.of(instruction), delivered, item);
+        return finish(command, crossing, Optional.of(instruction), delivered, item, principal, reprocess);
     }
 
     /**
@@ -82,7 +94,8 @@ public final class CrossingDeliveryService {
         }
         DeliveryResult second =
                 deliveryPort.deliver(new DeliveryRequest(first.instruction().get(), providerScenario));
-        return new CrossingDeliveryResult(first.crossing(), first.instruction(), second, first.quarantine());
+        return finish(
+                command, first.crossing(), first.instruction(), second, first.quarantine(), command.principal(), false);
     }
 
     public CrossingDeliveryResult reprocess(QuarantineItem current, boolean authorizedAdmin) {
@@ -95,7 +108,7 @@ public final class CrossingDeliveryService {
                         "REPROCESS_CONTEXT_MISSING", "local reprocess context is no longer available"));
         CrossingCommand command =
                 CrossingScenarios.delivery("transformed-delivery").withProfiles("active", "valid", "closed");
-        CrossingDeliveryResult result = execute(command, ProviderScenario.SUCCESS);
+        CrossingDeliveryResult result = execute(command, ProviderScenario.SUCCESS, null, true);
         boolean delivered = result.delivery().kind() == DeliveryResultKind.DELIVERED
                 || result.delivery().kind() == DeliveryResultKind.DUPLICATE_SUPPRESSED;
         if (delivered) {
@@ -113,7 +126,8 @@ public final class CrossingDeliveryService {
                 result.crossing(),
                 result.instruction(),
                 result.delivery(),
-                quarantine.find(processing.id()).orElse(processing));
+                quarantine.find(processing.id()).orElse(processing),
+                result.attestation());
     }
 
     private QuarantineItem open(
@@ -154,9 +168,22 @@ public final class CrossingDeliveryService {
         return item;
     }
 
+    private CrossingDeliveryResult finish(
+            CrossingCommand command,
+            CrossingResult crossing,
+            Optional<DeliveryInstruction> instruction,
+            DeliveryResult delivery,
+            QuarantineItem quarantineItem,
+            BoundaryPrincipal principal,
+            boolean reprocess) {
+        var recorded = evidence.record(command, crossing, instruction, delivery, quarantineItem, principal, reprocess);
+        return new CrossingDeliveryResult(crossing, instruction, delivery, quarantineItem, recorded.attestation());
+    }
+
     public record CrossingDeliveryResult(
             CrossingResult crossing,
             Optional<DeliveryInstruction> instruction,
             DeliveryResult delivery,
-            QuarantineItem quarantine) {}
+            QuarantineItem quarantine,
+            ExchangeAttestation attestation) {}
 }

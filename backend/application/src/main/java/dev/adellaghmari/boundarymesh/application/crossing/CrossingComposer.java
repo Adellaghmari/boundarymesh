@@ -246,6 +246,10 @@ public final class CrossingComposer {
                     connector);
         }
 
+        public CrossingCommand withReplay(ControlResult nextReplay) {
+            return copy(principal, identity, authenticity, freshness, nextReplay, transactionId);
+        }
+
         private CrossingCommand copy(
                 BoundaryPrincipal nextPrincipal,
                 ControlResult nextIdentity,

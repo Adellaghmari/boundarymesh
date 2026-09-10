@@ -17,6 +17,7 @@ public record DeliveryLabResponse(
         CredentialView credential,
         ConsentView consent,
         QuarantineView quarantine,
+        EvidenceView evidence,
         List<String> stages) {
 
     public static DeliveryLabResponse from(
@@ -31,6 +32,7 @@ public record DeliveryLabResponse(
                 CredentialView.from(result),
                 ConsentView.from(result),
                 QuarantineView.from(result.quarantine()),
+                EvidenceView.from(result),
                 List.of(
                         "Boundary Decision",
                         "Delivery Instruction",
@@ -38,7 +40,8 @@ public record DeliveryLabResponse(
                         "Camel Route",
                         "Connector",
                         "Resilience",
-                        "Delivery Result"));
+                        "Delivery Result",
+                        "Audit / Attestation"));
     }
 
     public record InstructionView(
@@ -135,6 +138,22 @@ public record DeliveryLabResponse(
                     item.recoveryDecision()
                             == dev.adellaghmari.boundarymesh.domain.quarantine.RecoveryDecision.ELIGIBLE,
                     item.destinationSystem());
+        }
+    }
+
+    public record EvidenceView(
+            @JsonProperty("attestation_id") String attestationId,
+            @JsonProperty("attestation_status") String attestationStatus,
+            @JsonProperty("audit_chain_id") String auditChainId) {
+
+        static EvidenceView from(CrossingDeliveryResult result) {
+            if (result.attestation() == null) {
+                return null;
+            }
+            return new EvidenceView(
+                    result.attestation().id().value(),
+                    result.attestation().status().name(),
+                    result.attestation().auditChainId().value());
         }
     }
 }

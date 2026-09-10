@@ -4,6 +4,7 @@ import dev.adellaghmari.boundarymesh.application.contract.ContractEvaluator;
 import dev.adellaghmari.boundarymesh.application.crossing.CrossingComposer.CrossingCommand;
 import dev.adellaghmari.boundarymesh.domain.ControlKind;
 import dev.adellaghmari.boundarymesh.domain.ControlResult;
+import dev.adellaghmari.boundarymesh.domain.ReasonCode;
 import dev.adellaghmari.boundarymesh.domain.exception.InvalidInputException;
 import java.util.Locale;
 import java.util.UUID;
@@ -71,6 +72,19 @@ public final class CrossingScenarios {
             case "transformed-delivery", "success" ->
                 command("v1", QuayForgeDemoPayloads.transformV1(eventId), "LUMENWAY", false)
                         .withProfiles("active", "valid", "closed");
+            case "covecrm-delivery" ->
+                command("v1", QuayForgeDemoPayloads.validV1(eventId), "COVECRM", false)
+                        .withProfiles("active", "valid", "closed");
+            case "contract-drift" ->
+                command("v1", QuayForgeDemoPayloads.v2Shape(eventId), "RIVERTIDE", false)
+                        .withProfiles("active", "valid", "closed");
+            case "replay-reject" ->
+                command("v1", QuayForgeDemoPayloads.transformV1(eventId), "COVECRM", false)
+                        .withProfiles("active", "valid", "closed")
+                        .withReplay(ControlResult.fail(
+                                ControlKind.REPLAY,
+                                ReasonCode.REPLAY_DETECTED,
+                                "Nonce already seen. Delivery is not attempted."));
             case "lumenway-translate" ->
                 command("v1", QuayForgeDemoPayloads.transformV1(eventId), "LUMENWAY", false)
                         .withProfiles("active", "valid", "closed");
