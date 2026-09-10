@@ -14,7 +14,6 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
-import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 /**
@@ -36,12 +35,11 @@ public class AdminSessionSecurityConfig {
         CookieCsrfTokenRepository csrfRepo = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrfRepo.setCookieCustomizer(
                 cookie -> cookie.sameSite("Lax").secure(false).path("/"));
-        XorCsrfTokenRequestAttributeHandler requestHandler = new XorCsrfTokenRequestAttributeHandler();
-        requestHandler.setCsrfRequestAttributeName(null);
 
         http.securityMatcher("/api/v1/admin/**", "/oauth2/**", "/login/**", "/logout")
                 .cors(Customizer.withDefaults())
-                .csrf(csrf -> csrf.csrfTokenRepository(csrfRepo).csrfTokenRequestHandler(requestHandler))
+                .csrf(csrf ->
+                        csrf.csrfTokenRepository(csrfRepo).csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()))
                 .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .httpBasic(AbstractHttpConfigurer::disable)

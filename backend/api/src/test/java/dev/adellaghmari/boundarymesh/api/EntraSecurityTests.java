@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,12 +16,23 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class EntraSecurityTests {
+
+    @DynamicPropertySource
+    static void isolateFromOsEntra(DynamicPropertyRegistry registry) {
+        registry.add("boundarymesh.entra.tenant-id", () -> "");
+        registry.add("boundarymesh.entra.client-id", () -> "");
+        registry.add("boundarymesh.entra.client-secret", () -> "");
+        registry.add("boundarymesh.entra.graph-mode", () -> "HARNESS");
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -64,6 +76,24 @@ class EntraSecurityTests {
                         .with(oauth2Login().authorities(new SimpleGrantedAuthority("SCOPE_Calendars.Read")))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminPullAcceptsRawXsrfCookieCopiedToHeader() throws Exception {
+        MvcResult session = mockMvc.perform(get("/api/v1/admin/session")).andReturn();
+        Cookie xsrf = session.getResponse().getCookie("XSRF-TOKEN");
+        assertThat(xsrf).isNotNull();
+        assertThat(xsrf.getValue()).isNotBlank();
+
+        mockMvc.perform(post("/api/v1/admin/microsoft/calendar/pull")
+                        .cookie(xsrf)
+                        .header("X-XSRF-TOKEN", xsrf.getValue())
+                        .with(oauth2Login().authorities(new SimpleGrantedAuthority("SCOPE_Calendars.Read")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.live").value(false))
+                .andExpect(jsonPath("$.mode").value("CONTRACT_HARNESS"));
     }
 
     @Test
