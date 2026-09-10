@@ -34,6 +34,20 @@ Policies are versioned: `egressPolicies/{policyId}/versions/{version}`.
 - `reject` — default for Rivertide (financial-like)
 - `strip` — only if policy explicitly allows dropping (never for secrets: secrets are always reject)
 
+## Example: Microsoft 365 Calendar (Phase 14)
+
+Normalized contract `m365-calendar/v1`, policy `m365-calendar-egress/v1`, destination `M365_CALENDAR`.
+
+| Field | Rule |
+| --- | --- |
+| `event_reference` | ALLOW (SHA-256 of Graph event id) |
+| `start_time` / `end_time` | ALLOW |
+| `availability` | ALLOW |
+| `subject` | REDACT |
+| `attendees` | DENY STRIP |
+| `online_meeting_url` | DENY STRIP |
+| `body` | DENY STRIP |
+
 ## Example: Helix calendar → CoveCRM
 
 | Field | Rule |

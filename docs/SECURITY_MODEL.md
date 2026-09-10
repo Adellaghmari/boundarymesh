@@ -9,9 +9,9 @@ BoundaryMesh is an **application-security and integration-security** product. Su
 | Spring Security | HTTP authentication, route authorization, security headers, CORS | Domain crossing outcomes |
 | Boundary Enforcement Engine | `ControlVector` → `ALLOW` / `REJECT` / … | HTTP 401/403 admission |
 
-**CSRF:** disabled on the local resource-server API because callers use bearer JWT or HMAC headers and there is no cookie session. A future Entra OIDC BFF **must re-enable CSRF** for browser cookies. CSRF is not globally “turned off forever.”
+**CSRF:** disabled on the **bearer JWT / HMAC** resource-server chain (`/api/**`, `/v3/**`). Cookie CSRF is **enabled** on the admin session chain (`/api/v1/admin/**`). Do not treat CSRF as globally off.
 
-**CORS:** local origins only (`http://127.0.0.1:5173`, `http://localhost:5173`, `http://127.0.0.1:4173`). No `*` and no credentialed wildcard. Disallowed origins are rejected (HTTP 403) and do not receive `Access-Control-Allow-Origin`.
+**CORS:** local origins only (`http://127.0.0.1:5173`, `http://localhost:5173`, `http://127.0.0.1:4173`). Credentials allowed for the session cookie via the Vite proxy. No `*`. Disallowed origins are rejected (HTTP 403) and do not receive `Access-Control-Allow-Origin`.
 
 **TLS:** local HTTP is accepted. Cloud Run HTTPS is later. No fake local certificates.
 
@@ -25,7 +25,7 @@ BoundaryMesh is an **application-security and integration-security** product. Su
 2. **Separate AuthN from AuthZ.** A valid token can still be rejected.
 3. **Least privilege** per workload identity and per Graph permission.
 4. **No secret values** in Firestore, Git, frontend, logs, audit, or attestations.
-5. **Public demo is read-only.** Local reprocess uses a server-minted admin JWT. Entra remains PLANNED.
+5. **Public demo is read-only** except the labeled harness POSTs. Admin mutations require an Entra session + CSRF when Entra is configured. Live Entra remains unverified without tenant credentials.
 6. **Provider-specific webhook rules stay provider-specific.**
 7. **Deterministic policy only.** No AI classification of PII or risk.
 
@@ -36,7 +36,7 @@ BoundaryMesh is an **application-security and integration-security** product. Su
 | Public recruiter APIs | anonymous + rate limit | GET demo data, GET transaction evidence, POST attestation verify (public key path) |
 | Graph notification URL | none (Microsoft calls) | validation handshake + notification ingest; authenticity via Graph rules, not Entra user login |
 | Partner webhook URL | HMAC headers | ingest only |
-| Machine JWT URL | Entra client-credentials JWT | ingest only |
+| Machine JWT URL | Local JWT/JWKS now; Entra client-credentials PLANNED | ingest only |
 | Admin HTML `/admin` | Entra OIDC BFF session | configuration, rotation, reprocess |
 | Admin APIs | same session + CSRF | mutations |
 

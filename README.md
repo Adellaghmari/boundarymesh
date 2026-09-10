@@ -32,7 +32,7 @@ Also implemented locally: **Tamper-Evident Audit Chain**, **Cryptographic Exchan
 | Frontend | Vue 3 + TypeScript + Pinia + Vue Router + SCSS + Vite | Vue 3.5.x, Pinia 4.x, Vue Router 5.x, Vite 8.x |
 | Backend | Java + Spring Boot + Spring Security | **Java 25 LTS**, **Spring Boot 4.1.1** |
 | Integration | Apache Camel | **4.22.0 LTS** (Java 17/21/25) |
-| Enterprise connector | Microsoft Graph + Microsoft Entra ID | Graph Java SDK 6.66.x |
+| Enterprise connector | Microsoft Graph + Microsoft Entra ID | Graph Java SDK **6.67.0** |
 | Cloud | Google Cloud (Cloud Run, Pub/Sub, Firestore, Secret Manager, Cloud KMS) | Region `europe-west4` |
 | IaC | Pulumi + TypeScript | GCS DIY state backend |
 | CI | GitHub Actions + Workload Identity Federation | No JSON keys |
@@ -45,11 +45,11 @@ Do not describe BoundaryMesh as professional security employment, paid Microsoft
 
 Do not modify **Project A** (AI Operations Copilot) or **Project B** (CloudOps Release Intelligence). Both are frozen.
 
-## What exists now (Phases 0–13)
+## What exists now (Phases 0–14)
 
-Local Java 25 / Spring Boot 4.1.1 / Spring Security resource server, a separate Camel delivery worker, and a Vue 3 recruiter console.
+Local Java 25 / Spring Boot 4.1.1 / Spring Security resource server, a separate Camel delivery worker, and a Vue 3 recruiter console with a premium product header.
 
-Phase 3 proves **local** JWT/JWKS identity federation (not Entra).  
+Phase 3 proves **local** JWT/JWKS identity federation.  
 Phase 4 proves **QuayForge** HMAC webhook defense (not Graph subscriptions).  
 Phase 5–7 prove contract drift, data-boundary transformation, and the composed engine.  
 Phase 8 delivers approved crossings through **Apache Camel 4.22.0** and **Resilience4j 2.4.0** against WireMock providers.  
@@ -57,7 +57,8 @@ Phase 9 adds a **local credential/consent boundary** (not Secret Manager).
 Phase 10 makes quarantine a real **recovery workflow** with admin-scoped reprocess (not Firestore).  
 Phase 11 adds a **SHA-256 tamper-evident audit chain** (in-memory, not immutable).  
 Phase 12 signs a **Cryptographic Exchange Attestation** with local ECDSA P-256 (Cloud KMS PLANNED).  
-Phase 13 renders an **Integration Boundary Graph** from live local repositories (not a blast-radius graph).
+Phase 13 renders an **Integration Boundary Graph** from live local repositories (not a blast-radius graph).  
+Phase 14 adds a **premium navigation shell** plus **Microsoft Entra OIDC BFF architecture** and a **bounded Outlook Calendar Graph connector** (contract harness TESTED; live tenant not claimed).
 
 ### One-minute story
 
@@ -67,9 +68,15 @@ Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** Co
 
 A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Still **PLANNED:** Entra, Microsoft Graph, GCP, Firestore, Pub/Sub, Secret Manager, Cloud KMS, Pulumi.
+Still **PLANNED:** live Microsoft tenant verification, Graph change notifications, GCP, Firestore, Pub/Sub, Secret Manager, Cloud KMS, Pulumi.
 
-## How to run (Phases 3–13)
+## Navigation
+
+Desktop: Core (Overview, Boundary Events, Connections, Architecture, Boundary Graph, Full Crossing) | Labs dropdown | Operations dropdown | Evidence dropdown | Status | Recruiter/operator control.
+
+Labs, Operations, and Evidence are grouped so the header stays a product shell instead of a crowded admin menu.
+
+## How to run (Phases 3–14)
 
 Requires **JDK 25** and **Node 22**. No secrets. `VITE_*` values are public browser configuration.
 
@@ -108,7 +115,9 @@ GET       /api/v1/audit/chains
 GET       /api/v1/audit/chains/{integrationId}/verify
 GET       /api/v1/attestations
 POST      /api/v1/attestations/{id}/verify
-GET       /api/v1/boundary-graph
+GET       /api/v1/microsoft/connector
+POST      /api/v1/dev/microsoft-lab/harness-crossing
+GET       /api/v1/admin/session
 ```
 
 `POST /api/v1/dev/evaluate` and `POST /api/v1/dev/crossings/evaluate` require a local bearer JWT with `boundary.evaluate`. Labs mint or sign on the Java side — do not paste tokens or HMAC secrets into the UI.
@@ -119,7 +128,7 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — NOT COMPLETE.** Phase 0–13 COMPLETE locally. Identity #1 local only (Entra future). Webhook #2 generic HMAC (Graph future). Contract Drift #3 TESTED. Data Boundary #4 TESTED. Credential & Consent #5 local model TESTED (Secret Manager PLANNED). Quarantine #6 local TESTED (Firestore PLANNED). Tamper-Evident Audit Chain TESTED. Cryptographic Exchange Attestation TESTED locally (Cloud KMS PLANNED). Integration Boundary Graph TESTED locally. Nothing is LIVE VERIFIED. No GCP, no Microsoft credentials.
+**PROJECT C — NOT COMPLETE.** Phase 0–14 COMPLETE locally except live Microsoft tenant verification. Identity #1 local JWT **TESTED**; Entra OIDC **TESTED** (harness); live Entra **BLOCKED** until credentials exist. Webhook #2 generic HMAC **TESTED**; Graph subscriptions **PLANNED**. Contract Drift #3 TESTED. Data Boundary #4 TESTED (including `m365-calendar-egress/v1`). Credential & Consent #5 local model TESTED with delegated `Calendars.Read` mapped. Quarantine #6 local TESTED. Tamper-Evident Audit Chain TESTED. Cryptographic Exchange Attestation TESTED locally. Integration Boundary Graph TESTED (includes Microsoft 365 Calendar node). Graph Java SDK 6.67.0 used in the live adapter. Nothing is LIVE VERIFIED. No GCP.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 
@@ -132,6 +141,7 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_M
 | [docs/BOUNDARY_ENFORCEMENT_ENGINE.md](docs/BOUNDARY_ENFORCEMENT_ENGINE.md) | Deterministic enforcement |
 | [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md) | Trust boundaries, public vs protected |
 | [docs/IDENTITY_MODEL.md](docs/IDENTITY_MODEL.md) | AuthN vs AuthZ, Entra, machine identity |
+| [docs/MICROSOFT_ENTRA_SETUP.md](docs/MICROSOFT_ENTRA_SETUP.md) | App registration, redirect URI, env names |
 | [docs/M365_GRAPH_INTEGRATION.md](docs/M365_GRAPH_INTEGRATION.md) | Calendar connector, live vs harness |
 | [docs/APACHE_CAMEL_ROUTES.md](docs/APACHE_CAMEL_ROUTES.md) | EIP usage after enforcement |
 | [docs/WEBHOOK_SECURITY.md](docs/WEBHOOK_SECURITY.md) | HMAC vs Graph notifications |

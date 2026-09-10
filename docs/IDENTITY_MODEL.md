@@ -15,7 +15,7 @@ Implemented and tested locally:
 - Domain `BoundaryPrincipal` via adapter (not Spring `Authentication` in domain)
 - HTTP **401** vs **403** vs domain AuthN PASS / AuthZ FAIL
 
-**Not implemented:** Microsoft Entra ID, interactive OIDC Authorization Code / BFF, browser login, tenant `tid` allowlists against `login.microsoftonline.com`.
+**Not implemented as live tenant login:** a real Microsoft Entra tenant was not configured in this environment. The OIDC BFF and Graph adapter are implemented and tested with a contract harness.
 
 Local issuer defaults (`boundarymesh.security` in local/test):
 
@@ -29,7 +29,7 @@ Diagnostic: `GET /api/v1/security/me` (authenticated, no raw JWT).
 Engine path: `POST /api/v1/identity/evaluate` (authenticated; AuthZ is a domain control).  
 HTTP-gated mutation: `POST /api/v1/dev/evaluate` requires `SCOPE_boundary.evaluate`.
 
-The sections below describe the **target** Entra model. Do not read them as live integration.
+The sections below describe the **target** Entra model. Phase 14 implements the operator OIDC BFF and delegated Calendar read; live tenant verification remains blocked without credentials.
 
 ## Three identity cases
 
@@ -41,8 +41,8 @@ The sections below describe the **target** Entra model. Do not read them as live
 - Browser: never stores access tokens (HttpOnly session cookie)
 - Scopes: `openid profile`, plus the API’s app-role token
 - App roles: `Operator`, `SecurityAdmin`
-- Used for: connector config, rotation, quarantine reprocess, policy activation
-- **Not used for:** Graph calendar connector calls
+- Used for: Graph Calendar.Read operator pull, future connector config / reprocess
+- Graph calendar connector calls use the **delegated** access token from the same session (server-side). The browser never sees it.
 
 ### 2. Machine connector (application)
 

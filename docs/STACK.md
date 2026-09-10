@@ -27,8 +27,8 @@ Java 21 remains an emergency fallback only if a transitive library later proves 
 | Resilience4j | **2.4.0** (`resilience4j-spring-boot4` pinned explicitly; BOM does not manage that artifact) | Retry + CircuitBreaker on **outbound connectors only**. Timeouts via RestClient read timeout. Spring `@Retryable` is **not** stacked. |
 | JSON Schema | `com.networknt:json-schema-validator` **3.0.6** | Runtime JSON Schema 2020-12 / OpenAPI 3.1 dialect. Jackson 3 / Java 17+. Apache 2.0. Selected after checking maintenance and Java 25 compatibility. Adapter lives in `api`, not domain. |
 | JSON Canonicalization | Constrained RFC 8785 writer in `application` (`Rfc8785Canonicalizer`) | No extra JCS library. Titanium JCS is Jackson 2; Boot 4 is Jackson 3. Integers only; floats rejected. |
-| Microsoft Graph | `microsoft-graph` **6.66.1** | Current Graph Java SDK line. |
-| Azure Identity (client only) | `azure-identity` current 1.x compatible with Graph 6.66 | Client-credentials / managed identity **client** for Graph. Not a hosting dependency. |
+| Microsoft Graph | `microsoft-graph` **6.67.0** | Official Graph Java SDK used in `MicrosoftGraphCalendarAdapter`. |
+| Azure Identity | not added | Delegated token comes from Spring OAuth2 client session, not azure-identity. |
 | OpenTelemetry | Spring Boot 4 official OTel starter | Traces and metrics to Cloud Trace / Monitoring. |
 | springdoc | OpenAPI 3.1 compatible starter for Boot 4 | Generated + authored OpenAPI stay in sync. |
 

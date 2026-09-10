@@ -86,7 +86,16 @@ Vitest + Vue Test Utils. MSW mocks HTTP for the typed API client only. MSW is no
 
 ## Frontend E2E
 
-Playwright starts the local **worker + API** and the Vite app. It covers Delivery Lab, Credential Lab, audit-chain verification, attestation signature verification, isolated tamper demos, and graph updates for delivered / quarantined / rejected crossings. Entra/Graph/KMS remain later.
+Playwright starts the local **worker + API** and the Vite app. It covers Delivery Lab, Credential Lab, audit-chain verification, attestation signature verification, isolated tamper demos, graph updates, premium navigation (Labs/Operations/Evidence/mobile), and the Microsoft connector harness badge. Live Entra login is not required for E2E.
+
+## Microsoft Graph / Entra (Phase 14)
+
+- WireMock calendarView 200 / empty / 401 / 403 / 429 / 5xx / malformed
+- Bounded retry honors Retry-After; 403 is not retried
+- Harness crossing: contract + egress + no subject/attendee leakage
+- Admin session anonymous; CSRF required on session mutation; `SCOPE_Calendars.Read` required
+- Bearer JWT resource server unchanged
+- No live Microsoft network in `mvn verify`
 
 ## Live (Phase 18)
 

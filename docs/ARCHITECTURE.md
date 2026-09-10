@@ -19,7 +19,8 @@ BoundaryMesh is two Cloud Run workloads, one enforcement engine, and a delivery 
 | IaC | Pulumi TypeScript + GCS state | Distinct from Terraform (B) |
 | CI identity | GitHub → GCP WIF | No JSON keys |
 | Admin identity | Microsoft Entra OIDC (BFF) | Real authorization, not login theatre |
-| Graph | Outlook Calendar, one deep connector | Live mode **or** contract harness |
+| Graph | Outlook Calendar, one deep connector | Contract harness TESTED; live Graph blocked without tenant |
+| Product shell | Custom Vue/SCSS premium header | Core / Labs / Operations / Evidence / Status; no UI framework |
 | AI | None | Deterministic policy is the product |
 
 ## High-level flow (local now / cloud later)
@@ -117,48 +118,53 @@ Each hop has a different identity. Secret Manager is unreachable from the public
 
 ## Frontend architecture
 
-Vue 3 SPA on Firebase Hosting.
+Vue 3 SPA (Firebase Hosting remains PLANNED). Recruiter console uses a sticky premium header: Core destinations, Labs/Operations/Evidence dropdowns, Status, and a compact Recruiter/Operator control. Microsoft 365 Calendar lives under **Connections**, not a top-level `/m365` route.
 
 | Route | Auth | Purpose |
 | --- | --- | --- |
-| `/` | public | Overview + wow scenario |
-| `/connections` | public | Synthetic + live-identity connectors |
-| `/events` | public | Boundary events list |
-| `/events/:id` | public | Transaction evidence |
-| `/quarantine` | public read / operator reprocess | Quarantine workflow |
+| `/` | public | Overview |
+| `/connections` | public | Velora synthetic systems + Microsoft 365 Calendar connector |
+| `/boundary-events` `/boundary-events/:id` | public | Boundary events |
+| `/quarantine` `/quarantine/:id` | public read / operator reprocess | Quarantine workflow |
 | `/audit` `/audit/:integrationId` | public | Tamper-evident audit chain |
 | `/attestations` `/attestations/:id` | public | Exchange attestation + Java verify |
 | `/boundary-graph` | public | Integration Boundary Graph |
-| `/m365` | public | Graph connector + live/harness badge |
-| `/posture` | public | Controls, scans (live later), fail-closed map |
-| `/architecture` | public | Honest stack + dogfood SHA |
-| `/admin/*` | Entra session | Protected mutations |
+| `/architecture` | public | Honest stack |
+| `/status` | public | Capabilities / project status |
+| `/identity` `/webhooks` `/contracts` `/data-boundary` `/crossing` `/delivery` `/credentials` | public labs | Local control demonstrations |
+| `/api/v1/admin/**` | Entra session + CSRF when configured | Operator Graph pull |
 
-Pinia stores: `events`, `quarantine`, `evidence` (audit chains, attestations, boundary graph), `projectIdentity`. No secret values, no JWTs in state.
+Pinia stores: `events`, `quarantine`, `evidence` (audit chains, attestations, boundary graph), `microsoft` session (no tokens). No JWTs in Vue or localStorage.
 
-Visual system: **Integration Boundary Graph** — live application state, not a static architecture poster. Spec: [BOUNDARY_GRAPH.md](BOUNDARY_GRAPH.md).
+Visual system: premium navy/teal product header plus **Integration Boundary Graph** — live application state, not a static architecture poster. Spec: [BOUNDARY_GRAPH.md](BOUNDARY_GRAPH.md).
 
 ## Identity at the product edge
 
 Three distinct cases, never mixed:
 
-| Case | Flow | Used for |
+| Case | Flow | Current status |
 | --- | --- | --- |
-| Recruiter | none | Read-only demo |
-| Admin user | Entra OIDC authorization code + PKCE, Spring BFF session cookie | Protected mutations |
-| Machine connector | JWT bearer (Entra client credentials) **or** HMAC webhook **or** Graph notification | Ingress transactions |
+| Recruiter | none | Public read + labeled harness POSTs |
+| Admin / operator | Entra OIDC authorization code, Spring BFF HttpOnly session | Implemented + TESTED. Live tenant **BLOCKED** without credentials |
+| Machine / API | Local JWT/JWKS resource server | **TESTED**. Entra client-credentials JWT remains PLANNED |
 
-Delegated Graph permissions are **not** used for the flagship calendar connector. Application permission `Calendars.Read` only. Admin consent is a documented product fact, not a hidden checkbox.
+**Spring Security chains (local):**
+
+1. `@Order(1)` admin/session: `/api/v1/admin/**`, `/oauth2/**`, `/login/**`, `/logout` — CSRF on, cookie session.
+2. `@Order(2)` resource server: `/api/**`, `/v3/**` — bearer JWT/HMAC, CSRF off (stateless).
+
+Delegated Graph permission **`Calendars.Read`** is the flagship calendar connector. Application `Calendars.Read` is not claimed. Graph change notifications remain **PLANNED** until a reachable HTTPS endpoint exists.
 
 ## Contracts as runtime
 
 ```text
 contracts/openapi/boundary-api.yaml          OpenAPI 3.1
 contracts/asyncapi/delivery-instructions.yaml AsyncAPI 3
-contracts/json-schema/helix-calendar-event.v1.json
+contracts/json-schema/m365-calendar.v1.schema.json
 contracts/json-schema/quayforge-order.v1.json
 contracts/json-schema/covecrm-activity.v1.json
 contracts/json-schema/rivertide-instruction.v1.json
+contracts/policies/m365-calendar.egress.v1.json
 ```
 
 The engine loads schema **version** from the integration record. Unknown versions → `QUARANTINE` + `CONTRACT_VERSION_UNSUPPORTED` (or `REJECT` if policy says hard-fail). See [CONTRACT_MODEL.md](CONTRACT_MODEL.md).

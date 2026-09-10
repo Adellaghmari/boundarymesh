@@ -1,120 +1,84 @@
-# Microsoft 365 / Graph / Entra integration
+# Microsoft 365 / Graph integration
 
-Microsoft 365 is the **flagship enterprise connector ecosystem**, not the hosting cloud. BoundaryMesh remains GCP-hosted.
+Microsoft Graph is an **enterprise connector plugged into BoundaryMesh**, not the product.
 
 ```text
-MICROSOFT 365 / ENTRA / GRAPH
-        →  JAVA / SPRING / CAMEL
-        →  BOUNDARY ENFORCEMENT
-        →  GOOGLE CLOUD
-        →  COVECRM (and other connectors)
+MICROSOFT ENTRA / MICROSOFT 365
+        → Graph Calendar connector adapter
+        → normalize m365-calendar/v1
+        → identity / authorization evidence
+        → Contract Drift Firewall
+        → Data Boundary Firewall
+        → Boundary Enforcement Engine
+        → ALLOW / TRANSFORM / QUARANTINE / REJECT
+        → audit + exchange attestation
 ```
 
-## Chosen depth: Outlook Calendar
+Helix 365 remains a **fictional** Velora system. It is not Microsoft 365.
 
-One deep connector beats five shallow Graph wrappers.
+## Chosen depth
 
-**Scenario:** a Helix 365 calendar event (customer meeting created or updated) attempts to become a **CoveCRM activity**.
+One bounded read: **Outlook Calendar** `GET /me/calendarView` (next 7 days, `$top<=5`).
 
-Why calendar:
+Not in this phase: mail, Teams, OneDrive, SharePoint, users/groups, calendar write, or Graph change notifications.
 
-- Real change-notification lifecycle (create, validate, expire, renew, lifecycle notifications).
-- Attendee emails are a natural **egress** demo (REDACT).
-- Application permission can be least-privilege (`Calendars.Read`).
-- CRM destination is a believable system crossing.
+## Permission mode
 
-Not in v1: SharePoint libraries, Teams chats, mail send, `User.Read.All`.
+**Delegated `Calendars.Read`** (least privilege that still allows a signed-in operator demo).
 
-## Permission matrix (least privilege)
+Application `Calendars.Read` is not requested. Admin-consent application permissions are not faked.
 
-| Permission | Type | Why |
-| --- | --- | --- |
-| `Calendars.Read` | Application | Read events for subscribed mailboxes / users in tenant |
-| Admin consent | required | Application permissions always |
-
-Not requested: `Calendars.ReadWrite` (connector does not write back to Graph in v1).
-
-If live tenant cannot grant application calendar read, **do not fake it**. Stay on **CONTRACT-HARNESS MODE** and mark the CV matrix `TESTED`, not `LIVE VERIFIED`.
-
-## Two modes (hard)
-
-### LIVE CONNECTOR MODE
-
-Used only when a legitimate tenant exists and a real Graph call has been executed.
-
-Evidence required to flip the badge:
-
-- tenant ID (non-secret)
-- application ID (non-secret)
-- permission granted
-- one successful Graph GET or notification processed
-- timestamp and Git SHA
-
-### CONTRACT-HARNESS MODE (default until proven otherwise)
-
-- Official Graph API shapes (OpenAPI / documented JSON)
-- WireMock mappings for:
-  - `GET /v1.0/users/{id}/events/{id}`
-  - subscription CRUD
-  - validation handshake (echo `validationToken`)
-  - notification payload
-  - 401 / 403 / 429 / 5xx
-- Pact consumer tests for `GraphCalendarClient`
-- Synthetic Helix 365 mailbox data labeled **SYNTHETIC DEMO**
-
-The core product **must build and demo fully** in harness mode.
-
-## Graph change notifications (real behavior)
-
-Microsoft Graph notifications are **not** HMAC-SHA256 partner webhooks.
-
-| Step | Graph behavior | BoundaryMesh |
-| --- | --- | --- |
-| Create subscription | POST `/subscriptions` with `notificationUrl`, `resource`, `expirationDateTime`, `clientState` | Worker (authenticated) creates; API does not |
-| Validation | Graph sends GET/POST with `validationToken`; endpoint must return token in **plain text** within seconds | `boundary-api` public handler, no engine, no persistence of token |
-| Notifications | POST resource notifications; may include `clientState` | Authenticity: `clientState` compared constant-time to Secret Manager reference; tenant/app/subscription ID must match Firestore registration |
-| Lifecycle | `subscriptionRemoved`, `missed`, reauthorization | Quarantine + renew path; no fake infinite subscriptions |
-| Expiration | max lifetime is limited | Renewal job on worker before expiry |
-| Duplicates | Graph may deliver more than once | Idempotency on `notificationId` / resource + change type; **not** classified as replay |
-
-`clientState` is a secret. Store only a Secret Manager reference. Compare in constant time. Never log it.
-
-If Microsoft introduces additional handshake/signature validation for the notification payload in the tenant’s cloud, implement the **documented Graph mechanism**, not a pretend HMAC.
-
-## Connector through the engine
-
-Graph events do **not** bypass BoundaryMesh.
-
-1. Notification hits `boundary-api`.
-2. Subscription authenticity + freshness + duplicate/replay rules.
-3. Optional fetch of full event (worker) **or** use resource data in notification if rich notifications are enabled — Phase 14 chooses one and documents it. Default: notification is a **pointer**; worker fetches the event **after** ALLOW, so untrusted POST bodies are not treated as the CRM payload.
-4. Fetched event is validated against `helix-calendar-event.v1` JSON Schema.
-5. Egress policy for CoveCRM applied.
-6. Camel `graphToCrm` route delivers.
-
-If we fetch after ALLOW, the **ingress** transaction is the notification envelope; the **delivery** payload is the Graph resource. Both get evidence records. The attestation covers the crossing that was actually delivered.
-
-## Error handling (Graph)
-
-| Graph status | Retry | Outcome |
-| --- | --- | --- |
-| 401 / 403 | **no** | quarantine `CREDENTIAL` / `AUTHZ` — fail closed |
-| 429 | yes, honor `Retry-After` | bounded retry then quarantine |
-| 5xx | yes, bounded | then quarantine |
-| Timeout | yes, bounded | then quarantine |
-| 404 resource | no | reject or quarantine per policy (default quarantine — resource may have been deleted) |
+Consent is mapped to the generic Phase 9 model: `ConsentGrant` + `Permission(Calendars.Read)` + `GrantKind.DELEGATED` + `ConnectorOperation.CALENDAR_READ`.
 
 ## SDK
 
-Microsoft Graph Java SDK 6.66.x with `azure-identity` **client credentials** in the **worker only**.
+Live adapter: official **Microsoft Graph Java SDK 6.67.0** in the API module only (`MicrosoftGraphCalendarAdapter`). Domain and application modules must not import `com.microsoft`.
 
-API process has no Graph SDK usage except the validation HTTP endpoint.
+WireMock tests use `GraphCalendarHttpAdapter` (JDK HttpClient) so `mvn verify` never calls Microsoft.
 
-## Recruiter UI: Microsoft 365 Connector page
+## Modes
 
-- Mode badge: `LIVE VERIFIED` or `CONTRACT HARNESS`
-- Permission list actually requested
-- Delegated vs application explanation
-- Last subscription expiry / renewal (synthetic or live)
-- Last crossing outcome
-- Explicit statement if no real tenant call has occurred
+| Mode | When | Label |
+| --- | --- | --- |
+| CONTRACT HARNESS | default; no tenant required | `CONTRACT_HARNESS` |
+| NOT CONFIGURED | Entra env vars blank | Recruiter mode; harness still available |
+| LIVE | Entra configured **and** `BOUNDARYMESH_GRAPH_MODE=LIVE` **and** a real Graph call succeeds | `LIVE_VERIFIED` only then |
+
+Never label a WireMock or harness payload as LIVE.
+
+## Normalization and policy
+
+Normalized contract: `contracts/json-schema/m365-calendar.v1.schema.json` (`m365-calendar/v1`).
+
+Egress: `contracts/policies/m365-calendar.egress.v1.json` destination `M365_CALENDAR`.
+
+| Path | Action |
+| --- | --- |
+| `/event_reference` | ALLOW (SHA-256 of provider id) |
+| `/start_time` | ALLOW |
+| `/end_time` | ALLOW |
+| `/availability` | ALLOW |
+| `/subject` | REDACT |
+| `/attendees` | DENY STRIP |
+| `/online_meeting_url` | DENY STRIP |
+| `/body` | DENY STRIP |
+
+This is deterministic minimization, not a legal-compliance claim.
+
+Recruiter and admin JSON responses do not include subjects, attendees, bodies, or tokens.
+
+## Resilience
+
+Graph reads use a bounded retry (max 3). `401`/`403` are not retried. `429` honors `Retry-After` (capped). `5xx` and transport timeouts are retryable then fail closed. Camel Resilience4j stays on the delivery worker; Graph is not a CRM delivery.
+
+## Recruiter demo
+
+`Connections → Microsoft 365 Calendar` explains the architecture without login.
+
+`POST /api/v1/dev/microsoft-lab/harness-crossing` runs the harness through contract + egress + engine + audit + attestation.
+
+Operator live pull (session + CSRF + `Calendars.Read`): `POST /api/v1/admin/microsoft/calendar/pull`.
+
+## Graph change notifications
+
+**PLANNED.** A live subscription needs a reachable HTTPS notification URL. This project is not on Cloud Run yet. No ngrok.

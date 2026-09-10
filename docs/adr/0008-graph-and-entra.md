@@ -2,30 +2,28 @@
 
 ## Status
 
-Accepted.
+Accepted (Phase 14).
 
 ## Context
 
-Need a flagship Microsoft enterprise connector without Azure hosting. No dependency on a free M365 developer tenant.
+Need a flagship Microsoft enterprise connector without Azure hosting and without requiring a live tenant for CI.
 
 ## Decision
 
-- **Entra ID**: admin OIDC BFF; machine client-credentials JWT; app roles.
-- **Graph**: one deep connector — **Outlook Calendar** read + change notifications.
-- **LIVE** vs **CONTRACT-HARNESS** (WireMock + Pact + real schemas). Never claim live without a real call.
+- **Entra ID**: operator OIDC BFF (`oauth2Login` Authorization Code). Machine JWT resource server stays.
+- **Graph**: one deep connector — Outlook Calendar **read** via delegated `Calendars.Read`.
+- **SDK**: Microsoft Graph Java SDK 6.67.0 in the API adapter only.
+- **Harness default**: WireMock + synthetic calendar events. Never claim LIVE without a real Graph call.
+- **Graph change notifications**: remain PLANNED until a public HTTPS endpoint exists.
 
-## Why Graph?
+## Why delegated Calendar read?
 
-Demonstrates Entra application identity, least-privilege `Calendars.Read`, subscription lifecycle, egress of attendee emails into CoveCRM. Cross-cloud: M365 → Java → GCP.
+Least privilege that still allows a signed-in operator demo. Application permissions are not faked when admin consent is unavailable.
 
 ## Why not five Graph APIs?
 
-Breadth without subscription/egress depth is a keyword move.
-
-## Why Entra?
-
-Real IAM for admin mutations and machine ingress. Login is not decoration: protected routes 401/403 tested.
+Breadth without contract/egress/audit depth is a keyword move.
 
 ## Consequences
 
-Harness is the default production-quality path. Live tenant is a bonus badge.
+`mvn verify` and Playwright do not call Microsoft. Live tenant verification is a manual checkpoint.

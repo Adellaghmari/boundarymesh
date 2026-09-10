@@ -1,6 +1,6 @@
 # CV claims matrix
 
-**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 13.
+**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 14.
 
 Statuses: `PLANNED` → `IMPLEMENTED` → `TESTED` → `LIVE VERIFIED`
 
@@ -23,16 +23,17 @@ This is portfolio work, not professional employment.
 | Java 25 | **TESTED** | Temurin 25.0.4.1; `--release 25`; Enforcer |
 | Maven | **TESTED** | Wrapper 3.9.11; `mvnw.cmd verify` |
 | Spring Boot 4.1.1 | **TESTED** | Context load + HTTP tests |
-| Spring Security (local filter chain) | **TESTED** | Resource-server chain, headers, CORS, 401/403 JSON |
-| Spring Security OAuth2 resource server | **TESTED** | Local JWT decoder + JWKS. Not Entra |
-| Spring Security OIDC BFF | PLANNED | No Authorization Code login |
-| Identity Federation Gateway | **TESTED** | Local issuer. Entra remains PLANNED |
+| Spring Security (local filter chain) | **TESTED** | Two chains: admin session CSRF + bearer JWT resource server |
+| Spring Security OAuth2 resource server | **TESTED** | Local JWT decoder + JWKS. Machine identity unchanged |
+| Spring Security OIDC BFF | **TESTED** | Authorization Code `oauth2Login` when Entra is configured; disabled when blank |
+| Identity Federation Gateway | **TESTED** | Local issuer TESTED. Entra OIDC TESTED without live tenant |
 | AuthN vs AuthZ evidence | **TESTED** | HTTP 401/403 and domain identity/authorization controls |
 | JWT validation (iss/aud/exp/nbf/sig) | **TESTED** | Asymmetric RS256 |
 | JWKS validation / key rotation tests | **TESTED** | In-process JWKS |
-| Scope/role authorization | **TESTED** | `boundary.read` / `boundary.evaluate` / `boundary.admin` |
-| Microsoft Entra ID (admin) | PLANNED | No app registration |
-| Entra client-credentials JWT | PLANNED | |
+| Scope/role authorization | **TESTED** | `boundary.read` / `boundary.evaluate` / `boundary.admin` / `SCOPE_Calendars.Read` |
+| Microsoft Entra ID (admin) | **TESTED** | Implemented + security tests. LIVE VERIFIED LOCALLY blocked (no tenant) |
+| Entra client-credentials JWT | PLANNED | Machine identity remains the local resource server |
+| OIDC Authorization Code / browser login | **TESTED** | Spring Security oauth2Login; live tenant blocked |
 | Webhook HMAC-SHA256 | **TESTED** | QuayForge raw-body contract |
 | Constant-time signature comparison | **TESTED** | `MessageDigest.isEqual` |
 | Timestamp freshness | **TESTED** | ±300s via `Clock` |
@@ -41,9 +42,10 @@ This is portfolio work, not professional employment.
 | Replay vs duplicate distinction | **TESTED** | Same nonce ≠ same event_id |
 | Graph notification validation (harness) | PLANNED | |
 | Graph subscription lifecycle | PLANNED | |
-| Microsoft Graph Calendar connector | PLANNED | |
-| Microsoft Graph Java SDK | PLANNED | |
-| Calendars.Read least privilege | PLANNED | |
+| Microsoft Graph Calendar connector | **TESTED** | Bounded calendarView via SDK adapter + WireMock harness. Not LIVE |
+| Microsoft Graph Java SDK | **TESTED** | `com.microsoft.graph:microsoft-graph:6.67.0` used in `MicrosoftGraphCalendarAdapter` |
+| Calendars.Read least privilege | **TESTED** | Delegated permission mapped to ConsentGrant. Not a standalone skill |
+| Microsoft 365 integration | **TESTED** | Normalized `m365-calendar/v1` through engine. Live tenant blocked |
 | Apache Camel 4.22 routes | **TESTED** | Worker-only 4.22.0. API artifact has no Camel |
 | EIP: Content-Based Router | **TESTED** | Destination discriminator |
 | EIP: Message Translator | **TESTED** | Lumenway fulfillment mapping |
@@ -109,8 +111,8 @@ This is portfolio work, not professional employment.
 | Cloud Logging / Monitoring / Trace | PLANNED | |
 | Firebase Hosting | PLANNED | |
 | Public recruiter demo | PLANNED | |
-| Protected admin mutations | **TESTED** | Local `boundary.admin` reprocess. Entra admin PLANNED |
+| Protected admin mutations | **TESTED** | Session CSRF on `/api/v1/admin/**`. Local `boundary.admin` reprocess remains |
 | Self-dogfood Git SHA / revision | PLANNED | |
-| LIVE Graph tenant call | PLANNED | Explicitly not claimed |
+| LIVE Graph tenant call | PLANNED | Explicitly not claimed. Harness is TESTED |
 
 No row may move to LIVE VERIFIED without dated evidence in PROJECT_STATUS.md.

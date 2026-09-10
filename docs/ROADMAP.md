@@ -18,7 +18,7 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 | **11** | Tamper-evident audit chain | **COMPLETE** local hash chain + verifier. Firestore PLANNED |
 | **12** | Cryptographic Exchange Attestation | **COMPLETE** local JCA P-256. Cloud KMS PLANNED |
 | **13** | Integration Boundary Graph | **COMPLETE** state-driven Vue SVG |
-| **14** | M365 / Graph connector | SDK client, harness default, live optional |
+| **14** | M365 / Graph connector | **COMPLETE** harness + Entra architecture TESTED. Live tenant BLOCKED. Graph subscriptions PLANNED |
 | **15** | Firestore + Pub/Sub adapters | emulators then cloud; outbox publish |
 | **16** | Pulumi / GCP infrastructure | Cloud Run ×2, IAM, KMS, secrets, hosting — **first provision** |
 | **17** | GitHub WIF + CI/CD + AppSec | no JSON keys; Semgrep/Gitleaks/ZAP/Dependency-Check |

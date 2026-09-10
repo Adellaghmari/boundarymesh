@@ -14,7 +14,8 @@ It is **not** Project B’s dependency blast-radius graph, a release timeline, o
 | ACTIVE | Recent observed allow/transform/delivery |
 | BLOCKED | Recent REJECT |
 | QUARANTINED | Recent hold or open quarantine for that destination |
-| NO_RECENT_ACTIVITY | Helix 365 / Entra remains PLANNED |
+| NO_RECENT_ACTIVITY | Helix 365 remains a fictional unused connector |
+| CONFIGURED | Microsoft 365 Calendar edge until a harness/live crossing is observed |
 
 Configured ≠ delivered. Observed crossings update recent status.
 
@@ -23,6 +24,7 @@ Configured ≠ delivered. Observed crossings update recent status.
 `BoundaryGraphAssembler` derives nodes and edges from:
 
 - configured Velora integrations (QuayForge, Helix 365, CoveCRM, Lumenway, Rivertide)
+- Microsoft 365 Calendar → BoundaryMesh (`m365-calendar`)
 - credential/consent/contract/policy metadata
 - `ObservedCrossingStore` (latest crossing per destination from the live pipeline)
 - open quarantine counts
