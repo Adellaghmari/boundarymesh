@@ -30,6 +30,11 @@ import dev.adellaghmari.boundarymesh.application.egress.EgressPolicyRepository;
 import dev.adellaghmari.boundarymesh.application.evidence.CrossingEvidenceService;
 import dev.adellaghmari.boundarymesh.application.graph.BoundaryGraphAssembler;
 import dev.adellaghmari.boundarymesh.application.graph.ObservedCrossingStore;
+import dev.adellaghmari.boundarymesh.application.microsoft.CalendarEventNormalizer;
+import dev.adellaghmari.boundarymesh.application.microsoft.GraphCalendarPort;
+import dev.adellaghmari.boundarymesh.application.microsoft.HarnessGraphCalendarAdapter;
+import dev.adellaghmari.boundarymesh.application.microsoft.MicrosoftCalendarCrossingService;
+import dev.adellaghmari.boundarymesh.application.microsoft.RetryingGraphCalendarPort;
 import dev.adellaghmari.boundarymesh.application.quarantine.InMemoryQuarantineRepository;
 import dev.adellaghmari.boundarymesh.application.quarantine.QuarantineOrchestrator;
 import dev.adellaghmari.boundarymesh.application.quarantine.QuarantineRepository;
@@ -206,6 +211,31 @@ public class ApplicationConfig {
     @Bean
     BoundaryGraphAssembler boundaryGraphAssembler(ObservedCrossingStore observations, QuarantineRepository quarantine) {
         return new BoundaryGraphAssembler(observations, quarantine);
+    }
+
+    @Bean
+    HarnessGraphCalendarAdapter harnessGraphCalendarAdapter() {
+        return new HarnessGraphCalendarAdapter();
+    }
+
+    @Bean
+    GraphCalendarPort graphCalendarPort(HarnessGraphCalendarAdapter harness) {
+        return new RetryingGraphCalendarPort(harness);
+    }
+
+    @Bean
+    CalendarEventNormalizer calendarEventNormalizer() {
+        return new CalendarEventNormalizer();
+    }
+
+    @Bean
+    MicrosoftCalendarCrossingService microsoftCalendarCrossingService(
+            GraphCalendarPort graphCalendarPort,
+            CalendarEventNormalizer calendarEventNormalizer,
+            CrossingDeliveryService crossingDeliveryService,
+            AuditAppender auditAppender) {
+        return new MicrosoftCalendarCrossingService(
+                graphCalendarPort, calendarEventNormalizer, crossingDeliveryService, auditAppender);
     }
 
     @Bean

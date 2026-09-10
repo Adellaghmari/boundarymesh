@@ -18,8 +18,8 @@ public class CorsConfig {
         configuration.setAllowedOrigins(
                 List.of("http://127.0.0.1:5173", "http://localhost:5173", "http://127.0.0.1:4173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Request-Id"));
-        configuration.setAllowCredentials(false);
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Request-Id", "X-XSRF-TOKEN"));
+        configuration.setAllowCredentials(true);
         configuration.setMaxAge(600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", configuration);

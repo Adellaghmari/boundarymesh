@@ -19,10 +19,39 @@ public record BoundaryMeshProperties(
         @Pattern(regexp = "[a-z0-9._-]+") String policyVersion,
         String workerBaseUrl,
         @Valid @NotNull Security security,
-        @Valid @NotNull Webhook webhook) {
+        @Valid @NotNull Webhook webhook,
+        @Valid @NotNull Entra entra) {
 
     public record Security(@NotBlank String issuer, @NotBlank String audience, @NotNull Duration accessTokenTtl) {}
 
     public record Webhook(
             @NotNull Duration freshnessWindow, @Min(1024) @Max(262144) int maxBodyBytes, String quayforgeSecret) {}
+
+    public record Entra(
+            String tenantId,
+            String clientId,
+            String clientSecret,
+            String redirectUri,
+            String frontendOrigin,
+            String graphMode) {
+
+        public boolean configured() {
+            return notBlank(tenantId) && notBlank(clientId) && notBlank(clientSecret);
+        }
+
+        public boolean liveGraph() {
+            return configured() && "LIVE".equalsIgnoreCase(graphMode);
+        }
+
+        public String modeLabel() {
+            if (liveGraph()) {
+                return "LIVE_VERIFIED";
+            }
+            return configured() ? "CONTRACT_HARNESS" : "NOT_CONFIGURED";
+        }
+
+        private static boolean notBlank(String value) {
+            return value != null && !value.isBlank();
+        }
+    }
 }

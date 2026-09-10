@@ -9,6 +9,12 @@ spring:
 server:
   shutdown: graceful
   port: 8080
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+        secure: false
   error:
     include-stacktrace: never
     include-message: never
@@ -51,6 +57,13 @@ boundarymesh:
     freshness-window: 5m
     max-body-bytes: 65536
     quayforge-secret: ""
+  entra:
+    tenant-id: ${BOUNDARYMESH_ENTRA_TENANT_ID:}
+    client-id: ${BOUNDARYMESH_ENTRA_CLIENT_ID:}
+    client-secret: ${BOUNDARYMESH_ENTRA_CLIENT_SECRET:}
+    redirect-uri: ${BOUNDARYMESH_ENTRA_REDIRECT_URI:http://127.0.0.1:5173/login/oauth2/code/entra}
+    frontend-origin: ${BOUNDARYMESH_FRONTEND_ORIGIN:http://127.0.0.1:5173}
+    graph-mode: ${BOUNDARYMESH_GRAPH_MODE:HARNESS}
 
 logging:
   level:

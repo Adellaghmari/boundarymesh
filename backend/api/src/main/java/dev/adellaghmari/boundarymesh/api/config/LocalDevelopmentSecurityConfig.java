@@ -3,6 +3,7 @@ package dev.adellaghmari.boundarymesh.api.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,18 +17,20 @@ import org.springframework.security.web.SecurityFilterChain;
  * <p>Spring Security owns HTTP authentication and route authorization. The Boundary Enforcement
  * Engine owns domain crossing outcomes after a request is admitted.
  *
- * <p>CSRF is disabled because this API is a stateless bearer JWT / HMAC resource server and does
- * not use cookie sessions. A future Entra OIDC BFF must re-enable CSRF for browser cookies.
+ * <p>CSRF is disabled on this chain because it is a stateless bearer JWT / HMAC resource server.
+ * Browser session mutations live on {@link AdminSessionSecurityConfig} and keep cookie CSRF.
  *
- * <p>This is not Microsoft Entra and not an interactive OIDC login.
+ * <p>Machine identity here remains the local JWT resource server. Entra OIDC is a separate chain.
  */
 @Configuration
 @Profile({"local", "test"})
 public class LocalDevelopmentSecurityConfig {
 
     @Bean
+    @Order(2)
     SecurityFilterChain localDevelopmentSecurity(HttpSecurity http) throws Exception {
-        return http.csrf(AbstractHttpConfigurer::disable)
+        return http.securityMatcher("/api/**", "/v3/**")
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .headers(Customizer.withDefaults())
                 .httpBasic(AbstractHttpConfigurer::disable)
@@ -61,7 +64,12 @@ public class LocalDevelopmentSecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/boundary-graph")
                         .permitAll()
-                        .requestMatchers("/api/v1/dev/audit-lab/**", "/api/v1/dev/attestation-lab/**")
+                        .requestMatchers(
+                                "/api/v1/dev/audit-lab/**",
+                                "/api/v1/dev/attestation-lab/**",
+                                "/api/v1/dev/microsoft-lab/**")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/microsoft/connector")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/webhooks/quayforge")
                         .permitAll()
