@@ -19,7 +19,7 @@ This is portfolio work, not professional employment.
 | Vue Test Utils | **TESTED** | outcome, control vector, routes |
 | Playwright | **TESTED** | local smoke vs real Java backend |
 | MSW | **TESTED** | frontend API unit tests only; not WireMock |
-| Integration Boundary Graph | **TESTED** | Vue SVG from `GET /api/v1/boundary-graph`. Configured + observed. Not blast-radius |
+| Integration Boundary Graph | **TESTED** / **LIVE VERIFIED LOCALLY** | Vue SVG from `GET /api/v1/boundary-graph`. Live `m365-calendar` edge OBSERVED/ACTIVE after a real Graph event. Helix 365 remains SYNTHETIC. Not blast-radius |
 | Java 25 | **TESTED** | Temurin 25.0.4.1; `--release 25`; Enforcer |
 | Maven | **TESTED** | Wrapper 3.9.11; `mvnw.cmd verify` |
 | Spring Boot 4.1.1 | **TESTED** | Context load + HTTP tests |
@@ -42,10 +42,10 @@ This is portfolio work, not professional employment.
 | Replay vs duplicate distinction | **TESTED** | Same nonce ≠ same event_id |
 | Graph notification validation (harness) | PLANNED | |
 | Graph subscription lifecycle | PLANNED | |
-| Microsoft Graph Calendar connector | **LIVE VERIFIED LOCALLY** | Real Graph `calendarView` HTTP 200 via `MicrosoftGraphCalendarAdapter`. Empty calendar (`count=0`) is provider-verified, not event-transformation-verified |
+| Microsoft Graph Calendar connector | **LIVE VERIFIED LOCALLY** | Real Graph `calendarView` HTTP 200 via `MicrosoftGraphCalendarAdapter`. Live event `count=1` crossed `m365-calendar/v1` |
 | Microsoft Graph Java SDK | **LIVE VERIFIED LOCALLY** | `com.microsoft.graph:microsoft-graph:6.67.0` used on the live 2xx path |
 | Calendars.Read least privilege | **LIVE VERIFIED LOCALLY** | Delegated `Calendars.Read` only. `SCOPE_Calendars.Read` still required for admin pull |
-| Microsoft 365 integration | **LIVE VERIFIED LOCALLY** | Live Microsoft Graph calendar integration using delegated `Calendars.Read` with a personal Microsoft account, server-side OIDC session handling, and BoundaryMesh security controls. Helix 365 remains SYNTHETIC DEMO. Not an enterprise Exchange Online mailbox |
+| Microsoft 365 integration | **LIVE VERIFIED LOCALLY** | Live Microsoft Graph calendar integration using delegated `Calendars.Read` with a personal Microsoft account, server-side OIDC session, `m365-calendar/v1` normalization, `m365-calendar-egress/v1` enforcement, audit, local JCA attestation, and an OBSERVED graph edge. Helix 365 remains SYNTHETIC DEMO. Not an enterprise Exchange Online mailbox |
 | Apache Camel 4.22 routes | **TESTED** | Worker-only 4.22.0. API artifact has no Camel |
 | EIP: Content-Based Router | **TESTED** | Destination discriminator |
 | EIP: Message Translator | **TESTED** | Lumenway fulfillment mapping |
@@ -55,17 +55,17 @@ This is portfolio work, not professional employment.
 | connector delivery | **TESTED** | Synthetic CoveCRM / Lumenway / Rivertide + WireMock |
 | OpenAPI 3.1 | **TESTED** | Partner artifact `contracts/openapi/` plus springdoc. Runtime uses referenced JSON Schema |
 | AsyncAPI delivery instructions | **TESTED** | Validated AsyncAPI 3 artifact. Pub/Sub runtime still PLANNED |
-| JSON Schema runtime validation | **TESTED** | networknt 3.0.6, dialect 2020-12 |
-| versioned integration contracts | **TESTED** | QuayForge v1/v2 supported, v3 unsupported |
+| JSON Schema runtime validation | **TESTED** / **LIVE VERIFIED LOCALLY** | networknt 3.0.6. Live Graph event: contract control PASS for `m365-calendar/v1` |
+| versioned integration contracts | **TESTED** / **LIVE VERIFIED LOCALLY** | QuayForge v1/v2 TESTED. `m365-calendar/v1` LIVE VERIFIED LOCALLY on one real event |
 | Contract Drift Firewall | **TESTED** | Drift ≠ malformed. Affects BoundaryOutcome |
-| destination-specific data egress policy | **TESTED** | CoveCRM / Rivertide / Lumenway |
-| deterministic redaction | **TESTED** | `[REDACTED]` outbound copy |
-| data minimization | **TESTED** | Implicit deny + destination allow-lists |
-| Data Boundary Firewall | **TESTED** | Real transformation, not UI masking |
+| destination-specific data egress policy | **TESTED** / **LIVE VERIFIED LOCALLY** | CoveCRM / Rivertide / Lumenway TESTED. `m365-calendar-egress/v1` LIVE VERIFIED LOCALLY on one real Graph event |
+| deterministic redaction | **TESTED** / **LIVE VERIFIED LOCALLY** | `[REDACTED]` outbound copy. Live calendar subject redaction required (`EGRESS_REDACTION_REQUIRED`) |
+| data minimization | **TESTED** / **LIVE VERIFIED LOCALLY** | Implicit deny + destination allow-lists. Live Graph adapter does not select subject/attendees/body/join URL |
+| Data Boundary Firewall | **TESTED** / **LIVE VERIFIED LOCALLY** | Real transformation, not UI masking. Live Graph event: `ALLOW_WITH_TRANSFORMATION`, transformation_count=4 |
 | Boundary Enforcement Engine foundation | **TESTED** | Synthetic ControlVector plus real contract/egress |
-| expanded Boundary Enforcement Engine | **TESTED** | All nine ControlVector fields real and tested |
-| integrated multi-control boundary crossing | **TESTED** | `POST /api/v1/dev/crossings/evaluate` |
-| Outcomes ALLOW / TRANSFORM / QUARANTINE / REJECT | **TESTED** | |
+| expanded Boundary Enforcement Engine | **TESTED** / **LIVE VERIFIED LOCALLY** | Nine ControlVector fields. Live Graph event: contract PASS, egress PASS, outcome `ALLOW_WITH_TRANSFORMATION` |
+| integrated multi-control boundary crossing | **TESTED** / **LIVE VERIFIED LOCALLY** | Labs use `POST /api/v1/dev/crossings/evaluate`. Live Graph event used `evaluateWithoutDelivery` |
+| Outcomes ALLOW / TRANSFORM / QUARANTINE / REJECT | **TESTED** / **LIVE VERIFIED LOCALLY** | Live Graph event outcome `ALLOW_WITH_TRANSFORMATION` |
 | JUnit 5 | **TESTED** | Identity + webhook + engine suites |
 | ArchUnit | **TESTED** | Domain/application must not depend on Spring/cloud |
 | Spotless | **TESTED** | Bound to `verify` |
@@ -86,10 +86,10 @@ This is portfolio work, not professional employment.
 | Firestore Native access patterns | PLANNED | |
 | Cloud Run API + worker | PLANNED | |
 | Cloud KMS EC_SIGN_P256_SHA256 | PLANNED | Local JCA ECDSA P-256 is TESTED; KMS adapter is not |
-| Cryptographic Exchange Attestation | **TESTED** | Local JCA. Does not prove business truth. Cloud KMS PLANNED |
+| Cryptographic Exchange Attestation | **LIVE VERIFIED LOCALLY** | Local JCA P-256 SIGNED + verify VALID for one real Graph calendar event. Does not prove business truth. Cloud KMS PLANNED |
 | RFC 8785 canonicalization | **TESTED** | Constrained application writer. Floats rejected. No Jackson default |
 | Attestation signature verification | **TESTED** | ECDSA P-256 P1363 + Base64. UNSIGNED is explicit |
-| SHA-256 tamper-evident audit chain | **TESTED** | Hash-chained, continuity-verifiable. Not immutable |
+| SHA-256 tamper-evident audit chain | **TESTED** / **LIVE VERIFIED LOCALLY** | Live `m365-calendar` chain VALID: CONNECTOR_READ count=1, BOUNDARY_DECISION, ATTESTATION_CREATED. Not immutable |
 | Deterministic audit canonicalization | **TESTED** | RFC 8785 subset over audit-entry/v1 |
 | Audit-chain verification | **TESTED** | Sequence, previous-hash, recalculated SHA-256 |
 | Concurrency-safe audit append | **TESTED** | Per-chain lock + expected-head check |
@@ -113,6 +113,6 @@ This is portfolio work, not professional employment.
 | Public recruiter demo | PLANNED | |
 | Protected admin mutations | **TESTED** | Session CSRF on `/api/v1/admin/**`. Local `boundary.admin` reprocess remains |
 | Self-dogfood Git SHA / revision | PLANNED | |
-| LIVE Graph tenant call | **LIVE VERIFIED LOCALLY** | Operator `POST /api/v1/admin/microsoft/calendar/pull` returned Graph HTTP 200. Contract harness is not this evidence |
+| LIVE Graph tenant call | **LIVE VERIFIED LOCALLY** | Operator pull Graph HTTP 200, `count=1`. Contract harness is not this evidence |
 
 No row may move to LIVE VERIFIED or LIVE VERIFIED LOCALLY without dated evidence in PROJECT_STATUS.md.

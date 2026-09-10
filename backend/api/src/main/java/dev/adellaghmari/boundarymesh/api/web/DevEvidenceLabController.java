@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.adellaghmari.boundarymesh.application.attestation.AttestationService;
 import dev.adellaghmari.boundarymesh.application.audit.AuditAppender;
 import dev.adellaghmari.boundarymesh.application.audit.AuditChainVerifier;
-import dev.adellaghmari.boundarymesh.application.audit.AuditRepository;
 import dev.adellaghmari.boundarymesh.domain.attestation.ExchangeAttestation;
 import dev.adellaghmari.boundarymesh.domain.audit.AuditChainId;
 import dev.adellaghmari.boundarymesh.domain.audit.AuditEntry;
@@ -29,25 +28,17 @@ import org.springframework.web.bind.annotation.RestController;
 @ConditionalOnProperty(name = "boundarymesh.dev-evaluate-enabled", havingValue = "true")
 public class DevEvidenceLabController {
 
-    private final AuditRepository auditRepository;
-    private final AuditChainVerifier verifier;
     private final AttestationService attestations;
 
-    public DevEvidenceLabController(
-            AuditRepository auditRepository, AuditChainVerifier verifier, AttestationService attestations) {
-        this.auditRepository = auditRepository;
-        this.verifier = verifier;
+    public DevEvidenceLabController(AttestationService attestations) {
         this.attestations = attestations;
     }
 
     @GetMapping("/audit-lab/tamper-demo")
     public TamperDemoView auditTamper() {
         AuditChainId chainId = new AuditChainId("quayforge-orders");
-        List<AuditEntry> original = auditRepository.entries(chainId, 100);
-        if (original.size() < 2) {
-            original = isolatedSeed(chainId);
-        }
-        AuditVerificationResult valid = verifier.verify(chainId, original);
+        List<AuditEntry> original = isolatedSeed(chainId);
+        AuditVerificationResult valid = new AuditChainVerifier().verify(chainId, original);
         AuditEntry first = original.getFirst();
         Map<String, String> mutated = new LinkedHashMap<>(first.attributes());
         mutated.put("outcome", "TAMPERED");
@@ -62,7 +53,7 @@ public class DevEvidenceLabController {
                 first.currentHash());
         List<AuditEntry> tampered = new ArrayList<>(original);
         tampered.set(0, tamperedEntry);
-        AuditVerificationResult broken = verifier.verify(chainId, tampered);
+        AuditVerificationResult broken = new AuditChainVerifier().verify(chainId, tampered);
         return new TamperDemoView(
                 "SYNTHETIC DEMO. Isolated copy only. The live audit repository was not mutated.",
                 AuditChainController.VerifyView.from(valid),

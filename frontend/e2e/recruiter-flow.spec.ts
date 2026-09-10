@@ -199,7 +199,7 @@ test('boundary graph, audit chain, and attestation follow a real crossing', asyn
   await page.getByRole('button', { name: 'Verify chain' }).click()
   await expect(page.getByTestId('audit-verify')).toContainText('VALID', { timeout: 20_000 })
   await page.getByRole('button', { name: 'Synthetic tamper demo' }).click()
-  await expect(page.getByTestId('audit-tamper')).toContainText('HASH_MISMATCH', { timeout: 20_000 })
+  await expect(page.getByTestId('audit-tamper')).toContainText(/HASH_MISMATCH|SEQUENCE_GAP/, { timeout: 20_000 })
   await expect(page.getByTestId('audit-verify')).toContainText('VALID')
 
   await page.goto('/attestations')

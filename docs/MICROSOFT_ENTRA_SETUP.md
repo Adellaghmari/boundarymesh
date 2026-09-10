@@ -48,7 +48,7 @@ BOUNDARYMESH_GRAPH_MODE=HARNESS
 
 Leave them unset for Recruiter mode. The Graph **contract harness** still runs without Entra.
 
-Live Graph reads use `BOUNDARYMESH_GRAPH_MODE=LIVE` with the three Entra values configured. A Graph HTTP 2xx on the Operator calendar pull is the only path to `LIVE_VERIFIED`. Local evidence for that path is recorded in PROJECT_STATUS.md. The contract harness is not live evidence.
+Live Graph reads use `BOUNDARYMESH_GRAPH_MODE=LIVE` with the three Entra values configured. A Graph HTTP 2xx on the Operator calendar pull is the only path to `LIVE_VERIFIED`. Local evidence includes one real event crossing (`m365-calendar/v1`, `m365-calendar-egress/v1`) recorded in PROJECT_STATUS.md. The contract harness is not live evidence.
 
 ## Login / logout
 

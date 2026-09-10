@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **14B COMPLETE** for local Microsoft Graph provider verification. Graph change notifications and GCP remain **PLANNED**.  
+**Phase:** **14B COMPLETE** — live Microsoft Graph event crossing verified locally. Graph change notifications and GCP remain **PLANNED**.  
 **Overall:** **PROJECT C — NOT COMPLETE**
 
 ## Completeness
@@ -15,24 +15,24 @@
 | Phase 3 Identity Federation Gateway | **COMPLETE** (local JWT/JWKS **TESTED**; Entra OIDC Operator login **LIVE VERIFIED LOCALLY**) |
 | Phase 4 Webhook & Subscription Defense | **COMPLETE** (QuayForge HMAC; Graph subscriptions **PLANNED**) |
 | Phase 5 Contract Drift Firewall | **COMPLETE** |
-| Phase 6 Data Boundary Firewall | **COMPLETE** (includes M365 calendar egress policy) |
+| Phase 6 Data Boundary Firewall | **COMPLETE** (`m365-calendar-egress/v1` **LIVE VERIFIED LOCALLY** on one real Graph event) |
 | Phase 7 Engine expansion | **COMPLETE** |
 | Phase 8 Apache Camel delivery | **COMPLETE** (local worker; Pub/Sub PLANNED) |
 | Phase 9 Credential & Consent | **COMPLETE** (local model + delegated Calendars.Read mapping; Secret Manager PLANNED) |
 | Phase 10 Quarantine & Recovery | **COMPLETE** (in-memory; Firestore PLANNED) |
 | Phase 11 Tamper-Evident Audit Chain | **COMPLETE** (in-memory SHA-256 chain; Firestore PLANNED) |
-| Phase 12 Cryptographic Exchange Attestation | **COMPLETE** (local JCA P-256; Cloud KMS PLANNED) |
-| Phase 13 Integration Boundary Graph | **COMPLETE** (state-driven Vue SVG; includes M365 Calendar node) |
+| Phase 12 Cryptographic Exchange Attestation | **COMPLETE** (local JCA P-256 **LIVE VERIFIED LOCALLY** for one Graph event; Cloud KMS PLANNED) |
+| Phase 13 Integration Boundary Graph | **COMPLETE** (`m365-calendar` OBSERVED/ACTIVE from the live event; Helix 365 SYNTHETIC) |
 | Phase 14 premium navigation | **COMPLETE** |
-| Phase 14 Entra + Graph connector | **LIVE VERIFIED LOCALLY** (Graph HTTP 200, empty calendar). Change notifications **PLANNED** |
+| Phase 14 Entra + Graph connector | **LIVE VERIFIED LOCALLY** (Graph HTTP 200, `count=1`, `ALLOW_WITH_TRANSFORMATION`). Change notifications **PLANNED** |
 | Application production IAM / Entra live | **LIVE VERIFIED LOCALLY** — common authority, personal Microsoft account, server-side session |
-| Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, `count=0`. Event payload transformation **not** verified |
+| Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, one event normalized and enforced |
 | GCP resources | **NONE PROVISIONED** |
 | Microsoft credentials | **NONE CREATED in Git / this session** |
 | GCP service-account JSON keys | **NONE** |
 | Project A | **FROZEN** — not modified |
 | Project B | **FROZEN** — not modified |
-| LIVE VERIFIED LOCALLY | Entra OIDC + Microsoft Graph calendar provider (empty calendar). Not GCP. Not Graph notifications |
+| LIVE VERIFIED LOCALLY | Entra OIDC + Graph calendar event crossing (normalization, egress, decision, audit, attestation, OBSERVED graph). Not GCP. Not Graph notifications |
 
 ## ControlVector audit
 
@@ -43,8 +43,8 @@
 | authenticity | yes | yes | real HMAC |
 | freshness | yes | yes | real timestamp window |
 | replay | yes | yes | real nonce store |
-| contract | yes | yes | real schema/registry including `m365-calendar/v1` |
-| egress | yes | yes | real destination policy including `m365-calendar-egress/v1` |
+| contract | yes | yes | real schema/registry; live Graph event `m365-calendar/v1` PASS |
+| egress | yes | yes | live Graph event `m365-calendar-egress/v1` PASS, `EGRESS_REDACTION_REQUIRED` |
 | credential resolvability | yes | yes | real local catalog/evaluator |
 | connector safety | yes | yes | real circuit/config snapshot |
 
@@ -53,26 +53,28 @@
 1. Identity Federation Gateway — local JWT **TESTED**; Entra OIDC BFF **LIVE VERIFIED LOCALLY**.
 2. Webhook & Subscription Defense — QuayForge HMAC **TESTED**; Graph subscriptions **PLANNED**.
 3. Contract Drift Firewall — **TESTED**.
-4. Data Boundary Firewall — **TESTED**.
+4. Data Boundary Firewall — **TESTED**; `m365-calendar-egress/v1` **LIVE VERIFIED LOCALLY**.
 5. Credential & Consent Vault — local model **TESTED**; Microsoft delegated consent mapped; Secret Manager **PLANNED**.
 6. Quarantine & Recovery Orchestrator — local **TESTED**, cloud persistence **PLANNED**.
 
-Also: Tamper-Evident Audit Chain **TESTED**; Cryptographic Exchange Attestation **TESTED locally**; Integration Boundary Graph **TESTED locally**. Cloud KMS and Firestore **PLANNED**.
+Also: Tamper-Evident Audit Chain **LIVE VERIFIED LOCALLY** for the Graph event; Cryptographic Exchange Attestation **LIVE VERIFIED LOCALLY** (local JCA; Cloud KMS **PLANNED**); Integration Boundary Graph **LIVE VERIFIED LOCALLY** for `m365-calendar` OBSERVED. Firestore **PLANNED**.
 
 ## LIVE MICROSOFT VERIFICATION (local, 2026-09-10)
 
-Human-controlled Operator browser completed `POST /api/v1/admin/microsoft/calendar/pull`.
+Human-controlled Operator browser completed `POST /api/v1/admin/microsoft/calendar/pull` twice in this process.
 
-Safe recorded result:
+Empty-calendar pull: Graph HTTP 200, `count=0` (provider verified only).
 
-- pull HTTP 200, `mode=LIVE_VERIFIED`, `live=true`, `permission=Calendars.Read`, `provider_status=200`, `count=0`
-- common v2 authority, personal Microsoft account, server-side OIDC session, SPA CSRF
-- live adapter: `MicrosoftGraphCalendarAdapter` (Microsoft Graph Java SDK)
-- audit chain `m365-calendar`: `CONNECTOR_READ` with `provider=MICROSOFT_GRAPH`, `live=true`, `count=0`, continuity `VALID`
-- no access/refresh/ID tokens, Authorization headers, calendar subjects, attendees, bodies, or join URLs in audit, attestations list, graph payload, connector GET, or recruiter UI
-- Vue receives connector/session categories only; no Microsoft tokens
-- zero events: no `m365-calendar/v1` payload entered the Data Boundary Firewall on this pull
-- zero events: no Exchange Attestation and no Boundary Graph **OBSERVED** edge for this pull (`m365-calendar` remains **CONFIGURED**)
+Event pull: Graph HTTP 200, `mode=LIVE_VERIFIED`, `live=true`, `permission=Calendars.Read`, `provider_status=200`, `count=1`.
+
+Safe recorded result for the event pull:
+
+- path: Microsoft Graph → `MicrosoftGraphCalendarAdapter` → `m365-calendar/v1` → contract PASS → `m365-calendar-egress/v1` → engine `ALLOW_WITH_TRANSFORMATION` (`EGRESS_REDACTION_REQUIRED`) → audit → SIGNED local JCA attestation (verify VALID) → graph OBSERVED/ACTIVE
+- audit chain `m365-calendar` continuity VALID: `CONNECTOR_READ` count=1, `BOUNDARY_DECISION`, `DELIVERY_RESULT` NOT_ATTEMPTED, `ATTESTATION_CREATED` SIGNED
+- applicable controls PASS; authenticity/freshness/replay NOT_APPLICABLE; transformation_count=4 (subject REDACT + attendees/body/join URL DENY)
+- live adapter selects only id/start/end/showAs from Graph
+- no access/refresh/ID tokens, Authorization headers, calendar subjects, attendees, bodies, or join URLs in audit, attestation, graph, connector GET, recruiter UI, localStorage, or sessionStorage
+- Vue receives connector/session categories only
 - Helix 365 remains SYNTHETIC DEMO
 - not an enterprise Exchange Online mailbox
 - Graph change notifications remain **PLANNED**
