@@ -1,82 +1,79 @@
 # Tamper-evident audit chain
 
-Each relevant security/integration event is appended to a **hash chain**. When the chain is verified, **broken continuity or tampering of stored entries can be detected**.
+BoundaryMesh records a **hash-chained security/integration audit**. Verification can detect broken continuity or retrospective modification of stored entries. The local repository is still mutable memory.
 
-## Correct vs incorrect claims
+## Correct language
 
-**Correct:** verification detects missing sequence, mutated payload, or broken `previous_entry_hash` links.
+**Correct:** tamper-evident, hash-chained, continuity-verifiable.
 
-**Incorrect:** “the database cannot be changed,” “immutable,” “blockchain,” “tamper-proof.”
+**Incorrect:** immutable database, blockchain, tamper-proof, cryptographically prevents all modification.
 
-Firestore remains a mutable store. This is a **detective** control, not a prevention of a privileged administrator.
+A privileged process can still delete or rewrite storage. Verification **detects** that when it is run. It does not prevent a storage administrator from changing bytes.
 
-## Entry fields
+## Chain identity
+
+One chain per integration (`AuditChainId` = integration slug, for example `quayforge-orders`). That avoids a single global lock. Firestore remains PLANNED.
+
+## Domain
+
+| Type | Role |
+| --- | --- |
+| `AuditChainId` | Integration-scoped chain |
+| `AuditEntryId` | Entry identity (not hashed) |
+| `AuditEntry` | Sequence, timestamp, event type, safe attributes, previous hash, current hash |
+| `AuditHash` | SHA-256 as 64 lowercase hex characters. Genesis is 64 zeros |
+| `AuditChainHead` | Latest sequence + head hash |
+| `AuditVerificationResult` | `VALID`, `EMPTY`, `SEQUENCE_GAP`, `LINK_MISMATCH`, `HASH_MISMATCH`, `REORDERED`, `FOREIGN_CHAIN` |
+
+## Events recorded
+
+Pipeline records structured events, not every method call:
+
+`BOUNDARY_DECISION`, `DELIVERY_INSTRUCTION_CREATED`, `DELIVERY_RESULT`, `QUARANTINE_CREATED`, `REPROCESS_STARTED`, `QUARANTINE_RESOLVED`, `ATTESTATION_CREATED`.
+
+Safe attributes only: transaction id, destination, outcome, reason code, control statuses, contract/credential references, connector/route ids, attempt count. Never JWT, HMAC secrets, tokens, private keys, or sensitive payload fields.
+
+## Canonicalization
+
+Hash input is RFC 8785 JSON Canonicalization Scheme for a constrained model (objects, arrays, strings, integers, booleans, null). Floating-point numbers are rejected. Object keys are sorted lexicographically. UTF-8 bytes are hashed.
+
+Implementation: `Rfc8785Canonicalizer` in the application layer. No third-party JCS library: Titanium JCS tracks Jackson 2; Spring Boot 4 uses Jackson 3.
+
+Canonical map for an entry (**excludes** `id` and `current_hash`):
 
 ```text
-chain_id            e.g. integration or global `boundarymesh.v1`
-sequence            monotonic integer per chain
-timestamp           RFC 3339
-event_type          INGEST | DECISION | DELIVERY | QUARANTINE | REPROCESS | ADMIN ...
-transaction_id      optional
-previous_entry_hash hex SHA-256 of previous canonical entry (64 zeros for genesis)
-entry_hash          SHA-256 of this entry’s canonical bytes (excluding entry_hash itself)
-metadata            operational fields only (ids, reason codes, hashes)
+attributes       object of string→string, keys sorted
+chain_id         string
+event_type       enum name
+occurred_at      Instant.toString()
+previous_hash    64 lowercase hex
+schema_version   "audit-entry/v1"
+sequence         integer
 ```
 
-Canonical bytes: RFC 8785 JCS of the entry without `entry_hash`.
+`current_hash = lowercase hex(SHA-256(RFC8785(canonical map)))`
 
-`entry_hash = SHA-256( JCS(entry_without_hash) )`
+Entry 1: `previous_hash = GENESIS` (64 zeros).  
+Entry n: `previous_hash = entry n-1 current_hash`.
 
-`previous_entry_hash` of item n = `entry_hash` of item n-1.
+## Concurrency
 
-## What is hashed
+`InMemoryAuditRepository` holds a `ReentrantLock` per chain. Append checks the expected head (sequence + hash) before write. Two concurrent events cannot claim the same sequence. Firestore transactional append remains PLANNED.
 
-Include: sequence, timestamp, event_type, ids, reason codes, decision outcome, payload_sha256, attestation_id.
+## Verifier
 
-Exclude: raw payloads, tokens, secrets, emails, PAN-like fields.
+`AuditChainVerifier` walks entries in order and checks sequence continuity, previous-hash linkage, foreign-chain membership, and recalculated SHA-256. It does not merely compare a stored head hash.
 
-## Write protocol
+## API
 
-1. Read latest sequence (Firestore transaction).
-2. Build entry with that `previous_entry_hash`.
-3. Compute `entry_hash`.
-4. Create `auditChains/{chainId}/entries/{sequence}` with precondition “does not exist.”
-5. Update chain head.
+Read-only:
 
-Contention: one chain per **integration** plus one `platform` chain for admin actions. Avoid a single global hotspot.
+- `GET /api/v1/audit/chains`
+- `GET /api/v1/audit/chains/{integrationId}` (latest 100 entries; verification uses the full in-memory chain)
+- `GET /api/v1/audit/chains/{integrationId}/verify`
 
-## Verification API
+`GET /api/v1/dev/audit-lab/tamper-demo` (local/dev): isolated copy. Original verifies VALID. Metadata-tampered copy HASH_MISMATCH. Live repository is not mutated.
 
-`GET /api/v1/audit-chains/{chainId}/verify` (public read):
+## Storage truth
 
-Walk entries in order. Recompute hashes. Report first break:
-
-- `VALID`
-- `GAP` (missing sequence)
-- `HASH_MISMATCH`
-- `LINK_MISMATCH`
-
-Do not “repair” automatically.
-
-## Signed checkpoints (KMS)
-
-Every **N=100** entries, or daily, write `checkpoints/{seq}`:
-
-- `from_sequence`, `to_sequence`
-- `head_hash`
-- KMS signature over JCS({chain_id, from, to, head_hash})
-
-Checkpoints make long-range verification cheaper and detect silent truncation of the tail if an attacker deletes recent entries **and** the checkpoint still points at the old head (operator compares). An attacker who also deletes checkpoints is a privileged-storage threat; detection then depends on exported logs / object versioning — **not claimed as solved**.
-
-## Failure
-
-If append fails after a decision: security event `AUDIT_CHAIN_APPEND_FAILED`, fail **open** for the already-computed REJECT/ALLOW response only if the decision document exists; otherwise fail closed. Never claim chain validity if append failed.
-
-## Tests
-
-- valid chain
-- mutated metadata → HASH_MISMATCH
-- swapped previous hash → LINK_MISMATCH
-- deleted middle entry → GAP
-- checkpoint verifies
-- public API does not leak Restricted metadata
+Local in-memory. Does not survive restart. Firestore PLANNED.

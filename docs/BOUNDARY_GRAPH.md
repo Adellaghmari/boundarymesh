@@ -1,83 +1,50 @@
 # Integration Boundary Graph
 
-The **Integration Boundary Graph** is the recruiter-facing visual system. It is **not** a static architecture diagram. It renders **actual application state** for a selected transaction or live connector pair.
+The graph answers: which systems are connected, which security boundaries exist, which identity/contract/data/credential controls apply, and what recent outcomes occurred.
 
-## Purpose
+It is **not** Project B’s dependency blast-radius graph, a release timeline, or a static architecture SVG.
 
-In one view:
+## Semantics
 
-- source and destination
-- identity mechanism
-- authorization result
-- contract version
-- credential **reference** (not secret)
-- boundary outcome
-- connector status
+| Piece | Meaning |
+| --- | --- |
+| Node | Configured synthetic system or the BoundaryMesh control plane |
+| Edge | Configured integration crossing (source → destination, mediated by BoundaryMesh) |
+| CONFIGURED | Integration exists; no recent observed crossing |
+| ACTIVE | Recent observed allow/transform/delivery |
+| BLOCKED | Recent REJECT |
+| QUARANTINED | Recent hold or open quarantine for that destination |
+| NO_RECENT_ACTIVITY | Helix 365 / Entra remains PLANNED |
 
-## Visual language
-
-Nodes: systems (Helix 365, BoundaryMesh, CoveCRM, …).  
-Edges: a crossing.  
-BoundaryMesh expands into **control chips**:
-
-```text
-HELIX 365
-    │  Entra application identity
-    ▼
-BOUNDARYMESH
-    ├ Identity        VERIFIED
-    ├ Authorization   ALLOWED
-    ├ Authenticity    VALID
-    ├ Replay          CLEAR
-    ├ Contract        VALID  v1.2.0
-    ├ Egress          2 REDACTIONS
-    ├ Credential      ref …/versions/3
-    ├ Connector       HEALTHY
-    ▼
-COVECRM
-    outcome: ALLOW_WITH_TRANSFORMATION
-```
-
-Reject example:
-
-```text
-QUAYFORGE
-    ▼
-BOUNDARYMESH
-    └ REPLAY DETECTED
-    ▼
-REJECT     (no edge into Rivertide)
-```
-
-Color: outcome only (allow / transform / quarantine / reject). Do not use red/green as the only encoding — include labels for accessibility.
+Configured ≠ delivered. Observed crossings update recent status.
 
 ## Data source
 
-`GET /api/v1/transactions/{id}/graph` returns a **view model**:
+`BoundaryGraphAssembler` derives nodes and edges from:
 
-```text
-nodes[]  { id, kind, label, synthetic: true }
-edges[]  { from, to, outcome }
-controls[] { key, result, detail }
-badge    SYNTHETIC DEMO | LIVE PROJECT
-```
+- configured Velora integrations (QuayForge, Helix 365, CoveCRM, Lumenway, Rivertide)
+- credential/consent/contract/policy metadata
+- `ObservedCrossingStore` (latest crossing per destination from the live pipeline)
+- open quarantine counts
 
-No tokens. No emails. No HMAC signatures.
+Vue does not hardcode edges as the source of truth. It renders `GET /api/v1/boundary-graph`.
 
-The overview page can show an **aggregate** graph of current connectors (status + last outcome). Transaction detail shows the **instance** graph.
+## Visual
 
-## Implementation (Phase 13)
+Custom Vue SVG. No graph library. Selecting an edge shows identity, contract, egress policy, credential reference, consent, connector route, recent outcome, delivery, audit chain, and attestation links, plus the nine ControlVector stages from the linked attestation.
 
-Vue 3 + SVG (preferred) or Canvas. Pinia `graph` store. No GraphViz server. Layout: layered left-to-right, BoundaryMesh center.
+Recruiter demo on `/boundary-graph`:
 
-If a library is added, it must be for layout math only, not to replace the product visual identity.
+1. QuayForge → CoveCRM delivery → ACTIVE / DELIVERED / SIGNED
+2. Contract drift → QUARANTINED
+3. Replay reject → BLOCKED / no delivery
 
-## Wow path
+## Differentiation
 
-Default seed transaction is the calendar → CRM success with two redactions, then toggle to audience-fail and replay-fail comparators on the same page.
+Project B graph: upstream/downstream service blast radius for releases.
 
-## Non-goals
+BoundaryMesh graph: system-to-system **security boundaries**. No reverse-BFS, no rollback impact.
 
-- Editing integrations by dragging nodes
-- Displaying real customer networks
-- Copying Project B’s Change Impact Graph (that is blast radius of **releases**)
+## Storage truth
+
+Derived from local in-memory repositories. Does not survive restart. Firestore PLANNED.

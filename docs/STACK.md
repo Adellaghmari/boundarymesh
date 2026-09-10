@@ -26,7 +26,7 @@ Java 21 remains an emergency fallback only if a transitive library later proves 
 | Apache Camel | **4.22.0 LTS** | Current Camel LTS with Spring Boot 4 and Java 25. |
 | Resilience4j | **2.4.0** (`resilience4j-spring-boot4` pinned explicitly; BOM does not manage that artifact) | Retry + CircuitBreaker on **outbound connectors only**. Timeouts via RestClient read timeout. Spring `@Retryable` is **not** stacked. |
 | JSON Schema | `com.networknt:json-schema-validator` **3.0.6** | Runtime JSON Schema 2020-12 / OpenAPI 3.1 dialect. Jackson 3 / Java 17+. Apache 2.0. Selected after checking maintenance and Java 25 compatibility. Adapter lives in `api`, not domain. |
-| JSON Canonicalization | RFC 8785 (JCS) library, verified in Phase 12 | Attestation bytes. Never default Jackson serialization. |
+| JSON Canonicalization | Constrained RFC 8785 writer in `application` (`Rfc8785Canonicalizer`) | No extra JCS library. Titanium JCS is Jackson 2; Boot 4 is Jackson 3. Integers only; floats rejected. |
 | Microsoft Graph | `microsoft-graph` **6.66.1** | Current Graph Java SDK line. |
 | Azure Identity (client only) | `azure-identity` current 1.x compatible with Graph 6.66 | Client-credentials / managed identity **client** for Graph. Not a hosting dependency. |
 | OpenTelemetry | Spring Boot 4 official OTel starter | Traces and metrics to Cloud Trace / Monitoring. |
@@ -49,7 +49,7 @@ Java 21 remains an emergency fallback only if a transitive library later proves 
 | HTTP | Typed native `fetch` client — no Axios |
 
 **Phase 2 resolved (2026-09-09):** Vue **3.5.42**, Pinia **4.0.3**, Vue Router **5.3.1**, Vite **8.2.2**, TypeScript **6.0.3**, Vitest **4.1.11**, Playwright **1.63.0**, MSW **2.15.0**. Details: [PHASE2.md](PHASE2.md).
-| Graph viz | Vue-rendered SVG/Canvas boundary graph (no D3 unless layout requires it in Phase 13) |
+| Graph viz | Custom Vue SVG Integration Boundary Graph (no extra graph library) |
 | Tests | Vitest + Vue Test Utils + Playwright |
 
 No Next.js. No Nuxt as a hosting framework (Vite SPA is enough). No Tailwind-as-identity: SCSS is the visual system.

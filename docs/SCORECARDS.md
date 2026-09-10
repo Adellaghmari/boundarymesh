@@ -15,10 +15,10 @@ Desired: no major category below 8 without an explicit justified tradeoff.
 | GCP depth | **8** | Serverless suite; no GKE by design |
 | Cloud architecture | **9** | Two services, pull worker, outbox |
 | Backend engineering | **9** | |
-| Frontend differentiation | **8** | Vue + graph visual; polish in Phase 2/13 |
+| Frontend differentiation | **9** | Vue SVG Integration Boundary Graph from live Java state |
 | Application security | **9** | Semgrep/ZAP/HMAC/JWT — not Trivy-as-story |
 | IAM depth | **9** | Entra + WIF + SA split + app roles |
-| Cryptography depth | **8** | KMS ECDSA + JCS + hash chain; no homemade ciphers — correct |
+| Cryptography depth | **9** | Local JCA ECDSA P-256 + constrained RFC 8785 + SHA-256 chain; Cloud KMS PLANNED |
 | Testing depth | **9** | Pyramid specified including Camel and replay |
 | Job-market relevance | **9** | |
 | Interview differentiation | **9** | AuthN≠AuthZ, replay≠duplicate |
@@ -28,8 +28,8 @@ Desired: no major category below 8 without an explicit justified tradeoff.
 | Cost coherence | **9** | Scale to zero, logging trap called out |
 
 **M365 8:** depends on tenant luck; architecture still complete via harness.  
-**Frontend 8:** visual wow is Phase 13.  
-**Cryptography 8:** using KMS/JCA is the *right* depth, not a gap.  
+**Frontend 9:** Phase 13 SVG graph is state-driven, not a static poster.  
+**Cryptography 9:** local JCA is TESTED; Cloud KMS remains the managed-key follow-on, not a fake substitute.  
 **Platform engineering 7** lives on the job-market card, not here as a product failure.
 
 No unjustified category below 8.

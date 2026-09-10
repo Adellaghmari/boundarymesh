@@ -69,9 +69,24 @@ JUnit 5. Mockito only at adapter edges.
 
 Vitest + Vue Test Utils. MSW mocks HTTP for the typed API client only. MSW is not WireMock and is not a Java integration test stand-in.
 
+## Hash chain and attestation (Phases 11–12)
+
+- Valid chain verifies; metadata/timestamp/sequence/previous-hash tamper fails
+- Removed, reordered, and foreign-chain entries fail
+- Concurrent append does not reuse sequence
+- Signed attestation verifies; semantic change / wrong key / corrupted signature fail
+- UNSIGNED is explicit; secrets absent from artifacts
+
+## Boundary graph (Phase 13)
+
+- Configured nodes/edges without traffic
+- Observed delivery/quarantine/reject update edge state
+- Vue SVG selection, filters, stage overlay
+- Playwright: delivered edge, quarantine hold, replay reject, tamper demo INVALID
+
 ## Frontend E2E
 
-Playwright starts the local **worker + API** and the Vite app. It now also covers Delivery Lab (transformed success, credential/consent hold, provider outage → quarantine → admin reprocess, duplicate suppression) and Credential Lab references. Later phases add Entra/Graph/attestation paths.
+Playwright starts the local **worker + API** and the Vite app. It covers Delivery Lab, Credential Lab, audit-chain verification, attestation signature verification, isolated tamper demos, and graph updates for delivered / quarantined / rejected crossings. Entra/Graph/KMS remain later.
 
 ## Live (Phase 18)
 

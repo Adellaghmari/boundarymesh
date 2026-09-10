@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **10 COMPLETE** (Camel delivery + credential/consent boundary + quarantine orchestrator, local)  
+**Phase:** **13 COMPLETE** (audit chain + local exchange attestation + boundary graph; KMS/Firestore PLANNED)  
 **Overall:** **PROJECT C — NOT COMPLETE**
 
 ## Completeness
@@ -20,6 +20,9 @@
 | Phase 8 Apache Camel delivery | **COMPLETE** (local worker; Pub/Sub PLANNED) |
 | Phase 9 Credential & Consent | **COMPLETE** (local model; Secret Manager PLANNED) |
 | Phase 10 Quarantine & Recovery | **COMPLETE** (in-memory; Firestore PLANNED) |
+| Phase 11 Tamper-Evident Audit Chain | **COMPLETE** (in-memory SHA-256 chain; Firestore PLANNED) |
+| Phase 12 Cryptographic Exchange Attestation | **COMPLETE** (local JCA P-256; Cloud KMS PLANNED) |
+| Phase 13 Integration Boundary Graph | **COMPLETE** (state-driven Vue SVG; not Project B) |
 | Application production IAM / Entra | **NOT STARTED** |
 | Microsoft Graph | **NOT STARTED** |
 | GCP resources | **NONE PROVISIONED** |
@@ -52,6 +55,8 @@
 5. Credential & Consent Vault — local model **TESTED**, Secret Manager **PLANNED**
 6. Quarantine & Recovery Orchestrator — local **TESTED**, cloud persistence **PLANNED**
 
+Also: Tamper-Evident Audit Chain **TESTED**; Cryptographic Exchange Attestation **TESTED locally**; Integration Boundary Graph **TESTED locally**. Cloud KMS and Firestore **PLANNED**.
+
 ## Next (do not start automatically)
 
-Phase 11 — tamper-evident audit chain. Do not implement Entra live, Graph, Secret Manager, Firestore, Pub/Sub, or GCP until that phase is requested.
+Phase 14 — Microsoft Graph / Entra live integration remains the next planned phase. Do not implement Entra live, Graph, Secret Manager, Firestore, Pub/Sub, Cloud KMS, or GCP until that phase is requested.

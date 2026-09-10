@@ -11,10 +11,21 @@ Out of scope: compromising Google or Microsoft as vendors; physical datacenter.
 | Elevation of privilege (reprocess) | `boundary.admin` on quarantine reprocess | Entra app roles |
 | Replay (inbound) | HMAC nonce window | Firestore TTL nonce |
 | Replay (outbound) | Delivery idempotent consumer | Firestore idempotency |
-| Tampering | Existing JWT/HMAC/contracts/egress | Attestation + audit chain |
+| Tampering | JWT/HMAC/contracts/egress + audit-chain verification + ECDSA attestation verify | Cloud KMS, Firestore versioning |
 | Denial / dependency failure | Bounded R4j retry, circuit breaker, quarantine | Pub/Sub redelivery budget |
 
-Do not mark Secret Manager / IAM / KMS / Firestore as implemented.
+## Phase 11–13 implemented mitigations
+
+| Threat | Implemented now | Still planned |
+| --- | --- | --- |
+| Repudiation | Structured audit + SHA-256 hash-chain continuity | Firestore + exported checkpoints |
+| Tampering (audit entries) | Recalculated hashes and previous-hash links | Object versioning / privileged-admin detection |
+| Tampering (attestation) | ECDSA P-256 verification of RFC 8785 bytes | Cloud KMS key hosting |
+| Information disclosure | Metadata-only audit/attestation/graph | Gitleaks CI |
+
+The chain does **not** prevent deletion by a privileged storage administrator. That remains a storage/governance concern.
+
+Do not mark Cloud KMS / Firestore as implemented.
 
 ## Phase 3–4 implemented mitigations
 

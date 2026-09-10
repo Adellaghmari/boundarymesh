@@ -1,6 +1,6 @@
 # CV claims matrix
 
-**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 10.
+**Rule:** promote only what is actually supported. Nothing is LIVE VERIFIED in Phase 13.
 
 Statuses: `PLANNED` → `IMPLEMENTED` → `TESTED` → `LIVE VERIFIED`
 
@@ -19,7 +19,7 @@ This is portfolio work, not professional employment.
 | Vue Test Utils | **TESTED** | outcome, control vector, routes |
 | Playwright | **TESTED** | local smoke vs real Java backend |
 | MSW | **TESTED** | frontend API unit tests only; not WireMock |
-| Integration Boundary Graph | PLANNED | |
+| Integration Boundary Graph | **TESTED** | Vue SVG from `GET /api/v1/boundary-graph`. Configured + observed. Not blast-radius |
 | Java 25 | **TESTED** | Temurin 25.0.4.1; `--release 25`; Enforcer |
 | Maven | **TESTED** | Wrapper 3.9.11; `mvnw.cmd verify` |
 | Spring Boot 4.1.1 | **TESTED** | Context load + HTTP tests |
@@ -83,11 +83,17 @@ This is portfolio work, not professional employment.
 | Pub/Sub delivery decoupling | PLANNED | |
 | Firestore Native access patterns | PLANNED | |
 | Cloud Run API + worker | PLANNED | |
-| Cloud KMS EC_SIGN_P256_SHA256 | PLANNED | |
-| Cryptographic Exchange Attestation | PLANNED | |
-| RFC 8785 canonicalization | PLANNED | |
-| Attestation signature verification | PLANNED | |
-| Tamper-evident audit chain | PLANNED | |
+| Cloud KMS EC_SIGN_P256_SHA256 | PLANNED | Local JCA ECDSA P-256 is TESTED; KMS adapter is not |
+| Cryptographic Exchange Attestation | **TESTED** | Local JCA. Does not prove business truth. Cloud KMS PLANNED |
+| RFC 8785 canonicalization | **TESTED** | Constrained application writer. Floats rejected. No Jackson default |
+| Attestation signature verification | **TESTED** | ECDSA P-256 P1363 + Base64. UNSIGNED is explicit |
+| SHA-256 tamper-evident audit chain | **TESTED** | Hash-chained, continuity-verifiable. Not immutable |
+| Deterministic audit canonicalization | **TESTED** | RFC 8785 subset over audit-entry/v1 |
+| Audit-chain verification | **TESTED** | Sequence, previous-hash, recalculated SHA-256 |
+| Concurrency-safe audit append | **TESTED** | Per-chain lock + expected-head check |
+| ECDSA P-256 | **TESTED** | JCA `SHA256withECDSAinP1363Format` |
+| JCA asymmetric cryptography | **TESTED** | Ephemeral local key `local-jca-p256` |
+| state-driven Vue SVG/graph visualization | **TESTED** | Custom SVG, no graph library |
 | Pulumi TypeScript GCP | PLANNED | |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |

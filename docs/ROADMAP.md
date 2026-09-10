@@ -15,9 +15,9 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 | **8** | Apache Camel routes | **COMPLETE** local worker, EIPs, Resilience4j, WireMock. Pub/Sub PLANNED |
 | **9** | Credential & Consent Vault | **COMPLETE** local security model. Secret Manager adapter PLANNED |
 | **10** | Quarantine & Recovery | **COMPLETE** local orchestrator. Firestore persistence PLANNED |
-| **11** | Tamper-evident audit chain | append + verify |
-| **12** | Cryptographic Exchange Attestation | JCS + KMS port + local signing stub; live KMS later |
-| **13** | Integration Boundary Graph | Vue SVG graph on real transaction view-model |
+| **11** | Tamper-evident audit chain | **COMPLETE** local hash chain + verifier. Firestore PLANNED |
+| **12** | Cryptographic Exchange Attestation | **COMPLETE** local JCA P-256. Cloud KMS PLANNED |
+| **13** | Integration Boundary Graph | **COMPLETE** state-driven Vue SVG |
 | **14** | M365 / Graph connector | SDK client, harness default, live optional |
 | **15** | Firestore + Pub/Sub adapters | emulators then cloud; outbox publish |
 | **16** | Pulumi / GCP infrastructure | Cloud Run ×2, IAM, KMS, secrets, hosting — **first provision** |

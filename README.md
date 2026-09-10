@@ -12,7 +12,7 @@ It is **not** an API dashboard, an iPaaS clone, an AI copilot, or a release-inte
 
 ## Product in one paragraph
 
-An untrusted system transaction arrives. BoundaryMesh authenticates identity, authorizes the specific action, verifies message authenticity, distinguishes malicious replay from legitimate duplicate delivery, validates the integration contract, governs which fields may leave the source boundary, then **enforces** a deterministic outcome: `ALLOW`, `ALLOW_WITH_TRANSFORMATION`, `QUARANTINE`, or `REJECT`. Allowed work becomes a `DeliveryInstruction`, passes credential/consent checks, and is routed by Apache Camel with Resilience4j around the connector. Recoverable failures become quarantine items that an authorized operator can reprocess. Cryptographic attestations remain a later phase.
+An untrusted system transaction arrives. BoundaryMesh authenticates identity, authorizes the specific action, verifies message authenticity, distinguishes malicious replay from legitimate duplicate delivery, validates the integration contract, governs which fields may leave the source boundary, then **enforces** a deterministic outcome: `ALLOW`, `ALLOW_WITH_TRANSFORMATION`, `QUARANTINE`, or `REJECT`. Allowed work becomes a `DeliveryInstruction`, passes credential/consent checks, and is routed by Apache Camel with Resilience4j around the connector. Recoverable failures become quarantine items that an authorized operator can reprocess. Each terminal crossing writes a tamper-evident audit chain and a local ECDSA P-256 Cryptographic Exchange Attestation. An Integration Boundary Graph renders configured and observed crossings from application state.
 
 ## Flagship capabilities
 
@@ -23,7 +23,7 @@ An untrusted system transaction arrives. BoundaryMesh authenticates identity, au
 5. **Credential & Consent Vault** — local reference/version/consent model now; Secret Manager later
 6. **Quarantine & Recovery Orchestrator** — local workflow now; Firestore later
 
-Core systems: **Boundary Enforcement Engine**, **Cryptographic Exchange Attestation**, **Integration Boundary Graph**.
+Also implemented locally: **Tamper-Evident Audit Chain**, **Cryptographic Exchange Attestation** (JCA, not Cloud KMS), **Integration Boundary Graph**.
 
 ## Stack (locked)
 
@@ -45,7 +45,7 @@ Do not describe BoundaryMesh as professional security employment, paid Microsoft
 
 Do not modify **Project A** (AI Operations Copilot) or **Project B** (CloudOps Release Intelligence). Both are frozen.
 
-## What exists now (Phases 0–10)
+## What exists now (Phases 0–13)
 
 Local Java 25 / Spring Boot 4.1.1 / Spring Security resource server, a separate Camel delivery worker, and a Vue 3 recruiter console.
 
@@ -54,19 +54,22 @@ Phase 4 proves **QuayForge** HMAC webhook defense (not Graph subscriptions).
 Phase 5–7 prove contract drift, data-boundary transformation, and the composed engine.  
 Phase 8 delivers approved crossings through **Apache Camel 4.22.0** and **Resilience4j 2.4.0** against WireMock providers.  
 Phase 9 adds a **local credential/consent boundary** (not Secret Manager).  
-Phase 10 makes quarantine a real **recovery workflow** with admin-scoped reprocess (not Firestore).
+Phase 10 makes quarantine a real **recovery workflow** with admin-scoped reprocess (not Firestore).  
+Phase 11 adds a **SHA-256 tamper-evident audit chain** (in-memory, not immutable).  
+Phase 12 signs a **Cryptographic Exchange Attestation** with local ECDSA P-256 (Cloud KMS PLANNED).  
+Phase 13 renders an **Integration Boundary Graph** from live local repositories (not a blast-radius graph).
 
 ### One-minute story
 
-A QuayForge order arrives. Identity, authorization, authenticity, freshness, and replay **PASS**. The contract is **VALID**. The Data Boundary Firewall redacts governed fields. The engine emits **ALLOW_WITH_TRANSFORMATION**. Credential version 2 is resolvable. Consent is granted. The connector circuit is **CLOSED**. Camel routes to Lumenway or CoveCRM. The provider receives the transformed body. Result: **DELIVERED**.
+A QuayForge order arrives. Identity, authorization, authenticity, freshness, and replay **PASS**. The contract is **VALID**. The Data Boundary Firewall redacts governed fields. The engine emits **ALLOW_WITH_TRANSFORMATION**. Credential version 2 is resolvable. Consent is granted. The connector circuit is **CLOSED**. Camel routes to Lumenway or CoveCRM. The provider receives the transformed body. Result: **DELIVERED**. The audit chain verifies. The exchange attestation signature verifies. The graph edge is **ACTIVE**.
 
-Then the same integration hits repeated 503s. Resilience4j retries at most three times. The circuit opens. The next crossing is quarantined without another provider call. The destination recovers. An operator with `boundary.admin` reprocesses. The item becomes **RESOLVED**.
+Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** CoveCRM with no delivery. The graph reflects the actual outcome.
 
-A valid JWT still does **not** automatically allow a crossing.
+A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Still **PLANNED:** Entra, Microsoft Graph, GCP, Firestore, Pub/Sub, Secret Manager, KMS, Pulumi, attestations, Integration Boundary Graph.
+Still **PLANNED:** Entra, Microsoft Graph, GCP, Firestore, Pub/Sub, Secret Manager, Cloud KMS, Pulumi.
 
-## How to run (Phases 3–10)
+## How to run (Phases 3–13)
 
 Requires **JDK 25** and **Node 22**. No secrets. `VITE_*` values are public browser configuration.
 
@@ -101,6 +104,11 @@ POST      /api/v1/dev/delivery-lab/{scenario}
 GET       /api/v1/dev/credential-lab
 GET       /api/v1/quarantine
 POST      /api/v1/quarantine/{id}/reprocess   (boundary.admin)
+GET       /api/v1/audit/chains
+GET       /api/v1/audit/chains/{integrationId}/verify
+GET       /api/v1/attestations
+POST      /api/v1/attestations/{id}/verify
+GET       /api/v1/boundary-graph
 ```
 
 `POST /api/v1/dev/evaluate` and `POST /api/v1/dev/crossings/evaluate` require a local bearer JWT with `boundary.evaluate`. Labs mint or sign on the Java side — do not paste tokens or HMAC secrets into the UI.
@@ -111,7 +119,7 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — NOT COMPLETE.** Phase 0–10 COMPLETE locally. Identity #1 local only (Entra future). Webhook #2 generic HMAC (Graph future). Contract Drift #3 TESTED. Data Boundary #4 TESTED. Credential & Consent #5 local model TESTED (Secret Manager PLANNED). Quarantine #6 local TESTED (Firestore PLANNED). Nothing is LIVE VERIFIED. No GCP, no Microsoft credentials.
+**PROJECT C — NOT COMPLETE.** Phase 0–13 COMPLETE locally. Identity #1 local only (Entra future). Webhook #2 generic HMAC (Graph future). Contract Drift #3 TESTED. Data Boundary #4 TESTED. Credential & Consent #5 local model TESTED (Secret Manager PLANNED). Quarantine #6 local TESTED (Firestore PLANNED). Tamper-Evident Audit Chain TESTED. Cryptographic Exchange Attestation TESTED locally (Cloud KMS PLANNED). Integration Boundary Graph TESTED locally. Nothing is LIVE VERIFIED. No GCP, no Microsoft credentials.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 

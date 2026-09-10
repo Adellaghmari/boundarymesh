@@ -126,14 +126,15 @@ Vue 3 SPA on Firebase Hosting.
 | `/events` | public | Boundary events list |
 | `/events/:id` | public | Transaction evidence |
 | `/quarantine` | public read / operator reprocess | Quarantine workflow |
-| `/attestations` | public | Attestation + verify action (verify is read-only crypto) |
-| `/graph` | public | Integration Boundary Graph |
+| `/audit` `/audit/:integrationId` | public | Tamper-evident audit chain |
+| `/attestations` `/attestations/:id` | public | Exchange attestation + Java verify |
+| `/boundary-graph` | public | Integration Boundary Graph |
 | `/m365` | public | Graph connector + live/harness badge |
 | `/posture` | public | Controls, scans (live later), fail-closed map |
 | `/architecture` | public | Honest stack + dogfood SHA |
 | `/admin/*` | Entra session | Protected mutations |
 
-Pinia stores: `events`, `quarantine`, `graph`, `attestations`, `projectIdentity`. No secret values, no JWTs in state.
+Pinia stores: `events`, `quarantine`, `evidence` (audit chains, attestations, boundary graph), `projectIdentity`. No secret values, no JWTs in state.
 
 Visual system: **Integration Boundary Graph** — live application state, not a static architecture poster. Spec: [BOUNDARY_GRAPH.md](BOUNDARY_GRAPH.md).
 

@@ -15,9 +15,9 @@ BoundaryMesh is an **application-security and integration-security** product. Su
 
 **TLS:** local HTTP is accepted. Cloud Run HTTPS is later. No fake local certificates.
 
-**Public (local):** health, ready, OpenAPI docs, local JWKS/issuer, token mint (local/test), webhook lab helper, QuayForge webhook ingest (HMAC, not anonymous-arbitrary).
+**Public (local):** health, ready, OpenAPI docs, local JWKS/issuer, token mint (local/test), webhook lab helper, QuayForge webhook ingest (HMAC, not anonymous-arbitrary), GET audit chains, GET attestations, GET/POST attestation verify, GET boundary graph, local tamper-demo GETs.
 
-**Protected (local):** `GET /api/v1/security/me` (authenticated), `POST /api/v1/identity/evaluate` (authenticated), `POST /api/v1/dev/evaluate` and delivery lab (`SCOPE_boundary.evaluate`). `POST /api/v1/quarantine/{id}/reprocess` requires `boundary.admin`. Production profile does not expose `/api/v1/dev/**`.
+**Protected (local):** `GET /api/v1/security/me` (authenticated), `POST /api/v1/identity/evaluate` (authenticated), `POST /api/v1/dev/evaluate` and delivery lab (`SCOPE_boundary.evaluate`). `POST /api/v1/quarantine/{id}/reprocess` requires `boundary.admin`. Production profile does not expose `/api/v1/dev/**`. There is no public audit write or public signing endpoint.
 
 ## Principles
 
@@ -40,7 +40,7 @@ BoundaryMesh is an **application-security and integration-security** product. Su
 | Admin HTML `/admin` | Entra OIDC BFF session | configuration, rotation, reprocess |
 | Admin APIs | same session + CSRF | mutations |
 
-Public **verify attestation** is allowed because it uses the KMS **public** key. It does not change state.
+Public **verify attestation** is allowed because it uses the **local public key** (later: KMS public key). It does not change state and does not mint signatures.
 
 Rate limiting on public POST ingest is a defensive control (Cloud Armor is **not** in the default cost model; application-level limits + Cloud Run max instance). If abuse appears later, Cloud Armor is an optional Phase 18 add with a cost ADR.
 
