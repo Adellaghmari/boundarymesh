@@ -52,10 +52,17 @@ public final class GraphCalendarHttpAdapter implements GraphCalendarPort {
             HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
             int status = response.statusCode();
             if (status == 401 || status == 403 || status == 429 || status >= 500) {
+                String body = response.body();
+                String code = GraphErrorSanitizer.code(body);
+                boolean emptyBody = body == null || body.isBlank();
+                boolean www = response.headers().firstValue("WWW-Authenticate").isPresent();
                 throw new GraphProviderException(
                         status,
                         "graph provider error",
-                        response.headers().firstValue("Retry-After").orElse(null));
+                        response.headers().firstValue("Retry-After").orElse(null),
+                        code,
+                        GraphErrorSanitizer.category(status, code, emptyBody),
+                        www);
             }
             if (status != 200) {
                 throw new GraphProviderException(status, "graph provider error", null);

@@ -21,19 +21,16 @@ public class MicrosoftConnectorController {
     @GetMapping("/connector")
     public Map<String, Object> connector() {
         Map<String, Object> body = new LinkedHashMap<>();
-        boolean live = properties.entra().liveGraph();
-        String mode = live ? "LIVE_VERIFIED" : "CONTRACT_HARNESS";
-        if (!properties.entra().configured() && !live) {
-            mode = "CONTRACT_HARNESS";
-        }
+        boolean liveConfigured = properties.entra().liveGraph();
+        String mode = LiveGraphStatus.connectorMode(liveConfigured);
         body.put("mode", mode);
-        body.put("live", live);
+        body.put("live", false);
         body.put("permission", "Calendars.Read");
         body.put("permission_kind", "delegated");
         body.put(
                 "banner",
-                live
-                        ? "LIVE MICROSOFT GRAPH DATA"
+                liveConfigured
+                        ? "LIVE CONFIGURED. Microsoft Graph is enabled but not verified until a provider HTTP 2xx."
                         : "CONTRACT HARNESS. Microsoft Graph Calendar is exercised through BoundaryMesh contracts without a live tenant.");
         body.put("subscriptions", "PLANNED");
         body.put("entra_configured", properties.entra().configured());

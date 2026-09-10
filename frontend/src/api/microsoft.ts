@@ -11,11 +11,18 @@ export interface MicrosoftSession {
 }
 
 export interface MicrosoftConnector {
-  mode: 'NOT_CONFIGURED' | 'CONTRACT_HARNESS' | 'LIVE_VERIFIED'
+  mode: 'NOT_CONFIGURED' | 'CONTRACT_HARNESS' | 'LIVE_CONFIGURED' | 'LIVE_VERIFIED'
   permission: string
   permissionKind: string
   live: boolean
   banner: string
+}
+
+export function normalizeMicrosoftMode(mode: unknown): MicrosoftConnector['mode'] {
+  if (mode === 'LIVE_VERIFIED' || mode === 'LIVE_CONFIGURED' || mode === 'NOT_CONFIGURED') {
+    return mode
+  }
+  return 'CONTRACT_HARNESS'
 }
 
 export async function fetchMicrosoftSession(): Promise<MicrosoftSession> {
@@ -36,7 +43,7 @@ export async function fetchMicrosoftSession(): Promise<MicrosoftSession> {
 export async function fetchMicrosoftConnector(): Promise<MicrosoftConnector> {
   const response = await apiClient.request<Record<string, unknown>>('/api/v1/microsoft/connector')
   const body = response.data
-  const mode = body.mode === 'LIVE_VERIFIED' || body.mode === 'NOT_CONFIGURED' ? body.mode : 'CONTRACT_HARNESS'
+  const mode = normalizeMicrosoftMode(body.mode)
   return {
     mode,
     permission: typeof body.permission === 'string' ? body.permission : 'Calendars.Read',

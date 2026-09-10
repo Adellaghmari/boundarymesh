@@ -31,7 +31,8 @@ public class AdminSessionController {
         body.put("login_url", "/oauth2/authorization/entra");
         body.put("logout_url", "/logout");
         body.put("graph_mode", properties.entra().liveGraph() ? "LIVE" : "HARNESS");
-        body.put("graph_mode_label", properties.entra().liveGraph() ? "LIVE MICROSOFT GRAPH DATA" : "CONTRACT HARNESS");
+        body.put("graph_mode_label", properties.entra().liveGraph() ? "LIVE CONFIGURED" : "CONTRACT HARNESS");
+        body.put("authority_mode", properties.entra().authorityMode());
         body.put("role_label", signedIn ? "Operator" : "Recruiter");
         body.put("provider", signedIn ? "MICROSOFT_ENTRA" : "NONE");
         if (signedIn && authentication.getPrincipal() instanceof OidcUser user) {

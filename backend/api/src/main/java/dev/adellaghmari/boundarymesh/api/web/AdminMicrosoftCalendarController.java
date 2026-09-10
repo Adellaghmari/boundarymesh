@@ -59,12 +59,24 @@ public class AdminMicrosoftCalendarController {
         var adapter = new RetryingGraphCalendarPort(new MicrosoftGraphCalendarAdapter(() -> token));
         BoundaryPrincipal principal = principal(user);
         var result = crossings.pull(principal, true, adapter);
-        body.put("mode", "LIVE_VERIFIED");
-        body.put("live", true);
+        boolean verified = LiveGraphStatus.pullLive(true, result.providerStatus());
+        body.put("mode", LiveGraphStatus.pullMode(true, result.providerStatus()));
+        body.put("live", verified);
         body.put("permission", "Calendars.Read");
         body.put("provider_status", result.providerStatus());
         body.put("count", result.crossings().size());
-        body.put("banner", "LIVE MICROSOFT GRAPH DATA. Event subjects, attendees, and bodies are not returned.");
+        if (result.providerErrorCode() != null) {
+            body.put("provider_error_code", result.providerErrorCode());
+        }
+        if (result.providerErrorCategory() != null) {
+            body.put("provider_error_category", result.providerErrorCategory());
+        }
+        body.put("www_authenticate_present", result.wwwAuthenticatePresent());
+        body.put(
+                "banner",
+                verified
+                        ? "LIVE MICROSOFT GRAPH DATA. Event subjects, attendees, and bodies are not returned. Personal Microsoft accounts are not an enterprise Exchange Online mailbox."
+                        : "LIVE CONFIGURED. Microsoft Graph has not returned HTTP 2xx.");
         return body;
     }
 

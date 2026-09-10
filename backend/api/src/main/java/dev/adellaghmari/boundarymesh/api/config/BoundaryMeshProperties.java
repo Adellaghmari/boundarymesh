@@ -45,9 +45,13 @@ public record BoundaryMeshProperties(
 
         public String modeLabel() {
             if (liveGraph()) {
-                return "LIVE_VERIFIED";
+                return "LIVE_CONFIGURED";
             }
             return configured() ? "CONTRACT_HARNESS" : "NOT_CONFIGURED";
+        }
+
+        public String authorityMode() {
+            return configured() ? "COMMON" : "NONE";
         }
 
         private static boolean notBlank(String value) {

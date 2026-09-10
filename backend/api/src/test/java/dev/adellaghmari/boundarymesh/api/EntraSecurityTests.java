@@ -52,7 +52,8 @@ class EntraSecurityTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authenticated").value(false))
                 .andExpect(jsonPath("$.entra_enabled").value(false))
-                .andExpect(jsonPath("$.provider").value("NONE"));
+                .andExpect(jsonPath("$.provider").value("NONE"))
+                .andExpect(jsonPath("$.authority_mode").value("NONE"));
     }
 
     @Test

@@ -52,8 +52,29 @@ class GraphCalendarHttpAdapterTest {
                 .willReturn(aResponse().withStatus(401)));
         assertThatThrownBy(() -> new GraphCalendarHttpAdapter(graph.baseUrl(), () -> "token").readUpcoming(5))
                 .isInstanceOf(GraphProviderException.class)
-                .extracting(ex -> ((GraphProviderException) ex).status())
-                .isEqualTo(401);
+                .satisfies(ex -> {
+                    GraphProviderException failure = (GraphProviderException) ex;
+                    assertThat(failure.status()).isEqualTo(401);
+                    assertThat(failure.errorCategory()).isEqualTo("EMPTY_BODY");
+                });
+    }
+
+    @Test
+    void unauthorizedPreservesCanonicalGraphCodeOnly() {
+        graph.stubFor(get(urlPathEqualTo("/v1.0/me/calendarView"))
+                .willReturn(aResponse()
+                        .withStatus(401)
+                        .withHeader("WWW-Authenticate", "Bearer")
+                        .withBody("{\"error\":{\"code\":\"InvalidAuthenticationToken\",\"message\":\"redacted\"}}")));
+        assertThatThrownBy(() -> new GraphCalendarHttpAdapter(graph.baseUrl(), () -> "token").readUpcoming(5))
+                .isInstanceOf(GraphProviderException.class)
+                .satisfies(ex -> {
+                    GraphProviderException failure = (GraphProviderException) ex;
+                    assertThat(failure.status()).isEqualTo(401);
+                    assertThat(failure.errorCode()).isEqualTo("InvalidAuthenticationToken");
+                    assertThat(failure.errorCategory()).isEqualTo("INVALID_AUTHENTICATION_TOKEN");
+                    assertThat(failure.wwwAuthenticatePresent()).isTrue();
+                });
     }
 
     @Test

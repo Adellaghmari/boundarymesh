@@ -58,7 +58,15 @@ public final class MicrosoftCalendarCrossingService {
                             Integer.toString(ex.status()),
                             "retryable",
                             Boolean.toString(ex.retryable())));
-            return new Result(false, live, List.of(), ex.status(), ex.getMessage());
+            return new Result(
+                    false,
+                    live,
+                    List.of(),
+                    ex.status(),
+                    ex.getMessage(),
+                    ex.errorCode(),
+                    ex.errorCategory(),
+                    ex.wwwAuthenticatePresent());
         }
         audit.append(
                 AuditChainId.ofIntegration(INTEGRATION_ID),
@@ -90,7 +98,7 @@ public final class MicrosoftCalendarCrossingService {
                     "closed");
             crossings.add(delivery.evaluateWithoutDelivery(command, principal));
         }
-        return new Result(true, live, List.copyOf(crossings), 200, null);
+        return new Result(true, live, List.copyOf(crossings), 200, null, null, null, false);
     }
 
     public static BoundaryPrincipal harnessPrincipal() {
@@ -109,5 +117,8 @@ public final class MicrosoftCalendarCrossingService {
             boolean live,
             List<CrossingDeliveryResult> crossings,
             int providerStatus,
-            String providerError) {}
+            String providerError,
+            String providerErrorCode,
+            String providerErrorCategory,
+            boolean wwwAuthenticatePresent) {}
 }

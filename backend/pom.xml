@@ -134,6 +134,18 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <environmentVariables>
+                            <BOUNDARYMESH_ENTRA_TENANT_ID></BOUNDARYMESH_ENTRA_TENANT_ID>
+                            <BOUNDARYMESH_ENTRA_CLIENT_ID></BOUNDARYMESH_ENTRA_CLIENT_ID>
+                            <BOUNDARYMESH_ENTRA_CLIENT_SECRET></BOUNDARYMESH_ENTRA_CLIENT_SECRET>
+                            <BOUNDARYMESH_GRAPH_MODE>HARNESS</BOUNDARYMESH_GRAPH_MODE>
+                        </environmentVariables>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <executions>
                         <execution>
@@ -157,6 +169,10 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>

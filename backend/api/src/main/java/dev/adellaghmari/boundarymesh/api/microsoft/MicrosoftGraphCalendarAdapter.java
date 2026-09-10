@@ -56,14 +56,24 @@ public final class MicrosoftGraphCalendarAdapter implements GraphCalendarPort {
             return List.copyOf(events);
         } catch (ApiException ex) {
             String retryAfter = null;
-            if (ex.getResponseHeaders() != null && ex.getResponseHeaders().containsKey("Retry-After")) {
-                var values = ex.getResponseHeaders().get("Retry-After");
-                if (values != null && !values.isEmpty()) {
-                    retryAfter = values.iterator().next();
+            boolean wwwAuthenticate = false;
+            if (ex.getResponseHeaders() != null) {
+                if (ex.getResponseHeaders().containsKey("Retry-After")) {
+                    var values = ex.getResponseHeaders().get("Retry-After");
+                    if (values != null && !values.isEmpty()) {
+                        retryAfter = values.iterator().next();
+                    }
                 }
+                wwwAuthenticate = GraphErrorSanitizer.wwwAuthenticatePresent(
+                        ex.getResponseHeaders().keySet());
             }
             int status = ex.getResponseStatusCode();
-            throw new GraphProviderException(status, "graph provider error", retryAfter);
+            String source = ex.getMessage();
+            String code = GraphErrorSanitizer.code(source);
+            boolean emptyBody = source == null || source.isBlank();
+            String category = GraphErrorSanitizer.category(status, code, emptyBody);
+            throw new GraphProviderException(
+                    status, "graph provider error", retryAfter, code, category, wwwAuthenticate);
         } catch (RuntimeException ex) {
             if (ex instanceof GraphProviderException failure) {
                 throw failure;

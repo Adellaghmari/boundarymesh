@@ -249,7 +249,7 @@ test('premium navigation reaches labs, operations, evidence, and graph', async (
   await expect(page.getByRole('heading', { name: 'Integration Boundary Graph' })).toBeVisible()
 
   await page.goto('/connections')
-  await expect(page.getByTestId('m365-mode')).toContainText('CONTRACT_HARNESS')
+  await expect(page.getByTestId('m365-mode')).toHaveText(/CONTRACT_HARNESS|LIVE_CONFIGURED/)
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Connections' })).toBeVisible()
 })
