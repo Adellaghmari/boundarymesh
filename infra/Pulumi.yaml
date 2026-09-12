@@ -1,0 +1,7 @@
+name: boundarymesh
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: BoundaryMesh cloud infrastructure
+main: src/index.ts

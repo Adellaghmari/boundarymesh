@@ -109,7 +109,7 @@ backend/
   api/               # Spring MVC — Boundary API
   worker/            # Spring Boot — Delivery Worker
 frontend/            # Vue 3 SPA
-infra/               # Pulumi TypeScript
+infra/               # Pulumi TypeScript (Phase 15A foundation; zero resources)
 contracts/           # OpenAPI, AsyncAPI, JSON Schema (source of truth)
 ```
 

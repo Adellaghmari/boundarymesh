@@ -1,0 +1,23 @@
+{
+  "name": "boundarymesh-infra",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "BoundaryMesh Pulumi TypeScript infrastructure foundation",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs",
+    "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('bin', { recursive: true, force: true });\""
+  },
+  "dependencies": {
+    "@pulumi/gcp": "^9.7.0",
+    "@pulumi/pulumi": "^3.203.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "typescript": "~5.9.2"
+  }
+}

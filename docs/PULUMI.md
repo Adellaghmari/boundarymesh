@@ -2,7 +2,11 @@
 
 Primary IaC: **Pulumi + TypeScript**. Terraform is forbidden for Project C.
 
-## Layout (Phase 16)
+## Phase 15A (current)
+
+`infra/` is a compilable Pulumi TypeScript project. It defines **zero resources**. GCP provider authentication, stack project id, and `pulumi preview` / `pulumi up` remain **PLANNED** (Phase 15B+). No Pulumi CLI or `gcloud` was used to validate 15A.
+
+## Layout (later provision)
 
 ```text
 infra/

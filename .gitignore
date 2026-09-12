@@ -34,8 +34,9 @@ credentials.json
 **/secrets/
 service-account*.json
 
-# Pulumi local
+# Pulumi local / infra emit
 .pulumi/
+infra/bin/
 
 # OS / logs
 .DS_Store

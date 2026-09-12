@@ -96,7 +96,9 @@ This is portfolio work, not professional employment.
 | ECDSA P-256 | **TESTED** | JCA `SHA256withECDSAinP1363Format` |
 | JCA asymmetric cryptography | **TESTED** | Ephemeral local key `local-jca-p256` |
 | state-driven Vue SVG/graph visualization | **TESTED** | Custom SVG, no graph library |
-| Pulumi TypeScript GCP | PLANNED | |
+| Pulumi TypeScript repository foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | `infra/` typecheck + zero-resource test. No preview/up. No GCP resources |
+| GCP provider / authentication | PLANNED | Phase 15B |
+| Pulumi TypeScript GCP resources | PLANNED | Artifact Registry, Secret Manager, Firestore, Pub/Sub, Cloud KMS, Cloud Run, Hosting |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |
 | Gitleaks | PLANNED | |

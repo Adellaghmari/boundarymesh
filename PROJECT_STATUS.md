@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **14B COMPLETE** — live Microsoft Graph event crossing verified locally. Graph change notifications and GCP remain **PLANNED**.  
+**Phase:** **15A COMPLETE** — Pulumi TypeScript repository foundation (zero resources). GCP provider/auth and all GCP services remain **PLANNED**.  
 **Overall:** **PROJECT C — NOT COMPLETE**
 
 ## Completeness
@@ -25,6 +25,7 @@
 | Phase 13 Integration Boundary Graph | **COMPLETE** (`m365-calendar` OBSERVED/ACTIVE from the live event; Helix 365 SYNTHETIC) |
 | Phase 14 premium navigation | **COMPLETE** |
 | Phase 14 Entra + Graph connector | **LIVE VERIFIED LOCALLY** (Graph HTTP 200, `count=1`, `ALLOW_WITH_TRANSFORMATION`). Change notifications **PLANNED** |
+| Phase 15A Pulumi TypeScript foundation | **IMPLEMENTED + LOCALLY VALIDATED** — `infra/` compiles; zero resources; no `pulumi` / `gcloud` |
 | Application production IAM / Entra live | **LIVE VERIFIED LOCALLY** — common authority, personal Microsoft account, server-side session |
 | Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, one event normalized and enforced |
 | GCP resources | **NONE PROVISIONED** |
@@ -84,4 +85,4 @@ GET `/api/v1/microsoft/connector` still reports `LIVE_CONFIGURED` because that e
 
 ## Next (do not start automatically)
 
-Phase 15 — GCP adapters remain planned. Do not provision Cloud Run, Firestore, Pub/Sub, Secret Manager, Cloud KMS, Artifact Registry, Firebase Hosting, WIF, or Pulumi until that phase is requested.
+Phase 15B — GCP project / provider validation. Do not provision Artifact Registry, Cloud Run, Firestore, Pub/Sub, Secret Manager, Cloud KMS, Firebase Hosting, or WIF until those subphases are requested. Do not run `pulumi up`.
