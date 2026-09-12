@@ -1,7 +1,9 @@
-# Safe non-secret stack config for the local `dev` environment.
-# Phase 15B sets the real GCP project identifier and provider authentication.
-# Do not put secrets, tokens, or service-account material in this file.
+# Non-secret dev stack configuration. Phase 15B.
+# Authentication uses workstation Application Default Credentials.
+# Do not put tokens, ADC files, or service-account material in this file.
+# Do not run pulumi up.
 config:
+  gcp:project: boundarymesh-dev
+  gcp:region: europe-west4
   boundarymesh:environment: dev
-  boundarymesh:region: europe-west4
-  boundarymesh:gcpProjectId: REPLACE_IN_PHASE_15B
+encryptionsalt: v1:xgRzv9RgXJw=:v1:zHt/bqpj7IhyPATq:wQNAHmHT8rGcPNImZqlCyEp0VRLKJQ==

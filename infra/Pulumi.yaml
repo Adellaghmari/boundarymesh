@@ -4,4 +4,4 @@ runtime:
   options:
     typescript: true
 description: BoundaryMesh cloud infrastructure
-main: src/index.ts
+main: bin/index.js

@@ -2,9 +2,17 @@
 
 Primary IaC: **Pulumi + TypeScript**. Terraform is forbidden for Project C.
 
-## Phase 15A (current)
+## Phase 15B (current)
 
-`infra/` is a compilable Pulumi TypeScript project. It defines **zero resources**. GCP provider authentication, stack project id, and `pulumi preview` / `pulumi up` remain **PLANNED** (Phase 15B+). No Pulumi CLI or `gcloud` was used to validate 15A.
+`infra/` is a compilable Pulumi TypeScript project with verified **non-secret** `dev` configuration:
+
+- `gcp:project` = `boundarymesh-dev`
+- `gcp:region` = `europe-west4`
+- `boundarymesh:environment` = `dev`
+
+Local Pulumi backend (`file://~`). Zero-resource `pulumi preview` **TESTED**. The preview may list the local `pulumi:pulumi:Stack` envelope; that is not a GCP resource and was **not** applied. `pulumi up` remains forbidden until a later subphase explicitly allows it.
+
+GCS DIY state remains **PLANNED**.
 
 ## Layout (later provision)
 

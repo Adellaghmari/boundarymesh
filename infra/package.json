@@ -2,13 +2,13 @@
   "name": "boundarymesh-infra",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "description": "BoundaryMesh Pulumi TypeScript infrastructure foundation",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "build": "tsc",
     "test": "node --test test/*.test.mjs",
     "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('bin', { recursive: true, force: true });\""
   },

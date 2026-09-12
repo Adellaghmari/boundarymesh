@@ -96,8 +96,16 @@ This is portfolio work, not professional employment.
 | ECDSA P-256 | **TESTED** | JCA `SHA256withECDSAinP1363Format` |
 | JCA asymmetric cryptography | **TESTED** | Ephemeral local key `local-jca-p256` |
 | state-driven Vue SVG/graph visualization | **TESTED** | Custom SVG, no graph library |
-| Pulumi TypeScript repository foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | `infra/` typecheck + zero-resource test. No preview/up. No GCP resources |
-| GCP provider / authentication | PLANNED | Phase 15B |
+| Pulumi TypeScript repository foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | `infra/` typecheck + zero-resource test. No `pulumi up` |
+| GCP project | **CREATED + BILLING LINKED** | `boundarymesh-dev`. No application resources |
+| gcloud local authentication | **CONFIGURED + VERIFIED** | Active project `boundarymesh-dev` |
+| Application Default Credentials | **CONFIGURED + VERIFIED LOCALLY** | Token discarded; ADC not in Git |
+| Pulumi local backend | **CONFIGURED + VERIFIED LOCALLY** | `file://~`. GCS state PLANNED |
+| Pulumi `dev` stack configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `gcp:project`, `gcp:region`, `boundarymesh:environment` |
+| GCP project configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `gcp:project = boundarymesh-dev` |
+| GCP region configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `europe-west4` |
+| Zero-resource Pulumi preview | **TESTED** | Local `pulumi:pulumi:Stack` envelope only. No GCP resources. Not applied |
+| GCP provider / authentication | **CONFIGURED + VERIFIED LOCALLY** | ADC. No `GOOGLE_APPLICATION_CREDENTIALS`. No JSON keys |
 | Pulumi TypeScript GCP resources | PLANNED | Artifact Registry, Secret Manager, Firestore, Pub/Sub, Cloud KMS, Cloud Run, Hosting |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |

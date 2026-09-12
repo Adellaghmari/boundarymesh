@@ -68,7 +68,7 @@ Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** Co
 
 A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Still **PLANNED:** Graph change notifications, GCP services, Firestore, Pub/Sub, Secret Manager, Cloud KMS, Cloud Run, Firebase Hosting, WIF. Pulumi TypeScript **repository foundation** is **IMPLEMENTED** (zero resources; Phase 15A).
+Still **PLANNED:** Graph change notifications, Artifact Registry, Firestore, Pub/Sub, Secret Manager, Cloud KMS, Cloud Run, Firebase Hosting, WIF. Pulumi TypeScript foundation is **IMPLEMENTED**. GCP project `boundarymesh-dev` is **CREATED + BILLING LINKED**. Zero-resource Pulumi preview is **TESTED**. No GCP application resources.
 
 ## Navigation
 
@@ -128,7 +128,7 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — NOT COMPLETE.** Phase 14B live Microsoft Graph event crossing is recorded. Phase 15A Pulumi TypeScript foundation is **IMPLEMENTED + LOCALLY VALIDATED** (zero resources; no Pulumi apply). Identity #1 local JWT **TESTED**; Entra OIDC Operator login **LIVE VERIFIED LOCALLY**. Webhook #2 generic HMAC **TESTED**; Graph subscriptions **PLANNED**. Contract Drift #3 TESTED. Data Boundary #4 **LIVE VERIFIED LOCALLY** for `m365-calendar-egress/v1` on one real Graph event. Credential & Consent #5 local model TESTED with delegated `Calendars.Read` **LIVE VERIFIED LOCALLY**. Quarantine #6 local TESTED. Tamper-Evident Audit Chain **LIVE VERIFIED LOCALLY** for the Graph event. Cryptographic Exchange Attestation **LIVE VERIFIED LOCALLY** (local JCA; Cloud KMS PLANNED). Integration Boundary Graph **LIVE VERIFIED LOCALLY** (`m365-calendar` OBSERVED/ACTIVE). Graph Java SDK **LIVE VERIFIED LOCALLY**. No GCP resources provisioned.
+**PROJECT C — NOT COMPLETE.** Phase 14B live Microsoft Graph event crossing is recorded. Phase 15A Pulumi TypeScript foundation is **IMPLEMENTED + LOCALLY VALIDATED**. Phase 15B GCP project/provider validation is **IMPLEMENTED + LOCALLY VALIDATED** (`boundarymesh-dev`, ADC, local Pulumi backend, zero-resource preview; no apply). Identity #1 local JWT **TESTED**; Entra OIDC Operator login **LIVE VERIFIED LOCALLY**. Webhook #2 generic HMAC **TESTED**; Graph subscriptions **PLANNED**. Contract Drift #3 TESTED. Data Boundary #4 **LIVE VERIFIED LOCALLY** for `m365-calendar-egress/v1` on one real Graph event. Credential & Consent #5 local model TESTED with delegated `Calendars.Read` **LIVE VERIFIED LOCALLY**. Quarantine #6 local TESTED. Tamper-Evident Audit Chain **LIVE VERIFIED LOCALLY** for the Graph event. Cryptographic Exchange Attestation **LIVE VERIFIED LOCALLY** (local JCA; Cloud KMS PLANNED). Integration Boundary Graph **LIVE VERIFIED LOCALLY** (`m365-calendar` OBSERVED/ACTIVE). Graph Java SDK **LIVE VERIFIED LOCALLY**. No GCP application resources provisioned.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 

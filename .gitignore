@@ -33,6 +33,8 @@ playwright/.cache/
 credentials.json
 **/secrets/
 service-account*.json
+application_default_credentials.json
+**/application_default_credentials.json
 
 # Pulumi local / infra emit
 .pulumi/

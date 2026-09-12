@@ -13,6 +13,7 @@ const forbidden = [
     /\bnew\s+ComponentResource\b/,
     /\bextends\s+ComponentResource\b/,
     /\bnew\s+gcp\./,
+    /\bnew\s+gcp\.Provider\b/,
     /\bgcp\.cloudrun\b/,
     /\bgcp\.pubsub\b/,
     /\bgcp\.firestore\b/,
@@ -34,13 +35,21 @@ test("Phase 15A program defines zero Pulumi or GCP resources", () => {
         for (const token of forbidden) {
             assert.equal(token.test(file.text), false, `${file.name} must not contain ${token}`);
         }
+        assert.equal(
+            /from\s+["']@pulumi\/gcp["']/.test(file.text),
+            false,
+            `${file.name} must not import @pulumi/gcp while the program is zero-resource`,
+        );
     }
 });
 
-test("stack YAML stays non-secret and defers the GCP project to Phase 15B", () => {
+test("stack YAML is non-secret and pins the verified GCP project", () => {
     const stack = readFileSync(join(root, "Pulumi.dev.yaml"), "utf8");
     assert.equal(stack.includes("secure:"), false);
+    assert.equal(/GOOGLE_APPLICATION_CREDENTIALS|private_key|client_secret/i.test(stack), false);
+    assert.equal(/^\s*(access_token|refresh_token|credentials):/im.test(stack), false);
     assert.match(stack, /boundarymesh:environment:\s*dev/);
-    assert.match(stack, /boundarymesh:region:\s*europe-west4/);
-    assert.match(stack, /boundarymesh:gcpProjectId:\s*REPLACE_IN_PHASE_15B/);
+    assert.match(stack, /gcp:project:\s*boundarymesh-dev/);
+    assert.match(stack, /gcp:region:\s*europe-west4/);
+    assert.equal(stack.includes("REPLACE_IN_PHASE_15B"), false);
 });
