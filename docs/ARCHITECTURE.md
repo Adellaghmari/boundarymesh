@@ -195,7 +195,8 @@ Spring Cloud Gateway is **NOT APPROPRIATE**: it would turn the product into “a
 backend/          Java modules (Phase 1)
 frontend/         Vue app (Phase 2)
 contracts/        schemas (Phase 5)
-infra/            Pulumi TypeScript foundation (Phase 15A; zero resources)
+infra/            Pulumi TypeScript foundation (Phase 15A–15B; zero resources)
+backend/gcp       Cloud adapter boundary (Phase 15C; no production clients)
 .github/workflows (Phase 17)
 docs/             this folder
 ```

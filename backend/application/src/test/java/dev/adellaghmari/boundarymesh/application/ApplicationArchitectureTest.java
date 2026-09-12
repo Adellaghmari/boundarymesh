@@ -30,5 +30,6 @@ class ApplicationArchitectureTest {
                     "org.wiremock..",
                     "com.networknt..",
                     "dev.adellaghmari.boundarymesh.worker..",
-                    "dev.adellaghmari.boundarymesh.api..");
+                    "dev.adellaghmari.boundarymesh.api..",
+                    "dev.adellaghmari.boundarymesh.gcp..");
 }

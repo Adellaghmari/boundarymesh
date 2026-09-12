@@ -19,6 +19,7 @@ class ApiArchitectureTest {
             .resideInAnyPackage(
                     "org.springframework..",
                     "com.google.cloud..",
+                    "dev.adellaghmari.boundarymesh.gcp..",
                     "com.microsoft..",
                     "org.apache.camel..",
                     "io.github.resilience4j..",
@@ -36,5 +37,6 @@ class ApiArchitectureTest {
                     "org.apache.camel..",
                     "io.github.resilience4j..",
                     "org.wiremock..",
-                    "dev.adellaghmari.boundarymesh.worker..");
+                    "dev.adellaghmari.boundarymesh.worker..",
+                    "com.google.cloud..");
 }

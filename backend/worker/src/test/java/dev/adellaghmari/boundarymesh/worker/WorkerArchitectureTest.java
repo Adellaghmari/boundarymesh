@@ -18,7 +18,17 @@ class WorkerArchitectureTest {
             .dependOnClassesThat()
             .resideInAnyPackage(
                     "dev.adellaghmari.boundarymesh.worker..",
+                    "dev.adellaghmari.boundarymesh.gcp..",
+                    "com.google.cloud..",
                     "org.apache.camel..",
                     "io.github.resilience4j..",
                     "org.wiremock..");
+
+    @ArchTest
+    static final ArchRule workerMustNotDependOnGoogleCloudSdk = noClasses()
+            .that()
+            .resideInAPackage("dev.adellaghmari.boundarymesh.worker..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("com.google.cloud..");
 }

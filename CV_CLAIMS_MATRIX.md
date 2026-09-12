@@ -106,6 +106,11 @@ This is portfolio work, not professional employment.
 | GCP region configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `europe-west4` |
 | Zero-resource Pulumi preview | **TESTED** | Local `pulumi:pulumi:Stack` envelope only. No GCP resources. Not applied |
 | GCP provider / authentication | **CONFIGURED + VERIFIED LOCALLY** | ADC. No `GOOGLE_APPLICATION_CREDENTIALS`. No JSON keys |
+| GCP adapter module architecture | **IMPLEMENTED** / **TESTED** | `backend/gcp`. Domain/application remain cloud-independent |
+| GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |
+| Firestore production adapter | PLANNED | |
+| Pub/Sub production adapter | PLANNED | |
+| Secret Manager production adapter | PLANNED | |
 | Pulumi TypeScript GCP resources | PLANNED | Artifact Registry, Secret Manager, Firestore, Pub/Sub, Cloud KMS, Cloud Run, Hosting |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |

@@ -25,7 +25,10 @@ class DomainArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage(
-                    "dev.adellaghmari.boundarymesh.persistence..", "com.google.cloud..", "com.google.firestore..");
+                    "dev.adellaghmari.boundarymesh.persistence..",
+                    "dev.adellaghmari.boundarymesh.gcp..",
+                    "com.google.cloud..",
+                    "com.google.firestore..");
 
     @ArchTest
     static final ArchRule domainMustNotDependOnMicrosoftOrGcpSdks = noClasses()

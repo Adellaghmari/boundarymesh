@@ -21,6 +21,7 @@
     <modules>
         <module>domain</module>
         <module>application</module>
+        <module>gcp</module>
         <module>api</module>
         <module>worker</module>
     </modules>
@@ -64,6 +65,11 @@
             <dependency>
                 <groupId>dev.adellaghmari.boundarymesh</groupId>
                 <artifactId>boundarymesh-application</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.adellaghmari.boundarymesh</groupId>
+                <artifactId>boundarymesh-gcp</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
@@ -136,6 +142,7 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
+                        <excludedGroups>gcp-emulator</excludedGroups>
                         <environmentVariables>
                             <BOUNDARYMESH_ENTRA_TENANT_ID></BOUNDARYMESH_ENTRA_TENANT_ID>
                             <BOUNDARYMESH_ENTRA_CLIENT_ID></BOUNDARYMESH_ENTRA_CLIENT_ID>

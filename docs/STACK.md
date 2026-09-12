@@ -103,7 +103,8 @@ backend/
   integration/       # contract, egress, replay, idempotency
   connectors/        # Graph, CRM, orders, settlements adapters
   camel/             # routes only — no policy decisions
-  persistence/       # Firestore ports + adapters
+  gcp/               # Google Cloud adapters (Phase 15C boundary; no production clients yet)
+  persistence/       # Firestore ports + adapters (later, inside gcp)
   audit/             # chain + attestation
   delivery/          # Pub/Sub publisher/consumer
   api/               # Spring MVC — Boundary API

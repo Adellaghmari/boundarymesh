@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **15B COMPLETE** — GCP project/provider validation. Pulumi local backend + zero-resource preview. No GCP application resources provisioned.  
+**Phase:** **15C COMPLETE** — GCP adapter module + emulator foundation. No production GCP adapters. No GCP application resources provisioned.  
 **Overall:** **PROJECT C — NOT COMPLETE**
 
 ## Completeness
@@ -27,6 +27,7 @@
 | Phase 14 Entra + Graph connector | **LIVE VERIFIED LOCALLY** (Graph HTTP 200, `count=1`, `ALLOW_WITH_TRANSFORMATION`). Change notifications **PLANNED** |
 | Phase 15A Pulumi TypeScript foundation | **IMPLEMENTED + LOCALLY VALIDATED** — `infra/` compiles; zero application resources |
 | Phase 15B GCP project / provider validation | **IMPLEMENTED + LOCALLY VALIDATED** — `boundarymesh-dev`, `europe-west4`, ADC, local Pulumi backend, zero-resource preview |
+| Phase 15C GCP adapter module + emulator foundation | **IMPLEMENTED + TESTED** — `backend/gcp`; no production Firestore/Pub/Sub/SM/KMS adapters |
 | Application production IAM / Entra live | **LIVE VERIFIED LOCALLY** — common authority, personal Microsoft account, server-side session |
 | Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, one event normalized and enforced |
 | GCP project | **CREATED + BILLING LINKED** (`boundarymesh-dev`) — no application resources |
@@ -87,4 +88,4 @@ GET `/api/v1/microsoft/connector` still reports `LIVE_CONFIGURED` because that e
 
 ## Next (do not start automatically)
 
-Phase 15C — Artifact Registry + Dockerfiles. Do not run `pulumi up` until that subphase is explicitly requested. Do not provision Secret Manager, Firestore, Pub/Sub, Cloud KMS, Cloud Run, Firebase Hosting, or WIF.
+Phase 15D — Artifact Registry + Dockerfiles. Do not run `pulumi up` until that subphase is explicitly requested. Do not provision Secret Manager, Firestore, Pub/Sub, Cloud KMS, Cloud Run, Firebase Hosting, or WIF.
