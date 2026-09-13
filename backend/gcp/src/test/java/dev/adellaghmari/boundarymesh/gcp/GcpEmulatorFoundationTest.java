@@ -28,9 +28,15 @@ class GcpEmulatorFoundationTest {
     }
 
     @Test
-    void defaultRuntimeModeIsLocalAndNoProductionAdapterExists() {
+    void defaultRuntimeModeIsLocalAndOnlySecretManagerAdaptersAreImplemented() {
         assertThat(GcpRuntimeMode.LOCAL).isNotEqualTo(GcpRuntimeMode.PROD);
-        assertThat(GcpPortMapping.values()).isNotEmpty().allMatch(mapping -> !mapping.productionAdapterImplemented());
+        assertThat(GcpPortMapping.SECRET_VALUE_PROVIDER.productionAdapterImplemented())
+                .isTrue();
+        assertThat(GcpPortMapping.WEBHOOK_SECRET_PROVIDER.productionAdapterImplemented())
+                .isTrue();
         assertThat(GcpPortMapping.OUTBOX.localImplementation()).isEqualTo("ABSENT");
+        assertThat(GcpPortMapping.OUTBOX.productionAdapterImplemented()).isFalse();
+        assertThat(GcpPortMapping.AUDIT_REPOSITORY.productionAdapterImplemented())
+                .isFalse();
     }
 }

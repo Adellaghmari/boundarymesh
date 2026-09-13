@@ -75,7 +75,7 @@ This is portfolio work, not professional employment.
 | consent / permission model | **TESTED** | Distinct from credential availability |
 | credential resolvability control | **TESTED** | PASS / FAIL / UNAVAILABLE |
 | connector safety control | **TESTED** | Circuit / configured destination |
-| Google Secret Manager | PLANNED | No GCP project |
+| Google Secret Manager | **LIVE** / **CONTAINERS ONLY** | API enabled. Four empty secrets. No versions. No IAM |
 | Quarantine & Recovery Orchestrator (local) | **TESTED** | State machine, eligibility, admin reprocess |
 | bounded reprocess | **TESTED** | Cap 3; `boundary.admin` |
 | delivery idempotency | **TESTED** | Distinct from inbound webhook replay |
@@ -113,13 +113,21 @@ This is portfolio work, not professional employment.
 | Artifact Registry API | **LIVE** / **ENABLED IN GCP** | `artifactregistry.googleapis.com` via Pulumi; `disableOnDestroy=false` |
 | Artifact Registry repository | **LIVE** / **PROVISIONED IN GCP** | `projects/boundarymesh-dev/locations/europe-west4/repositories/boundarymesh` |
 | Artifact Registry round-trip | **LIVE VERIFIED** | Push → remote digest → pull by digest → local smoke |
+| Secret Manager adapter architecture | **IMPLEMENTED** / **TESTED** | `SecretValueProvider` + `WebhookSecretProvider` in `backend/gcp` |
+| Secret Manager production adapter | **IMPLEMENTED** / **LOCALLY TESTED WITH MOCKED/CONTROLLED CLIENT** | Default `mvnw verify` does not call GCP |
+| Secret Manager API Pulumi definition | **IMPLEMENTED** / **APPLIED** | `secretmanager.googleapis.com`; `disableOnDestroy=false` |
+| Secret containers | **LIVE** / **PROVISIONED IN GCP** | `hmac-quayforge`, `covecrm-api`, `lumenway-api`, `rivertide-api` |
+| Secret Manager API in GCP | **LIVE** / **ENABLED IN GCP** | |
+| Secret containers in GCP | **LIVE** / **EMPTY** / **NO VERSIONS** | User-managed replication `europe-west4` |
+| Secret versions | PLANNED | No payloads in this phase |
+| Workload IAM | PLANNED | |
+| Cloud Run env-from-secret | PLANNED FOR PHASE 15I | Entra remains `BOUNDARYMESH_ENTRA_CLIENT_SECRET` |
 | GCP provider / authentication | **CONFIGURED + VERIFIED LOCALLY** | ADC. No `GOOGLE_APPLICATION_CREDENTIALS`. No JSON keys |
 | GCP adapter module architecture | **IMPLEMENTED** / **TESTED** | `backend/gcp`. Domain/application remain cloud-independent |
 | GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |
 | Firestore production adapter | PLANNED | |
 | Pub/Sub production adapter | PLANNED | |
-| Secret Manager production adapter | PLANNED | |
-| Pulumi TypeScript GCP resources | PLANNED | Artifact Registry, Secret Manager, Firestore, Pub/Sub, Cloud KMS, Cloud Run, Hosting |
+| Pulumi TypeScript GCP resources | Artifact Registry **LIVE**; Secret Manager containers **LIVE** (empty); others PLANNED | Firestore, Pub/Sub, Cloud KMS, Cloud Run, Hosting |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |
 | Gitleaks | PLANNED | |

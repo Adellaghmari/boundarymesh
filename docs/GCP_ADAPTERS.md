@@ -6,12 +6,12 @@ Domain and application stay cloud-provider independent. Local in-memory adapters
 
 ## Runtime modes
 
-| Mode | Meaning in Phase 15C |
+| Mode | Meaning |
 | --- | --- |
 | `LOCAL` | Default application path. In-memory / local adapters. |
 | `TEST` | Deterministic tests. Same local adapters. |
 | `GCP_EMULATOR` | Reserved. Opt-in JUnit tag `gcp-emulator`. Not part of default `mvnw verify`. |
-| `PROD` | Reserved. No production GCP adapter is active. |
+| `PROD` | May select Secret Manager adapters when a later phase wires `backend/gcp` under an explicit cloud profile. Not active in 15E. |
 
 `local` remains the API/worker Spring default. Profile `gcp-emulator` is documented only; it is not activated.
 
@@ -37,11 +37,31 @@ Testcontainers may be added in 15F/15G if an official emulator image is justifie
 | `ReplayNonceStore` | `InMemoryReplayNonceStore` | Firestore Native TTL | PLANNED |
 | `IdempotencyStore` | `InMemoryIdempotencyStore` | Firestore Native | PLANNED |
 | `DeliveryIdempotencyStore` | `InMemoryDeliveryIdempotencyStore` | Firestore Native | PLANNED |
-| `SecretValueProvider` | `LocalSecretValueProvider` | Secret Manager (worker only) | PLANNED |
-| `WebhookSecretProvider` | `LocalWebhookSecretProvider` | Secret Manager | PLANNED |
+| `SecretValueProvider` | `LocalSecretValueProvider` | `SecretManagerSecretValueProvider` | **IMPLEMENTED** (not default-wired) |
+| `WebhookSecretProvider` | `LocalWebhookSecretProvider` | `SecretManagerWebhookSecretProvider` | **IMPLEMENTED** (not default-wired) |
 | `ObservedCrossingStore` | In-process store | Firestore Native | PLANNED |
 | Delivery outbox | ABSENT (not a port yet) | Firestore outbox then Pub/Sub publish | PLANNED |
 
 ## Next
 
-Phase 15D Artifact Registry + images is complete. Do not implement production Firestore, Pub/Sub, Secret Manager, or KMS adapters here.
+## Phase 15E secret inventory
+
+Pulumi **manages** empty Secret Manager **containers**. They are LIVE in GCP. No versions. No IAM.
+
+| Secret ID | Category | Why |
+| --- | --- | --- |
+| `hmac-quayforge` | A / later Cloud Run env | QuayForge webhook HMAC behind `WebhookSecretProvider` |
+| `covecrm-api` | A | Worker `SecretValueProvider` credential `covecrm-api` |
+| `lumenway-api` | A | Worker `SecretValueProvider` credential `lumenway-api` |
+| `rivertide-api` | A | Worker `SecretValueProvider` credential `rivertide-api` |
+
+Not created in 15E:
+
+| Secret | Category | Why deferred |
+| --- | --- | --- |
+| Entra client secret | B / 15I | Stays `BOUNDARYMESH_ENTRA_CLIENT_SECRET`. Cloud Run env-from-secret later |
+| Graph `clientState` | C | Graph subscriptions remain PLANNED |
+
+API and worker do **not** depend on `backend/gcp` in this phase. Local providers remain the default.
+
+Phase 15F+ may add Firestore/Pub/Sub adapters. Do not add KMS or Cloud Run here.

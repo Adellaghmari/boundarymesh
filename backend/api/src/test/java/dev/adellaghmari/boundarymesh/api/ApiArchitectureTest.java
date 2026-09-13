@@ -38,5 +38,6 @@ class ApiArchitectureTest {
                     "io.github.resilience4j..",
                     "org.wiremock..",
                     "dev.adellaghmari.boundarymesh.worker..",
+                    "dev.adellaghmari.boundarymesh.gcp..",
                     "com.google.cloud..");
 }

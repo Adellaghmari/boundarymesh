@@ -2,11 +2,11 @@
 
 Pulumi + TypeScript workspace for Google Cloud resources.
 
-## Phase 15D purpose
+## Phase 15E purpose
 
-Define the **minimum** Artifact Registry needed to store API and worker images.
+Define empty Secret Manager **containers** for the current webhook and connector secret IDs.
 
-The first controlled apply has provisioned Artifact Registry only. Do not add other GCP resources without a new explicit apply gate.
+The 15E apply provisioned empty Secret Manager containers only. Do not add versions, IAM, or other GCP resources without a new apply gate.
 
 Authentication uses workstation **Application Default Credentials**. Do not set `GOOGLE_APPLICATION_CREDENTIALS`. Do not commit ADC files, tokens, or service-account JSON.
 
@@ -23,6 +23,11 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | Worker image | PUSHED + REMOTE DIGEST VERIFIED |
 | Artifact Registry round-trip | LIVE VERIFIED |
 | Cloud Run deployment | PLANNED |
+| Secret Manager Pulumi definition | IMPLEMENTED + APPLIED |
+| Secret Manager API | LIVE / ENABLED IN GCP |
+| Secret containers | LIVE / PROVISIONED IN GCP / EMPTY |
+| Secret versions | PLANNED |
+| Workload IAM | PLANNED |
 
 Target region: **`europe-west4`**.  
 Stack: **`dev`**.  
@@ -47,7 +52,7 @@ Local backend remains `file://~`. GCS state is **PLANNED**.
 
 ## Future planned services (not provisioned)
 
-- Secret Manager
+- Secret versions and Secret Manager IAM
 - Firestore
 - Pub/Sub
 - Cloud KMS
@@ -67,4 +72,4 @@ $env:PULUMI_CONFIG_PASSPHRASE = '<LOCAL_PULUMI_PASSPHRASE>'
 pulumi preview
 ```
 
-Do not run `pulumi destroy` or add resources until explicitly approved. Image publication is not a Cloud Run deploy.
+Do not run `pulumi destroy` or add versions/IAM until explicitly approved.

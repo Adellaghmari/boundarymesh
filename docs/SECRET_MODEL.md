@@ -2,7 +2,7 @@
 
 Flagship capability #5.
 
-**Current (Phase 9):** local credential references, versions, and a worker-only `SecretValueProvider`. This is not Secret Manager.
+**Current:** local credential references remain the runtime path. Phase 15E provisioned empty Secret Manager containers in `boundarymesh-dev`. No versions. No IAM. The production adapter is implemented and tested with a controlled client; it is **not** workload-live.
 
 **Future:** secrets live in **Google Secret Manager**. Application persistence stores **references**, never values.
 

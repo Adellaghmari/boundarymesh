@@ -30,5 +30,5 @@ class WorkerArchitectureTest {
             .resideInAPackage("dev.adellaghmari.boundarymesh.worker..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("com.google.cloud..");
+            .resideInAnyPackage("com.google.cloud..", "dev.adellaghmari.boundarymesh.gcp..");
 }

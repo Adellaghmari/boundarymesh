@@ -12,12 +12,20 @@
 
     <artifactId>boundarymesh-gcp</artifactId>
     <name>BoundaryMesh GCP</name>
-    <description>Google Cloud adapter boundary. No production Firestore, Pub/Sub, Secret Manager, or KMS clients yet.</description>
+    <description>Google Cloud adapter boundary. Secret Manager adapter is implemented; Firestore, Pub/Sub, and KMS remain planned.</description>
 
     <dependencies>
         <dependency>
             <groupId>dev.adellaghmari.boundarymesh</groupId>
             <artifactId>boundarymesh-application</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-secretmanager</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -32,6 +40,16 @@
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -2,14 +2,23 @@
 
 Primary IaC: **Pulumi + TypeScript**. Terraform is forbidden for Project C.
 
-## Phase 15D (current)
+## Phase 15E (current)
 
-Pulumi **manages** Artifact Registry only:
+Pulumi **manages** Secret Manager containers in addition to Artifact Registry:
+
+- `gcp.projects.Service` `secret-manager-api` → `secretmanager.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
+- `gcp.secretmanager.Secret` containers `hmac-quayforge`, `covecrm-api`, `lumenway-api`, `rivertide-api` — **LIVE / PROVISIONED IN GCP**, empty, user-managed replication in `europe-west4`
+
+No version resources. No IAM. No secret payloads. Adapter is not workload-live.
+
+## Phase 15D
+
+Pulumi **manages** Artifact Registry:
 
 - `gcp.projects.Service` `artifact-registry-api` → `artifactregistry.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
 - `gcp.artifactregistry.Repository` `boundarymesh-images` → repo id `boundarymesh`, format `DOCKER`, location `europe-west4` — **LIVE / PROVISIONED IN GCP**
 
-API and worker images are **PUSHED + REMOTE DIGEST VERIFIED** (see `infra/README.md`). Cloud Run and all other GCP application services remain **PLANNED**. Image publication is not a workload deployment.
+API and worker images are **PUSHED + REMOTE DIGEST VERIFIED** (see `infra/README.md`). Image publication is not a workload deployment.
 
 ## Phase 15B
 

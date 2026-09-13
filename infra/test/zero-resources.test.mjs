@@ -11,7 +11,8 @@ const forbidden = [
     /\bnew\s+gcp\.cloudrun\./,
     /\bnew\s+gcp\.pubsub\./,
     /\bnew\s+gcp\.firestore\./,
-    /\bnew\s+gcp\.secretmanager\./,
+    /\bnew\s+gcp\.secretmanager\.SecretVersion\b/,
+    /\bnew\s+gcp\.secretmanager\.SecretIam/,
     /\bnew\s+gcp\.kms\./,
     /\bnew\s+gcp\.firebase\./,
     /\bnew\s+gcp\.serviceaccount\./,
@@ -28,7 +29,7 @@ function sourceFiles() {
         .map((name) => ({ name, text: readFileSync(join(srcDir, name), "utf8") }));
 }
 
-test("Phase 15D program may define only Artifact Registry resources", () => {
+test("Phase 15E program may define Artifact Registry plus Secret Manager containers", () => {
     const text = sourceFiles()
         .map((file) => file.text)
         .join("\n");
@@ -37,9 +38,20 @@ test("Phase 15D program may define only Artifact Registry resources", () => {
     }
     assert.match(text, /new gcp\.projects\.Service/);
     assert.match(text, /new gcp\.artifactregistry\.Repository/);
+    assert.match(text, /new gcp\.secretmanager\.Secret/);
     assert.match(text, /artifactregistry\.googleapis\.com/);
+    assert.match(text, /secretmanager\.googleapis\.com/);
     assert.match(text, /repositoryId:\s*"boundarymesh"/);
-    assert.equal((text.match(/new gcp\./g) ?? []).length, 2);
+    assert.match(text, /"hmac-quayforge"/);
+    assert.match(text, /"covecrm-api"/);
+    assert.match(text, /"lumenway-api"/);
+    assert.match(text, /"rivertide-api"/);
+    assert.equal(/new gcp\.secretmanager\.SecretVersion/.test(text), false);
+    assert.equal(/client_secret|private_key|BEGIN [A-Z]+ PRIVATE/i.test(text), false);
+    assert.equal((text.match(/new gcp\.projects\.Service/g) ?? []).length, 2);
+    assert.equal((text.match(/new gcp\.artifactregistry\.Repository/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.secretmanager\.Secret/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\./g) ?? []).length, 4);
 });
 
 test("stack YAML is non-secret and pins the verified GCP project", () => {

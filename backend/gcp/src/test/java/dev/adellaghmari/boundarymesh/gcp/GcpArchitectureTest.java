@@ -33,4 +33,12 @@ class GcpArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("dev.adellaghmari.boundarymesh.api..", "dev.adellaghmari.boundarymesh.worker..");
+
+    @ArchTest
+    static final ArchRule secretManagerSdkStaysInGcpSecretPackage = noClasses()
+            .that()
+            .resideOutsideOfPackage("dev.adellaghmari.boundarymesh.gcp.secret..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("com.google.cloud.secretmanager..");
 }

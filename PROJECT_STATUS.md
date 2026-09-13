@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **15D COMPLETE** — Artifact Registry live; API and worker images pushed and digest-verified. Cloud Run remains PLANNED.  
+**Phase:** **15E COMPLETE** — Secret Manager API enabled; four empty secret containers provisioned. No versions, no IAM, no workload access. Artifact Registry unchanged.  
 **Overall:** **PROJECT C — NOT COMPLETE**
 
 ## Completeness
@@ -27,12 +27,13 @@
 | Phase 14 Entra + Graph connector | **LIVE VERIFIED LOCALLY** (Graph HTTP 200, `count=1`, `ALLOW_WITH_TRANSFORMATION`). Change notifications **PLANNED** |
 | Phase 15A Pulumi TypeScript foundation | **IMPLEMENTED + LOCALLY VALIDATED** — `infra/` compiles; zero application resources |
 | Phase 15B GCP project / provider validation | **IMPLEMENTED + LOCALLY VALIDATED** — `boundarymesh-dev`, `europe-west4`, ADC, local Pulumi backend, zero-resource preview |
-| Phase 15C GCP adapter module + emulator foundation | **IMPLEMENTED + TESTED** — `backend/gcp`; no production Firestore/Pub/Sub/SM/KMS adapters |
+| Phase 15C GCP adapter module + emulator foundation | **IMPLEMENTED + TESTED** — `backend/gcp`; Firestore/Pub/Sub/KMS adapters remain planned |
 | Phase 15D Artifact Registry + container images | **COMPLETE** — registry live; images pushed + remote digest verified. Workloads not deployed |
+| Phase 15E Secret Manager | **COMPLETE** — API LIVE; four empty containers LIVE. No versions. Adapter not workload-live |
 | Application production IAM / Entra live | **LIVE VERIFIED LOCALLY** — common authority, personal Microsoft account, server-side session |
 | Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, one event normalized and enforced |
 | GCP project | **CREATED + BILLING LINKED** (`boundarymesh-dev`) |
-| GCP resources | **Artifact Registry only** — API + one Docker repository. No workloads |
+| GCP resources | Artifact Registry + Secret Manager API + four empty secret containers. No workloads |
 | Microsoft credentials | **NONE CREATED in Git / this session** |
 | GCP service-account JSON keys | **NONE** |
 | Project A | **FROZEN** — not modified |
@@ -89,4 +90,4 @@ GET `/api/v1/microsoft/connector` still reports `LIVE_CONFIGURED` because that e
 
 ## Next (do not start automatically)
 
-Phase 15E Secret Manager infrastructure (preview + controlled apply). Do not provision Firestore, Pub/Sub, Cloud KMS, Cloud Run, Firebase Hosting, or WIF. Do not start automatically.
+Phase 15F Firestore infrastructure (preview + controlled apply). Do not add secret versions, Secret Manager IAM, Pub/Sub, Cloud KMS, Cloud Run, Firebase Hosting, or WIF. Do not start automatically.
