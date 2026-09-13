@@ -28,15 +28,29 @@ class GcpEmulatorFoundationTest {
     }
 
     @Test
-    void defaultRuntimeModeIsLocalAndOnlySecretManagerAdaptersAreImplemented() {
+    void defaultRuntimeModeIsLocalAndFirestoreAdaptersAreImplementedButNotDefault() {
         assertThat(GcpRuntimeMode.LOCAL).isNotEqualTo(GcpRuntimeMode.PROD);
         assertThat(GcpPortMapping.SECRET_VALUE_PROVIDER.productionAdapterImplemented())
                 .isTrue();
         assertThat(GcpPortMapping.WEBHOOK_SECRET_PROVIDER.productionAdapterImplemented())
                 .isTrue();
+        assertThat(GcpPortMapping.AUDIT_REPOSITORY.productionAdapterImplemented())
+                .isTrue();
+        assertThat(GcpPortMapping.ATTESTATION_REPOSITORY.productionAdapterImplemented())
+                .isTrue();
+        assertThat(GcpPortMapping.QUARANTINE_REPOSITORY.productionAdapterImplemented())
+                .isTrue();
+        assertThat(GcpPortMapping.REPLAY_NONCE_STORE.productionAdapterImplemented())
+                .isTrue();
+        assertThat(GcpPortMapping.IDEMPOTENCY_STORE.productionAdapterImplemented())
+                .isTrue();
+        assertThat(GcpPortMapping.DELIVERY_IDEMPOTENCY_STORE.productionAdapterImplemented())
+                .isTrue();
+        assertThat(GcpPortMapping.OBSERVED_CROSSING_STORE.productionAdapterImplemented())
+                .isTrue();
         assertThat(GcpPortMapping.OUTBOX.localImplementation()).isEqualTo("ABSENT");
         assertThat(GcpPortMapping.OUTBOX.productionAdapterImplemented()).isFalse();
-        assertThat(GcpPortMapping.AUDIT_REPOSITORY.productionAdapterImplemented())
+        assertThat(GcpPortMapping.ATTESTATION_SIGNER.productionAdapterImplemented())
                 .isFalse();
     }
 }

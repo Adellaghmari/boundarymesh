@@ -1,6 +1,8 @@
 # Data model (Firestore)
 
-Access patterns first. Firestore Native, regional `europe-west4`, optimistic concurrency. This is **not** a SQL schema dump.
+Access patterns first. Firestore Native, regional `europe-west4`, named database `boundarymesh` (never the default database). The Phase 15F-A Pulumi database uses **PESSIMISTIC** concurrency. This is **not** a SQL schema dump.
+
+Phase 15F-C live-verified the official Java SDK path against `projects/boundarymesh-dev/databases/boundarymesh`, then deleted the run-scoped documents. Residue is **CLEANED**. The delivery outbox remains Phase 15G. Cloud Run workload persistence is **not** live.
 
 ## Patterns
 
@@ -34,28 +36,40 @@ Optional subcollection `stages/{stage}` for per-stage evidence.
 
 Full `EnforcementDecision` JSON (safe).
 
-### `replayNonces/{docId}`
+### `replayNonces/{docId}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
 
-`docId = integrationId + '_' + nonce`. TTL. `transactionId`, `seenAt`.
+`docId` = sanitized nonce hash (already hashed at the port). Fields: `nonce_hash`, `claimed_at`, `expires_at` (ISO-8601), `expires_at_ms`. Create-if-absent in a transaction. TTL **cloud policy is PLANNED**; the expiry field exists for later cleanup.
 
-### `idempotency/{key}`
+### `idempotency/{key}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
 
-`key` = hash of `integration + destination + idempotency_key`. Delivery result, `created_at`, TTL ≥ 7d.
+Request/event idempotency (`IdempotencyStore`). First writer wins. Fields: `event_key`, `decision` (safe `BoundaryDecision`), `created_at`.
 
-### `quarantine/{quarantineId}`
+### `deliveryIdempotency/{deliveryInstructionId}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
 
-Reason, stage, retry_eligible, reprocess_of, connector_id, opened_at, status.
+Delivery duplicate suppression (`DeliveryIdempotencyStore`). First writer wins. Fields: `delivery_instruction_id`, `result` (safe `DeliveryResult`), `created_at`. Not merged with request idempotency.
 
-### `attestations/{attestationId}`
+### `quarantine/{quarantineId}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
 
-See [EXCHANGE_ATTESTATIONS.md](EXCHANGE_ATTESTATIONS.md). `transaction_id` index.
+Identity, boundary/outcome references, reason metadata, status/lifecycle, recovery attempts. No secrets or raw auth material.
 
-### `auditChains/{chainId}`
+### `attestations/{attestationId}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
 
-Head sequence + head hash.
+See [EXCHANGE_ATTESTATIONS.md](EXCHANGE_ATTESTATIONS.md). Public signature + signer **reference** only. No private key material.
 
-`auditChains/{chainId}/entries/{sequence}`  
-`auditChains/{chainId}/checkpoints/{toSequence}`
+### `observedCrossings/{destinationKey}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
+
+Latest derived observation per destination. Graph evidence, not an independently mutable source of truth.
+
+### `auditChains/{chainId}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
+
+Head: `chain_id`, `sequence`, `head_hash`, `updated_at`.
+
+`auditChains/{chainId}/entries/{zeroPaddedSequence}`  
+Entry fields keep `occurred_at` as `Instant.toString()` so the hash input is exact.
+
+Head read + entry create + head advance commit in one Firestore transaction.
+
+`auditChains/{chainId}/checkpoints/{toSequence}` remains **PLANNED**.
 
 ### `connectors/{connectorId}`
 

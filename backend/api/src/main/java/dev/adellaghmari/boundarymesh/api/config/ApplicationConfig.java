@@ -29,6 +29,7 @@ import dev.adellaghmari.boundarymesh.application.egress.EgressEvaluator;
 import dev.adellaghmari.boundarymesh.application.egress.EgressPolicyRepository;
 import dev.adellaghmari.boundarymesh.application.evidence.CrossingEvidenceService;
 import dev.adellaghmari.boundarymesh.application.graph.BoundaryGraphAssembler;
+import dev.adellaghmari.boundarymesh.application.graph.InMemoryObservedCrossingStore;
 import dev.adellaghmari.boundarymesh.application.graph.ObservedCrossingStore;
 import dev.adellaghmari.boundarymesh.application.microsoft.CalendarEventNormalizer;
 import dev.adellaghmari.boundarymesh.application.microsoft.GraphCalendarPort;
@@ -195,7 +196,7 @@ public class ApplicationConfig {
 
     @Bean
     ObservedCrossingStore observedCrossingStore() {
-        return new ObservedCrossingStore();
+        return new InMemoryObservedCrossingStore();
     }
 
     @Bean

@@ -12,7 +12,7 @@ A privileged process can still delete or rewrite storage. Verification **detects
 
 ## Chain identity
 
-One chain per integration (`AuditChainId` = integration slug, for example `quayforge-orders`). That avoids a single global lock. Firestore remains PLANNED.
+One chain per integration (`AuditChainId` = integration slug, for example `quayforge-orders`). That avoids a single global lock. Firestore transactional append is **EMULATOR TESTED + LIVE VERIFIED**. Cloud Run workload persistence is **not** live.
 
 ## Domain
 
@@ -58,7 +58,7 @@ Entry n: `previous_hash = entry n-1 current_hash`.
 
 ## Concurrency
 
-`InMemoryAuditRepository` holds a `ReentrantLock` per chain. Append checks the expected head (sequence + hash) before write. Two concurrent events cannot claim the same sequence. Firestore transactional append remains PLANNED.
+`AuditAppender` delegates atomic append to `AuditRepository.appendNext`. `InMemoryAuditRepository` holds a `ReentrantLock` per chain. `FirestoreAuditRepository` commits head read, entry create, and head advancement in one Firestore transaction. Two concurrent events cannot claim the same sequence.
 
 ## Verifier
 
@@ -76,4 +76,4 @@ Read-only:
 
 ## Storage truth
 
-Local in-memory. Does not survive restart. Firestore PLANNED.
+Local default remains in-memory and does not survive restart. Firestore adapter **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Database **LIVE / PROVISIONED**. Live verification residue **CLEANED**. Cloud Run workload persistence is **not** live.

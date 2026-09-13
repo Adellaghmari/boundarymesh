@@ -21,7 +21,7 @@ An untrusted system transaction arrives. BoundaryMesh authenticates identity, au
 3. **Contract Drift Firewall** — versioned OpenAPI / AsyncAPI / JSON Schema as runtime enforcement
 4. **Data Boundary Firewall** — destination-specific allow / redact / deny, no AI PII guessing
 5. **Credential & Consent Vault** — local reference/version/consent model now; Secret Manager later
-6. **Quarantine & Recovery Orchestrator** — local workflow now; Firestore later
+6. **Quarantine & Recovery Orchestrator** — local workflow now; Firestore adapter **LIVE VERIFIED LOCALLY**, not Cloud Run workload-live
 
 Also implemented locally: **Tamper-Evident Audit Chain**, **Cryptographic Exchange Attestation** (JCA, not Cloud KMS), **Integration Boundary Graph**.
 
@@ -68,7 +68,7 @@ Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** Co
 
 A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Still **PLANNED:** Graph change notifications, Secret Manager versions/IAM, Firestore, Pub/Sub, Cloud KMS, Cloud Run, Firebase Hosting, WIF. API/worker Docker images are **IMPLEMENTED + LOCALLY TESTED** and **PUSHED + REMOTE DIGEST VERIFIED**. Artifact Registry remains **LIVE**. Phase 15E Secret Manager API and empty containers are **LIVE**. No Cloud Run workloads.
+Still **PLANNED:** Graph change notifications, Secret Manager versions/IAM, Pub/Sub, Cloud KMS, Cloud Run, Firebase Hosting, WIF. Firestore persistence adapters are **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** and not the local default. The named Firestore database `boundarymesh` is **LIVE / PROVISIONED**. Live verification residue is **CLEANED**. Cloud Run workload persistence is **not** live. API/worker Docker images are **IMPLEMENTED + LOCALLY TESTED** and **PUSHED + REMOTE DIGEST VERIFIED**. Artifact Registry remains **LIVE**. Phase 15E Secret Manager API and empty containers are **LIVE**. No Cloud Run workloads.
 
 ## Navigation
 

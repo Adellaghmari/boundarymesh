@@ -19,6 +19,8 @@ class ApiArchitectureTest {
             .resideInAnyPackage(
                     "org.springframework..",
                     "com.google.cloud..",
+                    "com.google.cloud.firestore..",
+                    "com.google.firestore..",
                     "dev.adellaghmari.boundarymesh.gcp..",
                     "com.microsoft..",
                     "org.apache.camel..",
@@ -39,5 +41,7 @@ class ApiArchitectureTest {
                     "org.wiremock..",
                     "dev.adellaghmari.boundarymesh.worker..",
                     "dev.adellaghmari.boundarymesh.gcp..",
-                    "com.google.cloud..");
+                    "com.google.cloud..",
+                    "com.google.cloud.firestore..",
+                    "com.google.firestore..");
 }

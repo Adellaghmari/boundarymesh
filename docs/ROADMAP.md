@@ -14,12 +14,12 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 | **7** | Boundary Enforcement Engine | ControlVector → EnforcementDecision, decision-table tests, API wiring |
 | **8** | Apache Camel routes | **COMPLETE** local worker, EIPs, Resilience4j, WireMock. Pub/Sub PLANNED |
 | **9** | Credential & Consent Vault | **COMPLETE** local security model. Secret Manager adapter PLANNED |
-| **10** | Quarantine & Recovery | **COMPLETE** local orchestrator. Firestore persistence PLANNED |
-| **11** | Tamper-evident audit chain | **COMPLETE** local hash chain + verifier. Firestore PLANNED |
+| **10** | Quarantine & Recovery | **COMPLETE** local orchestrator. Firestore adapter **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
+| **11** | Tamper-evident audit chain | **COMPLETE** local hash chain + verifier. Firestore transactional append **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | **12** | Cryptographic Exchange Attestation | **COMPLETE** local JCA P-256. Cloud KMS PLANNED |
 | **13** | Integration Boundary Graph | **COMPLETE** state-driven Vue SVG |
 | **14** | M365 / Graph connector | **COMPLETE** harness + Entra architecture TESTED. Live tenant BLOCKED. Graph subscriptions PLANNED |
-| **15** | GCP + Pulumi cloud foundation | **15A–15E COMPLETE**. Secret Manager containers LIVE (empty). Firestore / remaining GCP **PLANNED** |
+| **15** | GCP + Pulumi cloud foundation | **15A–15F COMPLETE**. Database `boundarymesh` LIVE / PROVISIONED. Java SDK path **LIVE VERIFIED LOCALLY**. Residue **CLEANED**. Remaining GCP **PLANNED** |
 | **16** | Pulumi / GCP infrastructure | Cloud Run ×2, IAM, KMS, secrets, hosting — **first provision** (not 15A) |
 | **17** | GitHub WIF + CI/CD + AppSec | no JSON keys; Semgrep/Gitleaks/ZAP/Dependency-Check |
 | **18** | Public deployment + live verification | honest badges; Graph live only if real |

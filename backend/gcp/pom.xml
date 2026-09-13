@@ -12,7 +12,7 @@
 
     <artifactId>boundarymesh-gcp</artifactId>
     <name>BoundaryMesh GCP</name>
-    <description>Google Cloud adapter boundary. Secret Manager adapter is implemented; Firestore, Pub/Sub, and KMS remain planned.</description>
+    <description>Google Cloud adapter boundary. Secret Manager and Firestore persistence adapters are implemented; Pub/Sub, KMS, and outbox remain planned.</description>
 
     <dependencies>
         <dependency>
@@ -22,6 +22,14 @@
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-secretmanager</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-firestore</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

@@ -52,7 +52,7 @@ LOCAL DELIVERY WORKER  —  boundarymesh-worker  (:8081)
         │  DELIVERED | DUPLICATE_SUPPRESSED | QUARANTINED
 ```
 
-Firestore, Pub/Sub, KMS, and Cloud Run remain **target architecture**, not current runtime. Secret Manager adapters exist in `backend/gcp` and are **not** the default local runtime. Empty secret containers are **LIVE / PROVISIONED IN GCP**. No versions. No workload IAM.
+Firestore adapters exist in `backend/gcp` and are **not** the default local runtime. The Firestore database `boundarymesh` is **LIVE / PROVISIONED**. `GoogleFirestoreFacade` is **LIVE VERIFIED AGAINST REAL GCP FIRESTORE**. Live verification residue is **CLEANED**. Cloud Run workload persistence is **not** live. Pub/Sub, KMS, and Cloud Run remain **target architecture**. Secret Manager adapters exist in `backend/gcp` and are **not** the default local runtime. Empty secret containers are **LIVE / PROVISIONED IN GCP**. No versions. No workload IAM.
 
 ## Why this is not an API gateway
 

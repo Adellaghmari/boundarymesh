@@ -12,6 +12,12 @@ public interface AuditRepository {
 
     void append(AuditEntry entry, AuditChainHead expectedHead);
 
+    /**
+     * Reads the current head, builds the next entry, and commits the entry plus the advanced head
+     * atomically. Concurrent callers must not produce duplicate sequences or a broken chain.
+     */
+    AuditEntry appendNext(AuditChainId chainId, AuditEntryFactory factory);
+
     List<AuditEntry> entries(AuditChainId chainId, int limit);
 
     List<AuditChainId> chainIds();

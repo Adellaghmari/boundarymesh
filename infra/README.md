@@ -2,11 +2,9 @@
 
 Pulumi + TypeScript workspace for Google Cloud resources.
 
-## Phase 15E purpose
+## Phase 15F-B purpose
 
-Define empty Secret Manager **containers** for the current webhook and connector secret IDs.
-
-The 15E apply provisioned empty Secret Manager containers only. Do not add versions, IAM, or other GCP resources without a new apply gate.
+The named Firestore Native database and Firestore API are **LIVE / PROVISIONED**. Phase 15F-C live-verified the Java SDK path and cleaned run-scoped documents. Do not add indexes, versions, IAM, Pub/Sub, KMS, or Cloud Run here.
 
 Authentication uses workstation **Application Default Credentials**. Do not set `GOOGLE_APPLICATION_CREDENTIALS`. Do not commit ADC files, tokens, or service-account JSON.
 
@@ -28,6 +26,11 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | Secret containers | LIVE / PROVISIONED IN GCP / EMPTY |
 | Secret versions | PLANNED |
 | Workload IAM | PLANNED |
+| Firestore persistence adapters | IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY |
+| Firestore Pulumi definition | IMPLEMENTED + APPLIED |
+| Firestore API in GCP | LIVE / ENABLED IN GCP |
+| Firestore database in GCP | LIVE / PROVISIONED IN GCP |
+| Live Java SDK data path | LIVE VERIFIED LOCALLY / RESIDUE CLEANED |
 
 Target region: **`europe-west4`**.  
 Stack: **`dev`**.  
@@ -53,7 +56,6 @@ Local backend remains `file://~`. GCS state is **PLANNED**.
 ## Future planned services (not provisioned)
 
 - Secret versions and Secret Manager IAM
-- Firestore
 - Pub/Sub
 - Cloud KMS
 - Cloud Run

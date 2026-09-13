@@ -41,4 +41,12 @@ class GcpArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("com.google.cloud.secretmanager..");
+
+    @ArchTest
+    static final ArchRule firestoreSdkStaysInGcpFirestorePackage = noClasses()
+            .that()
+            .resideOutsideOfPackage("dev.adellaghmari.boundarymesh.gcp.firestore..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("com.google.cloud.firestore..", "com.google.firestore..");
 }

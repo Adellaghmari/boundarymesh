@@ -22,7 +22,7 @@ class BoundaryGraphAssemblerTest {
 
     @BeforeEach
     void setup() {
-        observations = new ObservedCrossingStore();
+        observations = new InMemoryObservedCrossingStore();
         quarantine = new InMemoryQuarantineRepository();
         assembler = new BoundaryGraphAssembler(observations, quarantine);
     }

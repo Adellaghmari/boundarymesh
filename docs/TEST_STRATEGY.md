@@ -61,9 +61,10 @@ JUnit 5. Mockito only at adapter edges.
 
 ## Integration (Testcontainers)
 
-Phase 15C provides the `backend/gcp` emulator **foundation** only. Default `mvnw verify` excludes the `gcp-emulator` JUnit group and does not need ADC, Docker, or Google network access.
+Phase 15C provides the `backend/gcp` emulator **foundation** only. Default `mvnw verify` excludes the `gcp-emulator` and `gcp-live` JUnit groups and does not need ADC, Docker, or Google network access.
 
-- Firestore emulator: nonce create-if-absent — **PLANNED** (15F)
+- Firestore emulator: nonce create-if-absent, transactional audit, both idempotency stores — **IMPLEMENTED** (opt-in `-Pgcp-emulator`)
+- Live Java SDK against real named database `boundarymesh` — **IMPLEMENTED** (opt-in `-Pgcp-live`). Run-scoped documents are deleted after the suite.
 - Pub/Sub emulator: publish after persist, duplicate delivery — **PLANNED** (15G)
 - KMS: **use test double** locally; live KMS only in LIVE VERIFIED phase
 

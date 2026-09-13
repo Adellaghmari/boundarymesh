@@ -2,7 +2,6 @@ package dev.adellaghmari.boundarymesh.application.audit;
 
 import dev.adellaghmari.boundarymesh.application.canon.Rfc8785Canonicalizer;
 import dev.adellaghmari.boundarymesh.application.canon.Sha256;
-import dev.adellaghmari.boundarymesh.domain.audit.AuditChainHead;
 import dev.adellaghmari.boundarymesh.domain.audit.AuditChainId;
 import dev.adellaghmari.boundarymesh.domain.audit.AuditEntry;
 import dev.adellaghmari.boundarymesh.domain.audit.AuditEntryId;
@@ -14,7 +13,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 public final class AuditAppender {
 
@@ -27,11 +25,8 @@ public final class AuditAppender {
     }
 
     public AuditEntry append(AuditChainId chainId, AuditEventType type, Map<String, String> attributes) {
-        ReentrantLock lock =
-                repository instanceof InMemoryAuditRepository memory ? memory.lockFor(chainId) : new ReentrantLock();
-        lock.lock();
-        try {
-            AuditChainHead head = repository.head(chainId).orElse(AuditChainHead.empty(chainId));
+        Map<String, String> safeAttributes = attributes == null ? Map.of() : attributes;
+        return repository.appendNext(chainId, head -> {
             Instant now = clock.instant();
             AuditEntry unsigned = new AuditEntry(
                     AuditEntryId.random(),
@@ -39,16 +34,11 @@ public final class AuditAppender {
                     head.sequence() + 1,
                     now,
                     type,
-                    attributes == null ? Map.of() : attributes,
+                    safeAttributes,
                     head.headHash(),
                     AuditHash.GENESIS);
-            AuditHash current = hashOf(unsigned);
-            AuditEntry signed = unsigned.withCurrentHash(current);
-            repository.append(signed, head);
-            return signed;
-        } finally {
-            lock.unlock();
-        }
+            return unsigned.withCurrentHash(hashOf(unsigned));
+        });
     }
 
     public static AuditHash hashOf(AuditEntry entry) {

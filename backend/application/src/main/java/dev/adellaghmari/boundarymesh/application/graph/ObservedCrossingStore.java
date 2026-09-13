@@ -4,12 +4,11 @@ import java.time.Instant;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
-/** Latest observed crossing per destination. Derived from live pipeline, not Vue fixtures. */
-public final class ObservedCrossingStore {
+/** Latest observed crossing per destination. Derived from the live pipeline, not Vue fixtures. */
+public interface ObservedCrossingStore {
 
-    public record Observation(
+    record Observation(
             String integrationId,
             String source,
             String destination,
@@ -20,27 +19,15 @@ public final class ObservedCrossingStore {
             boolean quarantined,
             Instant occurredAt) {}
 
-    private final Map<String, Observation> latest = new ConcurrentHashMap<>();
+    void record(Observation observation);
 
-    public void record(Observation observation) {
-        latest.put(key(observation.destination()), observation);
-    }
+    Optional<Observation> find(String integrationId);
 
-    public Optional<Observation> find(String integrationId) {
-        return latest.values().stream()
-                .filter(item -> integrationId.equals(item.integrationId()))
-                .findFirst();
-    }
+    Optional<Observation> findByDestination(String destination);
 
-    public Optional<Observation> findByDestination(String destination) {
-        return Optional.ofNullable(latest.get(key(destination)));
-    }
+    Map<String, Observation> all();
 
-    private static String key(String destination) {
+    static String destinationKey(String destination) {
         return destination == null ? "" : destination.trim().toUpperCase(Locale.ROOT);
-    }
-
-    public Map<String, Observation> all() {
-        return Map.copyOf(latest);
     }
 }

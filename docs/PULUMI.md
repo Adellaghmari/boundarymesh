@@ -2,7 +2,16 @@
 
 Primary IaC: **Pulumi + TypeScript**. Terraform is forbidden for Project C.
 
-## Phase 15E (current)
+## Phase 15F (current)
+
+Pulumi **manages** one named Firestore Native database and the Firestore API.
+
+- `gcp.projects.Service` `firestore-api` → `firestore.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
+- `gcp.firestore.Database` `boundarymesh-database` → database ID `boundarymesh`, `europe-west4`, `FIRESTORE_NATIVE`, `STANDARD`, App Engine `DISABLED`, concurrency `PESSIMISTIC`, delete protection **ENABLED** — **LIVE / PROVISIONED IN GCP**
+
+No indexes, PITR, backup schedules, or TTL policies. Phase 15F-C live-verified the Java SDK path and cleaned run-scoped documents. Residue is **zero**. Artifact Registry and Secret Manager remain **LIVE / UNCHANGED**. Cloud Run workload persistence is **not** live.
+
+## Phase 15E
 
 Pulumi **manages** Secret Manager containers in addition to Artifact Registry:
 

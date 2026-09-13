@@ -83,7 +83,7 @@ This is portfolio work, not professional employment.
 | Resilience4j Circuit Breaker | **TESTED** | CLOSED / OPEN / HALF_OPEN |
 | WireMock | **TESTED** | External connector simulation |
 | Pub/Sub delivery decoupling | PLANNED | |
-| Firestore Native access patterns | PLANNED | |
+| Firestore Native access patterns | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** | Named DB `boundarymesh` LIVE / PROVISIONED. Residue CLEANED. Not Cloud Run workload-live |
 | Cloud Run API + worker | PLANNED | |
 | Cloud KMS EC_SIGN_P256_SHA256 | PLANNED | Local JCA ECDSA P-256 is TESTED; KMS adapter is not |
 | Cryptographic Exchange Attestation | **LIVE VERIFIED LOCALLY** | Local JCA P-256 SIGNED + verify VALID for one real Graph calendar event. Does not prove business truth. Cloud KMS PLANNED |
@@ -92,7 +92,7 @@ This is portfolio work, not professional employment.
 | SHA-256 tamper-evident audit chain | **TESTED** / **LIVE VERIFIED LOCALLY** | Live `m365-calendar` chain VALID: CONNECTOR_READ count=1, BOUNDARY_DECISION, ATTESTATION_CREATED. Not immutable |
 | Deterministic audit canonicalization | **TESTED** | RFC 8785 subset over audit-entry/v1 |
 | Audit-chain verification | **TESTED** | Sequence, previous-hash, recalculated SHA-256 |
-| Concurrency-safe audit append | **TESTED** | Per-chain lock + expected-head check |
+| Concurrency-safe audit append | **TESTED** / **EMULATOR TESTED** / **LIVE VERIFIED LOCALLY** | In-memory per-chain lock; Firestore transactional append |
 | ECDSA P-256 | **TESTED** | JCA `SHA256withECDSAinP1363Format` |
 | JCA asymmetric cryptography | **TESTED** | Ephemeral local key `local-jca-p256` |
 | state-driven Vue SVG/graph visualization | **TESTED** | Custom SVG, no graph library |
@@ -125,9 +125,9 @@ This is portfolio work, not professional employment.
 | GCP provider / authentication | **CONFIGURED + VERIFIED LOCALLY** | ADC. No `GOOGLE_APPLICATION_CREDENTIALS`. No JSON keys |
 | GCP adapter module architecture | **IMPLEMENTED** / **TESTED** | `backend/gcp`. Domain/application remain cloud-independent |
 | GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |
-| Firestore production adapter | PLANNED | |
+| Firestore production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** | Not default-wired. `GoogleFirestoreFacade` against named DB `boundarymesh`. Residue **CLEANED** |
 | Pub/Sub production adapter | PLANNED | |
-| Pulumi TypeScript GCP resources | Artifact Registry **LIVE**; Secret Manager containers **LIVE** (empty); others PLANNED | Firestore, Pub/Sub, Cloud KMS, Cloud Run, Hosting |
+| Pulumi TypeScript GCP resources | Artifact Registry **LIVE**; Secret Manager containers **LIVE** (empty); Firestore database **LIVE / PROVISIONED** | Pub/Sub, Cloud KMS, Cloud Run, Hosting |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |
 | Gitleaks | PLANNED | |

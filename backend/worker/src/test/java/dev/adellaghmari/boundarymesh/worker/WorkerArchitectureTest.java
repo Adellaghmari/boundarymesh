@@ -20,6 +20,8 @@ class WorkerArchitectureTest {
                     "dev.adellaghmari.boundarymesh.worker..",
                     "dev.adellaghmari.boundarymesh.gcp..",
                     "com.google.cloud..",
+                    "com.google.cloud.firestore..",
+                    "com.google.firestore..",
                     "org.apache.camel..",
                     "io.github.resilience4j..",
                     "org.wiremock..");
@@ -30,5 +32,9 @@ class WorkerArchitectureTest {
             .resideInAPackage("dev.adellaghmari.boundarymesh.worker..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("com.google.cloud..", "dev.adellaghmari.boundarymesh.gcp..");
+            .resideInAnyPackage(
+                    "com.google.cloud..",
+                    "com.google.cloud.firestore..",
+                    "com.google.firestore..",
+                    "dev.adellaghmari.boundarymesh.gcp..");
 }

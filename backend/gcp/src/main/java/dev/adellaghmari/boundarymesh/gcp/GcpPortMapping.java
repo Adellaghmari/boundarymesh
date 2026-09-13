@@ -1,21 +1,22 @@
 package dev.adellaghmari.boundarymesh.gcp;
 
 /**
- * Mapping from existing application ports to GCP adapters. Secret Manager ports are implemented in
- * this module and not activated by default. Remaining production adapters are planned.
+ * Mapping from existing application ports to GCP adapters. Secret Manager and Firestore persistence
+ * adapters are implemented in this module and not activated by default. Outbox and KMS remain
+ * planned.
  */
 public enum GcpPortMapping {
-    AUDIT_REPOSITORY("AuditRepository", "InMemoryAuditRepository", "Firestore Native", false),
-    ATTESTATION_REPOSITORY("AttestationRepository", "InMemoryAttestationRepository", "Firestore Native", false),
+    AUDIT_REPOSITORY("AuditRepository", "InMemoryAuditRepository", "Firestore Native", true),
+    ATTESTATION_REPOSITORY("AttestationRepository", "InMemoryAttestationRepository", "Firestore Native", true),
     ATTESTATION_SIGNER("AttestationSigner", "JcaP256AttestationCrypto", "Cloud KMS EC_SIGN_P256_SHA256", false),
-    QUARANTINE_REPOSITORY("QuarantineRepository", "InMemoryQuarantineRepository", "Firestore Native", false),
-    REPLAY_NONCE_STORE("ReplayNonceStore", "InMemoryReplayNonceStore", "Firestore Native TTL", false),
-    IDEMPOTENCY_STORE("IdempotencyStore", "InMemoryIdempotencyStore", "Firestore Native", false),
+    QUARANTINE_REPOSITORY("QuarantineRepository", "InMemoryQuarantineRepository", "Firestore Native", true),
+    REPLAY_NONCE_STORE("ReplayNonceStore", "InMemoryReplayNonceStore", "Firestore Native TTL field", true),
+    IDEMPOTENCY_STORE("IdempotencyStore", "InMemoryIdempotencyStore", "Firestore Native", true),
     DELIVERY_IDEMPOTENCY_STORE(
-            "DeliveryIdempotencyStore", "InMemoryDeliveryIdempotencyStore", "Firestore Native", false),
+            "DeliveryIdempotencyStore", "InMemoryDeliveryIdempotencyStore", "Firestore Native", true),
     SECRET_VALUE_PROVIDER("SecretValueProvider", "LocalSecretValueProvider", "Secret Manager (worker only)", true),
     WEBHOOK_SECRET_PROVIDER("WebhookSecretProvider", "LocalWebhookSecretProvider", "Secret Manager", true),
-    OBSERVED_CROSSING_STORE("ObservedCrossingStore", "ObservedCrossingStore (in-process)", "Firestore Native", false),
+    OBSERVED_CROSSING_STORE("ObservedCrossingStore", "InMemoryObservedCrossingStore", "Firestore Native", true),
     OUTBOX("DeliveryOutbox (not a port yet)", "ABSENT", "Firestore outbox then Pub/Sub publish", false);
 
     private final String port;

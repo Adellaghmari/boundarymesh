@@ -32,6 +32,20 @@ public final class InMemoryAuditRepository implements AuditRepository {
     }
 
     @Override
+    public AuditEntry appendNext(AuditChainId chainId, AuditEntryFactory factory) {
+        ReentrantLock lock = lockFor(chainId);
+        lock.lock();
+        try {
+            AuditChainHead head = head(chainId).orElse(AuditChainHead.empty(chainId));
+            AuditEntry entry = factory.create(head);
+            append(entry, head);
+            return entry;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
     public void append(AuditEntry entry, AuditChainHead expectedHead) {
         ReentrantLock lock = lockFor(entry.chainId());
         lock.lock();

@@ -49,4 +49,4 @@ BoundaryMesh graph: system-to-system **security boundaries**. No reverse-BFS, no
 
 ## Storage truth
 
-Derived from local in-memory repositories. Does not survive restart. Firestore PLANNED.
+Derived from local in-memory repositories by default. Does not survive local restart. Firestore observation adapter **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Database **LIVE / PROVISIONED**. Live verification residue **CLEANED**. Cloud Run workload persistence is **not** live.

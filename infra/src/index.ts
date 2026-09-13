@@ -1,6 +1,6 @@
 /**
- * Phase 15E — Artifact Registry plus empty Secret Manager containers.
- * First Secret Manager apply completed. Do not add versions, IAM, or workloads.
+ * Phase 15F-B — Artifact Registry, empty Secret Manager containers, and one empty
+ * named Firestore Native database. Do not write application documents here.
  */
 import * as pulumi from "@pulumi/pulumi";
 import {
@@ -10,6 +10,7 @@ import {
     type TargetRegion,
 } from "./config";
 import { defineArtifactRegistry } from "./registry";
+import { defineFirestore } from "./firestore";
 import { defineSecretManager, PHASE_15E_SECRET_IDS } from "./secrets";
 
 const gcpConfig = new pulumi.Config("gcp");
@@ -23,9 +24,11 @@ export const foundation: FoundationConfig = loadFoundationConfig({
 
 const registry = defineArtifactRegistry(foundation);
 const secretManager = defineSecretManager(foundation);
+const firestore = defineFirestore(foundation);
 
 export const phase15DScope = "ARTIFACT_REGISTRY_ONLY" as const;
 export const phase15EScope = "SECRET_CONTAINERS_ONLY" as const;
+export const phase15FScope = "FIRESTORE_DATABASE_PREVIEW" as const;
 
 export const environment = foundation.environment;
 export const region = foundation.region;
@@ -35,3 +38,7 @@ export const artifactRegistryLocation = registry.repository.location;
 export const artifactRegistryFormat = registry.repository.format;
 export const secretManagerSecretIds = PHASE_15E_SECRET_IDS;
 export const secretManagerApiService = secretManager.secretManagerApi.service;
+export const firestoreApiService = firestore.firestoreApi.service;
+export const firestoreDatabaseId = firestore.database.name;
+export const firestoreDatabaseLocation = firestore.database.locationId;
+export const firestoreDatabaseType = firestore.database.type;

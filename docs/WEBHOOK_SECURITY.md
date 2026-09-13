@@ -31,7 +31,7 @@ HMAC-SHA256 over that UTF-8 string. Phase 4 uses a local `WebhookSecretProvider`
 2. Compute HMAC.
 3. Compare with `MessageDigest.isEqual` (constant-time).
 4. Reject if timestamp outside **±300 seconds** (configurable per integration, max 600).
-5. Reject if nonce seen in the replay window (Phase 4: in-memory `ReplayNonceStore` with expiry and `recordIfAbsent`. Firestore adapter remains **PLANNED**).
+5. Reject if nonce seen in the replay window (Phase 4: in-memory `ReplayNonceStore` with expiry and `recordIfAbsent`. Firestore adapter is **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** and not the local default).
 6. Then parse JSON, apply event-id idempotency, and run the engine. Contract Drift Firewall is **not** Phase 4.
 
 ### Malicious replay vs legitimate duplicate

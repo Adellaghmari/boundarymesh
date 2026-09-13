@@ -25,7 +25,7 @@ Out of scope: compromising Google or Microsoft as vendors; physical datacenter.
 
 The chain does **not** prevent deletion by a privileged storage administrator. That remains a storage/governance concern.
 
-Do not mark Cloud KMS / Firestore as implemented.
+Do not mark Cloud KMS as implemented. Do not mark Cloud Run workload Firestore as live.
 
 ## Phase 3–4 implemented mitigations
 
@@ -34,12 +34,12 @@ Do not mark Cloud KMS / Firestore as implemented.
 | Spoofing (JWT) | Asymmetric RS256 + JWKS, issuer, audience, exp, nbf | Entra issuer/JWKS live |
 | Spoofing (webhook) | HMAC-SHA256 over raw body, constant-time compare | Secret Manager |
 | Tampering (webhook body) | Signature covers SHA-256 of raw bytes | Graph-specific proofs |
-| Replay | Signed timestamp ±300s + atomic nonce store | Firestore TTL adapter |
+| Replay | Signed timestamp ±300s + atomic nonce store | Firestore TTL **policy** |
 | Elevation of privilege | Scope `boundary.evaluate` on HTTP and domain AuthZ | Entra app roles / ACL |
 | Information disclosure | Sanitized 401/403, no raw JWT/HMAC in responses or normal logs | Gitleaks CI, cloud log sinks |
 | Oversized ingest | 65536-byte webhook limit, 413 | Distributed rate limit |
 
-Do not mark GCP / Secret Manager / KMS / Firestore as implemented.
+Do not mark Cloud KMS as implemented. Secret Manager containers are LIVE and empty. Firestore adapters are emulator-tested and live-verified locally; they are not the default runtime and not Cloud Run workload-live.
 
 Each important threat maps to **preventive**, **detective**, and **recovery** controls.
 
