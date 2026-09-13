@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **15C COMPLETE** — GCP adapter module + emulator foundation. No production GCP adapters. No GCP application resources provisioned.  
+**Phase:** **15D COMPLETE** — Artifact Registry live; API and worker images pushed and digest-verified. Cloud Run remains PLANNED.  
 **Overall:** **PROJECT C — NOT COMPLETE**
 
 ## Completeness
@@ -28,10 +28,11 @@
 | Phase 15A Pulumi TypeScript foundation | **IMPLEMENTED + LOCALLY VALIDATED** — `infra/` compiles; zero application resources |
 | Phase 15B GCP project / provider validation | **IMPLEMENTED + LOCALLY VALIDATED** — `boundarymesh-dev`, `europe-west4`, ADC, local Pulumi backend, zero-resource preview |
 | Phase 15C GCP adapter module + emulator foundation | **IMPLEMENTED + TESTED** — `backend/gcp`; no production Firestore/Pub/Sub/SM/KMS adapters |
+| Phase 15D Artifact Registry + container images | **COMPLETE** — registry live; images pushed + remote digest verified. Workloads not deployed |
 | Application production IAM / Entra live | **LIVE VERIFIED LOCALLY** — common authority, personal Microsoft account, server-side session |
 | Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, one event normalized and enforced |
-| GCP project | **CREATED + BILLING LINKED** (`boundarymesh-dev`) — no application resources |
-| GCP resources | **NONE PROVISIONED** |
+| GCP project | **CREATED + BILLING LINKED** (`boundarymesh-dev`) |
+| GCP resources | **Artifact Registry only** — API + one Docker repository. No workloads |
 | Microsoft credentials | **NONE CREATED in Git / this session** |
 | GCP service-account JSON keys | **NONE** |
 | Project A | **FROZEN** — not modified |
@@ -88,4 +89,4 @@ GET `/api/v1/microsoft/connector` still reports `LIVE_CONFIGURED` because that e
 
 ## Next (do not start automatically)
 
-Phase 15D — Artifact Registry + Dockerfiles. Do not run `pulumi up` until that subphase is explicitly requested. Do not provision Secret Manager, Firestore, Pub/Sub, Cloud KMS, Cloud Run, Firebase Hosting, or WIF.
+Phase 15E Secret Manager infrastructure (preview + controlled apply). Do not provision Firestore, Pub/Sub, Cloud KMS, Cloud Run, Firebase Hosting, or WIF. Do not start automatically.

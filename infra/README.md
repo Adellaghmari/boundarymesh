@@ -1,14 +1,12 @@
 # BoundaryMesh infrastructure
 
-Pulumi + TypeScript workspace for future Google Cloud resources.
+Pulumi + TypeScript workspace for Google Cloud resources.
 
-## Phase 15B purpose
+## Phase 15D purpose
 
-Phase 15B validates **non-secret GCP project/provider configuration** and local Pulumi tooling. It does not provision application infrastructure.
+Define the **minimum** Artifact Registry needed to store API and worker images.
 
-This directory still defines **zero cloud resources**.
-
-`pulumi preview` is allowed. **`pulumi up` is forbidden.**
+The first controlled apply has provisioned Artifact Registry only. Do not add other GCP resources without a new explicit apply gate.
 
 Authentication uses workstation **Application Default Credentials**. Do not set `GOOGLE_APPLICATION_CREDENTIALS`. Do not commit ADC files, tokens, or service-account JSON.
 
@@ -18,38 +16,46 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | --- | --- |
 | Pulumi TypeScript repository foundation | IMPLEMENTED + LOCALLY VALIDATED |
 | GCP project | CREATED + BILLING LINKED (`boundarymesh-dev`) |
-| gcloud local authentication | CONFIGURED + VERIFIED |
-| Application Default Credentials | CONFIGURED + VERIFIED LOCALLY |
-| Pulumi local backend | CONFIGURED + VERIFIED LOCALLY |
-| Pulumi `dev` stack configuration | IMPLEMENTED + LOCALLY VALIDATED |
-| GCP project configuration | IMPLEMENTED + LOCALLY VALIDATED (`gcp:project`) |
-| GCP region configuration | IMPLEMENTED + LOCALLY VALIDATED (`europe-west4`) |
-| Zero-resource Pulumi preview | TESTED |
-| Cloud resources in `src/` | none |
+| Artifact Registry Pulumi definition | IMPLEMENTED + APPLIED |
+| Artifact Registry API | LIVE / ENABLED IN GCP |
+| Artifact Registry repository | LIVE / PROVISIONED IN GCP |
+| API image | PUSHED + REMOTE DIGEST VERIFIED |
+| Worker image | PUSHED + REMOTE DIGEST VERIFIED |
+| Artifact Registry round-trip | LIVE VERIFIED |
+| Cloud Run deployment | PLANNED |
 
 Target region: **`europe-west4`**.  
 Stack: **`dev`**.  
-GCP project: **`boundarymesh-dev`**.
+GCP project: **`boundarymesh-dev`**.  
+Repository ID: **`boundarymesh`** (DOCKER). Published image names: `boundarymesh-api`, `boundarymesh-worker` (tag `phase15d`).
 
-GCS Pulumi state remains **PLANNED**. Phase 15B uses a **local** Pulumi backend only.
+## Published image digests (2026-09-13)
 
-## Future planned services (not implemented)
+Immutable Artifact Registry digests. Tag `phase15d` is a pointer; the digest is the artifact.
 
-- Artifact Registry
+```text
+europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api:phase15d
+sha256:3a933e2bc260be6511d835353dbc3a3cde10e3e836f1b318122e7e94cee4d705
+
+europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker:phase15d
+sha256:62570f5c928394b74b60071ed7d34cb534522ce7f4f8c39816b012d855fa3768
+```
+
+These images are stored, not deployed. Cloud Run remains **PLANNED**.
+
+Local backend remains `file://~`. GCS state is **PLANNED**.
+
+## Future planned services (not provisioned)
+
 - Secret Manager
 - Firestore
 - Pub/Sub
 - Cloud KMS
 - Cloud Run
 - Firebase Hosting, pending final validation
+- WIF
 
-Workload Identity Federation for GitHub Actions is **PLANNED**. Do not add long-lived GCP service-account JSON keys. Ever.
-
-## Secrets
-
-Never commit secrets, tokens, Microsoft credentials, ADC JSON, or service-account material. Stack YAML contains only non-secret project/region/environment values.
-
-## Local commands (Phase 15B)
+## Local commands
 
 ```powershell
 cd infra
@@ -61,8 +67,4 @@ $env:PULUMI_CONFIG_PASSPHRASE = '<LOCAL_PULUMI_PASSPHRASE>'
 pulumi preview
 ```
 
-`<LOCAL_PULUMI_PASSPHRASE>` is a **local Pulumi stack unlock string** for the empty `dev` stack. It is not a GCP, Microsoft, or application secret. Do not reuse it as a cloud credential.
-
-A first preview may list `pulumi:pulumi:Stack` as create. That is the local stack envelope. It is not a GCP resource. Do not run `pulumi up` to materialize it in Phase 15B.
-
-Do not run `pulumi up` or `pulumi destroy`.
+Do not run `pulumi destroy` or add resources until explicitly approved. Image publication is not a Cloud Run deploy.

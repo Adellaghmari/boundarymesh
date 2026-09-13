@@ -1,7 +1,7 @@
 # Non-secret dev stack configuration. Phase 15B.
 # Authentication uses workstation Application Default Credentials.
 # Do not put tokens, ADC files, or service-account material in this file.
-# Do not run pulumi up.
+# Phase 15D Artifact Registry apply completed. Do not add other resources here.
 config:
   gcp:project: boundarymesh-dev
   gcp:region: europe-west4

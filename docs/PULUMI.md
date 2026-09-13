@@ -2,7 +2,16 @@
 
 Primary IaC: **Pulumi + TypeScript**. Terraform is forbidden for Project C.
 
-## Phase 15B (current)
+## Phase 15D (current)
+
+Pulumi **manages** Artifact Registry only:
+
+- `gcp.projects.Service` `artifact-registry-api` → `artifactregistry.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
+- `gcp.artifactregistry.Repository` `boundarymesh-images` → repo id `boundarymesh`, format `DOCKER`, location `europe-west4` — **LIVE / PROVISIONED IN GCP**
+
+API and worker images are **PUSHED + REMOTE DIGEST VERIFIED** (see `infra/README.md`). Cloud Run and all other GCP application services remain **PLANNED**. Image publication is not a workload deployment.
+
+## Phase 15B
 
 `infra/` is a compilable Pulumi TypeScript project with verified **non-secret** `dev` configuration:
 
@@ -10,7 +19,7 @@ Primary IaC: **Pulumi + TypeScript**. Terraform is forbidden for Project C.
 - `gcp:region` = `europe-west4`
 - `boundarymesh:environment` = `dev`
 
-Local Pulumi backend (`file://~`). Zero-resource `pulumi preview` **TESTED**. The preview may list the local `pulumi:pulumi:Stack` envelope; that is not a GCP resource and was **not** applied. `pulumi up` remains forbidden until a later subphase explicitly allows it.
+Local Pulumi backend (`file://~`). Phase 15B zero-resource `pulumi preview` **TESTED**. Phase 15D first controlled `pulumi up` **APPLIED** Artifact Registry only.
 
 GCS DIY state remains **PLANNED**.
 

@@ -8,20 +8,18 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const srcDir = join(root, "src");
 
 const forbidden = [
-    /\bnew\s+CustomResource\b/,
-    /\bextends\s+CustomResource\b/,
-    /\bnew\s+ComponentResource\b/,
-    /\bextends\s+ComponentResource\b/,
-    /\bnew\s+gcp\./,
+    /\bnew\s+gcp\.cloudrun\./,
+    /\bnew\s+gcp\.pubsub\./,
+    /\bnew\s+gcp\.firestore\./,
+    /\bnew\s+gcp\.secretmanager\./,
+    /\bnew\s+gcp\.kms\./,
+    /\bnew\s+gcp\.firebase\./,
+    /\bnew\s+gcp\.serviceaccount\./,
+    /\bnew\s+gcp\.storage\./,
+    /\bnew\s+gcp\.compute\./,
+    /\bnew\s+gcp\.dns\./,
+    /\bnew\s+gcp\.iam\./,
     /\bnew\s+gcp\.Provider\b/,
-    /\bgcp\.cloudrun\b/,
-    /\bgcp\.pubsub\b/,
-    /\bgcp\.firestore\b/,
-    /\bgcp\.secretmanager\b/,
-    /\bgcp\.kms\b/,
-    /\bgcp\.artifactregistry\b/,
-    /\bgcp\.firebase\b/,
-    /\bgcp\.serviceaccount\b/,
 ];
 
 function sourceFiles() {
@@ -30,17 +28,18 @@ function sourceFiles() {
         .map((name) => ({ name, text: readFileSync(join(srcDir, name), "utf8") }));
 }
 
-test("Phase 15A program defines zero Pulumi or GCP resources", () => {
-    for (const file of sourceFiles()) {
-        for (const token of forbidden) {
-            assert.equal(token.test(file.text), false, `${file.name} must not contain ${token}`);
-        }
-        assert.equal(
-            /from\s+["']@pulumi\/gcp["']/.test(file.text),
-            false,
-            `${file.name} must not import @pulumi/gcp while the program is zero-resource`,
-        );
+test("Phase 15D program may define only Artifact Registry resources", () => {
+    const text = sourceFiles()
+        .map((file) => file.text)
+        .join("\n");
+    for (const token of forbidden) {
+        assert.equal(token.test(text), false, `infra/src must not contain ${token}`);
     }
+    assert.match(text, /new gcp\.projects\.Service/);
+    assert.match(text, /new gcp\.artifactregistry\.Repository/);
+    assert.match(text, /artifactregistry\.googleapis\.com/);
+    assert.match(text, /repositoryId:\s*"boundarymesh"/);
+    assert.equal((text.match(/new gcp\./g) ?? []).length, 2);
 });
 
 test("stack YAML is non-secret and pins the verified GCP project", () => {
@@ -51,5 +50,4 @@ test("stack YAML is non-secret and pins the verified GCP project", () => {
     assert.match(stack, /boundarymesh:environment:\s*dev/);
     assert.match(stack, /gcp:project:\s*boundarymesh-dev/);
     assert.match(stack, /gcp:region:\s*europe-west4/);
-    assert.equal(stack.includes("REPLACE_IN_PHASE_15B"), false);
 });

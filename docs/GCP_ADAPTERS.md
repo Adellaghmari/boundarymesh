@@ -44,4 +44,4 @@ Testcontainers may be added in 15F/15G if an official emulator image is justifie
 
 ## Next
 
-Phase 15D is Artifact Registry + Dockerfiles. Do not implement production Firestore, Pub/Sub, Secret Manager, or KMS adapters in 15C.
+Phase 15D Artifact Registry + images is complete. Do not implement production Firestore, Pub/Sub, Secret Manager, or KMS adapters here.

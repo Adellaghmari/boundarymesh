@@ -104,7 +104,15 @@ This is portfolio work, not professional employment.
 | Pulumi `dev` stack configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `gcp:project`, `gcp:region`, `boundarymesh:environment` |
 | GCP project configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `gcp:project = boundarymesh-dev` |
 | GCP region configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `europe-west4` |
-| Zero-resource Pulumi preview | **TESTED** | Local `pulumi:pulumi:Stack` envelope only. No GCP resources. Not applied |
+| Zero-resource Pulumi preview | **TESTED** | Phase 15B envelope-only preview. Superseded by 15D registry preview |
+| API Docker image definition | **IMPLEMENTED** / **LOCALLY TESTED** | `backend/api/Dockerfile` |
+| Worker Docker image definition | **IMPLEMENTED** / **LOCALLY TESTED** | `backend/worker/Dockerfile` |
+| API container Artifact Registry image | **PUSHED** / **REMOTE DIGEST VERIFIED** | `boundarymesh-api:phase15d`. See `infra/README.md` |
+| Worker container Artifact Registry image | **PUSHED** / **REMOTE DIGEST VERIFIED** | `boundarymesh-worker:phase15d`. See `infra/README.md` |
+| Artifact Registry Pulumi definition | **IMPLEMENTED** / **APPLIED** | One Docker repo `boundarymesh` in `europe-west4` |
+| Artifact Registry API | **LIVE** / **ENABLED IN GCP** | `artifactregistry.googleapis.com` via Pulumi; `disableOnDestroy=false` |
+| Artifact Registry repository | **LIVE** / **PROVISIONED IN GCP** | `projects/boundarymesh-dev/locations/europe-west4/repositories/boundarymesh` |
+| Artifact Registry round-trip | **LIVE VERIFIED** | Push → remote digest → pull by digest → local smoke |
 | GCP provider / authentication | **CONFIGURED + VERIFIED LOCALLY** | ADC. No `GOOGLE_APPLICATION_CREDENTIALS`. No JSON keys |
 | GCP adapter module architecture | **IMPLEMENTED** / **TESTED** | `backend/gcp`. Domain/application remain cloud-independent |
 | GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |

@@ -19,7 +19,7 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 | **12** | Cryptographic Exchange Attestation | **COMPLETE** local JCA P-256. Cloud KMS PLANNED |
 | **13** | Integration Boundary Graph | **COMPLETE** state-driven Vue SVG |
 | **14** | M365 / Graph connector | **COMPLETE** harness + Entra architecture TESTED. Live tenant BLOCKED. Graph subscriptions PLANNED |
-| **15** | GCP + Pulumi cloud foundation | **15A–15C COMPLETE** (Pulumi + `backend/gcp` foundation). 15D Artifact Registry remains |
+| **15** | GCP + Pulumi cloud foundation | **15A–15D COMPLETE**. Artifact Registry live; images published. Secret Manager / remaining GCP **PLANNED** |
 | **16** | Pulumi / GCP infrastructure | Cloud Run ×2, IAM, KMS, secrets, hosting — **first provision** (not 15A) |
 | **17** | GitHub WIF + CI/CD + AppSec | no JSON keys; Semgrep/Gitleaks/ZAP/Dependency-Check |
 | **18** | Public deployment + live verification | honest badges; Graph live only if real |
