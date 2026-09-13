@@ -2,7 +2,7 @@
 
 Access patterns first. Firestore Native, regional `europe-west4`, named database `boundarymesh` (never the default database). The Phase 15F-A Pulumi database uses **PESSIMISTIC** concurrency. This is **not** a SQL schema dump.
 
-Phase 15F-C live-verified the official Java SDK path against `projects/boundarymesh-dev/databases/boundarymesh`, then deleted the run-scoped documents. Residue is **CLEANED**. The delivery outbox remains Phase 15G. Cloud Run workload persistence is **not** live.
+Phase 15F-C live-verified the official Java SDK path against `projects/boundarymesh-dev/databases/boundarymesh`, then deleted the run-scoped documents. Residue is **CLEANED**. The delivery outbox collection `deliveryOutbox` is **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub topics and pull subscriptions are **LIVE / PROVISIONED**. Live persist → publish → consume is **LIVE VERIFIED**. Residue is **CLEANED**. Cloud Run workload persistence is **not** live.
 
 ## Patterns
 
@@ -55,6 +55,14 @@ Identity, boundary/outcome references, reason metadata, status/lifecycle, recove
 ### `attestations/{attestationId}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
 
 See [EXCHANGE_ATTESTATIONS.md](EXCHANGE_ATTESTATIONS.md). Public signature + signer **reference** only. No private key material.
+
+### `deliveryOutbox/{instructionId}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
+
+Document id is the stable `DeliveryInstruction` id. Fields: `schema_version` (`delivery-outbox/v1`), `instruction_id`, `integration_id`, `destination_system`, `status` (`PENDING`|`PUBLISHED`), `created_at`, `publish_attempts`, optional `last_attempt_at` / `published_at` / `last_failure_kind`, and nested `instruction` (approved payload + credential **reference** only).
+
+Create-pending and status updates are Firestore transactions. Pending load is `status == PENDING` (single-field; no composite index). No secrets, tokens, or Authorization headers.
+
+Pub/Sub publish happens **after** this document exists. A publish can succeed while mark-`PUBLISHED` fails; a later retry may emit a duplicate message. That is at-least-once. The worker deduplicates with `deliveryIdempotency/{instructionId}`.
 
 ### `observedCrossings/{destinationKey}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
 
@@ -109,4 +117,4 @@ Project A already demonstrates PostgreSQL. Project B already demonstrates Dynamo
 
 ## Consistency
 
-Decision + transaction + audit entry: Firestore transaction where possible. Pub/Sub publish **after** commit (outbox field `publish_state` on the decision: `PENDING` → worker/API publisher). If publish fails, a sweeper republishes. Do not publish before persist (would deliver without evidence).
+The transactional unit for approved delivery is the `deliveryOutbox` document (instruction snapshot + `PENDING`). Firestore and Pub/Sub are **not** one distributed transaction. Publish after persist. If publish fails, the record stays `PENDING` and is retryable. Do not publish before persist.

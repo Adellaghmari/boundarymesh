@@ -82,7 +82,7 @@ This is portfolio work, not professional employment.
 | Resilience4j Retry | **TESTED** | 3 total attempts; 400/401/403 never retried |
 | Resilience4j Circuit Breaker | **TESTED** | CLOSED / OPEN / HALF_OPEN |
 | WireMock | **TESTED** | External connector simulation |
-| Pub/Sub delivery decoupling | PLANNED | |
+| Pub/Sub delivery decoupling | **IMPLEMENTED + EMULATOR TESTED** | Persist-before-publish. At-least-once + worker idempotency. Not LIVE |
 | Firestore Native access patterns | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** | Named DB `boundarymesh` LIVE / PROVISIONED. Residue CLEANED. Not Cloud Run workload-live |
 | Cloud Run API + worker | PLANNED | |
 | Cloud KMS EC_SIGN_P256_SHA256 | PLANNED | Local JCA ECDSA P-256 is TESTED; KMS adapter is not |
@@ -126,8 +126,8 @@ This is portfolio work, not professional employment.
 | GCP adapter module architecture | **IMPLEMENTED** / **TESTED** | `backend/gcp`. Domain/application remain cloud-independent |
 | GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |
 | Firestore production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** | Not default-wired. `GoogleFirestoreFacade` against named DB `boundarymesh`. Residue **CLEANED** |
-| Pub/Sub production adapter | PLANNED | |
-| Pulumi TypeScript GCP resources | Artifact Registry **LIVE**; Secret Manager containers **LIVE** (empty); Firestore database **LIVE / PROVISIONED** | Pub/Sub, Cloud KMS, Cloud Run, Hosting |
+| Pub/Sub production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED AGAINST REAL GCP** | Publisher + pull consumer in `backend/gcp`. Not default-wired. Not Cloud Run workload-live |
+| Pulumi TypeScript GCP resources | Artifact Registry **LIVE**; Secret Manager containers **LIVE** (empty); Firestore database **LIVE / PROVISIONED**; Pub/Sub topics + pull subscriptions **LIVE / PROVISIONED** | Dead-letter forwarding, Cloud KMS, Cloud Run, Hosting |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |
 | Gitleaks | PLANNED | |

@@ -16,7 +16,11 @@ class GcpArchitectureTest {
             .resideInAPackage("dev.adellaghmari.boundarymesh.domain..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("dev.adellaghmari.boundarymesh.gcp..", "com.google.cloud..", "com.google.firestore..");
+            .resideInAnyPackage(
+                    "dev.adellaghmari.boundarymesh.gcp..",
+                    "com.google.cloud..",
+                    "com.google.firestore..",
+                    "com.google.pubsub..");
 
     @ArchTest
     static final ArchRule applicationMustNotDependOnGcp = noClasses()
@@ -24,7 +28,11 @@ class GcpArchitectureTest {
             .resideInAPackage("dev.adellaghmari.boundarymesh.application..")
             .should()
             .dependOnClassesThat()
-            .resideInAnyPackage("dev.adellaghmari.boundarymesh.gcp..", "com.google.cloud..", "com.google.firestore..");
+            .resideInAnyPackage(
+                    "dev.adellaghmari.boundarymesh.gcp..",
+                    "com.google.cloud..",
+                    "com.google.firestore..",
+                    "com.google.pubsub..");
 
     @ArchTest
     static final ArchRule gcpMustNotDependOnApiOrWorker = noClasses()
@@ -41,6 +49,14 @@ class GcpArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("com.google.cloud.secretmanager..");
+
+    @ArchTest
+    static final ArchRule pubSubSdkStaysInGcpPubSubPackage = noClasses()
+            .that()
+            .resideOutsideOfPackage("dev.adellaghmari.boundarymesh.gcp.pubsub..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("com.google.cloud.pubsub..", "com.google.pubsub..");
 
     @ArchTest
     static final ArchRule firestoreSdkStaysInGcpFirestorePackage = noClasses()

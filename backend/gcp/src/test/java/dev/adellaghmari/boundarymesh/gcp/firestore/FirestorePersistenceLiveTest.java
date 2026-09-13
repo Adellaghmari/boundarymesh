@@ -64,6 +64,7 @@ class FirestorePersistenceLiveTest {
             FirestoreCollections.REPLAY_NONCES,
             FirestoreCollections.IDEMPOTENCY,
             FirestoreCollections.DELIVERY_IDEMPOTENCY,
+            FirestoreCollections.DELIVERY_OUTBOX,
             FirestoreCollections.OBSERVED_CROSSINGS);
     private static final int CONCURRENT_APPENDS = 8;
 

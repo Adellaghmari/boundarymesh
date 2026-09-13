@@ -11,19 +11,20 @@ Domain and application stay cloud-provider independent. Local in-memory adapters
 | `LOCAL` | Default application path. In-memory / local adapters. |
 | `TEST` | Deterministic tests. Same local adapters. |
 | `GCP_EMULATOR` | Opt-in JUnit tag `gcp-emulator`. Firestore emulator adapters allowed. Not part of default `mvnw verify`. |
-| `PROD` | May select Secret Manager and Firestore production adapters when a later phase wires `backend/gcp` under an explicit cloud profile. Live Java SDK path is **LIVE VERIFIED LOCALLY** via opt-in `gcp-live`; not the local API/worker default. |
+| `PROD` | May select Secret Manager, Firestore, and Pub/Sub production adapters when a later phase wires `backend/gcp` under an explicit cloud profile. Live Java SDK path is **LIVE VERIFIED LOCALLY** via opt-in `gcp-live`; Pub/Sub adapters are **EMULATOR TESTED + LIVE VERIFIED LOCALLY** via opt-in `gcp-live-pubsub`. Pub/Sub infrastructure is **LIVE / PROVISIONED**. |
 
 `local` remains the API/worker Spring default. Profile `gcp-emulator` is documented only; it is not activated at runtime.
 
 ## Emulator tests
 
-Default `backend/mvnw.cmd verify` does not need ADC, Docker, a running emulator, or live GCP. Surefire excludes the `gcp-emulator` and `gcp-live` groups.
+Default `backend/mvnw.cmd verify` does not need ADC, Docker, a running emulator, or live GCP. Surefire excludes the `gcp-emulator`, `gcp-live`, and `gcp-live-pubsub` groups.
 
 Firestore adapter proofs start the Cloud Firestore emulator with firebase-tools on the host and named database ID `boundarymesh`. Emulator tests use the emulator REST API for that named database. Production construction is `GoogleFirestoreFacade` plus the official Java Firestore SDK. Run the opt-in suites with:
 
 ```text
 backend/mvnw.cmd -pl gcp -am -Pgcp-emulator test
 backend/mvnw.cmd -pl gcp -am -Pgcp-live test
+backend/mvnw.cmd -pl gcp -am -Pgcp-live-pubsub test
 ```
 
 Local emulator host placeholders remain:
@@ -47,7 +48,9 @@ Secret Manager and Cloud KMS have no emulator path; Secret Manager uses local do
 | `SecretValueProvider` | `LocalSecretValueProvider` | `SecretManagerSecretValueProvider` | **IMPLEMENTED** (not default-wired) |
 | `WebhookSecretProvider` | `LocalWebhookSecretProvider` | `SecretManagerWebhookSecretProvider` | **IMPLEMENTED** (not default-wired) |
 | `ObservedCrossingStore` | `InMemoryObservedCrossingStore` | `FirestoreObservedCrossingStore` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
-| Delivery outbox | ABSENT (not a port yet) | Firestore outbox then Pub/Sub publish | PLANNED FOR PHASE 15G |
+| `OutboxRepository` | `InMemoryOutboxRepository` | `FirestoreOutboxRepository` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
+| `MessagePublisherPort` | `RecordingMessagePublisher` | `GooglePubSubPublisher` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED AGAINST REAL GCP** |
+| Delivery pull consumer | in-process `DeliveryInstructionHandler` | `GooglePubSubPullConsumer` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED AGAINST REAL GCP** |
 
 ## Phase 15F Firestore truth
 
@@ -67,7 +70,10 @@ Secret Manager and Cloud KMS have no emulator path; Secret Manager uses local do
 | Firestore location | `europe-west4` |
 | Firestore database type | **FIRESTORE_NATIVE / STANDARD** |
 | Live verification residue | **CLEANED / ZERO RUN-SCOPED DOCUMENTS REMAIN** |
-| Outbox | **PLANNED FOR PHASE 15G** |
+| Outbox | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
+| Persist-before-publish | **EMULATOR VERIFIED + LIVE VERIFIED** |
+| Pub/Sub publisher / pull consumer | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED AGAINST REAL GCP** |
+| Pub/Sub resources in real GCP | **LIVE / PROVISIONED** |
 | TTL policy | **PLANNED / REVIEW LATER** |
 
 Do **not** claim Cloud Run workload persistence is live. API/worker still use in-memory defaults.
@@ -92,4 +98,31 @@ Not created in 15E:
 
 API and worker do **not** depend on `backend/gcp` in this phase. Local providers remain the default.
 
-Do not add KMS or Cloud Run here.
+## Phase 15G outbox / Pub/Sub truth
+
+| Item | Status |
+| --- | --- |
+| Transactional outbox model | **IMPLEMENTED + TESTED** |
+| Firestore outbox repository | **EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
+| Pub/Sub publisher adapter | **EMULATOR TESTED + LIVE VERIFIED AGAINST REAL GCP** |
+| Pub/Sub pull consumer adapter | **EMULATOR TESTED + LIVE VERIFIED AGAINST REAL GCP** |
+| Persist-before-publish | **EMULATOR VERIFIED + LIVE VERIFIED** |
+| ALLOW publication | **LIVE VERIFIED** |
+| ALLOW_WITH_TRANSFORMATION publication | **LIVE VERIFIED** |
+| REJECT / QUARANTINE non-publication | **LIVE VERIFIED** |
+| Duplicate delivery safety | **EMULATOR VERIFIED + LIVE VERIFIED** |
+| Transport semantics | **AT-LEAST-ONCE** (end-to-end exactly-once **NOT CLAIMED**) |
+| Worker delivery idempotency | **LIVE VERIFIED** |
+| Client recreation persistence | **LIVE VERIFIED** |
+| Pub/Sub API | **LIVE / ENABLED IN GCP** |
+| Main topic `boundarymesh-deliveries` | **LIVE / PROVISIONED IN GCP** |
+| Worker pull subscription `boundarymesh-delivery-worker` | **LIVE / PROVISIONED IN GCP** |
+| DLQ topic `boundarymesh-delivery-dlq` | **LIVE / PROVISIONED IN GCP** |
+| DLQ inspect subscription `boundarymesh-delivery-dlq-inspect` | **LIVE / PROVISIONED IN GCP** |
+| Dead-letter forwarding | **PLANNED / NOT CONFIGURED** (no `deadLetterPolicy`, no IAM) |
+| Live publisher / consumer data path | **LIVE VERIFIED LOCALLY** (not Cloud Run workload-live) |
+| Live persist → publish → consume → dedupe | **LIVE VERIFIED** |
+| Live verification residue | **CLEANED** |
+| Cloud Run Worker Pool | **PLANNED FOR PHASE 15I** |
+
+Do **not** claim Cloud Run workload messaging is live. Do not add KMS or Cloud Run here.

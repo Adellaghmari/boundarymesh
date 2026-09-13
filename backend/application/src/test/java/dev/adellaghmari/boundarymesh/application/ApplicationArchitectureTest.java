@@ -25,6 +25,8 @@ class ApplicationArchitectureTest {
                     "com.google.cloud..",
                     "com.google.firestore..",
                     "com.google.cloud.firestore..",
+                    "com.google.cloud.pubsub..",
+                    "com.google.pubsub..",
                     "com.microsoft..",
                     "org.apache.camel..",
                     "io.github.resilience4j..",

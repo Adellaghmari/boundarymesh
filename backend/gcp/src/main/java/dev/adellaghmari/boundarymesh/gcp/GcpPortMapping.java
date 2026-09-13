@@ -2,8 +2,8 @@ package dev.adellaghmari.boundarymesh.gcp;
 
 /**
  * Mapping from existing application ports to GCP adapters. Secret Manager and Firestore persistence
- * adapters are implemented in this module and not activated by default. Outbox and KMS remain
- * planned.
+ * adapters are implemented in this module and not activated by default. The delivery outbox and
+ * Pub/Sub adapters are implemented and not default-wired. KMS remains planned.
  */
 public enum GcpPortMapping {
     AUDIT_REPOSITORY("AuditRepository", "InMemoryAuditRepository", "Firestore Native", true),
@@ -17,7 +17,9 @@ public enum GcpPortMapping {
     SECRET_VALUE_PROVIDER("SecretValueProvider", "LocalSecretValueProvider", "Secret Manager (worker only)", true),
     WEBHOOK_SECRET_PROVIDER("WebhookSecretProvider", "LocalWebhookSecretProvider", "Secret Manager", true),
     OBSERVED_CROSSING_STORE("ObservedCrossingStore", "InMemoryObservedCrossingStore", "Firestore Native", true),
-    OUTBOX("DeliveryOutbox (not a port yet)", "ABSENT", "Firestore outbox then Pub/Sub publish", false);
+    OUTBOX("OutboxRepository", "InMemoryOutboxRepository", "Firestore outbox then Pub/Sub publish", true),
+    MESSAGE_PUBLISHER("MessagePublisherPort", "RecordingMessagePublisher", "Google Pub/Sub topic", true),
+    MESSAGE_CONSUMER("DeliveryInstructionHandler + pull consumer", "in-process handler", "Google Pub/Sub pull", true);
 
     private final String port;
     private final String localImplementation;

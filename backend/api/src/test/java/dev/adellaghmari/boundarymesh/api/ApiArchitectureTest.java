@@ -21,6 +21,8 @@ class ApiArchitectureTest {
                     "com.google.cloud..",
                     "com.google.cloud.firestore..",
                     "com.google.firestore..",
+                    "com.google.cloud.pubsub..",
+                    "com.google.pubsub..",
                     "dev.adellaghmari.boundarymesh.gcp..",
                     "com.microsoft..",
                     "org.apache.camel..",
@@ -43,5 +45,7 @@ class ApiArchitectureTest {
                     "dev.adellaghmari.boundarymesh.gcp..",
                     "com.google.cloud..",
                     "com.google.cloud.firestore..",
-                    "com.google.firestore..");
+                    "com.google.firestore..",
+                    "com.google.cloud.pubsub..",
+                    "com.google.pubsub..");
 }

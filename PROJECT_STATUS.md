@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **15F COMPLETE** — named Firestore Native database `boundarymesh` **LIVE / PROVISIONED** in `europe-west4`. Production Java SDK path **LIVE VERIFIED LOCALLY** against real GCP, then run-scoped documents **CLEANED**. Artifact Registry and Secret Manager unchanged. Cloud Run workload persistence is **not** live.  
+**Phase:** **15G COMPLETE** — transactional outbox + Pub/Sub adapters **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub infrastructure **LIVE / PROVISIONED**. Dead-letter forwarding **PLANNED / NOT CONFIGURED**. Cloud Run Worker Pool **PLANNED FOR PHASE 15I**.  
 **Overall:** **PROJECT C — NOT COMPLETE**
 
 ## Completeness
@@ -17,7 +17,7 @@
 | Phase 5 Contract Drift Firewall | **COMPLETE** |
 | Phase 6 Data Boundary Firewall | **COMPLETE** (`m365-calendar-egress/v1` **LIVE VERIFIED LOCALLY** on one real Graph event) |
 | Phase 7 Engine expansion | **COMPLETE** |
-| Phase 8 Apache Camel delivery | **COMPLETE** (local worker; Pub/Sub PLANNED) |
+| Phase 8 Apache Camel delivery | **COMPLETE** (local worker HTTP default; Pub/Sub adapters **LIVE VERIFIED LOCALLY**, not Cloud Run workload-live) |
 | Phase 9 Credential & Consent | **COMPLETE** (local model + delegated Calendars.Read mapping; Secret Manager PLANNED) |
 | Phase 10 Quarantine & Recovery | **COMPLETE** (in-memory default; Firestore adapter **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**) |
 | Phase 11 Tamper-Evident Audit Chain | **COMPLETE** (in-memory default; Firestore transactional append **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**) |
@@ -33,10 +33,13 @@
 | Phase 15F-A Firestore persistence + preview | **COMPLETE** — adapters in `backend/gcp`; emulator suite passed; preview approved |
 | Phase 15F-B Firestore infrastructure apply | **COMPLETE** — `firestore.googleapis.com` LIVE; database `boundarymesh` LIVE / PROVISIONED |
 | Phase 15F-C live Java SDK data path | **COMPLETE** — `GoogleFirestoreFacade` + official Java SDK + ADC against `projects/boundarymesh-dev/databases/boundarymesh`. Residue **CLEANED**. Not Cloud Run workload-live |
+| Phase 15G-A transactional outbox + Pub/Sub preview | **COMPLETE** — adapters + combined emulator **IMPLEMENTED + EMULATOR TESTED**. Pulumi preview approved |
+| Phase 15G-B Pub/Sub infrastructure apply | **COMPLETE** — `pubsub.googleapis.com` LIVE; topics `boundarymesh-deliveries` / `boundarymesh-delivery-dlq` LIVE; pull subscriptions LIVE. No IAM. No `deadLetterPolicy` |
+| Phase 15G-C live Pub/Sub data path | **COMPLETE** — `GooglePubSubPublisher` + `GooglePubSubPullConsumer` + official Java SDK + ADC against real topic/subscription. Residue **CLEANED**. Not Cloud Run workload-live |
 | Application production IAM / Entra live | **LIVE VERIFIED LOCALLY** — common authority, personal Microsoft account, server-side session |
 | Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, one event normalized and enforced |
 | GCP project | **CREATED + BILLING LINKED** (`boundarymesh-dev`) |
-| GCP resources | Artifact Registry + Secret Manager (empty) + Firestore API + named database `boundarymesh` (no run-scoped residue). No workloads |
+| GCP resources | Artifact Registry + Secret Manager (empty) + Firestore API + named database `boundarymesh` + Pub/Sub API + delivery/DLQ topics + pull/inspect subscriptions. No IAM. No workloads. Live verification residue **CLEANED** |
 | Microsoft credentials | **NONE CREATED in Git / this session** |
 | GCP service-account JSON keys | **NONE** |
 | Project A | **FROZEN** — not modified |
@@ -93,4 +96,4 @@ GET `/api/v1/microsoft/connector` still reports `LIVE_CONFIGURED` because that e
 
 ## Next (do not start automatically)
 
-Phase 15G delivery outbox (Firestore persist-then-publish foundation). Do not add secret versions, Secret Manager IAM, Pub/Sub topics, Cloud KMS, Cloud Run, Firebase Hosting, or WIF. Do not start automatically.
+Phase 15H workload IAM + Secret Manager versions only, after human review. Do not add `deadLetterPolicy`, Cloud KMS, Cloud Run, Firebase Hosting, or WIF. Do not start automatically.

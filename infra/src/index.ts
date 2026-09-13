@@ -1,6 +1,6 @@
 /**
- * Phase 15F-B — Artifact Registry, empty Secret Manager containers, and one empty
- * named Firestore Native database. Do not write application documents here.
+ * Phase 15G-A — Artifact Registry, empty Secret Manager containers, one named
+ * Firestore Native database, and Pub/Sub delivery topology (preview only).
  */
 import * as pulumi from "@pulumi/pulumi";
 import {
@@ -11,6 +11,7 @@ import {
 } from "./config";
 import { defineArtifactRegistry } from "./registry";
 import { defineFirestore } from "./firestore";
+import { definePubSub } from "./pubsub";
 import { defineSecretManager, PHASE_15E_SECRET_IDS } from "./secrets";
 
 const gcpConfig = new pulumi.Config("gcp");
@@ -25,10 +26,12 @@ export const foundation: FoundationConfig = loadFoundationConfig({
 const registry = defineArtifactRegistry(foundation);
 const secretManager = defineSecretManager(foundation);
 const firestore = defineFirestore(foundation);
+const pubsub = definePubSub(foundation);
 
 export const phase15DScope = "ARTIFACT_REGISTRY_ONLY" as const;
 export const phase15EScope = "SECRET_CONTAINERS_ONLY" as const;
 export const phase15FScope = "FIRESTORE_DATABASE_PREVIEW" as const;
+export const phase15GScope = "PUBSUB_PREVIEW" as const;
 
 export const environment = foundation.environment;
 export const region = foundation.region;
@@ -42,3 +45,7 @@ export const firestoreApiService = firestore.firestoreApi.service;
 export const firestoreDatabaseId = firestore.database.name;
 export const firestoreDatabaseLocation = firestore.database.locationId;
 export const firestoreDatabaseType = firestore.database.type;
+export const pubsubApiService = pubsub.pubsubApi.service;
+export const deliveryTopicName = pubsub.deliveryTopic.name;
+export const deliveryWorkerSubscriptionName = pubsub.deliveryWorkerSubscription.name;
+export const deliveryDlqTopicName = pubsub.deliveryDlqTopic.name;

@@ -26,7 +26,7 @@ Application code depends on `DeliveryPort`. Adapters:
 | --- | --- | --- |
 | `test` | `RecordingDeliveryPort` | In-process capture. No worker. |
 | `local` | `HttpWorkerDeliveryPort` | HTTP to the local worker. Not Pub/Sub. |
-| future | Pub/Sub publisher | PLANNED |
+| `gcp-emulator` / future prod | Outbox + Pub/Sub | Adapters **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Infra **LIVE / PROVISIONED**. Not the local default. Not Cloud Run workload-live. |
 
 Camel is behind `CamelDeliveryAdapter` in the worker.
 
@@ -41,3 +41,5 @@ HTTP status is evidence, not the domain model.
 1. Transformed deliveries must not contain the original governed email.
 2. Duplicate consumption of the same instruction ID does not call the provider again.
 3. Connector secret material is resolved in the worker immediately before HTTP, then discarded with the adapter call.
+4. Persist the outbox record before Pub/Sub publish. Transport is at-least-once. End-to-end delivery is **not** exactly-once.
+5. `REJECT` and `QUARANTINE` create zero outbox records.

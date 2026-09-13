@@ -4,7 +4,7 @@ Pulumi + TypeScript workspace for Google Cloud resources.
 
 ## Phase 15F-B purpose
 
-The named Firestore Native database and Firestore API are **LIVE / PROVISIONED**. Phase 15F-C live-verified the Java SDK path and cleaned run-scoped documents. Do not add indexes, versions, IAM, Pub/Sub, KMS, or Cloud Run here.
+The named Firestore Native database and Firestore API are **LIVE / PROVISIONED**. Phase 15F-C live-verified the Java SDK path and cleaned run-scoped documents. Phase 15G-B **applied** Pub/Sub API + delivery topic + pull subscription + DLQ topic/inspect subscription. Dead-letter forwarding is **not** configured. Do not add indexes, versions, IAM, `deadLetterPolicy`, KMS, or Cloud Run here.
 
 Authentication uses workstation **Application Default Credentials**. Do not set `GOOGLE_APPLICATION_CREDENTIALS`. Do not commit ADC files, tokens, or service-account JSON.
 
@@ -31,6 +31,12 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | Firestore API in GCP | LIVE / ENABLED IN GCP |
 | Firestore database in GCP | LIVE / PROVISIONED IN GCP |
 | Live Java SDK data path | LIVE VERIFIED LOCALLY / RESIDUE CLEANED |
+| Transactional outbox + Pub/Sub adapters | IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY |
+| Pub/Sub Pulumi | IMPLEMENTED + APPLIED |
+| Pub/Sub API in GCP | LIVE / ENABLED IN GCP |
+| Pub/Sub topics + pull subscriptions | LIVE / PROVISIONED IN GCP |
+| Dead-letter forwarding | PLANNED / NOT CONFIGURED |
+| Live Pub/Sub data path | LIVE VERIFIED LOCALLY / RESIDUE CLEANED |
 
 Target region: **`europe-west4`**.  
 Stack: **`dev`**.  
@@ -56,7 +62,7 @@ Local backend remains `file://~`. GCS state is **PLANNED**.
 ## Future planned services (not provisioned)
 
 - Secret versions and Secret Manager IAM
-- Pub/Sub
+- Pub/Sub dead-letter forwarding and live messaging verification
 - Cloud KMS
 - Cloud Run
 - Firebase Hosting, pending final validation

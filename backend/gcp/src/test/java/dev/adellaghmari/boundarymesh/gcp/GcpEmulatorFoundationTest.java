@@ -48,8 +48,12 @@ class GcpEmulatorFoundationTest {
                 .isTrue();
         assertThat(GcpPortMapping.OBSERVED_CROSSING_STORE.productionAdapterImplemented())
                 .isTrue();
-        assertThat(GcpPortMapping.OUTBOX.localImplementation()).isEqualTo("ABSENT");
-        assertThat(GcpPortMapping.OUTBOX.productionAdapterImplemented()).isFalse();
+        assertThat(GcpPortMapping.OUTBOX.localImplementation()).isEqualTo("InMemoryOutboxRepository");
+        assertThat(GcpPortMapping.OUTBOX.productionAdapterImplemented()).isTrue();
+        assertThat(GcpPortMapping.MESSAGE_PUBLISHER.productionAdapterImplemented())
+                .isTrue();
+        assertThat(GcpPortMapping.MESSAGE_CONSUMER.productionAdapterImplemented())
+                .isTrue();
         assertThat(GcpPortMapping.ATTESTATION_SIGNER.productionAdapterImplemented())
                 .isFalse();
     }

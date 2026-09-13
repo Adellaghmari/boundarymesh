@@ -65,7 +65,8 @@ Phase 15C provides the `backend/gcp` emulator **foundation** only. Default `mvnw
 
 - Firestore emulator: nonce create-if-absent, transactional audit, both idempotency stores — **IMPLEMENTED** (opt-in `-Pgcp-emulator`)
 - Live Java SDK against real named database `boundarymesh` — **IMPLEMENTED** (opt-in `-Pgcp-live`). Run-scoped documents are deleted after the suite.
-- Pub/Sub emulator: publish after persist, duplicate delivery — **PLANNED** (15G)
+- Pub/Sub emulator: persist → publish → consume → deduplicate — **IMPLEMENTED** (opt-in `-Pgcp-emulator`, combined Firestore + Pub/Sub)
+- Live Pub/Sub persist → publish → consume against real GCP topics — **IMPLEMENTED** (opt-in `-Pgcp-live-pubsub`). Run-scoped documents and messages are cleaned.
 - KMS: **use test double** locally; live KMS only in LIVE VERIFIED phase
 
 ## Frontend unit (Phase 2)

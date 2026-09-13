@@ -9,7 +9,6 @@ const srcDir = join(root, "src");
 
 const forbidden = [
     /\bnew\s+gcp\.cloudrun\./,
-    /\bnew\s+gcp\.pubsub\./,
     /\bnew\s+gcp\.firestore\.Index/,
     /\bnew\s+gcp\.firestore\.Field/,
     /\bnew\s+gcp\.firestore\.BackupSchedule/,
@@ -31,7 +30,7 @@ function sourceFiles() {
         .map((name) => ({ name, text: readFileSync(join(srcDir, name), "utf8") }));
 }
 
-test("Phase 15F-A program may define Artifact Registry, Secret Manager containers, and one Firestore database", () => {
+test("Phase 15G-A program may define Artifact Registry, Secret Manager, Firestore, and Pub/Sub delivery topology", () => {
     const text = sourceFiles()
         .map((file) => file.text)
         .join("\n");
@@ -45,7 +44,17 @@ test("Phase 15F-A program may define Artifact Registry, Secret Manager container
     assert.match(text, /artifactregistry\.googleapis\.com/);
     assert.match(text, /secretmanager\.googleapis\.com/);
     assert.match(text, /firestore\.googleapis\.com/);
+    assert.match(text, /pubsub\.googleapis\.com/);
     assert.match(text, /"firestore-api"/);
+    assert.match(text, /"pubsub-api"/);
+    assert.match(text, /"delivery-topic"/);
+    assert.match(text, /"delivery-worker-subscription"/);
+    assert.match(text, /"delivery-dlq-topic"/);
+    assert.match(text, /"delivery-dlq-inspect-subscription"/);
+    assert.match(text, /name:\s*"boundarymesh-deliveries"/);
+    assert.match(text, /name:\s*"boundarymesh-delivery-worker"/);
+    assert.equal(/deadLetterPolicy/.test(text), false);
+    assert.equal(/pushEndpoint/.test(text), false);
     assert.match(text, /"boundarymesh-database"/);
     assert.match(text, /name:\s*"boundarymesh"/);
     assert.match(text, /locationId:\s*foundation\.region/);
@@ -62,11 +71,13 @@ test("Phase 15F-A program may define Artifact Registry, Secret Manager container
     assert.equal(/new gcp\.secretmanager\.SecretVersion/.test(text), false);
     assert.equal(/\(default\)/.test(text), false);
     assert.equal(/client_secret|private_key|BEGIN [A-Z]+ PRIVATE/i.test(text), false);
-    assert.equal((text.match(/new gcp\.projects\.Service/g) ?? []).length, 3);
+    assert.equal((text.match(/new gcp\.projects\.Service/g) ?? []).length, 4);
     assert.equal((text.match(/new gcp\.artifactregistry\.Repository/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.secretmanager\.Secret/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.firestore\.Database/g) ?? []).length, 1);
-    assert.equal((text.match(/new gcp\./g) ?? []).length, 6);
+    assert.equal((text.match(/new gcp\.pubsub\.Topic/g) ?? []).length, 2);
+    assert.equal((text.match(/new gcp\.pubsub\.Subscription/g) ?? []).length, 2);
+    assert.equal((text.match(/new gcp\./g) ?? []).length, 11);
 });
 
 test("stack YAML is non-secret and pins the verified GCP project", () => {

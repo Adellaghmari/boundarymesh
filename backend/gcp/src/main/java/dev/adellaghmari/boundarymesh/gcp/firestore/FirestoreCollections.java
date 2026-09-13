@@ -3,7 +3,7 @@ package dev.adellaghmari.boundarymesh.gcp.firestore;
 import dev.adellaghmari.boundarymesh.application.graph.ObservedCrossingStore;
 import dev.adellaghmari.boundarymesh.domain.audit.AuditChainId;
 
-/** Stable collection names for the Phase 15F persistence model. Outbox is not created here. */
+/** Stable collection names. Outbox documents live in {@link #DELIVERY_OUTBOX}. */
 public final class FirestoreCollections {
 
     public static final String AUDIT_CHAINS = "auditChains";
@@ -14,6 +14,7 @@ public final class FirestoreCollections {
     public static final String IDEMPOTENCY = "idempotency";
     public static final String DELIVERY_IDEMPOTENCY = "deliveryIdempotency";
     public static final String OBSERVED_CROSSINGS = "observedCrossings";
+    public static final String DELIVERY_OUTBOX = "deliveryOutbox";
 
     private FirestoreCollections() {}
 
@@ -53,5 +54,9 @@ public final class FirestoreCollections {
         return FirestoreDocumentPath.of(
                 OBSERVED_CROSSINGS,
                 FirestoreDocumentIds.requireSafe(ObservedCrossingStore.destinationKey(destination)));
+    }
+
+    public static FirestoreDocumentPath deliveryOutbox(String instructionId) {
+        return FirestoreDocumentPath.of(DELIVERY_OUTBOX, FirestoreDocumentIds.requireSafe(instructionId));
     }
 }

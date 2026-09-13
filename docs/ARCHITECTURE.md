@@ -42,7 +42,7 @@ PUBLIC BOUNDARY API  —  boundarymesh-api  (:8080)
                 ▼
         DeliveryInstruction  (approved payload only)
                 │
-                ▼  local HTTP ingest today; Pub/Sub PLANNED
+                ▼  local HTTP ingest today; outbox + Pub/Sub adapters **EMULATOR TESTED + LIVE VERIFIED LOCALLY**; Pub/Sub infra **LIVE / PROVISIONED**; Cloud Run messaging **PLANNED FOR 15I**
 LOCAL DELIVERY WORKER  —  boundarymesh-worker  (:8081)
         │  just-in-time credential resolve (local provider)
         │  consent already decided on the API
@@ -52,7 +52,7 @@ LOCAL DELIVERY WORKER  —  boundarymesh-worker  (:8081)
         │  DELIVERED | DUPLICATE_SUPPRESSED | QUARANTINED
 ```
 
-Firestore adapters exist in `backend/gcp` and are **not** the default local runtime. The Firestore database `boundarymesh` is **LIVE / PROVISIONED**. `GoogleFirestoreFacade` is **LIVE VERIFIED AGAINST REAL GCP FIRESTORE**. Live verification residue is **CLEANED**. Cloud Run workload persistence is **not** live. Pub/Sub, KMS, and Cloud Run remain **target architecture**. Secret Manager adapters exist in `backend/gcp` and are **not** the default local runtime. Empty secret containers are **LIVE / PROVISIONED IN GCP**. No versions. No workload IAM.
+Firestore adapters exist in `backend/gcp` and are **not** the default local runtime. The Firestore database `boundarymesh` is **LIVE / PROVISIONED**. `GoogleFirestoreFacade` is **LIVE VERIFIED AGAINST REAL GCP FIRESTORE**. Live verification residue is **CLEANED**. The transactional outbox and Pub/Sub adapters are **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub API, topics, and pull subscriptions are **LIVE / PROVISIONED**. Dead-letter forwarding is **PLANNED / NOT CONFIGURED**. Live verification residue is **CLEANED**. Cloud Run workload persistence is **not** live. Cloud Run Worker Pool is **PLANNED FOR PHASE 15I**. KMS remains **target architecture**. Secret Manager adapters exist in `backend/gcp` and are **not** the default local runtime. Empty secret containers are **LIVE / PROVISIONED IN GCP**. No versions. No workload IAM.
 
 ## Why this is not an API gateway
 

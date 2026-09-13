@@ -28,7 +28,8 @@ class DomainArchitectureTest {
                     "dev.adellaghmari.boundarymesh.persistence..",
                     "dev.adellaghmari.boundarymesh.gcp..",
                     "com.google.cloud..",
-                    "com.google.firestore..");
+                    "com.google.firestore..",
+                    "com.google.pubsub..");
 
     @ArchTest
     static final ArchRule domainMustNotDependOnMicrosoftOrGcpSdks = noClasses()

@@ -1,6 +1,9 @@
 package dev.adellaghmari.boundarymesh.gcp.firestore;
 
 import dev.adellaghmari.boundarymesh.application.graph.ObservedCrossingStore;
+import dev.adellaghmari.boundarymesh.application.outbox.OutboxRecord;
+import dev.adellaghmari.boundarymesh.application.outbox.OutboxStatus;
+import dev.adellaghmari.boundarymesh.application.outbox.PublishFailureKind;
 import dev.adellaghmari.boundarymesh.domain.BoundaryDecision;
 import dev.adellaghmari.boundarymesh.domain.BoundaryOutcome;
 import dev.adellaghmari.boundarymesh.domain.ControlKind;
@@ -24,6 +27,8 @@ import dev.adellaghmari.boundarymesh.domain.credential.CredentialId;
 import dev.adellaghmari.boundarymesh.domain.credential.CredentialReference;
 import dev.adellaghmari.boundarymesh.domain.credential.CredentialStatus;
 import dev.adellaghmari.boundarymesh.domain.credential.CredentialVersion;
+import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryInstruction;
+import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryInstructionId;
 import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryResult;
 import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryResultKind;
 import dev.adellaghmari.boundarymesh.domain.delivery.ProviderFailureCategory;
@@ -273,6 +278,99 @@ final class FirestoreCodecs {
         fields.put("quarantined", observation.quarantined());
         fields.put("occurred_at", observation.occurredAt().toString());
         return fields;
+    }
+
+    static Map<String, Object> outbox(OutboxRecord record) {
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("schema_version", record.schemaVersion());
+        fields.put("instruction_id", record.instructionId());
+        fields.put("integration_id", record.integrationId());
+        fields.put("destination_system", record.destinationSystem());
+        fields.put("status", record.status().name());
+        fields.put("created_at", record.createdAt().toString());
+        fields.put("publish_attempts", record.publishAttempts());
+        if (record.lastAttemptAt() != null) {
+            fields.put("last_attempt_at", record.lastAttemptAt().toString());
+        }
+        if (record.publishedAt() != null) {
+            fields.put("published_at", record.publishedAt().toString());
+        }
+        if (record.lastFailureKind() != null) {
+            fields.put("last_failure_kind", record.lastFailureKind().name());
+        }
+        fields.put("instruction", deliveryInstruction(record.instruction()));
+        return omitNulls(fields);
+    }
+
+    static OutboxRecord outbox(Map<String, Object> fields) {
+        PublishFailureKind failure = fields.get("last_failure_kind") == null
+                ? null
+                : PublishFailureKind.valueOf(string(fields, "last_failure_kind"));
+        Instant lastAttempt =
+                fields.get("last_attempt_at") == null ? null : Instant.parse(string(fields, "last_attempt_at"));
+        Instant published = fields.get("published_at") == null ? null : Instant.parse(string(fields, "published_at"));
+        return new OutboxRecord(
+                string(fields, "instruction_id"),
+                string(fields, "integration_id"),
+                string(fields, "destination_system"),
+                string(fields, "schema_version"),
+                deliveryInstruction(map(fields.get("instruction"))),
+                OutboxStatus.valueOf(string(fields, "status")),
+                Instant.parse(string(fields, "created_at")),
+                (int) longValue(fields, "publish_attempts"),
+                lastAttempt,
+                published,
+                failure);
+    }
+
+    static Map<String, Object> deliveryInstruction(DeliveryInstruction instruction) {
+        Map<String, Object> fields = new LinkedHashMap<>();
+        fields.put("event_id", instruction.eventId().value());
+        fields.put("transaction_id", instruction.transactionId().value());
+        fields.put("integration_id", instruction.integrationId());
+        fields.put("source_system", instruction.sourceSystem());
+        fields.put("destination_system", instruction.destinationSystem());
+        fields.put("contract_reference", instruction.contractReference());
+        fields.put("egress_policy_reference", instruction.egressPolicyReference());
+        fields.put("boundary_outcome", instruction.boundaryOutcome().name());
+        fields.put("payload_json", instruction.payloadJson());
+        fields.put("correlation_id", instruction.correlationId());
+        fields.put("created_at", instruction.createdAt().toString());
+        if (instruction.credentialReference() != null) {
+            Map<String, Object> credential = new LinkedHashMap<>();
+            credential.put("id", instruction.credentialReference().id().value());
+            credential.put(
+                    "version", instruction.credentialReference().version().value());
+            credential.put("status", instruction.credentialReference().status().name());
+            fields.put("credential_reference", credential);
+        }
+        fields.put("consent_id", instruction.consentId());
+        return omitNulls(fields);
+    }
+
+    static DeliveryInstruction deliveryInstruction(Map<String, Object> fields) {
+        CredentialReference credential = null;
+        if (fields.get("credential_reference") instanceof Map<?, ?>) {
+            Map<String, Object> raw = map(fields.get("credential_reference"));
+            credential = new CredentialReference(
+                    new CredentialId(string(raw, "id")),
+                    new CredentialVersion(string(raw, "version")),
+                    CredentialStatus.valueOf(string(raw, "status")));
+        }
+        return new DeliveryInstruction(
+                new DeliveryInstructionId(string(fields, "event_id")),
+                TransactionId.of(string(fields, "transaction_id")),
+                string(fields, "integration_id"),
+                string(fields, "source_system"),
+                string(fields, "destination_system"),
+                stringOrNull(fields, "contract_reference"),
+                stringOrNull(fields, "egress_policy_reference"),
+                BoundaryOutcome.valueOf(string(fields, "boundary_outcome")),
+                string(fields, "payload_json"),
+                string(fields, "correlation_id"),
+                Instant.parse(string(fields, "created_at")),
+                credential,
+                stringOrNull(fields, "consent_id"));
     }
 
     static ObservedCrossingStore.Observation observation(Map<String, Object> fields) {

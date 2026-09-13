@@ -2,7 +2,21 @@
 
 Primary IaC: **Pulumi + TypeScript**. Terraform is forbidden for Project C.
 
-## Phase 15F (current)
+## Phase 15G-B (applied)
+
+Pulumi **manages** Pub/Sub delivery topology. Applied in Phase 15G-B.
+
+- `gcp.projects.Service` `pubsub-api` → `pubsub.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
+- `gcp.pubsub.Topic` `delivery-topic` → `boundarymesh-deliveries` — **LIVE / PROVISIONED IN GCP**
+- `gcp.pubsub.Subscription` `delivery-worker-subscription` → pull `boundarymesh-delivery-worker` (ack 60s, retry 10s–600s, no push) — **LIVE / PROVISIONED IN GCP**
+- `gcp.pubsub.Topic` `delivery-dlq-topic` → `boundarymesh-delivery-dlq` — **LIVE / PROVISIONED IN GCP**
+- `gcp.pubsub.Subscription` `delivery-dlq-inspect-subscription` → `boundarymesh-delivery-dlq-inspect` — **LIVE / PROVISIONED IN GCP**
+
+No `deadLetterPolicy`. No IAM. Dead-letter forwarding is **PLANNED / NOT CONFIGURED**. Live persist → publish → consume was **LIVE VERIFIED** in Phase 15G-C against these resources. Residue **CLEANED**.
+
+Existing Artifact Registry, Secret Manager, and Firestore resources stay unchanged.
+
+## Phase 15F
 
 Pulumi **manages** one named Firestore Native database and the Firestore API.
 

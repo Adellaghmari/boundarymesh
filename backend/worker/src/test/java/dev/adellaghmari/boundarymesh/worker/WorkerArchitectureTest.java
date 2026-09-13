@@ -22,6 +22,8 @@ class WorkerArchitectureTest {
                     "com.google.cloud..",
                     "com.google.cloud.firestore..",
                     "com.google.firestore..",
+                    "com.google.cloud.pubsub..",
+                    "com.google.pubsub..",
                     "org.apache.camel..",
                     "io.github.resilience4j..",
                     "org.wiremock..");
@@ -36,5 +38,7 @@ class WorkerArchitectureTest {
                     "com.google.cloud..",
                     "com.google.cloud.firestore..",
                     "com.google.firestore..",
+                    "com.google.cloud.pubsub..",
+                    "com.google.pubsub..",
                     "dev.adellaghmari.boundarymesh.gcp..");
 }
