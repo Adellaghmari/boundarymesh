@@ -6,4 +6,4 @@ config:
   gcp:project: boundarymesh-dev
   gcp:region: europe-west4
   boundarymesh:environment: dev
-encryptionsalt: v1:xgRzv9RgXJw=:v1:zHt/bqpj7IhyPATq:wQNAHmHT8rGcPNImZqlCyEp0VRLKJQ==
+encryptionsalt: v1:263PjWdiEvw=:v1:lXSg9vFcUjL6ZYG6:SPa41yRG0+5BJ7P4Cd3PbcTqAjfpUQ==

@@ -75,13 +75,17 @@ Local backend remains `file://~`. GCS state is **PLANNED**.
 
 ## Local commands
 
+The Pulumi passphrase is local secret material and must never be committed. Enter it only at
+Pulumi's interactive prompt, or provide it through an approved local secret mechanism that does
+not write it into this repository or shell history. Repository documentation must contain
+placeholders only.
+
 ```powershell
 cd infra
 npm install
 npm run typecheck
 npm run build
 npm test
-$env:PULUMI_CONFIG_PASSPHRASE = '<LOCAL_PULUMI_PASSPHRASE>'
 pulumi preview
 ```
 
