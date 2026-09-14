@@ -30,11 +30,15 @@ One final attestation is created at a stable terminal point after the boundary d
 
 RFC 8785 of the payload **excluding** `status` and `signature`. Property order and whitespace do not change the bytes. A semantic field change does.
 
-Signed with JCA `SHA256withECDSAinP1363Format` (ECDSA P-256 + SHA-256, conceptually aligned with Cloud KMS `EC_SIGN_P256_SHA256`). Algorithm recorded as `ES256`. Signature encoding: standard Base64. Hash encoding elsewhere: lowercase hex.
+Signed with JCA `SHA256withECDSAinP1363Format` (ECDSA P-256 + SHA-256). Algorithm recorded as `ES256`. Signature encoding: standard Base64 of IEEE P1363 (`r||s`, 64 bytes). Hash encoding elsewhere: lowercase hex.
+
+Production Cloud KMS uses `EC_SIGN_P256_SHA256` over a locally computed SHA-256 digest. Provider signatures are ASN.1 DER. `CloudKmsAttestationSigner` normalizes DER → IEEE P1363 before constructing `AttestationSignature`. The application-level format does not change.
+
+Phase 15H-C **LIVE VERIFIED LOCALLY** the real SDK/ADC path against `exchange-attestation` version 1. The adapter validates response integrity and verifies the normalized signature with the retrieved NIST P-256 public key before returning a present signature. Failures produce UNSIGNED while preserving the crossing outcome. See [live proof and opt-in commands](PHASE_15H_VERIFICATION.md).
 
 ## Ports
 
-`AttestationSigner` / `AttestationVerifier` are cloud-independent. Local adapter: `JcaP256AttestationCrypto`. Google Cloud KMS remains PLANNED. The application module does not depend on a GCP SDK.
+`AttestationSigner` / `AttestationVerifier` are cloud-independent. Local adapter: `JcaP256AttestationCrypto` (default for local, test, and `gcp-emulator`). Production adapter: `CloudKmsAttestationSigner` in `backend/gcp` (**IMPLEMENTED + UNIT TESTED**, not default-wired). The application module does not depend on a GCP SDK. Private key material never leaves Cloud KMS. Verification uses the KMS public key locally.
 
 ## Local keys
 
@@ -57,4 +61,4 @@ No public signing endpoint.
 
 ## Storage truth
 
-In-memory repository. Private keys are not stored in the repository. Firestore PLANNED.
+In-memory repository is the local default. Firestore attestation adapter is implemented and not default-wired. Private keys are not stored in the repository. Cloud KMS private key material never leaves KMS.

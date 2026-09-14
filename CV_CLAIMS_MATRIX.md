@@ -85,8 +85,8 @@ This is portfolio work, not professional employment.
 | Pub/Sub delivery decoupling | **IMPLEMENTED + EMULATOR TESTED** | Persist-before-publish. At-least-once + worker idempotency. Not LIVE |
 | Firestore Native access patterns | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** | Named DB `boundarymesh` LIVE / PROVISIONED. Residue CLEANED. Not Cloud Run workload-live |
 | Cloud Run API + worker | PLANNED | |
-| Cloud KMS EC_SIGN_P256_SHA256 | PLANNED | Local JCA ECDSA P-256 is TESTED; KMS adapter is not |
-| Cryptographic Exchange Attestation | **LIVE VERIFIED LOCALLY** | Local JCA P-256 SIGNED + verify VALID for one real Graph calendar event. Does not prove business truth. Cloud KMS PLANNED |
+| Cloud KMS EC_SIGN_P256_SHA256 | **IMPLEMENTED + UNIT TESTED** / **LIVE / PROVISIONED** | Adapter + DER→P1363. Key **LIVE** in GCP. Live sign **LIVE VERIFIED LOCALLY (15H-C)**. Private key never leaves KMS |
+| Cryptographic Exchange Attestation | **LIVE VERIFIED LOCALLY** | Local JCA P-256 SIGNED + verify VALID for one real Graph calendar event. Does not prove business truth. Cloud KMS adapter **IMPLEMENTED + UNIT TESTED**; live KMS **LIVE VERIFIED LOCALLY (15H-C)** |
 | RFC 8785 canonicalization | **TESTED** | Constrained application writer. Floats rejected. No Jackson default |
 | Attestation signature verification | **TESTED** | ECDSA P-256 P1363 + Base64. UNSIGNED is explicit |
 | SHA-256 tamper-evident audit chain | **TESTED** / **LIVE VERIFIED LOCALLY** | Live `m365-calendar` chain VALID: CONNECTOR_READ count=1, BOUNDARY_DECISION, ATTESTATION_CREATED. Not immutable |
@@ -127,7 +127,7 @@ This is portfolio work, not professional employment.
 | GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |
 | Firestore production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** | Not default-wired. `GoogleFirestoreFacade` against named DB `boundarymesh`. Residue **CLEANED** |
 | Pub/Sub production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED AGAINST REAL GCP** | Publisher + pull consumer in `backend/gcp`. Not default-wired. Not Cloud Run workload-live |
-| Pulumi TypeScript GCP resources | Artifact Registry **LIVE**; Secret Manager containers **LIVE** (empty); Firestore database **LIVE / PROVISIONED**; Pub/Sub topics + pull subscriptions **LIVE / PROVISIONED** | Dead-letter forwarding, Cloud KMS, Cloud Run, Hosting |
+| Pulumi TypeScript GCP resources | Artifact Registry **LIVE**; Secret Manager containers **LIVE** (empty); Firestore database **LIVE / PROVISIONED**; Pub/Sub topics + pull subscriptions **LIVE / PROVISIONED**; Cloud KMS key **LIVE / PROVISIONED** | Dead-letter forwarding, Cloud Run, Hosting |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |
 | Gitleaks | PLANNED | |

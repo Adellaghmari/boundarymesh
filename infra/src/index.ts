@@ -1,6 +1,7 @@
 /**
- * Phase 15G-A — Artifact Registry, empty Secret Manager containers, one named
- * Firestore Native database, and Pub/Sub delivery topology (preview only).
+ * Phase 15H-B — Artifact Registry, empty Secret Manager containers, one named
+ * Firestore Native database, Pub/Sub delivery topology, and Cloud KMS
+ * attestation signing key (applied).
  */
 import * as pulumi from "@pulumi/pulumi";
 import {
@@ -11,6 +12,7 @@ import {
 } from "./config";
 import { defineArtifactRegistry } from "./registry";
 import { defineFirestore } from "./firestore";
+import { defineKms } from "./kms";
 import { definePubSub } from "./pubsub";
 import { defineSecretManager, PHASE_15E_SECRET_IDS } from "./secrets";
 
@@ -27,11 +29,16 @@ const registry = defineArtifactRegistry(foundation);
 const secretManager = defineSecretManager(foundation);
 const firestore = defineFirestore(foundation);
 const pubsub = definePubSub(foundation);
+const kms = defineKms(foundation);
 
 export const phase15DScope = "ARTIFACT_REGISTRY_ONLY" as const;
 export const phase15EScope = "SECRET_CONTAINERS_ONLY" as const;
 export const phase15FScope = "FIRESTORE_DATABASE_PREVIEW" as const;
 export const phase15GScope = "PUBSUB_PREVIEW" as const;
+// Historical implementation-scope marker introduced for the 15H-A preview.
+// This literal is not deployment status: 15H-B applied the three KMS resources.
+// Keep it stable; an informational rename does not warrant a stack update.
+export const phase15HScope = "KMS_PREVIEW" as const;
 
 export const environment = foundation.environment;
 export const region = foundation.region;
@@ -49,3 +56,6 @@ export const pubsubApiService = pubsub.pubsubApi.service;
 export const deliveryTopicName = pubsub.deliveryTopic.name;
 export const deliveryWorkerSubscriptionName = pubsub.deliveryWorkerSubscription.name;
 export const deliveryDlqTopicName = pubsub.deliveryDlqTopic.name;
+export const kmsApiService = kms.kmsApi.service;
+export const attestationKeyRingName = kms.keyRing.name;
+export const attestationCryptoKeyName = kms.cryptoKey.name;

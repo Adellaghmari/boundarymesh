@@ -11,7 +11,7 @@ Out of scope: compromising Google or Microsoft as vendors; physical datacenter.
 | Elevation of privilege (reprocess) | `boundary.admin` on quarantine reprocess | Entra app roles |
 | Replay (inbound) | HMAC nonce window | Firestore TTL nonce |
 | Replay (outbound) | Delivery idempotent consumer | Firestore idempotency |
-| Tampering | JWT/HMAC/contracts/egress + audit-chain verification + ECDSA attestation verify | Cloud KMS, Firestore versioning |
+| Tampering | JWT/HMAC/contracts/egress + audit-chain verification + ECDSA attestation verify; KMS key hosted in GCP and live signing verified | Workload KMS IAM (15I), Firestore versioning |
 | Denial / dependency failure | Bounded R4j retry, circuit breaker, quarantine | Pub/Sub redelivery budget |
 
 ## Phase 11–13 implemented mitigations
@@ -20,12 +20,12 @@ Out of scope: compromising Google or Microsoft as vendors; physical datacenter.
 | --- | --- | --- |
 | Repudiation | Structured audit + SHA-256 hash-chain continuity | Firestore + exported checkpoints |
 | Tampering (audit entries) | Recalculated hashes and previous-hash links | Object versioning / privileged-admin detection |
-| Tampering (attestation) | ECDSA P-256 verification of RFC 8785 bytes | Cloud KMS key hosting |
+| Tampering (attestation) | ECDSA P-256 verification of RFC 8785 bytes; Cloud KMS signing **LIVE VERIFIED LOCALLY**; digest/signature/public-key integrity checks, strict DER → P1363, verification before SIGNED | Workload KMS IAM and production runtime composition (15I) |
 | Information disclosure | Metadata-only audit/attestation/graph | Gitleaks CI |
 
 The chain does **not** prevent deletion by a privileged storage administrator. That remains a storage/governance concern.
 
-Do not mark Cloud KMS as implemented. Do not mark Cloud Run workload Firestore as live.
+Normal/local/test and `gcp-emulator` retain JCA with no live KMS dependency. The explicit `gcp-live-kms` Maven profile permits real KMS metadata reads, signing, and public-key retrieval against the existing version 1 with synthetic input. Phase 15H-C is **LIVE VERIFIED LOCALLY**, not Cloud Run workload-live. Future production composition uses `CloudKmsAttestationSigner` after workload IAM is created in Phase 15I. Controlled failure tests return UNSIGNED without changing the boundary outcome; they are not live IAM/key failure tests.
 
 ## Phase 3–4 implemented mitigations
 
@@ -39,7 +39,7 @@ Do not mark Cloud KMS as implemented. Do not mark Cloud Run workload Firestore a
 | Information disclosure | Sanitized 401/403, no raw JWT/HMAC in responses or normal logs | Gitleaks CI, cloud log sinks |
 | Oversized ingest | 65536-byte webhook limit, 413 | Distributed rate limit |
 
-Do not mark Cloud KMS as implemented. Secret Manager containers are LIVE and empty. Firestore adapters are emulator-tested and live-verified locally; they are not the default runtime and not Cloud Run workload-live.
+KMS infrastructure is **LIVE / PROVISIONED**, and opt-in KMS signing is **LIVE VERIFIED LOCALLY**. Secret Manager containers are LIVE and empty. Firestore adapters are emulator-tested and live-verified locally; they are not the default runtime and not Cloud Run workload-live.
 
 Each important threat maps to **preventive**, **detective**, and **recovery** controls.
 

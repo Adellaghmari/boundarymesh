@@ -2,6 +2,18 @@
 
 Primary IaC: **Pulumi + TypeScript**. Terraform is forbidden for Project C.
 
+## Phase 15H-B (applied)
+
+Pulumi **manages** Cloud KMS attestation signing resources. Applied in Phase 15H-B.
+
+- `gcp.projects.Service` `kms-api` → `cloudkms.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
+- `gcp.kms.KeyRing` `attestation-key-ring` → `boundarymesh-attestation` in `europe-west4` — **LIVE / PROVISIONED IN GCP**
+- `gcp.kms.CryptoKey` `attestation-signing-key` → `exchange-attestation`, purpose `ASYMMETRIC_SIGN`, algorithm `EC_SIGN_P256_SHA256`, protection `SOFTWARE` — **LIVE / PROVISIONED IN GCP**
+
+No workload IAM. No service account. No imported key material. No scheduled version cycling. Version `1` is ENABLED. Existing Artifact Registry, Secret Manager, Firestore, and Pub/Sub resources stay unchanged. Cloud KMS signing is **LIVE VERIFIED LOCALLY (15H-C)**.
+
+`phase15HScope = "KMS_PREVIEW"` is a historical implementation-scope marker introduced in 15H-A, like the earlier Firestore/Pub/Sub scope constants. It is not a measurement of live infrastructure state. The literal and stack output are intentionally unchanged; a source comment clarifies its meaning. Provisioning truth comes from the 15H-B apply checkpoint and read-only GCP metadata. Phase 15H-C runs previews only, never `pulumi up`, including for informational output changes.
+
 ## Phase 15G-B (applied)
 
 Pulumi **manages** Pub/Sub delivery topology. Applied in Phase 15G-B.

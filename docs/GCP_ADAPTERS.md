@@ -11,7 +11,7 @@ Domain and application stay cloud-provider independent. Local in-memory adapters
 | `LOCAL` | Default application path. In-memory / local adapters. |
 | `TEST` | Deterministic tests. Same local adapters. |
 | `GCP_EMULATOR` | Opt-in JUnit tag `gcp-emulator`. Firestore emulator adapters allowed. Not part of default `mvnw verify`. |
-| `PROD` | May select Secret Manager, Firestore, and Pub/Sub production adapters when a later phase wires `backend/gcp` under an explicit cloud profile. Live Java SDK path is **LIVE VERIFIED LOCALLY** via opt-in `gcp-live`; Pub/Sub adapters are **EMULATOR TESTED + LIVE VERIFIED LOCALLY** via opt-in `gcp-live-pubsub`. Pub/Sub infrastructure is **LIVE / PROVISIONED**. |
+| `PROD` | May select Secret Manager, Firestore, Pub/Sub, and Cloud KMS production adapters when a later phase wires `backend/gcp` under an explicit cloud profile. Live Java SDK path is **LIVE VERIFIED LOCALLY** via opt-in `gcp-live`; Pub/Sub adapters are **EMULATOR TESTED + LIVE VERIFIED LOCALLY** via opt-in `gcp-live-pubsub`. Pub/Sub infrastructure is **LIVE / PROVISIONED**. Cloud KMS signing is **LIVE VERIFIED LOCALLY** via opt-in `gcp-live-kms`; workload IAM is **PLANNED FOR 15I**. |
 
 `local` remains the API/worker Spring default. Profile `gcp-emulator` is documented only; it is not activated at runtime.
 
@@ -32,7 +32,7 @@ Local emulator host placeholders remain:
 - Firestore: `127.0.0.1:18085`
 - Pub/Sub: `127.0.0.1:18086`
 
-Secret Manager and Cloud KMS have no emulator path; Secret Manager uses local doubles until live verification.
+Secret Manager and Cloud KMS have no emulator path. Secret Manager uses local doubles until live verification. Cloud KMS unit tests use a fake signing client; `gcp-emulator` keeps the JCA signer.
 
 ## Port map
 
@@ -40,7 +40,7 @@ Secret Manager and Cloud KMS have no emulator path; Secret Manager uses local do
 | --- | --- | --- | --- |
 | `AuditRepository` | `InMemoryAuditRepository` | `FirestoreAuditRepository` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | `AttestationRepository` | `InMemoryAttestationRepository` | `FirestoreAttestationRepository` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
-| `AttestationSigner` | `JcaP256AttestationCrypto` | Cloud KMS `EC_SIGN_P256_SHA256` | PLANNED |
+| `AttestationSigner` | `JcaP256AttestationCrypto` | Cloud KMS `EC_SIGN_P256_SHA256` | **IMPLEMENTED + UNIT TESTED** (not default-wired) |
 | `QuarantineRepository` | `InMemoryQuarantineRepository` | `FirestoreQuarantineRepository` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | `ReplayNonceStore` | `InMemoryReplayNonceStore` | `FirestoreReplayNonceStore` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | `IdempotencyStore` | `InMemoryIdempotencyStore` | `FirestoreIdempotencyStore` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
@@ -125,4 +125,23 @@ API and worker do **not** depend on `backend/gcp` in this phase. Local providers
 | Live verification residue | **CLEANED** |
 | Cloud Run Worker Pool | **PLANNED FOR PHASE 15I** |
 
-Do **not** claim Cloud Run workload messaging is live. Do not add KMS or Cloud Run here.
+Do **not** claim Cloud Run workload messaging is live.
+
+## Phase 15H Cloud KMS truth
+
+| Item | Status |
+| --- | --- |
+| Cloud KMS signer adapter | **IMPLEMENTED + UNIT TESTED** |
+| KMS P-256 signature normalization (DER → IEEE P1363) | **IMPLEMENTED + TESTED** |
+| Cloud KMS API Pulumi | **IMPLEMENTED + APPLIED** |
+| KMS key ring `boundarymesh-attestation` | **LIVE / PROVISIONED IN GCP** |
+| KMS asymmetric signing key `exchange-attestation` | **LIVE / PROVISIONED IN GCP** |
+| Algorithm | `EC_SIGN_P256_SHA256` (attestation records `ES256`) |
+| Protection level | SOFTWARE |
+| Cloud KMS in real GCP | **LIVE / PROVISIONED** |
+| Live Cloud KMS signing | **LIVE VERIFIED LOCALLY (15H-C)** |
+| Local JCA signer | **IMPLEMENTED + VERIFIED / UNCHANGED** |
+| Workload KMS IAM | **PLANNED FOR 15I** |
+| Default `mvnw verify` | No ADC, no KMS, no real GCP |
+
+Cloud KMS signing is **LIVE VERIFIED LOCALLY** with synthetic data. Workload IAM and Cloud Run remain **PLANNED FOR 15I**. See [Phase 15H verification](PHASE_15H_VERIFICATION.md).

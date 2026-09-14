@@ -2,13 +2,13 @@ package dev.adellaghmari.boundarymesh.gcp;
 
 /**
  * Mapping from existing application ports to GCP adapters. Secret Manager and Firestore persistence
- * adapters are implemented in this module and not activated by default. The delivery outbox and
- * Pub/Sub adapters are implemented and not default-wired. KMS remains planned.
+ * adapters are implemented in this module and not activated by default. The delivery outbox,
+ * Pub/Sub adapters, and Cloud KMS attestation signer are implemented and not default-wired.
  */
 public enum GcpPortMapping {
     AUDIT_REPOSITORY("AuditRepository", "InMemoryAuditRepository", "Firestore Native", true),
     ATTESTATION_REPOSITORY("AttestationRepository", "InMemoryAttestationRepository", "Firestore Native", true),
-    ATTESTATION_SIGNER("AttestationSigner", "JcaP256AttestationCrypto", "Cloud KMS EC_SIGN_P256_SHA256", false),
+    ATTESTATION_SIGNER("AttestationSigner", "JcaP256AttestationCrypto", "Cloud KMS EC_SIGN_P256_SHA256", true),
     QUARANTINE_REPOSITORY("QuarantineRepository", "InMemoryQuarantineRepository", "Firestore Native", true),
     REPLAY_NONCE_STORE("ReplayNonceStore", "InMemoryReplayNonceStore", "Firestore Native TTL field", true),
     IDEMPOTENCY_STORE("IdempotencyStore", "InMemoryIdempotencyStore", "Firestore Native", true),

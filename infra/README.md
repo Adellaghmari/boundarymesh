@@ -4,7 +4,7 @@ Pulumi + TypeScript workspace for Google Cloud resources.
 
 ## Phase 15F-B purpose
 
-The named Firestore Native database and Firestore API are **LIVE / PROVISIONED**. Phase 15F-C live-verified the Java SDK path and cleaned run-scoped documents. Phase 15G-B **applied** Pub/Sub API + delivery topic + pull subscription + DLQ topic/inspect subscription. Dead-letter forwarding is **not** configured. Do not add indexes, versions, IAM, `deadLetterPolicy`, KMS, or Cloud Run here.
+The named Firestore Native database and Firestore API are **LIVE / PROVISIONED**. Phase 15F-C live-verified the Java SDK path and cleaned run-scoped documents. Phase 15G-B **applied** Pub/Sub API + delivery topic + pull subscription + DLQ topic/inspect subscription. Dead-letter forwarding is **not** configured. Phase 15H-B **applied** Cloud KMS API + key ring + asymmetric signing key. Do not add IAM, versions, or Cloud Run here.
 
 Authentication uses workstation **Application Default Credentials**. Do not set `GOOGLE_APPLICATION_CREDENTIALS`. Do not commit ADC files, tokens, or service-account JSON.
 
@@ -37,6 +37,11 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | Pub/Sub topics + pull subscriptions | LIVE / PROVISIONED IN GCP |
 | Dead-letter forwarding | PLANNED / NOT CONFIGURED |
 | Live Pub/Sub data path | LIVE VERIFIED LOCALLY / RESIDUE CLEANED |
+| Cloud KMS signer adapter | IMPLEMENTED + UNIT TESTED |
+| Cloud KMS Pulumi | IMPLEMENTED + APPLIED |
+| Cloud KMS API / key ring / crypto key in GCP | LIVE / PROVISIONED |
+| Live Cloud KMS signing | LIVE VERIFIED LOCALLY (15H-C) |
+| Workload KMS IAM | PLANNED FOR PHASE 15I |
 
 Target region: **`europe-west4`**.  
 Stack: **`dev`**.  
@@ -62,8 +67,8 @@ Local backend remains `file://~`. GCS state is **PLANNED**.
 ## Future planned services (not provisioned)
 
 - Secret versions and Secret Manager IAM
-- Pub/Sub dead-letter forwarding and live messaging verification
-- Cloud KMS
+- Pub/Sub dead-letter forwarding
+- Workload KMS IAM (15I); KMS signing already live-verified locally in 15H-C
 - Cloud Run
 - Firebase Hosting, pending final validation
 - WIF

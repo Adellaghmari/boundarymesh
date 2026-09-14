@@ -23,7 +23,7 @@ An untrusted system transaction arrives. BoundaryMesh authenticates identity, au
 5. **Credential & Consent Vault** — local reference/version/consent model now; Secret Manager later
 6. **Quarantine & Recovery Orchestrator** — local workflow now; Firestore adapter **LIVE VERIFIED LOCALLY**, not Cloud Run workload-live
 
-Also implemented locally: **Tamper-Evident Audit Chain**, **Cryptographic Exchange Attestation** (JCA, not Cloud KMS), **Integration Boundary Graph**.
+Also implemented locally: **Tamper-Evident Audit Chain**, **Cryptographic Exchange Attestation** (local JCA default; Cloud KMS signing LIVE VERIFIED LOCALLY), **Integration Boundary Graph**.
 
 ## Stack (locked)
 
@@ -56,7 +56,7 @@ Phase 8 delivers approved crossings through **Apache Camel 4.22.0** and **Resili
 Phase 9 adds a **local credential/consent boundary** (not Secret Manager).  
 Phase 10 makes quarantine a real **recovery workflow** with admin-scoped reprocess (not Firestore).  
 Phase 11 adds a **SHA-256 tamper-evident audit chain** (in-memory, not immutable).  
-Phase 12 signs a **Cryptographic Exchange Attestation** with local ECDSA P-256 (Cloud KMS PLANNED).  
+Phase 12 signs a **Cryptographic Exchange Attestation** with local ECDSA P-256 (Cloud KMS adapter **IMPLEMENTED + UNIT TESTED**; live KMS **LIVE VERIFIED LOCALLY**).
 Phase 13 renders an **Integration Boundary Graph** from live local repositories (not a blast-radius graph).  
 Phase 14 adds a **premium navigation shell** plus **Microsoft Entra OIDC BFF** and a **bounded Outlook Calendar Graph connector**. Local live verification: delegated `Calendars.Read` with a personal Microsoft account; Graph HTTP 200 with one event normalized to `m365-calendar/v1` and enforced by `m365-calendar-egress/v1` (`ALLOW_WITH_TRANSFORMATION`). Helix 365 remains SYNTHETIC DEMO. Graph change notifications remain **PLANNED**.
 
@@ -68,7 +68,7 @@ Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** Co
 
 A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Still **PLANNED:** Graph change notifications, Secret Manager versions/IAM, Cloud KMS, Cloud Run, Firebase Hosting, WIF. Firestore persistence adapters are **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** and not the local default. The named Firestore database `boundarymesh` is **LIVE / PROVISIONED**. Live verification residue is **CLEANED**. The transactional outbox and Pub/Sub adapters are **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub infrastructure is **LIVE / PROVISIONED**. Dead-letter forwarding is **PLANNED / NOT CONFIGURED**. Live verification residue is **CLEANED**. Cloud Run workload persistence is **not** live. API/worker Docker images are **IMPLEMENTED + LOCALLY TESTED** and **PUSHED + REMOTE DIGEST VERIFIED**. Artifact Registry remains **LIVE**. Phase 15E Secret Manager API and empty containers are **LIVE**. No Cloud Run workloads.
+Still **PLANNED:** Graph change notifications, Secret Manager versions/IAM, Cloud Run, Firebase Hosting, WIF. The Cloud KMS attestation adapter is **IMPLEMENTED + UNIT TESTED** and not the local default. Cloud KMS API, key ring `boundarymesh-attestation`, and crypto key `exchange-attestation` are **LIVE / PROVISIONED**. Firestore persistence adapters are **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** and not the local default. The named Firestore database `boundarymesh` is **LIVE / PROVISIONED**. Live verification residue is **CLEANED**. The transactional outbox and Pub/Sub adapters are **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub infrastructure is **LIVE / PROVISIONED**. Dead-letter forwarding is **PLANNED / NOT CONFIGURED**. Live verification residue is **CLEANED**. Cloud Run workload persistence is **not** live. API/worker Docker images are **IMPLEMENTED + LOCALLY TESTED** and **PUSHED + REMOTE DIGEST VERIFIED**. Artifact Registry remains **LIVE**. Phase 15E Secret Manager API and empty containers are **LIVE**. No Cloud Run workloads.
 
 ## Navigation
 
@@ -128,7 +128,7 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — NOT COMPLETE.** Phase 14B live Microsoft Graph event crossing is recorded. Phase 15A–15B Pulumi/GCP project validation is **IMPLEMENTED + LOCALLY VALIDATED**. Phase 15C `backend/gcp` adapter foundation is **IMPLEMENTED + TESTED** (no production GCP clients). Phase 15D is **COMPLETE**. Phase 15E is **COMPLETE**: Secret Manager API **LIVE**; four empty containers **LIVE**. No versions. No IAM. Cloud Run remains **PLANNED**. Identity #1 local JWT **TESTED**; Entra OIDC Operator login **LIVE VERIFIED LOCALLY**. Webhook #2 generic HMAC **TESTED**; Graph subscriptions **PLANNED**. Contract Drift #3 TESTED. Data Boundary #4 **LIVE VERIFIED LOCALLY** for `m365-calendar-egress/v1` on one real Graph event. Credential & Consent #5 local model TESTED with delegated `Calendars.Read` **LIVE VERIFIED LOCALLY**. Quarantine #6 local TESTED. Tamper-Evident Audit Chain **LIVE VERIFIED LOCALLY** for the Graph event. Cryptographic Exchange Attestation **LIVE VERIFIED LOCALLY** (local JCA; Cloud KMS PLANNED). Integration Boundary Graph **LIVE VERIFIED LOCALLY** (`m365-calendar` OBSERVED/ACTIVE). Graph Java SDK **LIVE VERIFIED LOCALLY**. No GCP application resources provisioned.
+**PROJECT C — NOT COMPLETE.** Phase 14B live Microsoft Graph event crossing is recorded. Phase 15A–15B Pulumi/GCP project validation is **IMPLEMENTED + LOCALLY VALIDATED**. Phase 15C `backend/gcp` adapter foundation is **IMPLEMENTED + TESTED**. Phase 15D is **COMPLETE**. Phase 15E is **COMPLETE**: Secret Manager API **LIVE**; four empty containers **LIVE**. No versions. No IAM. Phase 15F–15G are **COMPLETE** (Firestore + Pub/Sub **LIVE / PROVISIONED**; adapters **LIVE VERIFIED LOCALLY**). Phase 15H-A is **COMPLETE**: Cloud KMS signer adapter **IMPLEMENTED + UNIT TESTED**. Phase 15H-B is **COMPLETE**: Cloud KMS API, key ring, and `exchange-attestation` **LIVE / PROVISIONED**. Live KMS signing **LIVE VERIFIED LOCALLY (15H-C)**. Cloud Run remains **PLANNED**. Identity #1 local JWT **TESTED**; Entra OIDC Operator login **LIVE VERIFIED LOCALLY**. Webhook #2 generic HMAC **TESTED**; Graph subscriptions **PLANNED**. Contract Drift #3 TESTED. Data Boundary #4 **LIVE VERIFIED LOCALLY** for `m365-calendar-egress/v1` on one real Graph event. Credential & Consent #5 local model TESTED with delegated `Calendars.Read` **LIVE VERIFIED LOCALLY**. Quarantine #6 local TESTED. Tamper-Evident Audit Chain **LIVE VERIFIED LOCALLY** for the Graph event. Cryptographic Exchange Attestation **LIVE VERIFIED LOCALLY** (local JCA; Cloud KMS signing **LIVE VERIFIED LOCALLY**). Integration Boundary Graph **LIVE VERIFIED LOCALLY** (`m365-calendar` OBSERVED/ACTIVE). Graph Java SDK **LIVE VERIFIED LOCALLY**.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 

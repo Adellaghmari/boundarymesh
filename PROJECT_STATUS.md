@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **15G COMPLETE** — transactional outbox + Pub/Sub adapters **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub infrastructure **LIVE / PROVISIONED**. Dead-letter forwarding **PLANNED / NOT CONFIGURED**. Cloud Run Worker Pool **PLANNED FOR PHASE 15I**.  
+**Phase:** **15H COMPLETE** — Cloud KMS API **LIVE / ENABLED**. Key ring `boundarymesh-attestation` and crypto key `exchange-attestation` **LIVE / PROVISIONED** (`EC_SIGN_P256_SHA256`, SOFTWARE, no workload IAM). Adapter **IMPLEMENTED + UNIT TESTED**, not default-wired. Live Cloud KMS signing **LIVE VERIFIED LOCALLY (15H-C)**. Workload KMS IAM **PLANNED FOR 15I**.
 **Overall:** **PROJECT C — NOT COMPLETE**
 
 ## Completeness
@@ -21,7 +21,7 @@
 | Phase 9 Credential & Consent | **COMPLETE** (local model + delegated Calendars.Read mapping; Secret Manager PLANNED) |
 | Phase 10 Quarantine & Recovery | **COMPLETE** (in-memory default; Firestore adapter **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**) |
 | Phase 11 Tamper-Evident Audit Chain | **COMPLETE** (in-memory default; Firestore transactional append **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**) |
-| Phase 12 Cryptographic Exchange Attestation | **COMPLETE** (local JCA P-256 **LIVE VERIFIED LOCALLY** for one Graph event; Cloud KMS PLANNED) |
+| Phase 12 Cryptographic Exchange Attestation | **COMPLETE** (local JCA P-256 **LIVE VERIFIED LOCALLY** for one Graph event; Cloud KMS signing **LIVE VERIFIED LOCALLY**) |
 | Phase 13 Integration Boundary Graph | **COMPLETE** (`m365-calendar` OBSERVED/ACTIVE from the live event; Helix 365 SYNTHETIC) |
 | Phase 14 premium navigation | **COMPLETE** |
 | Phase 14 Entra + Graph connector | **LIVE VERIFIED LOCALLY** (Graph HTTP 200, `count=1`, `ALLOW_WITH_TRANSFORMATION`). Change notifications **PLANNED** |
@@ -36,10 +36,13 @@
 | Phase 15G-A transactional outbox + Pub/Sub preview | **COMPLETE** — adapters + combined emulator **IMPLEMENTED + EMULATOR TESTED**. Pulumi preview approved |
 | Phase 15G-B Pub/Sub infrastructure apply | **COMPLETE** — `pubsub.googleapis.com` LIVE; topics `boundarymesh-deliveries` / `boundarymesh-delivery-dlq` LIVE; pull subscriptions LIVE. No IAM. No `deadLetterPolicy` |
 | Phase 15G-C live Pub/Sub data path | **COMPLETE** — `GooglePubSubPublisher` + `GooglePubSubPullConsumer` + official Java SDK + ADC against real topic/subscription. Residue **CLEANED**. Not Cloud Run workload-live |
+| Phase 15H-A Cloud KMS signer + preview | **COMPLETE** — `CloudKmsAttestationSigner` **IMPLEMENTED + UNIT TESTED**. Pulumi KMS API/key ring/crypto key **IMPLEMENTED + PREVIEWED**. No IAM |
+| Phase 15H-B Cloud KMS infrastructure apply | **COMPLETE** — `cloudkms.googleapis.com` LIVE; key ring `boundarymesh-attestation` LIVE; crypto key `exchange-attestation` LIVE (`ASYMMETRIC_SIGN` / `EC_SIGN_P256_SHA256` / SOFTWARE). No workload IAM. No live sign in 15H-B |
+| Phase 15H-C live KMS attestation | **COMPLETE** — official Java SDK + ADC, two real version 1 signs, DER → P1363, public-key verify VALID, altered bytes INVALID, client recreation VALID. Synthetic only; zero cloud document writes. [Evidence](docs/PHASE_15H_VERIFICATION.md) |
 | Application production IAM / Entra live | **LIVE VERIFIED LOCALLY** — common authority, personal Microsoft account, server-side session |
 | Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, one event normalized and enforced |
 | GCP project | **CREATED + BILLING LINKED** (`boundarymesh-dev`) |
-| GCP resources | Artifact Registry + Secret Manager (empty) + Firestore API + named database `boundarymesh` + Pub/Sub API + delivery/DLQ topics + pull/inspect subscriptions. No IAM. No workloads. Live verification residue **CLEANED** |
+| GCP resources | Artifact Registry + Secret Manager (empty) + Firestore API + named database `boundarymesh` + Pub/Sub API + delivery/DLQ topics + pull/inspect subscriptions + Cloud KMS API + key ring `boundarymesh-attestation` + crypto key `exchange-attestation`. No workload IAM. No workloads. Live verification residue **CLEANED** |
 | Microsoft credentials | **NONE CREATED in Git / this session** |
 | GCP service-account JSON keys | **NONE** |
 | Project A | **FROZEN** — not modified |
@@ -69,7 +72,7 @@
 5. Credential & Consent Vault — local model **TESTED**; Microsoft delegated consent mapped; Secret Manager **PLANNED**.
 6. Quarantine & Recovery Orchestrator — local **TESTED**; Firestore persistence **LIVE VERIFIED LOCALLY**. Not Cloud Run workload-live.
 
-Also: Tamper-Evident Audit Chain **LIVE VERIFIED LOCALLY** for the Graph event; Cryptographic Exchange Attestation **LIVE VERIFIED LOCALLY** (local JCA; Cloud KMS **PLANNED**); Integration Boundary Graph **LIVE VERIFIED LOCALLY** for `m365-calendar` OBSERVED. Firestore adapters **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Firestore database **LIVE / PROVISIONED**. Live verification residue **CLEANED**. Cloud Run workload persistence is **not** live.
+Also: Tamper-Evident Audit Chain **LIVE VERIFIED LOCALLY** for the Graph event; Cryptographic Exchange Attestation **LIVE VERIFIED LOCALLY** (local JCA; Cloud KMS signing **LIVE VERIFIED LOCALLY**); Integration Boundary Graph **LIVE VERIFIED LOCALLY** for `m365-calendar` OBSERVED. Firestore adapters **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Firestore database **LIVE / PROVISIONED**. Live verification residue **CLEANED**. Cloud Run workload persistence is **not** live.
 
 ## LIVE MICROSOFT VERIFICATION (local, 2026-09-10)
 
@@ -96,4 +99,4 @@ GET `/api/v1/microsoft/connector` still reports `LIVE_CONFIGURED` because that e
 
 ## Next (do not start automatically)
 
-Phase 15H workload IAM + Secret Manager versions only, after human review. Do not add `deadLetterPolicy`, Cloud KMS, Cloud Run, Firebase Hosting, or WIF. Do not start automatically.
+Phase 15I workload identity/IAM and explicit production runtime composition planning, after human review. Workload KMS IAM is not provisioned. Do not start automatically; no Cloud Run, Secret Manager versions, Firebase Hosting, or WIF is authorized by Phase 15H completion.

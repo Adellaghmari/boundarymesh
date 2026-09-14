@@ -16,11 +16,11 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 | **9** | Credential & Consent Vault | **COMPLETE** local security model. Secret Manager adapter PLANNED |
 | **10** | Quarantine & Recovery | **COMPLETE** local orchestrator. Firestore adapter **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | **11** | Tamper-evident audit chain | **COMPLETE** local hash chain + verifier. Firestore transactional append **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
-| **12** | Cryptographic Exchange Attestation | **COMPLETE** local JCA P-256. Cloud KMS PLANNED |
+| **12** | Cryptographic Exchange Attestation | **COMPLETE** local JCA P-256. Cloud KMS adapter **IMPLEMENTED + UNIT TESTED**; live KMS LIVE VERIFIED LOCALLY |
 | **13** | Integration Boundary Graph | **COMPLETE** state-driven Vue SVG |
 | **14** | M365 / Graph connector | **COMPLETE** harness + Entra architecture TESTED. Live tenant BLOCKED. Graph subscriptions PLANNED |
-| **15** | GCP + Pulumi cloud foundation | **15A–15G COMPLETE**. Outbox + Pub/Sub adapters **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub infra **LIVE**. Dead-letter forwarding **PLANNED**. Remaining GCP **PLANNED** |
-| **16** | Pulumi / GCP infrastructure | Cloud Run ×2, IAM, KMS, secrets, hosting — **first provision** (not 15A) |
+| **15** | GCP + Pulumi cloud foundation | **15A–15G COMPLETE**. **15H-A COMPLETE** (KMS adapter + preview). **15H-B COMPLETE** (KMS infra **LIVE**). Outbox + Pub/Sub adapters **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub infra **LIVE**. Live KMS sign **LIVE VERIFIED LOCALLY (15H-C)**. Dead-letter forwarding **PLANNED**. Remaining GCP **PLANNED** |
+| **16** | Remaining Pulumi / GCP infrastructure | Cloud Run, workload IAM, secret versions, hosting — **PLANNED**. KMS API/key ring/key already provisioned in 15H-B; signing live-verified in 15H-C. Workload KMS IAM is planned for 15I |
 | **17** | GitHub WIF + CI/CD + AppSec | no JSON keys; Semgrep/Gitleaks/ZAP/Dependency-Check |
 | **18** | Public deployment + live verification | honest badges; Graph live only if real |
 | **19** | Hardening + grand final audit | rotation proof, chain tamper demo, CV matrix update, freeze |
@@ -29,7 +29,7 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 
 - Camel (8) before cloud (15): routes must exist locally.
 - Graph (14) after vault (9): client secret reference must exist.
-- Attestation (12) can use a `Signer` port before real KMS (16).
+- Attestation (12) uses a cloud-neutral signer port. Real KMS was provisioned in 15H-B and live-verified in 15H-C; local JCA remains the default.
 
 ## Stop conditions per phase
 

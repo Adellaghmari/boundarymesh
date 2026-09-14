@@ -67,7 +67,9 @@ Phase 15C provides the `backend/gcp` emulator **foundation** only. Default `mvnw
 - Live Java SDK against real named database `boundarymesh` — **IMPLEMENTED** (opt-in `-Pgcp-live`). Run-scoped documents are deleted after the suite.
 - Pub/Sub emulator: persist → publish → consume → deduplicate — **IMPLEMENTED** (opt-in `-Pgcp-emulator`, combined Firestore + Pub/Sub)
 - Live Pub/Sub persist → publish → consume against real GCP topics — **IMPLEMENTED** (opt-in `-Pgcp-live-pubsub`). Run-scoped documents and messages are cleaned.
-- KMS: **use test double** locally; live KMS only in LIVE VERIFIED phase
+- KMS: **use test double** locally (`CloudKmsAttestationSigner` unit tests). Default `mvnw verify` does not call Cloud KMS. Live KMS sign/verify is **LIVE VERIFIED LOCALLY (15H-C)**.
+
+Explicit KMS-only verification: from `backend`, run `mvnw.cmd -pl gcp -am -Pgcp-live-kms test` after authorization and a zero-change Pulumi preview. This profile targets only existing `exchange-attestation` version 1 with synthetic input; it never creates infrastructure or persists documents. Normal verification excludes its tag. See [Phase 15H results](PHASE_15H_VERIFICATION.md).
 
 ## Frontend unit (Phase 2)
 

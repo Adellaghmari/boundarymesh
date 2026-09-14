@@ -18,7 +18,7 @@ Desired: no major category below 8 without an explicit justified tradeoff.
 | Frontend differentiation | **9** | Vue SVG Integration Boundary Graph from live Java state |
 | Application security | **9** | Semgrep/ZAP/HMAC/JWT — not Trivy-as-story |
 | IAM depth | **9** | Entra + WIF + SA split + app roles |
-| Cryptography depth | **9** | Local JCA ECDSA P-256 + constrained RFC 8785 + SHA-256 chain; Cloud KMS PLANNED |
+| Cryptography depth | **9** | Local JCA ECDSA P-256 + constrained RFC 8785 + SHA-256 chain; Cloud KMS signing **LIVE VERIFIED LOCALLY** |
 | Testing depth | **9** | Pyramid specified including Camel and replay |
 | Job-market relevance | **9** | |
 | Interview differentiation | **9** | AuthN≠AuthZ, replay≠duplicate |
@@ -29,7 +29,7 @@ Desired: no major category below 8 without an explicit justified tradeoff.
 
 **M365 9:** Graph SDK + harness through BoundaryMesh controls. Live tenant is a badge, not the architecture.  
 **Frontend 9:** Phase 13 SVG graph is state-driven, not a static poster.  
-**Cryptography 9:** local JCA is TESTED; Cloud KMS remains the managed-key follow-on, not a fake substitute.  
+**Cryptography 9:** local JCA is TESTED; Cloud KMS adapter is **IMPLEMENTED + UNIT TESTED** and remains the managed-key follow-on, not a fake substitute. Live KMS signing is **LIVE VERIFIED LOCALLY**; Cloud Run workload signing is not claimed.
 **Platform engineering 7** lives on the job-market card, not here as a product failure.
 
 ## Phase 14 navigation visual quality

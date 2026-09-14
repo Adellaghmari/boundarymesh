@@ -12,7 +12,7 @@
 
     <artifactId>boundarymesh-gcp</artifactId>
     <name>BoundaryMesh GCP</name>
-    <description>Google Cloud adapter boundary. Secret Manager, Firestore, transactional outbox, and Pub/Sub adapters are implemented; KMS remains planned.</description>
+    <description>Google Cloud adapter boundary. Secret Manager, Firestore, outbox/Pub/Sub, and Cloud KMS attestation adapters are implemented.</description>
 
     <dependencies>
         <dependency>
@@ -30,6 +30,10 @@
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-pubsub</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-kms</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>

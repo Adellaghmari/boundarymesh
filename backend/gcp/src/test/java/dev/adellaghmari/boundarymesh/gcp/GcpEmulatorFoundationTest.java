@@ -55,6 +55,6 @@ class GcpEmulatorFoundationTest {
         assertThat(GcpPortMapping.MESSAGE_CONSUMER.productionAdapterImplemented())
                 .isTrue();
         assertThat(GcpPortMapping.ATTESTATION_SIGNER.productionAdapterImplemented())
-                .isFalse();
+                .isTrue();
     }
 }

@@ -20,7 +20,8 @@ class GcpArchitectureTest {
                     "dev.adellaghmari.boundarymesh.gcp..",
                     "com.google.cloud..",
                     "com.google.firestore..",
-                    "com.google.pubsub..");
+                    "com.google.pubsub..",
+                    "com.google.cloud.kms..");
 
     @ArchTest
     static final ArchRule applicationMustNotDependOnGcp = noClasses()
@@ -32,7 +33,8 @@ class GcpArchitectureTest {
                     "dev.adellaghmari.boundarymesh.gcp..",
                     "com.google.cloud..",
                     "com.google.firestore..",
-                    "com.google.pubsub..");
+                    "com.google.pubsub..",
+                    "com.google.cloud.kms..");
 
     @ArchTest
     static final ArchRule gcpMustNotDependOnApiOrWorker = noClasses()
@@ -65,4 +67,12 @@ class GcpArchitectureTest {
             .should()
             .dependOnClassesThat()
             .resideInAnyPackage("com.google.cloud.firestore..", "com.google.firestore..");
+
+    @ArchTest
+    static final ArchRule kmsSdkStaysInGcpKmsPackage = noClasses()
+            .that()
+            .resideOutsideOfPackage("dev.adellaghmari.boundarymesh.gcp.kms..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("com.google.cloud.kms..");
 }
