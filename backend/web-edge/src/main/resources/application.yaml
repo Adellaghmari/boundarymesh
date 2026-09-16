@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: boundarymesh-web-edge
+server:
+  port: ${PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

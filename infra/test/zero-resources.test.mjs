@@ -28,7 +28,7 @@ function sourceFiles() {
         .map((name) => ({ name, text: readFileSync(join(srcDir, name), "utf8") }));
 }
 
-test("Phase 15I-A adds only the approved keyless workload preview and least-privilege IAM", () => {
+test("existing private workloads remain constrained while 15J-B adds only a dedicated web edge", () => {
     const text = sourceFiles()
         .map((file) => file.text)
         .join("\n");
@@ -88,7 +88,9 @@ test("Phase 15I-A adds only the approved keyless workload preview and least-priv
     assert.match(text, /roles\/cloudkms\.publicKeyViewer/);
     assert.match(text, /roles\/secretmanager\.secretAccessor/);
     assert.equal(/roles\/(owner|editor|viewer|pubsub\.admin|secretmanager\.admin|cloudkms\.admin|datastore\.owner)/i.test(text), false);
-    assert.equal(/allUsers|allAuthenticatedUsers/.test(text), false);
+    const coreWorkloads = readFileSync(join(srcDir, "workloads.ts"), "utf8");
+    assert.equal(/allUsers|allAuthenticatedUsers/.test(coreWorkloads), false);
+    assert.equal(/allAuthenticatedUsers/.test(text), false);
     assert.equal(/roles\/cloudkms\.[^"\n]+[\s\S]{0,160}workerPrincipal/.test(text), false);
     assert.match(text, /manualInstanceCount:\s*1/);
     assert.match(text, /minInstanceCount:\s*0/);
@@ -106,14 +108,29 @@ test("Phase 15I-A adds only the approved keyless workload preview and least-priv
     assert.equal((text.match(/new gcp\.pubsub\.Subscription\(/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.kms\.KeyRing/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.kms\.CryptoKey\(/g) ?? []).length, 1);
-    assert.equal((text.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 2);
-    assert.equal((text.match(/new gcp\.projects\.IAMMember/g) ?? []).length, 2);
+    assert.equal((text.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 3);
+    assert.equal((text.match(/new gcp\.projects\.IAMMember/g) ?? []).length, 3);
     assert.equal((text.match(/new gcp\.pubsub\.TopicIAMMember/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.pubsub\.SubscriptionIAMMember/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.kms\.CryptoKeyIAMMember/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.secretmanager\.SecretIamMember/g) ?? []).length, 2);
-    assert.equal((text.match(/new gcp\.cloudrunv2\.Service/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.cloudrunv2\.Service\(/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.cloudrunv2\.WorkerPool/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.cloudrunv2\.ServiceIamMember/g) ?? []).length, 2);
+    assert.equal((text.match(/new gcp\.projects\.IAMCustomRole/g) ?? []).length, 1);
+    const edge = readFileSync(join(srcDir, "web-edge.ts"), "utf8");
+    assert.match(edge, /name:\s*coreApi\.name,[\s\S]*?role:\s*"roles\/run\.invoker",\s*member:\s*principal/);
+    assert.match(edge, /name:\s*service\.name,[\s\S]*?member:\s*"allUsers"/);
+    assert.equal(/roles\/(owner|editor|run\.admin|cloudkms|pubsub|secretmanager|datastore)/i.test(edge), false);
+});
+
+test("Hosting rewrites select the BFF before the SPA and never target the private API", () => {
+    const hosting = JSON.parse(readFileSync(join(root, "..", "firebase.json"), "utf8")).hosting;
+    assert.equal(hosting.public, "frontend/dist");
+    assert.deepEqual(hosting.rewrites.map((rule) => rule.source), ["/session/**", "/api/**", "**"]);
+    assert.equal(hosting.rewrites[0].run.serviceId, "boundarymesh-web");
+    assert.equal(hosting.rewrites[1].run.serviceId, "boundarymesh-web");
+    assert.equal(hosting.rewrites[2].destination, "/index.html");
 });
 
 test("stack YAML is non-secret and pins the verified GCP project", () => {

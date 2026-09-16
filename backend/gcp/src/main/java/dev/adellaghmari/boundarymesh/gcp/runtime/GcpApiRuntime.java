@@ -4,6 +4,7 @@ import dev.adellaghmari.boundarymesh.application.attestation.AttestationReposito
 import dev.adellaghmari.boundarymesh.application.attestation.AttestationSigner;
 import dev.adellaghmari.boundarymesh.application.attestation.AttestationVerifier;
 import dev.adellaghmari.boundarymesh.application.audit.AuditRepository;
+import dev.adellaghmari.boundarymesh.application.delivery.DeliveryIdempotencyStore;
 import dev.adellaghmari.boundarymesh.application.graph.ObservedCrossingStore;
 import dev.adellaghmari.boundarymesh.application.outbox.MessagePublisherPort;
 import dev.adellaghmari.boundarymesh.application.outbox.OutboxRepository;
@@ -13,6 +14,7 @@ import dev.adellaghmari.boundarymesh.application.webhook.ReplayNonceStore;
 import dev.adellaghmari.boundarymesh.application.webhook.WebhookSecretProvider;
 import dev.adellaghmari.boundarymesh.gcp.firestore.FirestoreAttestationRepository;
 import dev.adellaghmari.boundarymesh.gcp.firestore.FirestoreAuditRepository;
+import dev.adellaghmari.boundarymesh.gcp.firestore.FirestoreDeliveryIdempotencyStore;
 import dev.adellaghmari.boundarymesh.gcp.firestore.FirestoreFacade;
 import dev.adellaghmari.boundarymesh.gcp.firestore.FirestoreIdempotencyStore;
 import dev.adellaghmari.boundarymesh.gcp.firestore.FirestoreObservedCrossingStore;
@@ -35,6 +37,7 @@ public final class GcpApiRuntime implements AutoCloseable {
     private final GooglePubSubPublisher publisher;
     private final CloudKmsAttestationSigner attestationCrypto;
     private final AuditRepository auditRepository;
+    private final DeliveryIdempotencyStore deliveryIdempotencyStore;
     private final AttestationRepository attestationRepository;
     private final QuarantineRepository quarantineRepository;
     private final ReplayNonceStore replayNonceStore;
@@ -54,6 +57,7 @@ public final class GcpApiRuntime implements AutoCloseable {
         this.publisher = Objects.requireNonNull(publisher, "publisher");
         this.attestationCrypto = Objects.requireNonNull(attestationCrypto, "attestationCrypto");
         this.auditRepository = new FirestoreAuditRepository(firestore);
+        this.deliveryIdempotencyStore = new FirestoreDeliveryIdempotencyStore(firestore);
         this.attestationRepository = new FirestoreAttestationRepository(firestore);
         this.quarantineRepository = new FirestoreQuarantineRepository(firestore);
         this.replayNonceStore = new FirestoreReplayNonceStore(firestore);
@@ -85,6 +89,10 @@ public final class GcpApiRuntime implements AutoCloseable {
 
     public AuditRepository auditRepository() {
         return auditRepository;
+    }
+
+    public DeliveryIdempotencyStore deliveryIdempotencyStore() {
+        return deliveryIdempotencyStore;
     }
 
     public AttestationRepository attestationRepository() {

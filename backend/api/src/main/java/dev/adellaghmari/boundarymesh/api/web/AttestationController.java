@@ -43,6 +43,35 @@ public class AttestationController {
                 .orElseThrow(() -> new InvalidInputException("ATTESTATION_NOT_FOUND", "attestation was not found")));
     }
 
+    @GetMapping("/{id}/summary")
+    public SummaryView summary(@PathVariable String id) {
+        ExchangeAttestation item = attestations
+                .repository()
+                .find(new AttestationId(id))
+                .orElseThrow(() -> new InvalidInputException("ATTESTATION_NOT_FOUND", "attestation was not found"));
+        return new SummaryView(
+                item.id().value(),
+                item.transactionId(),
+                item.integrationId(),
+                item.boundaryOutcome().name(),
+                item.status().name(),
+                item.signer().algorithm(),
+                item.signer().keyVersion(),
+                item.auditChainId().value(),
+                item.signature().present());
+    }
+
+    public record SummaryView(
+            String id,
+            @JsonProperty("transaction_id") String transactionId,
+            @JsonProperty("integration_id") String integrationId,
+            @JsonProperty("boundary_outcome") String boundaryOutcome,
+            String status,
+            String algorithm,
+            @JsonProperty("key_version") String keyVersion,
+            @JsonProperty("audit_chain_id") String auditChainId,
+            @JsonProperty("signature_present") boolean signaturePresent) {}
+
     @PostMapping("/{id}/verify")
     public VerifyView verify(@PathVariable String id) {
         ExchangeAttestation attestation = attestations

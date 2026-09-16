@@ -23,6 +23,7 @@
         <module>application</module>
         <module>gcp</module>
         <module>api</module>
+        <module>web-edge</module>
         <module>worker</module>
     </modules>
 

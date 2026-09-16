@@ -7,7 +7,13 @@
 export interface FrontendEnv {
   apiBaseUrl: string
   apiTimeoutMs: number
+  mode: 'local' | 'cloud'
+  firebaseApiKey: string
+  firebaseAuthDomain: string
+  firebaseProjectId: string
 }
+
+const mode = import.meta.env.VITE_APP_MODE === 'cloud' ? 'cloud' : 'local'
 
 function readPublicBaseUrl(): string {
   const raw = import.meta.env.VITE_API_BASE_URL?.trim() ?? ''
@@ -39,6 +45,10 @@ function readTimeoutMs(): number {
 }
 
 export const frontendEnv: FrontendEnv = {
-  apiBaseUrl: readPublicBaseUrl(),
+  apiBaseUrl: mode === 'cloud' ? '' : readPublicBaseUrl(),
   apiTimeoutMs: readTimeoutMs(),
+  mode,
+  firebaseApiKey: import.meta.env.VITE_FIREBASE_API_KEY?.trim() ?? '',
+  firebaseAuthDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN?.trim() ?? '',
+  firebaseProjectId: import.meta.env.VITE_FIREBASE_PROJECT_ID?.trim() ?? '',
 }

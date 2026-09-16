@@ -73,5 +73,17 @@ class ProdFoundationSecurityTests {
     void unrelatedProductionAndDevelopmentRoutesRemainDenied() throws Exception {
         mockMvc.perform(get("/api/v1/admin/session")).andExpect(status().isUnauthorized());
         mockMvc.perform(post("/api/v1/dev/evaluate")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/attestations")).andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/v1/attestations/some-id/verify")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/v1/quarantine")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void safeEvidenceReadsPassSecurityAndReachTheirHandlers() throws Exception {
+        mockMvc.perform(get("/api/v1/deliveries/dlv-ef133a64-fe3c-4cd3-afc6-6c4486f3dd00"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/attestations/one/summary")).andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/attestations/one/verify")).andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/audit/chains/one/verify")).andExpect(status().isNotFound());
     }
 }

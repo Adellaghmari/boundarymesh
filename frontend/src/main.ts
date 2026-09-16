@@ -1,10 +1,18 @@
-import { createPinia } from 'pinia'
 import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
 import './styles/_base.scss'
 
-const app = createApp(App)
-app.use(createPinia())
-app.use(router)
-app.mount('#app')
+// Build-time split keeps local lab routes and their chunks out of the hosted bundle.
+if (import.meta.env.VITE_APP_MODE === 'cloud') {
+  void import('./views/CloudConsoleView.vue').then(({ default: CloudConsoleView }) => {
+    createApp(CloudConsoleView).mount('#app')
+  })
+} else {
+  void Promise.all([import('./App.vue'), import('./router'), import('pinia')]).then(
+    ([{ default: App }, { default: router }, { createPinia }]) => {
+      const app = createApp(App)
+      app.use(createPinia())
+      app.use(router)
+      app.mount('#app')
+    },
+  )
+}

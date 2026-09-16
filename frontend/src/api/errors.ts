@@ -31,7 +31,7 @@ export function userMessageFor(error: unknown): string {
   if (error instanceof BoundaryMeshApiError) {
     return error.message
   }
-  return 'The local backend could not be reached.'
+  return 'BoundaryMesh could not complete the request.'
 }
 
 export function isRetryable(error: unknown): boolean {

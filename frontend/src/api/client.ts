@@ -90,13 +90,13 @@ function classifyHttpError(status: number, body: unknown, requestId: string): Bo
     )
   }
   if (status >= 500) {
-    return new BoundaryMeshApiError('server', 'The local backend returned an unexpected error.', {
+    return new BoundaryMeshApiError('server', 'The BoundaryMesh service returned an unexpected error.', {
       status,
       requestId: backendRequestId,
       errorCode,
     })
   }
-  return new BoundaryMeshApiError('server', 'The local backend returned an unexpected response.', {
+  return new BoundaryMeshApiError('server', 'The BoundaryMesh service returned an unexpected response.', {
     status,
     requestId: backendRequestId,
     errorCode,
@@ -121,14 +121,17 @@ export class BoundaryMeshApiClient {
         Accept: 'application/json',
         'X-Request-Id': requestId,
       }
-      const csrf = readCookie('XSRF-TOKEN')
+      const csrf = readCookie(frontendEnv.mode === 'cloud' ? '__Host-bm_csrf' : 'XSRF-TOKEN')
       if (csrf) {
-        headers['X-XSRF-TOKEN'] = csrf
+        headers[frontendEnv.mode === 'cloud' ? 'X-BM-CSRF' : 'X-XSRF-TOKEN'] = csrf
       }
       if (options.body !== undefined) {
         headers['Content-Type'] = 'application/json'
       }
       if (options.authorization) {
+        if (frontendEnv.mode === 'cloud') {
+          throw new BoundaryMeshApiError('malformed', 'Cloud browser requests cannot carry backend credentials.')
+        }
         headers.Authorization = options.authorization
       }
 
@@ -148,7 +151,7 @@ export class BoundaryMeshApiClient {
         } catch {
           throw new BoundaryMeshApiError(
             'malformed',
-            'The backend returned a response that was not valid JSON.',
+            'The BoundaryMesh service returned a response that was not valid JSON.',
             {
               status: response.status,
               requestId,
@@ -160,8 +163,11 @@ export class BoundaryMeshApiClient {
       if (!response.ok) {
         throw classifyHttpError(response.status, parsed, requestId)
       }
+      if (response.status === 204) {
+        return { data: undefined as T, requestId, status: response.status }
+      }
       if (parsed === undefined) {
-        throw new BoundaryMeshApiError('malformed', 'The backend returned an empty response.', {
+        throw new BoundaryMeshApiError('malformed', 'The BoundaryMesh service returned an empty response.', {
           status: response.status,
           requestId,
         })
@@ -177,11 +183,11 @@ export class BoundaryMeshApiClient {
         throw error
       }
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new BoundaryMeshApiError('timeout', 'The local backend did not respond in time.', {
+        throw new BoundaryMeshApiError('timeout', 'The BoundaryMesh service did not respond in time.', {
           requestId,
         })
       }
-      throw new BoundaryMeshApiError('unavailable', 'The local Java backend is not reachable.', {
+      throw new BoundaryMeshApiError('unavailable', 'The BoundaryMesh service is not reachable.', {
         requestId,
       })
     } finally {

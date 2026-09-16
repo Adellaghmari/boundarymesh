@@ -22,6 +22,13 @@ describe('API client', () => {
     expect(requestId).toMatch(/^bm-/)
   })
 
+  it('accepts a successful empty 204 response for session logout', async () => {
+    server.use(http.post('/session/logout', () => new HttpResponse(null, { status: 204 })))
+    const result = await client.request<void>('/session/logout', { method: 'POST' })
+    expect(result.status).toBe(204)
+    expect(result.data).toBeUndefined()
+  })
+
   it('maps timeout, 400, 401, 5xx, and malformed bodies', async () => {
     const originalFetch = globalThis.fetch
     try {
@@ -72,7 +79,7 @@ describe('API client', () => {
     )
     await expect(client.request('/api/v1/boom')).rejects.toMatchObject({
       kind: 'server',
-      message: 'The local backend returned an unexpected error.',
+      message: 'The BoundaryMesh service returned an unexpected error.',
     })
 
     server.use(

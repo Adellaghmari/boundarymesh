@@ -16,6 +16,7 @@ import { defineKms } from "./kms";
 import { definePubSub } from "./pubsub";
 import { defineSecretManager, PHASE_15E_SECRET_IDS } from "./secrets";
 import { defineWorkloads } from "./workloads";
+import { defineWebEdge } from "./web-edge";
 
 const gcpConfig = new pulumi.Config("gcp");
 const appConfig = new pulumi.Config();
@@ -37,6 +38,7 @@ const workloads = defineWorkloads(foundation, {
     cryptoKey: kms.cryptoKey,
     secrets: secretManager.secrets,
 });
+const webEdge = defineWebEdge(foundation, workloads.apiService, workloads.runApi);
 
 export const phase15DScope = "ARTIFACT_REGISTRY_ONLY" as const;
 export const phase15EScope = "SECRET_CONTAINERS_ONLY" as const;
@@ -72,3 +74,5 @@ export const apiServiceAccountEmail = workloads.apiServiceAccount.email;
 export const workerServiceAccountEmail = workloads.workerServiceAccount.email;
 export const apiCloudRunServiceName = workloads.apiService.name;
 export const workerPoolName = workloads.workerPool.name;
+export const webEdgeServiceName = webEdge.service.name;
+export const webEdgeServiceAccountEmail = webEdge.identity.email;

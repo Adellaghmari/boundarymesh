@@ -7,6 +7,7 @@ import dev.adellaghmari.boundarymesh.application.audit.AuditRepository;
 import dev.adellaghmari.boundarymesh.application.connector.ConnectorSafetyPort;
 import dev.adellaghmari.boundarymesh.application.connector.LocalConnectorSafetyPort;
 import dev.adellaghmari.boundarymesh.application.credential.InMemoryCredentialCatalog;
+import dev.adellaghmari.boundarymesh.application.delivery.DeliveryIdempotencyStore;
 import dev.adellaghmari.boundarymesh.application.delivery.DeliveryPort;
 import dev.adellaghmari.boundarymesh.application.graph.ObservedCrossingStore;
 import dev.adellaghmari.boundarymesh.application.outbox.OutboxDeliveryPort;
@@ -59,6 +60,11 @@ public class GcpApiProductionConfig {
     @Bean
     AuditRepository gcpAuditRepository(GcpApiRuntime runtime) {
         return runtime.auditRepository();
+    }
+
+    @Bean
+    DeliveryIdempotencyStore gcpDeliveryIdempotencyStore(GcpApiRuntime runtime) {
+        return runtime.deliveryIdempotencyStore();
     }
 
     @Bean

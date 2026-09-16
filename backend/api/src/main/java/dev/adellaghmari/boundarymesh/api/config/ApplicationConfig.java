@@ -25,8 +25,11 @@ import dev.adellaghmari.boundarymesh.application.credential.InMemoryCredentialCa
 import dev.adellaghmari.boundarymesh.application.crossing.CrossingComposer;
 import dev.adellaghmari.boundarymesh.application.crossing.CrossingDeliveryService;
 import dev.adellaghmari.boundarymesh.application.crossing.TransactionSubmissionService;
+import dev.adellaghmari.boundarymesh.application.delivery.DeliveryIdempotencyStore;
 import dev.adellaghmari.boundarymesh.application.delivery.DeliveryInstructionFactory;
 import dev.adellaghmari.boundarymesh.application.delivery.DeliveryPort;
+import dev.adellaghmari.boundarymesh.application.delivery.DeliveryStateQueryService;
+import dev.adellaghmari.boundarymesh.application.delivery.InMemoryDeliveryIdempotencyStore;
 import dev.adellaghmari.boundarymesh.application.delivery.RecordingDeliveryPort;
 import dev.adellaghmari.boundarymesh.application.egress.EgressEvaluator;
 import dev.adellaghmari.boundarymesh.application.egress.EgressPolicyRepository;
@@ -129,6 +132,17 @@ public class ApplicationConfig {
     @Bean
     DeliveryInstructionFactory deliveryInstructionFactory(Clock clock) {
         return new DeliveryInstructionFactory(clock);
+    }
+
+    @Bean
+    @Profile({"local", "test"})
+    DeliveryIdempotencyStore localDeliveryIdempotencyStore() {
+        return new InMemoryDeliveryIdempotencyStore();
+    }
+
+    @Bean
+    DeliveryStateQueryService deliveryStateQueryService(DeliveryIdempotencyStore store) {
+        return new DeliveryStateQueryService(store);
     }
 
     @Bean
