@@ -79,4 +79,15 @@ describe('hosted production console', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('session has expired')
   })
+
+  it('leaves a failed session bootstrap unavailable rather than indefinitely loading', async () => {
+    vi.mocked(initializeCloudSession).mockRejectedValueOnce(
+      new BoundaryMeshApiError('malformed', 'The BoundaryMesh service returned an unexpected response.'),
+    )
+    const wrapper = mount(CloudConsoleView)
+    await flushPromises()
+    expect(wrapper.text()).toContain('secure web edge is unavailable')
+    expect(wrapper.get('button').text()).toBe('Sign in')
+    expect(submitSyntheticTransaction).not.toHaveBeenCalled()
+  })
 })

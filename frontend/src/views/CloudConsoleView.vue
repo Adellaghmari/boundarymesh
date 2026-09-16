@@ -47,6 +47,7 @@ function handleError(error: unknown): void {
     authState.value = 'unavailable'
     message.value = 'The secure web edge is unavailable. Retry when the service is reachable.'
   } else {
+    authState.value = 'unavailable'
     message.value = error instanceof Error ? error.message : 'The request could not be completed.'
   }
 }
