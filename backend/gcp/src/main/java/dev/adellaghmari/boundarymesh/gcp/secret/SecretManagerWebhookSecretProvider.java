@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Secret Manager adapter for webhook HMAC material. Not wired into the API in Phase 15E. Fail
- * closed without exposing payload.
+ * Secret Manager adapter for webhook HMAC material. The production API composition selects it;
+ * local/test do not. Fails closed without exposing payload.
  */
 public final class SecretManagerWebhookSecretProvider implements WebhookSecretProvider {
 

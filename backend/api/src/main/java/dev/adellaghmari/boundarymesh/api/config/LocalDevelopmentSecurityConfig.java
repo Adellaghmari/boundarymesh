@@ -75,6 +75,8 @@ public class LocalDevelopmentSecurityConfig {
                         .permitAll()
                         .requestMatchers("/api/v1/security/me")
                         .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/transactions")
+                        .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/identity/evaluate")
                         .authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/v1/dev/evaluate")

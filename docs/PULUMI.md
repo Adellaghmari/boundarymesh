@@ -10,7 +10,7 @@ Pulumi **manages** Cloud KMS attestation signing resources. Applied in Phase 15H
 - `gcp.kms.KeyRing` `attestation-key-ring` → `boundarymesh-attestation` in `europe-west4` — **LIVE / PROVISIONED IN GCP**
 - `gcp.kms.CryptoKey` `attestation-signing-key` → `exchange-attestation`, purpose `ASYMMETRIC_SIGN`, algorithm `EC_SIGN_P256_SHA256`, protection `SOFTWARE` — **LIVE / PROVISIONED IN GCP**
 
-No workload IAM. No service account. No imported key material. No scheduled version cycling. Version `1` is ENABLED. Existing Artifact Registry, Secret Manager, Firestore, and Pub/Sub resources stay unchanged. Cloud KMS signing is **LIVE VERIFIED LOCALLY (15H-C)**.
+Phase 15I-B1 provisioned the keyless API and worker service accounts. Only the API has CryptoKey-scoped signer and public-key-viewer IAM; the worker has no KMS role. No imported key material or scheduled version cycling exists. Version `1` is ENABLED. Existing Artifact Registry, Secret Manager, Firestore, Pub/Sub, and KMS resources remain unchanged. Cloud KMS signing is **LIVE VERIFIED LOCALLY (15H-C)**; Cloud Run workload signing is not live.
 
 `phase15HScope = "KMS_PREVIEW"` is a historical implementation-scope marker introduced in 15H-A, like the earlier Firestore/Pub/Sub scope constants. It is not a measurement of live infrastructure state. The literal and stack output are intentionally unchanged; a source comment clarifies its meaning. Provisioning truth comes from the 15H-B apply checkpoint and read-only GCP metadata. Phase 15H-C runs previews only, never `pulumi up`, including for informational output changes.
 
@@ -42,7 +42,7 @@ No indexes, PITR, backup schedules, or TTL policies. Phase 15F-C live-verified t
 Pulumi **manages** Secret Manager containers in addition to Artifact Registry:
 
 - `gcp.projects.Service` `secret-manager-api` → `secretmanager.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
-- `gcp.secretmanager.Secret` containers `hmac-quayforge`, `covecrm-api`, `lumenway-api`, `rivertide-api` — **LIVE / PROVISIONED IN GCP**, empty, user-managed replication in `europe-west4`
+- `gcp.secretmanager.Secret` containers `hmac-quayforge`, `covecrm-api`, `lumenway-api`, `rivertide-api` — **LIVE / PROVISIONED IN GCP**, user-managed replication in `europe-west4`; each has one enabled synthetic version created outside Pulumi in 15I-B2
 
 No version resources. No IAM. No secret payloads. Adapter is not workload-live.
 
@@ -54,6 +54,11 @@ Pulumi **manages** Artifact Registry:
 - `gcp.artifactregistry.Repository` `boundarymesh-images` → repo id `boundarymesh`, format `DOCKER`, location `europe-west4` — **LIVE / PROVISIONED IN GCP**
 
 API and worker images are **PUSHED + REMOTE DIGEST VERIFIED** (see `infra/README.md`). Image publication is not a workload deployment.
+
+Phase 15I-C1 added fresh images built from the current Firestore/Pub/Sub/KMS/Secret Manager
+production composition. Phase 15I-C2 deployed the private API Service and no-endpoint Worker Pool
+on remote-verified immutable digests. The Phase 15D images remain historical; workload functional
+verification remains Phase 15I-D.
 
 ## Phase 15B
 
@@ -94,7 +99,9 @@ Do not mix console-created Cloud Run with Pulumi (duplicate ownership). Exceptio
 
 ## Secrets in Pulumi
 
-Stack config secrets for project numbers only if needed. Connector HMAC **values** go to Secret Manager via a **one-time** admin API after deploy, not `pulumi config`. If Pulumi creates the secret **resource**, the first version can be a placeholder rotated immediately.
+Stack config secrets for project numbers only if needed. Connector and HMAC **values** go to
+Secret Manager through a controlled interactive administrator procedure, never `pulumi config`,
+source, chat, logs, or placeholder SecretVersions.
 
 ## Preview / update / rollback
 
@@ -104,6 +111,8 @@ Stack config secrets for project numbers only if needed. Connector HMAC **values
 
 ## Resources Pulumi manages
 
-Two Cloud Run services, two SAs, Pub/Sub topic+sub+DLQ, Firestore database Native, KMS key ring+key, Secret Manager **ids**, Artifact Registry, IAM bindings, WIF pool/provider, Firebase Hosting (or documented split), budget alert.
+One Cloud Run Service, one Cloud Run Worker Pool, two keyless workload SAs, Pub/Sub
+topic/subscription/DLQ, Firestore Native database, KMS key ring/key, Secret Manager **ids**,
+Artifact Registry, additive IAM members, and later separately gated WIF/Firebase Hosting.
 
 No GKE. No VPC. No SQL.

@@ -29,6 +29,16 @@ public final class InMemoryCredentialCatalog implements CredentialCatalog {
         return catalog;
     }
 
+    /** Production demo references aligned with the synthetic Secret Manager version-1 payloads. */
+    public static InMemoryCredentialCatalog productionSyntheticDefaults(Instant rotatedAt) {
+        InMemoryCredentialCatalog catalog = new InMemoryCredentialCatalog();
+        catalog.put(record("covecrm-api", "1", CredentialStatus.ACTIVE, "covecrm-connector", "COVECRM", rotatedAt));
+        catalog.put(record("lumenway-api", "1", CredentialStatus.ACTIVE, "lumenway-connector", "LUMENWAY", rotatedAt));
+        catalog.put(
+                record("rivertide-api", "1", CredentialStatus.ACTIVE, "rivertide-connector", "RIVERTIDE", rotatedAt));
+        return catalog;
+    }
+
     public void put(CredentialRecord record) {
         records.put(
                 key(

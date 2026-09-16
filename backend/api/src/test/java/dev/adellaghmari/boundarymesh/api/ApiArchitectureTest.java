@@ -33,7 +33,7 @@ class ApiArchitectureTest {
                     "com.networknt..");
 
     @ArchTest
-    static final ArchRule apiMustNotDependOnCamelOrWorkerAdapters = noClasses()
+    static final ArchRule apiMustNotDependOnCamelWorkerOrGoogleSdk = noClasses()
             .that()
             .resideInAPackage("dev.adellaghmari.boundarymesh.api..")
             .should()
@@ -43,11 +43,20 @@ class ApiArchitectureTest {
                     "io.github.resilience4j..",
                     "org.wiremock..",
                     "dev.adellaghmari.boundarymesh.worker..",
-                    "dev.adellaghmari.boundarymesh.gcp..",
                     "com.google.cloud..",
                     "com.google.cloud.firestore..",
                     "com.google.firestore..",
                     "com.google.cloud.pubsub..",
                     "com.google.pubsub..",
                     "com.google.cloud.kms..");
+
+    @ArchTest
+    static final ArchRule onlyApiBootstrapMayReferenceGcpAdapters = noClasses()
+            .that()
+            .resideInAPackage("dev.adellaghmari.boundarymesh.api..")
+            .and()
+            .resideOutsideOfPackage("dev.adellaghmari.boundarymesh.api.bootstrap.gcp..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("dev.adellaghmari.boundarymesh.gcp..");
 }

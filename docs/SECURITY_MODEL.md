@@ -83,16 +83,20 @@ Method security: `@PreAuthorize("hasAuthority('ROLE_SECURITY_ADMIN')")` on rotat
 
 Do not persist raw before/after payloads when Restricted fields are present. Persist **field names, actions, and SHA-256 of canonical transformed body**.
 
-## Workload IAM (target)
+## Workload IAM (live after Phase 15I-B1)
 
 | Principal | Firestore | Pub/Sub | Secret Manager | KMS |
 | --- | --- | --- | --- | --- |
-| `sa-boundary-api` | RW app data | publish delivery | **none** | signer on attestation key |
-| `sa-delivery-worker` | RW app data | subscribe + DLQ | accessor on connector secrets only | signer if needed |
+| `boundarymesh-api` | `roles/datastore.user` | publisher on delivery topic | accessor on `hmac-quayforge` only | signer + public-key viewer on attestation CryptoKey |
+| `boundarymesh-worker` | `roles/datastore.user` | subscriber on worker subscription only | accessor on three connector secrets only | **none** |
 | `sa-github-ci` | none | none | none | none (tests use emulators) |
 | `sa-github-deploy` | none | none | none | none; Cloud Run + Artifact Registry + Pulumi |
 
-Secret-level IAM, not `roles/secretmanager.secretAccessor` on the whole project.
+Secret-level IAM, not `roles/secretmanager.secretAccessor` on the whole project. Pub/Sub and KMS
+roles are also resource-scoped. Firestore data IAM is project-scoped because collection-level IAM
+is not available for these server SDK operations. Both workload service accounts are keyless.
+Secret authorization is live. Each approved integration secret has exactly one enabled synthetic
+version; values are absent from Pulumi and source. Workload access awaits Cloud Run verification.
 
 ## Microsoft Graph permission story
 

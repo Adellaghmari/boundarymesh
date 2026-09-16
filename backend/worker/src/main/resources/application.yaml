@@ -31,6 +31,15 @@ camel:
     main-run-controller: true
 
 boundarymesh:
+  gcp:
+    project: ${BOUNDARYMESH_GCP_PROJECT:boundarymesh-dev}
+    location: ${BOUNDARYMESH_GCP_LOCATION:europe-west4}
+    firestore-database: ${BOUNDARYMESH_FIRESTORE_DATABASE:boundarymesh}
+    pubsub-topic: ${BOUNDARYMESH_PUBSUB_TOPIC:boundarymesh-deliveries}
+    pubsub-subscription: ${BOUNDARYMESH_PUBSUB_SUBSCRIPTION:boundarymesh-delivery-worker}
+    kms-key-ring: ${BOUNDARYMESH_KMS_KEY_RING:boundarymesh-attestation}
+    kms-crypto-key: ${BOUNDARYMESH_KMS_CRYPTO_KEY:exchange-attestation}
+    kms-key-version: ${BOUNDARYMESH_KMS_KEY_VERSION:1}
   worker:
     wiremock-port: 8099
     retry-max-attempts: 3

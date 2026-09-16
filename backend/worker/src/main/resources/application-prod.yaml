@@ -1,0 +1,19 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  main:
+    web-application-type: none
+
+boundarymesh:
+  worker:
+    covecrm-base-url: ${BOUNDARYMESH_COVECRM_BASE_URL:}
+    lumenway-base-url: ${BOUNDARYMESH_LUMENWAY_BASE_URL:}
+    rivertide-base-url: ${BOUNDARYMESH_RIVERTIDE_BASE_URL:}
+    retry-wait: 250ms
+    retry-after-cap: 30s
+    timeout: 10s
+    circuit-open-wait: 30s
+
+# The worker pool has no URL and starts no HTTP server. Provider URLs are non-secret deployment
+# configuration. Empty URLs fail closed until explicitly configured for the deployment gate.

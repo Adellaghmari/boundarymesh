@@ -12,7 +12,7 @@ A privileged process can still delete or rewrite storage. Verification **detects
 
 ## Chain identity
 
-One chain per integration (`AuditChainId` = integration slug, for example `quayforge-orders`). That avoids a single global lock. Firestore transactional append is **EMULATOR TESTED + LIVE VERIFIED**. Cloud Run workload persistence is **not** live.
+One chain per integration (`AuditChainId` = integration slug, for example `quayforge-orders`). That avoids a single global lock. Firestore transactional append is **EMULATOR TESTED + LIVE VERIFIED**. The Phase 15I-D1 `quayforge-orders` chain was verified in the deployed Cloud Run workload and is retained as synthetic live-verification evidence.
 
 ## Domain
 
@@ -76,4 +76,4 @@ Read-only:
 
 ## Storage truth
 
-Local default remains in-memory and does not survive restart. Firestore adapter **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Database **LIVE / PROVISIONED**. Live verification residue **CLEANED**. Cloud Run workload persistence is **not** live.
+Local default remains in-memory and does not survive restart. Firestore adapter is **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED**. Database is **LIVE / PROVISIONED**. D1 audit entries are append-only evidence and were preserved after cleanup.

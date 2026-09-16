@@ -5,5 +5,7 @@ spring:
 
 boundarymesh:
   dev-evaluate-enabled: false
+  runtime-mode: GCP
 
-# Prod profile is a configuration placeholder only. No cloud credentials. Entra remains PLANNED.
+# ADC comes from the keyless Cloud Run service identity. Entra remains disabled until its
+# dedicated Secret Manager value and production security flow are approved in a later gate.

@@ -19,12 +19,22 @@ public class HealthController {
 
     @GetMapping("/health")
     public HealthResponse health() {
-        return new HealthResponse("UP", properties.serviceName(), "SYNTHETIC DEMO / LOCAL");
+        return new HealthResponse("UP", properties.serviceName(), truth());
     }
 
     @GetMapping("/ready")
     public ReadyResponse ready() {
-        return new ReadyResponse("READY", "Phase 1 local foundation has no downstream dependencies.");
+        return new ReadyResponse(
+                "READY",
+                "GCP".equalsIgnoreCase(properties.runtimeMode())
+                        ? "Production composition initialized; downstream access remains fail-closed."
+                        : "Local composition initialized without live cloud dependencies.");
+    }
+
+    private String truth() {
+        return "GCP".equalsIgnoreCase(properties.runtimeMode())
+                ? "GCP PRODUCTION COMPOSITION"
+                : "SYNTHETIC DEMO / LOCAL";
     }
 
     public record HealthResponse(String status, String service, String truth) {}

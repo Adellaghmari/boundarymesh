@@ -1,6 +1,8 @@
 # Architecture
 
-BoundaryMesh is two Cloud Run workloads, one enforcement engine, and a delivery fabric. Security policy lives in explicit Java types. Apache Camel runs **after** the engine has decided.
+BoundaryMesh is a Cloud Run API Service plus a Cloud Run Worker Pool, one enforcement engine,
+and a delivery fabric. Security policy lives in explicit Java types. Apache Camel runs **after**
+the engine has decided.
 
 ## Decision summary
 
@@ -10,7 +12,7 @@ BoundaryMesh is two Cloud Run workloads, one enforcement engine, and a delivery 
 | Backend | Java 25 + Spring Boot 4.1.1 + Spring Security 7.1 | Real Java/Spring security and API engineering |
 | Integration runtime | Apache Camel 4.22.0 on the **worker** | Connector routes, translation, DLC, idempotent consumer |
 | Primary cloud | GCP `europe-west4` | Distinct from Azure (A) and AWS (B); serverless |
-| Compute | Cloud Run ×2, request-based, scale-to-zero | No GKE, no VMs |
+| Compute | Cloud Run Service + Worker Pool | API request-based/scale-to-zero; worker is a continuous pull process |
 | Ingress vs delivery | Sync enforcement, async delivery | Downstream instability must not pin the public boundary |
 | Data | Firestore Native | Access-pattern first; not Postgres (A) or DynamoDB (B) |
 | Async | Pub/Sub + DLQ | Integration-oriented delivery bus, not a release event bus |
@@ -42,17 +44,22 @@ PUBLIC BOUNDARY API  —  boundarymesh-api  (:8080)
                 ▼
         DeliveryInstruction  (approved payload only)
                 │
-                ▼  local HTTP ingest today; outbox + Pub/Sub adapters **EMULATOR TESTED + LIVE VERIFIED LOCALLY**; Pub/Sub infra **LIVE / PROVISIONED**; Cloud Run messaging **PLANNED FOR 15I**
-LOCAL DELIVERY WORKER  —  boundarymesh-worker  (:8081)
-        │  just-in-time credential resolve (local provider)
+                ▼  local HTTP ingest by default; prod profile uses transactional outbox + Pub/Sub
+CLOUD RUN WORKER POOL  —  boundarymesh-worker  (no HTTP server or URL)
+        │  just-in-time Secret Manager credential resolve
         │  consent already decided on the API
         │  Camel CBR + translator
         │  Resilience4j around outbound HTTP
-        │  WireMock synthetic CoveCRM / Lumenway / Rivertide
+        │  configured HTTPS CoveCRM / Lumenway / Rivertide endpoints
         │  DELIVERED | DUPLICATE_SUPPRESSED | QUARANTINED
 ```
 
-Firestore adapters exist in `backend/gcp` and are **not** the default local runtime. The Firestore database `boundarymesh` is **LIVE / PROVISIONED**. `GoogleFirestoreFacade` is **LIVE VERIFIED AGAINST REAL GCP FIRESTORE**. Live verification residue is **CLEANED**. The transactional outbox and Pub/Sub adapters are **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub API, topics, and pull subscriptions are **LIVE / PROVISIONED**. Dead-letter forwarding is **PLANNED / NOT CONFIGURED**. Live verification residue is **CLEANED**. Cloud Run workload persistence is **not** live. Cloud Run Worker Pool is **PLANNED FOR PHASE 15I**. Cloud KMS signer adapter is **IMPLEMENTED + UNIT TESTED** and not default-wired. Cloud KMS in GCP is **LIVE / PROVISIONED**. Live KMS signing is **LIVE VERIFIED LOCALLY (15H-C)**. Secret Manager adapters exist in `backend/gcp` and are **not** the default local runtime. Empty secret containers are **LIVE / PROVISIONED IN GCP**. No versions. No workload IAM.
+The `prod` Spring profile composes the existing Firestore, Pub/Sub, Cloud KMS, and Secret Manager
+adapters from `backend/gcp`; local/test profiles remain self-contained. Phase 15I-C2 deployed the
+private API Service and no-endpoint Worker Pool with the two keyless service accounts and existing
+least-privilege IAM. Both revisions are Ready. Secret versions are live, but workload data-path and
+connector behavior remain Phase 15I-D verification work. Existing Firestore, Pub/Sub, KMS, Secret
+Manager containers, and Artifact Registry remain unchanged. Dead-letter forwarding is still not configured.
 
 ## Why this is not an API gateway
 
@@ -60,25 +67,30 @@ A gateway would authenticate optionally, rate-limit, and reverse-proxy. Boundary
 
 ## Service boundaries
 
-### `boundary-api` (public)
+### `boundarymesh-api` (Cloud Run Service)
 
 - Receives HTTP transactions and Graph validation handshakes.
 - Runs synchronous enforcement stages that do not require destination I/O.
 - Connector **availability** is a local circuit snapshot + credential **metadata**, not a live Graph call.
 - Publishes to Pub/Sub only after `ALLOW` or `ALLOW_WITH_TRANSFORMATION`.
-- Serves public read APIs and Entra-protected admin APIs.
-- Identity: Cloud Run service account `sa-boundary-api`.
-- Permissions: Firestore read/write (app collections), Pub/Sub publish (delivery topic only), KMS sign (attestation key), Secret Manager **denied**, Graph network **not used**.
+- Identity: dedicated keyless service account `boundarymesh-api`.
+- Permissions: Firestore data read/write, publish only to `boundarymesh-deliveries`, sign and read
+  the public key only on `exchange-attestation`, and access only `hmac-quayforge`.
+- Phase 15I-A keeps Cloud Run invocation IAM-authenticated. The production Spring security
+  profile currently exposes health/readiness only; frontend/public authentication is a later gate.
 
-### `delivery-worker` (not publicly invokable)
+### `boundarymesh-worker` (Cloud Run Worker Pool)
 
 - Consumes Pub/Sub.
 - Resolves connector credentials from Secret Manager.
 - Executes Camel routes with Resilience4j.
-- Identity: `sa-delivery-worker`.
-- Permissions: Firestore read/write, Pub/Sub consume + DLQ publish, Secret Manager accessor on **named** connector secrets, KMS sign if delivery attestation update is required, no public HTTP.
+- Identity: dedicated keyless service account `boundarymesh-worker`.
+- Permissions: Firestore data read/write, subscribe only to `boundarymesh-delivery-worker`, and
+  Secret Manager accessor only on `covecrm-api`, `lumenway-api`, and `rivertide-api`.
+- No KMS, Pub/Sub publisher, DLQ publisher, or administrative permission.
 
-Ingress protection for the worker: Cloud Run ingress **internal** (Pub/Sub push with OIDC) **or** pull subscription (preferred for portfolio: pull from worker, no public URL). **Lock: pull subscription.** Worker has no HTTP ingress.
+The worker uses the locked pull subscription architecture. Worker Pools have no HTTP ingress or
+service URL. The Spring production profile starts no web server and keeps the pull consumer alive.
 
 ## Process architecture (Java)
 
@@ -111,10 +123,11 @@ See [NETWORK_BOUNDARIES.md](NETWORK_BOUNDARIES.md). Short form:
 2. `boundary-api` → Firestore / KMS (Google backplane, IAM)
 3. `boundary-api` → Pub/Sub (IAM)
 4. Pub/Sub → `delivery-worker` (pull, SA)
-5. `delivery-worker` → Secret Manager / Firestore / KMS
+5. `boundarymesh-worker` → Secret Manager / Firestore
 6. `delivery-worker` → external destinations (Graph, synthetic sinks)
 
-Each hop has a different identity. Secret Manager is unreachable from the public service.
+Each hop has a different identity. Secret access is scoped to the named secrets each workload
+actually resolves.
 
 ## Frontend architecture
 

@@ -9,9 +9,9 @@ import dev.adellaghmari.boundarymesh.domain.credential.CredentialReference;
 import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryResult;
 import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryResultKind;
 import dev.adellaghmari.boundarymesh.domain.delivery.ProviderFailureCategory;
+import dev.adellaghmari.boundarymesh.worker.connector.ConnectorEndpointProvider;
 import dev.adellaghmari.boundarymesh.worker.connector.FailureClassifier;
 import dev.adellaghmari.boundarymesh.worker.connector.ResilientConnectorClient;
-import dev.adellaghmari.boundarymesh.worker.stub.SyntheticProviderServer;
 import java.time.Duration;
 import org.apache.camel.Exchange;
 import org.springframework.stereotype.Component;
@@ -21,13 +21,13 @@ public class CamelConnectorBridge {
 
     private final ResilientConnectorClient connectors;
     private final SecretValueProvider secrets;
-    private final SyntheticProviderServer providers;
+    private final ConnectorEndpointProvider endpoints;
 
     public CamelConnectorBridge(
-            ResilientConnectorClient connectors, SecretValueProvider secrets, SyntheticProviderServer providers) {
+            ResilientConnectorClient connectors, SecretValueProvider secrets, ConnectorEndpointProvider endpoints) {
         this.connectors = connectors;
         this.secrets = secrets;
-        this.providers = providers;
+        this.endpoints = endpoints;
     }
 
     public void deliverCove(Exchange exchange) {
@@ -52,6 +52,11 @@ public class CamelConnectorBridge {
                 : request == null ? "" : request.instruction().payloadJson();
         CredentialReference reference =
                 request == null ? null : request.instruction().credentialReference();
+        String providerBaseUrl = endpoints.baseUrl(destination);
+        if (providerBaseUrl.isBlank()) {
+            exchange.getMessage().setBody(failed(destination, exchange, ReasonCode.CONNECTOR_UNAVAILABLE, 0, false));
+            return;
+        }
         if (reference == null) {
             exchange.getMessage().setBody(failed(destination, exchange, ReasonCode.CREDENTIAL_MISSING, 0, false));
             return;
@@ -69,7 +74,7 @@ public class CamelConnectorBridge {
             long start = System.nanoTime();
             ResilientConnectorClient.ConnectorCallResult call = connectors.post(
                     destination,
-                    providers.baseUrl() + basePath + suffix,
+                    providerBaseUrl + basePath + suffix,
                     body,
                     reference.version().value(),
                     secret);

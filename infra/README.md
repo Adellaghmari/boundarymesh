@@ -2,9 +2,12 @@
 
 Pulumi + TypeScript workspace for Google Cloud resources.
 
-## Phase 15F-B purpose
+## Phase 15I-A purpose
 
-The named Firestore Native database and Firestore API are **LIVE / PROVISIONED**. Phase 15F-C live-verified the Java SDK path and cleaned run-scoped documents. Phase 15G-B **applied** Pub/Sub API + delivery topic + pull subscription + DLQ topic/inspect subscription. Dead-letter forwarding is **not** configured. Phase 15H-B **applied** Cloud KMS API + key ring + asymmetric signing key. Do not add IAM, versions, or Cloud Run here.
+Phase 15I-A defined the production composition, two keyless workload identities, least-privilege
+IAM, an IAM-private Cloud Run API Service, and a no-endpoint Cloud Run Worker Pool. Phase 15I-B1
+applied only the two identities and ten approved IAM members. The post-apply preview proposes only
+the three Cloud Run resources, with 30 resources unchanged and zero updates/replacements/deletes.
 
 Authentication uses workstation **Application Default Credentials**. Do not set `GOOGLE_APPLICATION_CREDENTIALS`. Do not commit ADC files, tokens, or service-account JSON.
 
@@ -17,15 +20,19 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | Artifact Registry Pulumi definition | IMPLEMENTED + APPLIED |
 | Artifact Registry API | LIVE / ENABLED IN GCP |
 | Artifact Registry repository | LIVE / PROVISIONED IN GCP |
-| API image | PUSHED + REMOTE DIGEST VERIFIED |
-| Worker image | PUSHED + REMOTE DIGEST VERIFIED |
+| API image | CORRECTED 15I-C2 IMAGE PUSHED + DIGEST VERIFIED + DEPLOYED |
+| Worker image | PHASE 15I-C1 BUILT + SMOKE-TESTED + PUSHED + DIGEST VERIFIED + DEPLOYED |
 | Artifact Registry round-trip | LIVE VERIFIED |
-| Cloud Run deployment | PLANNED |
+| Production composition | IMPLEMENTED + LOCALLY TESTED / NOT LIVE |
+| Cloud Run API Service | LIVE / PRIVATE / READY |
+| Cloud Run Worker Pool | LIVE / READY / NO PUBLIC URL |
 | Secret Manager Pulumi definition | IMPLEMENTED + APPLIED |
 | Secret Manager API | LIVE / ENABLED IN GCP |
-| Secret containers | LIVE / PROVISIONED IN GCP / EMPTY |
-| Secret versions | PLANNED |
-| Workload IAM | PLANNED |
+| Secret containers | LIVE / PROVISIONED IN GCP |
+| Secret versions | FOUR TOTAL / EXACTLY ONE ENABLED SYNTHETIC VERSION PER CONTAINER |
+| Workload identities | TWO KEYLESS SERVICE ACCOUNTS / LIVE / PROVISIONED |
+| Workload IAM | LIVE / TEN ADDITIVE LEAST-PRIVILEGE MEMBERS APPLIED |
+| Secret Manager workload access | LIVE / RESOURCE-SCOPED AUTHORIZATION ONLY |
 | Firestore persistence adapters | IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY |
 | Firestore Pulumi definition | IMPLEMENTED + APPLIED |
 | Firestore API in GCP | LIVE / ENABLED IN GCP |
@@ -41,35 +48,38 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | Cloud KMS Pulumi | IMPLEMENTED + APPLIED |
 | Cloud KMS API / key ring / crypto key in GCP | LIVE / PROVISIONED |
 | Live Cloud KMS signing | LIVE VERIFIED LOCALLY (15H-C) |
-| Workload KMS IAM | PLANNED FOR PHASE 15I |
+| Workload KMS IAM | API-ONLY, CRYPTO-KEY-SCOPED / LIVE / APPLIED |
+| Phase 15I-A preview | 15 CREATE / 18 UNCHANGED / 0 UPDATE / 0 REPLACE / 0 DELETE |
+| Phase 15I-B1 targeted apply | 12 CREATED / NO OTHER OPERATIONS |
+| Phase 15I-B1 final preview | 3 CREATE / 30 UNCHANGED / 0 UPDATE / 0 REPLACE / 0 DELETE |
+| Phase 15I-B2 Secret Manager adapter proof | LIVE VERIFIED LOCALLY / PAYLOADS NOT PULUMI-MANAGED |
+| Phase 15I-C2 final preview | 33 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
 
 Target region: **`europe-west4`**.  
 Stack: **`dev`**.  
 GCP project: **`boundarymesh-dev`**.  
-Repository ID: **`boundarymesh`** (DOCKER). Published image names: `boundarymesh-api`, `boundarymesh-worker` (tag `phase15d`).
+Repository ID: **`boundarymesh`** (DOCKER). The API runs the corrected `phase15i-c2-fix-20260915-2345` image by immutable digest; the Worker Pool runs the verified Phase 15I-C1 digest. Phase 15D tags remain historical and untouched.
 
-## Published image digests (2026-09-13)
+## Published image digests (2026-09-16)
 
-Immutable Artifact Registry digests. Tag `phase15d` is a pointer; the digest is the artifact.
+Current immutable Artifact Registry deployment candidates:
 
 ```text
-europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api:phase15d
-sha256:3a933e2bc260be6511d835353dbc3a3cde10e3e836f1b318122e7e94cee4d705
+europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api@sha256:445cb21117d659fe4430cfdfb1eef956555bba5dc570a15ed43478251feb3a97
 
-europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker:phase15d
+europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker@sha256:5d9e0a3a442d3e3dbba8b424aa2cea79c6c97010a486cdd66eb3fd204f7071a6
 sha256:62570f5c928394b74b60071ed7d34cb534522ce7f4f8c39816b012d855fa3768
 ```
 
-These images are stored, not deployed. Cloud Run remains **PLANNED**.
+The API and Worker Pool are deployed on these immutable references. This documents deployment
+readiness only; Phase 15I-D remains required for functional workload verification.
 
 Local backend remains `file://~`. GCS state is **PLANNED**.
 
-## Future planned services (not provisioned)
+## Gated next steps (not provisioned)
 
-- Secret versions and Secret Manager IAM
 - Pub/Sub dead-letter forwarding
-- Workload KMS IAM (15I); KMS signing already live-verified locally in 15H-C
-- Cloud Run
+- Controlled workload end-to-end verification in Phase 15I-D
 - Firebase Hosting, pending final validation
 - WIF
 
@@ -89,4 +99,4 @@ npm test
 pulumi preview
 ```
 
-Do not run `pulumi destroy` or add versions/IAM until explicitly approved.
+Do not add another secret version or deploy Cloud Run before a later explicit gate.

@@ -1,5 +1,5 @@
 /**
- * Google Pub/Sub adapters. Domain and application depend on cloud-neutral ports only. This package
- * is not Spring-wired into API or worker in Phase 15G-A.
+ * Google Pub/Sub adapters. Domain and application depend on cloud-neutral ports only. Phase 15I-A
+ * selects these adapters only from production bootstrap boundaries.
  */
 package dev.adellaghmari.boundarymesh.gcp.pubsub;

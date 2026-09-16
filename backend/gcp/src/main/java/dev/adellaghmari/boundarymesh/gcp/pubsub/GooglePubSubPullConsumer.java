@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Pull consumer for the future Cloud Run Worker Pool. No public HTTP endpoint. Not deployed in
- * Phase 15G-A.
+ * Pull consumer for the Cloud Run Worker Pool production composition. No public HTTP endpoint;
+ * the workload remains preview-only in Phase 15I-A.
  */
-public final class GooglePubSubPullConsumer implements AutoCloseable {
+public final class GooglePubSubPullConsumer implements PubSubBatchConsumer {
 
     private final PubSubSettings settings;
     private final PubSubTransport transport;
@@ -117,6 +117,7 @@ public final class GooglePubSubPullConsumer implements AutoCloseable {
         return foreign;
     }
 
+    @Override
     public List<ConsumeDisposition> pullAndHandle(int maxMessages) {
         PullRequest request = PullRequest.newBuilder()
                 .setSubscription(transport.subscriptionName().toString())

@@ -2,7 +2,9 @@
 
 `backend/gcp` (`boundarymesh-gcp`) is the only home for Google Cloud application adapters.
 
-Domain and application stay cloud-provider independent. Local in-memory adapters remain the default. API and worker do **not** depend on this module yet.
+Domain and application stay cloud-provider independent. Local in-memory adapters remain the
+default. API and worker bootstrap packages depend on this module only for the explicit `prod`
+composition root introduced in Phase 15I-A.
 
 ## Runtime modes
 
@@ -11,7 +13,7 @@ Domain and application stay cloud-provider independent. Local in-memory adapters
 | `LOCAL` | Default application path. In-memory / local adapters. |
 | `TEST` | Deterministic tests. Same local adapters. |
 | `GCP_EMULATOR` | Opt-in JUnit tag `gcp-emulator`. Firestore emulator adapters allowed. Not part of default `mvnw verify`. |
-| `PROD` | May select Secret Manager, Firestore, Pub/Sub, and Cloud KMS production adapters when a later phase wires `backend/gcp` under an explicit cloud profile. Live Java SDK path is **LIVE VERIFIED LOCALLY** via opt-in `gcp-live`; Pub/Sub adapters are **EMULATOR TESTED + LIVE VERIFIED LOCALLY** via opt-in `gcp-live-pubsub`. Pub/Sub infrastructure is **LIVE / PROVISIONED**. Cloud KMS signing is **LIVE VERIFIED LOCALLY** via opt-in `gcp-live-kms`; workload IAM is **PLANNED FOR 15I**. |
+| `PROD` | Explicitly composes Firestore, Pub/Sub, Cloud KMS, and Secret Manager adapters in API/worker bootstrap boundaries. **DEPLOYED + READY; one internal cloud transaction was LIVE VERIFIED in 15I-D1.** |
 
 `local` remains the API/worker Spring default. Profile `gcp-emulator` is documented only; it is not activated at runtime.
 
@@ -40,13 +42,13 @@ Secret Manager and Cloud KMS have no emulator path. Secret Manager uses local do
 | --- | --- | --- | --- |
 | `AuditRepository` | `InMemoryAuditRepository` | `FirestoreAuditRepository` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | `AttestationRepository` | `InMemoryAttestationRepository` | `FirestoreAttestationRepository` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
-| `AttestationSigner` | `JcaP256AttestationCrypto` | Cloud KMS `EC_SIGN_P256_SHA256` | **IMPLEMENTED + UNIT TESTED** (not default-wired) |
+| `AttestationSigner` | `JcaP256AttestationCrypto` | Cloud KMS `EC_SIGN_P256_SHA256` | **IMPLEMENTED + UNIT TESTED + PROD-COMPOSED + DEPLOYED + WORKLOAD LIVE VERIFIED** |
 | `QuarantineRepository` | `InMemoryQuarantineRepository` | `FirestoreQuarantineRepository` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | `ReplayNonceStore` | `InMemoryReplayNonceStore` | `FirestoreReplayNonceStore` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | `IdempotencyStore` | `InMemoryIdempotencyStore` | `FirestoreIdempotencyStore` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | `DeliveryIdempotencyStore` | `InMemoryDeliveryIdempotencyStore` | `FirestoreDeliveryIdempotencyStore` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
-| `SecretValueProvider` | `LocalSecretValueProvider` | `SecretManagerSecretValueProvider` | **IMPLEMENTED** (not default-wired) |
-| `WebhookSecretProvider` | `LocalWebhookSecretProvider` | `SecretManagerWebhookSecretProvider` | **IMPLEMENTED** (not default-wired) |
+| `SecretValueProvider` | `LocalSecretValueProvider` | `SecretManagerSecretValueProvider` | **IMPLEMENTED + PROD-COMPOSED + DEPLOYED** (D1 did not exercise a connector credential read) |
+| `WebhookSecretProvider` | `LocalWebhookSecretProvider` | `SecretManagerWebhookSecretProvider` | **IMPLEMENTED + PROD-COMPOSED + DEPLOYED** (D1 did not exercise the webhook path) |
 | `ObservedCrossingStore` | `InMemoryObservedCrossingStore` | `FirestoreObservedCrossingStore` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | `OutboxRepository` | `InMemoryOutboxRepository` | `FirestoreOutboxRepository` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** |
 | `MessagePublisherPort` | `RecordingMessagePublisher` | `GooglePubSubPublisher` | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED AGAINST REAL GCP** |
@@ -76,11 +78,13 @@ Secret Manager and Cloud KMS have no emulator path. Secret Manager uses local do
 | Pub/Sub resources in real GCP | **LIVE / PROVISIONED** |
 | TTL policy | **PLANNED / REVIEW LATER** |
 
-Do **not** claim Cloud Run workload persistence is live. API/worker still use in-memory defaults.
+The explicit prod composition is deployed and Ready. D1 verified the workload persistence path for one
+synthetic transaction; local/test profiles continue to use in-memory defaults.
 
 ## Phase 15E secret inventory
 
-Pulumi **manages** empty Secret Manager **containers**. They are LIVE in GCP. No versions. No IAM.
+Pulumi manages the four Secret Manager containers. Phase 15I-B1 applied resource-level workload
+IAM, and Phase 15I-B2 added exactly one enabled synthetic version to each container outside Pulumi.
 
 | Secret ID | Category | Why |
 | --- | --- | --- |
@@ -96,7 +100,9 @@ Not created in 15E:
 | Entra client secret | B / 15I | Stays `BOUNDARYMESH_ENTRA_CLIENT_SECRET`. Cloud Run env-from-secret later |
 | Graph `clientState` | C | Graph subscriptions remain PLANNED |
 
-API and worker do **not** depend on `backend/gcp` in this phase. Local providers remain the default.
+The API prod profile accesses `hmac-quayforge`. The worker prod profile accesses the three
+provider credentials. Workstation ADC live verification proved both adapter paths; Cloud Run
+workload access is still unverified. Local providers remain the default.
 
 ## Phase 15G outbox / Pub/Sub truth
 
@@ -123,7 +129,7 @@ API and worker do **not** depend on `backend/gcp` in this phase. Local providers
 | Live publisher / consumer data path | **LIVE VERIFIED LOCALLY** (not Cloud Run workload-live) |
 | Live persist → publish → consume → dedupe | **LIVE VERIFIED** |
 | Live verification residue | **CLEANED** |
-| Cloud Run Worker Pool | **PLANNED FOR PHASE 15I** |
+| Cloud Run Worker Pool | **LIVE / READY**; no endpoint; Pub/Sub consumption and worker idempotency were LIVE VERIFIED in 15I-D1 |
 
 Do **not** claim Cloud Run workload messaging is live.
 
@@ -141,7 +147,37 @@ Do **not** claim Cloud Run workload messaging is live.
 | Cloud KMS in real GCP | **LIVE / PROVISIONED** |
 | Live Cloud KMS signing | **LIVE VERIFIED LOCALLY (15H-C)** |
 | Local JCA signer | **IMPLEMENTED + VERIFIED / UNCHANGED** |
-| Workload KMS IAM | **PLANNED FOR 15I** |
+| Workload KMS IAM | **API-ONLY + CRYPTO-KEY-SCOPED / LIVE + APPLIED (15I-B1)** |
 | Default `mvnw verify` | No ADC, no KMS, no real GCP |
 
-Cloud KMS signing is **LIVE VERIFIED LOCALLY** with synthetic data. Workload IAM and Cloud Run remain **PLANNED FOR 15I**. See [Phase 15H verification](PHASE_15H_VERIFICATION.md).
+Cloud KMS signing is **LIVE VERIFIED LOCALLY** with synthetic data. The API-only CryptoKey IAM is
+live after 15I-B1; the Cloud Run API composition is deployed and Ready, but workload signing is not
+yet verified. See
+[Phase 15H verification](PHASE_15H_VERIFICATION.md).
+
+## Phase 15I-A workload composition truth
+
+- API: real Firestore repositories, transactional outbox publisher, Cloud KMS signer/verifier,
+  and Secret Manager webhook provider.
+- Worker: real Pub/Sub continuous pull, Firestore delivery idempotency, Camel delivery, and
+  Secret Manager connector credentials. No HTTP server and no KMS permission.
+- Exactly two keyless service accounts are live. The ten approved IAM grants use additive member resources.
+- `roles/datastore.user` is project-scoped because Firestore IAM cannot express collection-level
+  restrictions for these server SDK data operations. Pub/Sub, KMS, and Secret Manager grants are
+  scoped to the individual topic, subscription, CryptoKey, or secret.
+- No SecretVersion is defined in Pulumi. Phase 15I-B2 created one enabled synthetic version per
+  existing integration secret and live-verified `GoogleSecretAccessor`, the webhook provider, and
+  the worker provider through ADC. D1 did not exercise a deployed workload secret read. The Entra cloud
+  composition remains disabled, so no Entra secret container exists.
+- Phase 15I-C1 built and smoke-tested current API/worker images, pushed them to the existing
+  Artifact Registry repository, and pinned the verified immutable digests in Pulumi.
+- Phase 15I-C2 enabled `run.googleapis.com`, deployed the private API Service and no-endpoint
+  Worker Pool, and ended with a 33-unchanged, zero-operation Pulumi preview. The API and Worker
+  Pool are Ready. The private `POST /api/v1/transactions` ingress is deployed and one internal cloud transaction was LIVE VERIFIED in Phase 15I-D1. D1 did not exercise a deployed workload secret read or external connector delivery.
+
+## Phase 15I-D0C delivery transport semantics
+
+The worker maps application delivery disposition to transport behavior. Terminal outcomes, including a
+durably persisted QUARANTINED custody state, are acknowledged after persistence succeeds. Retryable
+transient outcomes remain eligible for Pub/Sub redelivery. Persistence failure does not produce a false
+ACK. The D0C worker image is deployed to the Worker Pool; D1 verified one live application transaction and its terminal ACK behavior.

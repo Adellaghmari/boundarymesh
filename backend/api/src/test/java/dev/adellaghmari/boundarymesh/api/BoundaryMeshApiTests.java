@@ -53,6 +53,43 @@ class BoundaryMeshApiTests {
     }
 
     @Test
+    void productionTransactionIngressUsesTheSharedDeliveryPipeline() throws Exception {
+        mockMvc.perform(
+                        post("/api/v1/transactions")
+                                .header("Authorization", bearer())
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                {
+                                  "transaction_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+                                  "integration_id": "quayforge-orders",
+                                  "contract_version": "v1",
+                                  "destination_system": "RIVERTIDE",
+                                  "payload": {
+                                    "event_id": "evt-production-contract",
+                                    "event_type": "order.updated",
+                                    "order_id": "ord-1001",
+                                    "customer_id": "cust-9"
+                                  }
+                                }
+                                """))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.transaction_id").value("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"))
+                .andExpect(jsonPath("$.submission_status").value("ACCEPTED_FOR_ASYNCHRONOUS_DELIVERY"))
+                .andExpect(jsonPath("$.attestation_status").value("SIGNED"));
+    }
+
+    @Test
+    void productionTransactionIngressRejectsInvalidRequestBeforeApplicationMutation() throws Exception {
+        mockMvc.perform(post("/api/v1/transactions")
+                        .header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error_code").value("REQUEST_INVALID"));
+    }
+
+    @Test
     void trustedInboundRequestIdIsBounded() throws Exception {
         mockMvc.perform(get("/api/v1/health").header("X-Request-Id", "ok-request_1"))
                 .andExpect(header().string("X-Request-Id", "ok-request_1"));

@@ -15,6 +15,7 @@ import { defineFirestore } from "./firestore";
 import { defineKms } from "./kms";
 import { definePubSub } from "./pubsub";
 import { defineSecretManager, PHASE_15E_SECRET_IDS } from "./secrets";
+import { defineWorkloads } from "./workloads";
 
 const gcpConfig = new pulumi.Config("gcp");
 const appConfig = new pulumi.Config();
@@ -30,6 +31,12 @@ const secretManager = defineSecretManager(foundation);
 const firestore = defineFirestore(foundation);
 const pubsub = definePubSub(foundation);
 const kms = defineKms(foundation);
+const workloads = defineWorkloads(foundation, {
+    deliveryTopic: pubsub.deliveryTopic,
+    deliveryWorkerSubscription: pubsub.deliveryWorkerSubscription,
+    cryptoKey: kms.cryptoKey,
+    secrets: secretManager.secrets,
+});
 
 export const phase15DScope = "ARTIFACT_REGISTRY_ONLY" as const;
 export const phase15EScope = "SECRET_CONTAINERS_ONLY" as const;
@@ -39,6 +46,7 @@ export const phase15GScope = "PUBSUB_PREVIEW" as const;
 // This literal is not deployment status: 15H-B applied the three KMS resources.
 // Keep it stable; an informational rename does not warrant a stack update.
 export const phase15HScope = "KMS_PREVIEW" as const;
+export const phase15IScope = "WORKLOAD_COMPOSITION_PREVIEW_ONLY" as const;
 
 export const environment = foundation.environment;
 export const region = foundation.region;
@@ -59,3 +67,8 @@ export const deliveryDlqTopicName = pubsub.deliveryDlqTopic.name;
 export const kmsApiService = kms.kmsApi.service;
 export const attestationKeyRingName = kms.keyRing.name;
 export const attestationCryptoKeyName = kms.cryptoKey.name;
+export const cloudRunApiService = workloads.runApi.service;
+export const apiServiceAccountEmail = workloads.apiServiceAccount.email;
+export const workerServiceAccountEmail = workloads.workerServiceAccount.email;
+export const apiCloudRunServiceName = workloads.apiService.name;
+export const workerPoolName = workloads.workerPool.name;

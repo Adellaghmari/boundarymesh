@@ -14,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "boundarymesh")
 public record BoundaryMeshProperties(
         @NotBlank String serviceName,
+        @NotBlank String runtimeMode,
         boolean devEvaluateEnabled,
         boolean devSecurityToolsEnabled,
         @Pattern(regexp = "[a-z0-9._-]+") String policyVersion,

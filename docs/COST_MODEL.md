@@ -30,7 +30,7 @@ Currency: USD, 2026 public list / always-free where noted. Recheck at provision 
 | Idle deployed (min 0, tiny data, 1 KMS key version, few secrets) | **~$0.10–2.00** (KMS + storage + leftover logs) |
 | Recruiter demo traffic (hundreds of GETs/day) | still ~free-tier |
 | Logging left at DEBUG with payload fields | **$10–50+** easily — primary trap |
-| Cloud Run min-instance=1 on two services | **tens of dollars** — forbidden by default |
+| API min-instance > 0 or deployed Worker Pool instance | **tens of dollars** — API stays at 0; worker cost requires deployment approval |
 | Load balancer + unused GKE | out of policy |
 
 ## Cost traps before implementation

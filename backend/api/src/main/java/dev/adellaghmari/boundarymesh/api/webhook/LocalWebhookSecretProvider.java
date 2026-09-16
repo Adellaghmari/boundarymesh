@@ -7,9 +7,11 @@ import java.security.SecureRandom;
 import java.util.HexFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile({"local", "test"})
 public class LocalWebhookSecretProvider implements WebhookSecretProvider {
 
     private static final Logger log = LoggerFactory.getLogger(LocalWebhookSecretProvider.class);

@@ -7,8 +7,8 @@ import java.util.Objects;
 
 /**
  * Profile/mode composition for secret ports. LOCAL, TEST, and GCP_EMULATOR keep local providers.
- * Secret Manager has no emulator. PROD may select Secret Manager adapters when API/worker later
- * import this module under an explicit cloud profile. Phase 15E does not activate PROD.
+ * Secret Manager has no emulator. PROD selects Secret Manager adapters through the explicit
+ * Phase 15I production composition.
  */
 public final class SecretProviderSelection {
 

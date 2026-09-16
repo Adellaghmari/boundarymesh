@@ -11,7 +11,7 @@ Out of scope: compromising Google or Microsoft as vendors; physical datacenter.
 | Elevation of privilege (reprocess) | `boundary.admin` on quarantine reprocess | Entra app roles |
 | Replay (inbound) | HMAC nonce window | Firestore TTL nonce |
 | Replay (outbound) | Delivery idempotent consumer | Firestore idempotency |
-| Tampering | JWT/HMAC/contracts/egress + audit-chain verification + ECDSA attestation verify; KMS key hosted in GCP and live signing verified | Workload KMS IAM (15I), Firestore versioning |
+| Tampering | JWT/HMAC/contracts/egress + audit-chain verification + ECDSA attestation verify; KMS key hosted in GCP, live signing verified, API-only CryptoKey IAM applied | Cloud Run workload verification, Firestore versioning |
 | Denial / dependency failure | Bounded R4j retry, circuit breaker, quarantine | Pub/Sub redelivery budget |
 
 ## Phase 11–13 implemented mitigations
@@ -20,12 +20,18 @@ Out of scope: compromising Google or Microsoft as vendors; physical datacenter.
 | --- | --- | --- |
 | Repudiation | Structured audit + SHA-256 hash-chain continuity | Firestore + exported checkpoints |
 | Tampering (audit entries) | Recalculated hashes and previous-hash links | Object versioning / privileged-admin detection |
-| Tampering (attestation) | ECDSA P-256 verification of RFC 8785 bytes; Cloud KMS signing **LIVE VERIFIED LOCALLY**; digest/signature/public-key integrity checks, strict DER → P1363, verification before SIGNED | Workload KMS IAM and production runtime composition (15I) |
+| Tampering (attestation) | ECDSA P-256 verification of RFC 8785 bytes; Cloud KMS signing **LIVE VERIFIED LOCALLY**; digest/signature/public-key integrity checks, strict DER → P1363, verification before SIGNED; API-only CryptoKey IAM **LIVE** | Production workload verification (15I-C/D) |
 | Information disclosure | Metadata-only audit/attestation/graph | Gitleaks CI |
 
 The chain does **not** prevent deletion by a privileged storage administrator. That remains a storage/governance concern.
 
-Normal/local/test and `gcp-emulator` retain JCA with no live KMS dependency. The explicit `gcp-live-kms` Maven profile permits real KMS metadata reads, signing, and public-key retrieval against the existing version 1 with synthetic input. Phase 15H-C is **LIVE VERIFIED LOCALLY**, not Cloud Run workload-live. Future production composition uses `CloudKmsAttestationSigner` after workload IAM is created in Phase 15I. Controlled failure tests return UNSIGNED without changing the boundary outcome; they are not live IAM/key failure tests.
+Normal/local/test and `gcp-emulator` retain JCA with no live KMS dependency. The explicit
+`gcp-live-kms` Maven profile permits real KMS metadata reads, signing, and public-key retrieval
+against the existing version 1 with synthetic input. Phase 15H-C is **LIVE VERIFIED LOCALLY**.
+Phase 15I-A composes `CloudKmsAttestationSigner`; Phase 15I-B1 applied the API-only,
+CryptoKey-scoped signing and public-key-viewer IAM. The Cloud Run API Service and Worker Pool are
+deployed and Ready; workload KMS signing remains Phase 15I-D verification work. Controlled failure tests
+return UNSIGNED without changing the boundary outcome; they are not live IAM/key failure tests.
 
 ## Phase 3–4 implemented mitigations
 
@@ -39,7 +45,7 @@ Normal/local/test and `gcp-emulator` retain JCA with no live KMS dependency. The
 | Information disclosure | Sanitized 401/403, no raw JWT/HMAC in responses or normal logs | Gitleaks CI, cloud log sinks |
 | Oversized ingest | 65536-byte webhook limit, 413 | Distributed rate limit |
 
-KMS infrastructure is **LIVE / PROVISIONED**, and opt-in KMS signing is **LIVE VERIFIED LOCALLY**. Secret Manager containers are LIVE and empty. Firestore adapters are emulator-tested and live-verified locally; they are not the default runtime and not Cloud Run workload-live.
+KMS infrastructure is **LIVE / PROVISIONED**, and opt-in KMS signing is **LIVE VERIFIED LOCALLY**. Secret Manager has one enabled synthetic version in each of the four integration containers; production Java adapters are live-verified locally without payload disclosure. The Cloud Run workloads are deployed and Ready, but their Firestore, Secret Manager, Pub/Sub, and KMS data paths await Phase 15I-D verification.
 
 Each important threat maps to **preventive**, **detective**, and **recovery** controls.
 

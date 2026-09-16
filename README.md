@@ -68,7 +68,7 @@ Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** Co
 
 A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Still **PLANNED:** Graph change notifications, Secret Manager versions/IAM, Cloud Run, Firebase Hosting, WIF. The Cloud KMS attestation adapter is **IMPLEMENTED + UNIT TESTED** and not the local default. Cloud KMS API, key ring `boundarymesh-attestation`, and crypto key `exchange-attestation` are **LIVE / PROVISIONED**. Firestore persistence adapters are **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** and not the local default. The named Firestore database `boundarymesh` is **LIVE / PROVISIONED**. Live verification residue is **CLEANED**. The transactional outbox and Pub/Sub adapters are **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub infrastructure is **LIVE / PROVISIONED**. Dead-letter forwarding is **PLANNED / NOT CONFIGURED**. Live verification residue is **CLEANED**. Cloud Run workload persistence is **not** live. API/worker Docker images are **IMPLEMENTED + LOCALLY TESTED** and **PUSHED + REMOTE DIGEST VERIFIED**. Artifact Registry remains **LIVE**. Phase 15E Secret Manager API and empty containers are **LIVE**. No Cloud Run workloads.
+Still **PLANNED:** Graph change notifications, Firebase Hosting, WIF, and production Entra/OIDC. Phase 15I-D1 executed one synthetic transaction through the private `POST /api/v1/transactions` route: workload Firestore, Cloud KMS signing, attestation, audit, outbox, Pub/Sub, Worker Pool consumption, idempotency, and terminal quarantine ACK were LIVE VERIFIED. External connector delivery remains intentionally disabled and unverified. Each synthetic integration secret has exactly one enabled high-entropy version; D1 did not exercise a credential read. Existing Firestore, Pub/Sub, and KMS resources remain unchanged. Dead-letter forwarding is not configured.
 
 ## Navigation
 
@@ -128,7 +128,13 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — NOT COMPLETE.** Phase 14B live Microsoft Graph event crossing is recorded. Phase 15A–15B Pulumi/GCP project validation is **IMPLEMENTED + LOCALLY VALIDATED**. Phase 15C `backend/gcp` adapter foundation is **IMPLEMENTED + TESTED**. Phase 15D is **COMPLETE**. Phase 15E is **COMPLETE**: Secret Manager API **LIVE**; four empty containers **LIVE**. No versions. No IAM. Phase 15F–15G are **COMPLETE** (Firestore + Pub/Sub **LIVE / PROVISIONED**; adapters **LIVE VERIFIED LOCALLY**). Phase 15H-A is **COMPLETE**: Cloud KMS signer adapter **IMPLEMENTED + UNIT TESTED**. Phase 15H-B is **COMPLETE**: Cloud KMS API, key ring, and `exchange-attestation` **LIVE / PROVISIONED**. Live KMS signing **LIVE VERIFIED LOCALLY (15H-C)**. Cloud Run remains **PLANNED**. Identity #1 local JWT **TESTED**; Entra OIDC Operator login **LIVE VERIFIED LOCALLY**. Webhook #2 generic HMAC **TESTED**; Graph subscriptions **PLANNED**. Contract Drift #3 TESTED. Data Boundary #4 **LIVE VERIFIED LOCALLY** for `m365-calendar-egress/v1` on one real Graph event. Credential & Consent #5 local model TESTED with delegated `Calendars.Read` **LIVE VERIFIED LOCALLY**. Quarantine #6 local TESTED. Tamper-Evident Audit Chain **LIVE VERIFIED LOCALLY** for the Graph event. Cryptographic Exchange Attestation **LIVE VERIFIED LOCALLY** (local JCA; Cloud KMS signing **LIVE VERIFIED LOCALLY**). Integration Boundary Graph **LIVE VERIFIED LOCALLY** (`m365-calendar` OBSERVED/ACTIVE). Graph Java SDK **LIVE VERIFIED LOCALLY**.
+**PROJECT C — PHASE 15I FUNCTIONALLY COMPLETE.** Phase 14B live Microsoft Graph event crossing is recorded. Phases
+15A–15H are complete. Phase 15I deployed the private API Service and no-endpoint Worker Pool with
+two keyless workload identities and additive least-privilege IAM. D1 LIVE VERIFIED one internal
+cloud transaction through Firestore, Cloud KMS signing, signed attestation, audit, outbox, Pub/Sub,
+worker idempotency, and terminal quarantine ACK. External connector delivery, Firebase Hosting,
+WIF, and production Entra/OIDC remain planned or disabled. The Pulumi passphrase remains functional
+but was previously exposed in chat and must be rotated before the final project security freeze.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 

@@ -293,6 +293,41 @@ class OutboxPubSubEmulatorTest {
 
     @Test
     @Order(12)
+    void terminalQuarantineIsAcknowledgedAfterDurableState() throws Exception {
+        OutboxRecord terminal = outboxService
+                .persistApprovedInstruction(
+                        OutboxEmulatorFixtures.result(
+                                BoundaryOutcome.ALLOW, ReasonCode.IDENTITY_INVALID, "{\"order_id\":\"ord-terminal\"}"),
+                        OutboxEmulatorFixtures.command())
+                .orElseThrow();
+        new OutboxPublisher(outbox, publisher, OutboxEmulatorFixtures.CLOCK).publish(terminal.instructionId());
+        RecordingDeliveryPort port = new RecordingDeliveryPort();
+        port.succeedWith(new DeliveryResult(
+                DeliveryResultKind.QUARANTINED,
+                0,
+                ProviderFailureCategory.CREDENTIAL_OR_CONSENT,
+                ReasonCode.CONNECTOR_UNAVAILABLE,
+                "connector endpoint is not configured",
+                Duration.ZERO,
+                "covecrm",
+                "sink.covecrm.activity",
+                "CLOSED",
+                null,
+                null,
+                null,
+                false));
+        FirestoreDeliveryIdempotencyStore store = new FirestoreDeliveryIdempotencyStore(firestore);
+        try (GooglePubSubPullConsumer consumer = consumer(port, store)) {
+            assertThat(pullUntil(consumer, 1)).containsOnly(ConsumeDisposition.ACK);
+            assertThat(store.previous(terminal.instructionId())).isPresent();
+            Thread.sleep(250);
+            assertThat(consumer.pullAndHandle(1)).isEmpty();
+            assertThat(port.invocationCount()).isEqualTo(1);
+        }
+    }
+
+    @Test
+    @Order(13)
     void outboxDocumentsAndMessagesContainNoSecrets() {
         Map<String, Object> raw = firestore
                 .get(FirestoreCollections.deliveryOutbox(allowRecord.instructionId()))

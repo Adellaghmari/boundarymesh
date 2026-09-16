@@ -41,6 +41,15 @@ class WorkerArchitectureTest {
                     "com.google.firestore..",
                     "com.google.cloud.pubsub..",
                     "com.google.pubsub..",
-                    "com.google.cloud.kms..",
-                    "dev.adellaghmari.boundarymesh.gcp..");
+                    "com.google.cloud.kms..");
+
+    @ArchTest
+    static final ArchRule onlyWorkerBootstrapMayReferenceGcpAdapters = noClasses()
+            .that()
+            .resideInAPackage("dev.adellaghmari.boundarymesh.worker..")
+            .and()
+            .resideOutsideOfPackage("dev.adellaghmari.boundarymesh.worker.bootstrap.gcp..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("dev.adellaghmari.boundarymesh.gcp..");
 }

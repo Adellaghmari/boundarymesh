@@ -3,9 +3,11 @@ package dev.adellaghmari.boundarymesh.api.webhook;
 import dev.adellaghmari.boundarymesh.application.webhook.ReplayNonceStore;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile({"local", "test"})
 public class InMemoryReplayNonceStore implements ReplayNonceStore {
 
     private final ConcurrentHashMap<String, Instant> seen = new ConcurrentHashMap<>();

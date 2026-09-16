@@ -2,7 +2,7 @@
 
 Access patterns first. Firestore Native, regional `europe-west4`, named database `boundarymesh` (never the default database). The Phase 15F-A Pulumi database uses **PESSIMISTIC** concurrency. This is **not** a SQL schema dump.
 
-Phase 15F-C live-verified the official Java SDK path against `projects/boundarymesh-dev/databases/boundarymesh`, then deleted the run-scoped documents. Residue is **CLEANED**. The delivery outbox collection `deliveryOutbox` is **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub topics and pull subscriptions are **LIVE / PROVISIONED**. Live persist → publish → consume is **LIVE VERIFIED**. Residue is **CLEANED**. Cloud Run workload persistence is **not** live.
+Phase 15F-C live-verified the official Java SDK path against `projects/boundarymesh-dev/databases/boundarymesh`. Phase 15I-D1 verified one deployed workload transaction end to end; D2 removed its disposable outbox and delivery-idempotency records while preserving signed attestation and append-only audit evidence. The delivery outbox collection is **EMULATOR TESTED + LIVE VERIFIED**. Pub/Sub topics and pull subscriptions are **LIVE / PROVISIONED**.
 
 ## Patterns
 

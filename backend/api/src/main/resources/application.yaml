@@ -45,6 +45,7 @@ springdoc:
 
 boundarymesh:
   service-name: boundarymesh-api
+  runtime-mode: ${BOUNDARYMESH_RUNTIME_MODE:LOCAL}
   policy-version: boundary-enforcement.phase10.v1
   worker-base-url: http://127.0.0.1:8081
   dev-evaluate-enabled: false
@@ -64,6 +65,15 @@ boundarymesh:
     redirect-uri: ${BOUNDARYMESH_ENTRA_REDIRECT_URI:http://127.0.0.1:5173/login/oauth2/code/entra}
     frontend-origin: ${BOUNDARYMESH_FRONTEND_ORIGIN:http://127.0.0.1:5173}
     graph-mode: ${BOUNDARYMESH_GRAPH_MODE:HARNESS}
+  gcp:
+    project: ${BOUNDARYMESH_GCP_PROJECT:boundarymesh-dev}
+    location: ${BOUNDARYMESH_GCP_LOCATION:europe-west4}
+    firestore-database: ${BOUNDARYMESH_FIRESTORE_DATABASE:boundarymesh}
+    pubsub-topic: ${BOUNDARYMESH_PUBSUB_TOPIC:boundarymesh-deliveries}
+    pubsub-subscription: ${BOUNDARYMESH_PUBSUB_SUBSCRIPTION:boundarymesh-delivery-worker}
+    kms-key-ring: ${BOUNDARYMESH_KMS_KEY_RING:boundarymesh-attestation}
+    kms-crypto-key: ${BOUNDARYMESH_KMS_CRYPTO_KEY:exchange-attestation}
+    kms-key-version: ${BOUNDARYMESH_KMS_KEY_VERSION:1}
 
 logging:
   level:

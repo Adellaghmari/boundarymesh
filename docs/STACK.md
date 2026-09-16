@@ -59,7 +59,7 @@ No Next.js. No Nuxt as a hosting framework (Vite SPA is enough). No Tailwind-as-
 | Component | Locked |
 | --- | --- |
 | Region | **`europe-west4`** (Netherlands) — single region, matches operator timezone UTC+2 |
-| Compute | Cloud Run **services** (request-based billing, scale-to-zero) |
+| Compute | Cloud Run API Service + continuous Worker Pool |
 | Messaging | Pub/Sub |
 | Data | Firestore **Native** mode, regional `europe-west4` |
 | Secrets | Secret Manager |

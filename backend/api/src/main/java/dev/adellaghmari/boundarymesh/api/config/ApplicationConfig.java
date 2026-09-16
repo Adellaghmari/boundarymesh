@@ -4,6 +4,8 @@ import dev.adellaghmari.boundarymesh.application.BoundaryEnforcementEngine;
 import dev.adellaghmari.boundarymesh.application.attestation.AttestationFactory;
 import dev.adellaghmari.boundarymesh.application.attestation.AttestationRepository;
 import dev.adellaghmari.boundarymesh.application.attestation.AttestationService;
+import dev.adellaghmari.boundarymesh.application.attestation.AttestationSigner;
+import dev.adellaghmari.boundarymesh.application.attestation.AttestationVerifier;
 import dev.adellaghmari.boundarymesh.application.attestation.InMemoryAttestationRepository;
 import dev.adellaghmari.boundarymesh.application.attestation.JcaP256AttestationCrypto;
 import dev.adellaghmari.boundarymesh.application.audit.AuditAppender;
@@ -22,6 +24,7 @@ import dev.adellaghmari.boundarymesh.application.credential.CredentialEvaluator;
 import dev.adellaghmari.boundarymesh.application.credential.InMemoryCredentialCatalog;
 import dev.adellaghmari.boundarymesh.application.crossing.CrossingComposer;
 import dev.adellaghmari.boundarymesh.application.crossing.CrossingDeliveryService;
+import dev.adellaghmari.boundarymesh.application.crossing.TransactionSubmissionService;
 import dev.adellaghmari.boundarymesh.application.delivery.DeliveryInstructionFactory;
 import dev.adellaghmari.boundarymesh.application.delivery.DeliveryPort;
 import dev.adellaghmari.boundarymesh.application.delivery.RecordingDeliveryPort;
@@ -92,6 +95,7 @@ public class ApplicationConfig {
     }
 
     @Bean
+    @Profile("!prod")
     InMemoryCredentialCatalog credentialCatalog(Clock clock) {
         return InMemoryCredentialCatalog.veloraDefaults(clock.instant());
     }
@@ -134,6 +138,7 @@ public class ApplicationConfig {
     }
 
     @Bean
+    @Profile({"local", "test"})
     QuarantineRepository quarantineRepository() {
         return new InMemoryQuarantineRepository();
     }
@@ -160,6 +165,12 @@ public class ApplicationConfig {
     }
 
     @Bean
+    TransactionSubmissionService transactionSubmissionService(CrossingDeliveryService deliveries) {
+        return new TransactionSubmissionService(deliveries);
+    }
+
+    @Bean
+    @Profile({"local", "test"})
     InMemoryAuditRepository auditRepository() {
         return new InMemoryAuditRepository();
     }
@@ -175,26 +186,29 @@ public class ApplicationConfig {
     }
 
     @Bean
+    @Profile({"local", "test"})
     JcaP256AttestationCrypto jcaP256AttestationCrypto() {
         return new JcaP256AttestationCrypto();
     }
 
     @Bean
+    @Profile({"local", "test"})
     InMemoryAttestationRepository attestationRepository() {
         return new InMemoryAttestationRepository();
     }
 
     @Bean
-    AttestationFactory attestationFactory(Clock clock, JcaP256AttestationCrypto crypto) {
-        return new AttestationFactory(clock, crypto);
+    AttestationFactory attestationFactory(Clock clock, AttestationSigner signer) {
+        return new AttestationFactory(clock, signer);
     }
 
     @Bean
-    AttestationService attestationService(AttestationRepository repository, JcaP256AttestationCrypto crypto) {
-        return new AttestationService(repository, crypto);
+    AttestationService attestationService(AttestationRepository repository, AttestationVerifier verifier) {
+        return new AttestationService(repository, verifier);
     }
 
     @Bean
+    @Profile({"local", "test"})
     ObservedCrossingStore observedCrossingStore() {
         return new InMemoryObservedCrossingStore();
     }

@@ -49,7 +49,11 @@ public final class DeliveryInstructionHandler {
     public static ConsumeDisposition disposition(DeliveryResult result) {
         return switch (result.kind()) {
             case DELIVERED, DUPLICATE_SUPPRESSED, PERMANENT_FAILURE, NOT_ATTEMPTED -> ConsumeDisposition.ACK;
-            case QUARANTINED -> ConsumeDisposition.NACK;
+            case QUARANTINED ->
+                switch (result.providerCategory()) {
+                    case RATE_LIMITED, TEMPORARY_FAILURE, TIMEOUT, CIRCUIT_OPEN -> ConsumeDisposition.NACK;
+                    default -> ConsumeDisposition.ACK;
+                };
         };
     }
 

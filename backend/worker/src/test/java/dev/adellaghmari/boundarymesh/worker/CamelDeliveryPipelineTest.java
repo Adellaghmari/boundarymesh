@@ -18,6 +18,7 @@ import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryInstructionId;
 import dev.adellaghmari.boundarymesh.domain.delivery.DeliveryResultKind;
 import dev.adellaghmari.boundarymesh.domain.delivery.ProviderFailureCategory;
 import dev.adellaghmari.boundarymesh.worker.camel.DeliveryRouteBuilder;
+import dev.adellaghmari.boundarymesh.worker.connector.ConnectorEndpointProvider;
 import dev.adellaghmari.boundarymesh.worker.connector.ResilientConnectorClient;
 import dev.adellaghmari.boundarymesh.worker.secret.LocalSecretValueProvider;
 import dev.adellaghmari.boundarymesh.worker.stub.SyntheticProviderServer;
@@ -52,8 +53,12 @@ class CamelDeliveryPipelineTest {
     @Autowired
     private MeterRegistry meters;
 
+    @Autowired
+    private ConnectorEndpointProvider endpoints;
+
     @BeforeEach
     void reset() {
+        assertThat(endpoints.baseUrl("COVECRM")).isEqualTo(providers.baseUrl());
         connectors.reset("COVECRM");
         connectors.reset("LUMENWAY");
         connectors.reset("RIVERTIDE");

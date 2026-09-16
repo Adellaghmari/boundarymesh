@@ -2,8 +2,10 @@ package dev.adellaghmari.boundarymesh.worker.config;
 
 import dev.adellaghmari.boundarymesh.application.delivery.DeliveryIdempotencyStore;
 import dev.adellaghmari.boundarymesh.application.delivery.InMemoryDeliveryIdempotencyStore;
+import dev.adellaghmari.boundarymesh.worker.connector.ConnectorEndpointProvider;
 import dev.adellaghmari.boundarymesh.worker.connector.ProviderException;
 import dev.adellaghmari.boundarymesh.worker.connector.ResilientConnectorClient;
+import dev.adellaghmari.boundarymesh.worker.stub.SyntheticProviderServer;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.micrometer.tagged.TaggedCircuitBreakerMetrics;
@@ -18,6 +20,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.restclient.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 
 @Configuration
@@ -25,8 +28,21 @@ import org.springframework.http.client.JdkClientHttpRequestFactory;
 public class WorkerConfig {
 
     @Bean
+    @Profile({"local", "test"})
     DeliveryIdempotencyStore deliveryIdempotencyStore() {
         return new InMemoryDeliveryIdempotencyStore();
+    }
+
+    @Bean
+    @Profile({"local", "test"})
+    ConnectorEndpointProvider syntheticConnectorEndpoints(SyntheticProviderServer providers) {
+        return destination -> providers.baseUrl();
+    }
+
+    @Bean
+    @Profile("prod")
+    ConnectorEndpointProvider productionConnectorEndpoints(WorkerProperties properties) {
+        return properties::providerBaseUrl;
     }
 
     @Bean

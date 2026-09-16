@@ -5,6 +5,7 @@ import dev.adellaghmari.boundarymesh.application.credential.SecretValueProvider;
 import dev.adellaghmari.boundarymesh.domain.credential.CredentialReference;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
  * and must never leave this worker.
  */
 @Component
+@Profile({"local", "test"})
 public class LocalSecretValueProvider implements SecretValueProvider {
 
     public static final String COVECRM_V1 = "TEST-SECRET-COVECRM-V1-NOT-FOR-PRODUCTION";

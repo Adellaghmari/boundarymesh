@@ -2,9 +2,24 @@
 
 Flagship capability #5.
 
-**Current:** local credential references remain the runtime path. Phase 15E provisioned empty Secret Manager containers in `boundarymesh-dev`. No versions. No IAM. The production adapter is implemented and tested with a controlled client; it is **not** workload-live.
+**Current:** local credential references remain the default runtime path. Phase 15E provisioned
+four Secret Manager containers in `boundarymesh-dev`. Phase 15I-A composes the production adapters,
+and Phase 15I-B1 applied resource-scoped access for the two keyless workload identities. Phase
+15I-B2 added exactly one enabled, synthetic high-entropy version per container and live-verified
+the production Java adapters through workstation ADC. Cloud Run workloads are deployed and Ready,
+but their Secret Manager access is not yet runtime-verified.
 
-**Future:** secrets live in **Google Secret Manager**. Application persistence stores **references**, never values.
+Application persistence stores **references**, never values.
+
+## Phase 15I-B2 payload contract
+
+All four values are independent 32-byte CSPRNG outputs encoded as 43-character, unpadded Base64URL
+ASCII with no whitespace or newline. `hmac-quayforge` supplies those exact textual bytes to the
+QuayForge HMAC verifier. `covecrm-api`, `lumenway-api`, and `rivertide-api` are opaque bearer-token
+text used only by the worker connector client. The demo systems and their credentials are synthetic.
+No payload is managed by Pulumi or recorded in Git, documentation, chat, test reports, or temp files.
+The production composition pins all three worker credential references to version `1`; the local
+credential lab retains its separate v1/v2 rotation scenario.
 
 ## What is stored where
 
@@ -37,20 +52,23 @@ No `secret_value` field. Code review must fail if one is added.
 
 ## Resolution
 
-Only `sa-delivery-worker` holds `secretmanager.secretAccessor` on named secrets.
+The worker receives `secretmanager.secretAccessor` only on the three named provider secrets.
+The API receives it only on `hmac-quayforge`, which its webhook authenticity path resolves.
 
-`boundary-api` may read **metadata** (version number, status) via Firestore. It must not call `accessSecretVersion`.
+`boundarymesh-api` accesses only `hmac-quayforge`. It must not call `accessSecretVersion` for any
+worker connector secret.
 
 If the worker cannot access the secret: `CREDENTIAL_UNAVAILABLE` → quarantine. Fail closed for delivery, not fail open with empty auth.
 
 ## Rotation design
 
-1. SECURITY_ADMIN starts rotation.
-2. New Secret Manager version added (value entered in admin UI **once**, sent to API, API writes to Secret Manager, **does not persist body**).
-3. Status `ROTATING`; worker dual-read optional for HMAC only if partners need overlap — **default: pin to new version after health check**.
-4. Prove: requests signed with **old** HMAC fail; new succeeds.
-5. Disable old version; status `ACTIVE`.
-6. Old version destroy after idle period.
+1. SECURITY_ADMIN starts rotation and records only the current version metadata.
+2. New Secret Manager version is added through a controlled interactive administrator procedure;
+   the value never enters Pulumi config, source, chat, or logs.
+3. Verify the intended workload with the new version, then pin or promote it.
+4. Disable the prior version and observe provider/webhook behavior during the retention period.
+5. Destroy the disabled prior version only after an explicit review. Never create, disable, or
+   destroy versions as an incidental Pulumi deployment.
 
 Entra client-secret rotation: new secret in Entra, stored as new SM version, Graph SDK uses new version; old Graph calls 401 — quarantine until complete. Prefer **federated credentials** (WIF-like for Entra) in a later hardening if the tenant supports it, to avoid client secrets entirely. Phase 0 does not require that; it is a Phase 19 candidate.
 
@@ -79,7 +97,7 @@ This is **not** a secret. It is product evidence of least privilege.
 Separate secrets:
 
 - `hmac-quayforge`
-- `entra-helix-client`
+- a dedicated Entra client secret container only when production OIDC is explicitly enabled
 - `graph-client-state`
 
-Bindings: worker SA only, one secret at a time. CI SA: none.
+Bindings: each workload SA receives one additive binding per required secret. CI SA: none.

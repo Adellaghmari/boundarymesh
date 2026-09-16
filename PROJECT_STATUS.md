@@ -2,8 +2,8 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **15H COMPLETE** — Cloud KMS API **LIVE / ENABLED**. Key ring `boundarymesh-attestation` and crypto key `exchange-attestation` **LIVE / PROVISIONED** (`EC_SIGN_P256_SHA256`, SOFTWARE, no workload IAM). Adapter **IMPLEMENTED + UNIT TESTED**, not default-wired. Live Cloud KMS signing **LIVE VERIFIED LOCALLY (15H-C)**. Workload KMS IAM **PLANNED FOR 15I**.
-**Overall:** **PROJECT C — NOT COMPLETE**
+**Phase:** **15I-D2 PASS** — one synthetic production transaction traversed the private Cloud Run API, Firestore, Cloud KMS, audit chain, transactional outbox, Pub/Sub, and Worker Pool. The connector boundary failed closed with durable `QUARANTINED` state and ACK after persistence. Disposable run-scoped records were cleaned; signed attestation and append-only audit evidence were preserved. Final Pulumi preview: 33 unchanged, zero operations.
+**Overall:** **PROJECT C — PHASE 15I FUNCTIONALLY COMPLETE**
 
 ## Completeness
 
@@ -17,7 +17,7 @@
 | Phase 5 Contract Drift Firewall | **COMPLETE** |
 | Phase 6 Data Boundary Firewall | **COMPLETE** (`m365-calendar-egress/v1` **LIVE VERIFIED LOCALLY** on one real Graph event) |
 | Phase 7 Engine expansion | **COMPLETE** |
-| Phase 8 Apache Camel delivery | **COMPLETE** (local worker HTTP default; Pub/Sub adapters **LIVE VERIFIED LOCALLY**, not Cloud Run workload-live) |
+| Phase 8 Apache Camel delivery | **COMPLETE** (local worker HTTP default; Pub/Sub adapters LIVE VERIFIED; deployed D1 publish/consume LIVE VERIFIED) |
 | Phase 9 Credential & Consent | **COMPLETE** (local model + delegated Calendars.Read mapping; Secret Manager PLANNED) |
 | Phase 10 Quarantine & Recovery | **COMPLETE** (in-memory default; Firestore adapter **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**) |
 | Phase 11 Tamper-Evident Audit Chain | **COMPLETE** (in-memory default; Firestore transactional append **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**) |
@@ -28,21 +28,26 @@
 | Phase 15A Pulumi TypeScript foundation | **IMPLEMENTED + LOCALLY VALIDATED** — `infra/` compiles; zero application resources |
 | Phase 15B GCP project / provider validation | **IMPLEMENTED + LOCALLY VALIDATED** — `boundarymesh-dev`, `europe-west4`, ADC, local Pulumi backend, zero-resource preview |
 | Phase 15C GCP adapter module + emulator foundation | **IMPLEMENTED + TESTED** — `backend/gcp` |
-| Phase 15D Artifact Registry + container images | **COMPLETE** — registry live; images pushed + remote digest verified. Workloads not deployed |
-| Phase 15E Secret Manager | **COMPLETE** — API LIVE; four empty containers LIVE. No versions. Adapter not workload-live |
+| Phase 15D Artifact Registry + container images | **COMPLETE / HISTORICAL** — registry and original images remain live and untouched |
+| Phase 15I-C1 production images | **COMPLETE** — current API/worker images built, smoke-tested, pushed, remote-digest verified, and pinned in Pulumi; workloads not deployed |
+| Phase 15I-C2 Cloud Run deployment | **COMPLETE** — Run API enabled; private API Service and no-endpoint Worker Pool deployed and Ready on immutable images. One internal Firestore/Pub/Sub/KMS workload transaction was LIVE VERIFIED in Phase 15I-D1 |
+| Phase 15E Secret Manager | **COMPLETE** — API and four containers LIVE; Phase 15I-B2 added one enabled synthetic version per container. Adapter live-verified locally; D1 did not exercise a deployed secret read |
 | Phase 15F-A Firestore persistence + preview | **COMPLETE** — adapters in `backend/gcp`; emulator suite passed; preview approved |
 | Phase 15F-B Firestore infrastructure apply | **COMPLETE** — `firestore.googleapis.com` LIVE; database `boundarymesh` LIVE / PROVISIONED |
-| Phase 15F-C live Java SDK data path | **COMPLETE** — `GoogleFirestoreFacade` + official Java SDK + ADC against `projects/boundarymesh-dev/databases/boundarymesh`. Residue **CLEANED**. Not Cloud Run workload-live |
+| Phase 15F-C live Java SDK data path | **COMPLETE** — `GoogleFirestoreFacade` + official Java SDK + ADC against `projects/boundarymesh-dev/databases/boundarymesh`. D1 workload persistence LIVE VERIFIED; disposable residue CLEANED |
 | Phase 15G-A transactional outbox + Pub/Sub preview | **COMPLETE** — adapters + combined emulator **IMPLEMENTED + EMULATOR TESTED**. Pulumi preview approved |
 | Phase 15G-B Pub/Sub infrastructure apply | **COMPLETE** — `pubsub.googleapis.com` LIVE; topics `boundarymesh-deliveries` / `boundarymesh-delivery-dlq` LIVE; pull subscriptions LIVE. No IAM. No `deadLetterPolicy` |
-| Phase 15G-C live Pub/Sub data path | **COMPLETE** — `GooglePubSubPublisher` + `GooglePubSubPullConsumer` + official Java SDK + ADC against real topic/subscription. Residue **CLEANED**. Not Cloud Run workload-live |
+| Phase 15G-C live Pub/Sub data path | **COMPLETE** — `GooglePubSubPublisher` + `GooglePubSubPullConsumer` + official Java SDK + ADC against real topic/subscription. D1 workload persistence LIVE VERIFIED; disposable residue CLEANED |
 | Phase 15H-A Cloud KMS signer + preview | **COMPLETE** — `CloudKmsAttestationSigner` **IMPLEMENTED + UNIT TESTED**. Pulumi KMS API/key ring/crypto key **IMPLEMENTED + PREVIEWED**. No IAM |
 | Phase 15H-B Cloud KMS infrastructure apply | **COMPLETE** — `cloudkms.googleapis.com` LIVE; key ring `boundarymesh-attestation` LIVE; crypto key `exchange-attestation` LIVE (`ASYMMETRIC_SIGN` / `EC_SIGN_P256_SHA256` / SOFTWARE). No workload IAM. No live sign in 15H-B |
 | Phase 15H-C live KMS attestation | **COMPLETE** — official Java SDK + ADC, two real version 1 signs, DER → P1363, public-key verify VALID, altered bytes INVALID, client recreation VALID. Synthetic only; zero cloud document writes. [Evidence](docs/PHASE_15H_VERIFICATION.md) |
+| Phase 15I-A workload preview | **IMPLEMENTED + LOCALLY TESTED + PREVIEW-ONLY** — prod composition, two keyless SAs, additive least-privilege IAM, Cloud Run Service + Worker Pool. No apply/deploy |
+| Phase 15I-B1 workload identity/IAM apply | **COMPLETE** — two keyless SAs and ten approved additive IAM members LIVE; no keys, secret versions, Run API, Service, or Worker Pool |
+| Phase 15I-B2 synthetic secret readiness | **COMPLETE** — exactly one enabled version in each existing integration secret; official Java SDK adapters LIVE VERIFIED LOCALLY; no payload exposed or Pulumi-managed |
 | Application production IAM / Entra live | **LIVE VERIFIED LOCALLY** — common authority, personal Microsoft account, server-side session |
 | Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, one event normalized and enforced |
 | GCP project | **CREATED + BILLING LINKED** (`boundarymesh-dev`) |
-| GCP resources | Artifact Registry + Secret Manager (empty) + Firestore API + named database `boundarymesh` + Pub/Sub API + delivery/DLQ topics + pull/inspect subscriptions + Cloud KMS API + key ring `boundarymesh-attestation` + crypto key `exchange-attestation`. No workload IAM. No workloads. Live verification residue **CLEANED** |
+| GCP resources | Existing 18 resources unchanged. Phase 15I-B1 added 12 managed identity/IAM resources; Phase 15I-C2 added the Run API, private API Service, and Worker Pool. Live verification residue **CLEANED** |
 | Microsoft credentials | **NONE CREATED in Git / this session** |
 | GCP service-account JSON keys | **NONE** |
 | Project A | **FROZEN** — not modified |
@@ -70,7 +75,7 @@
 3. Contract Drift Firewall — **TESTED**.
 4. Data Boundary Firewall — **TESTED**; `m365-calendar-egress/v1` **LIVE VERIFIED LOCALLY**.
 5. Credential & Consent Vault — local model **TESTED**; Microsoft delegated consent mapped; Secret Manager **PLANNED**.
-6. Quarantine & Recovery Orchestrator — local **TESTED**; Firestore persistence **LIVE VERIFIED LOCALLY**. Not Cloud Run workload-live.
+6. Quarantine & Recovery Orchestrator — local **TESTED**; Firestore persistence LIVE VERIFIED in D1.
 
 Also: Tamper-Evident Audit Chain **LIVE VERIFIED LOCALLY** for the Graph event; Cryptographic Exchange Attestation **LIVE VERIFIED LOCALLY** (local JCA; Cloud KMS signing **LIVE VERIFIED LOCALLY**); Integration Boundary Graph **LIVE VERIFIED LOCALLY** for `m365-calendar` OBSERVED. Firestore adapters **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Firestore database **LIVE / PROVISIONED**. Live verification residue **CLEANED**. Cloud Run workload persistence is **not** live.
 
@@ -97,6 +102,22 @@ Safe recorded result for the event pull:
 
 GET `/api/v1/microsoft/connector` still reports `LIVE_CONFIGURED` because that endpoint never calls Graph. `LIVE_VERIFIED` was the Operator pull response after Graph HTTP 2xx.
 
-## Next (do not start automatically)
+## Phase 15I-D2 freeze truth
 
-Phase 15I workload identity/IAM and explicit production runtime composition planning, after human review. Workload KMS IAM is not provisioned. Do not start automatically; no Cloud Run, Secret Manager versions, Firebase Hosting, or WIF is authorized by Phase 15H completion.
+- Cloud Run API and Worker Pool: **LIVE VERIFIED** and Ready.
+- Private `POST /api/v1/transactions`: **LIVE VERIFIED** through the internal cloud pipeline.
+- Firestore, Cloud KMS signing, Exchange Attestation, audit continuity, transactional outbox, Pub/Sub publish/consume, worker idempotency, and terminal ACK semantics: **LIVE VERIFIED**.
+- External connector delivery: **NOT LIVE**; connector configuration remains intentionally fail-closed.
+- Deployed workload Secret Manager reads: **NOT EXERCISED BY D1**; infrastructure and IAM remain live.
+- Firebase Hosting, WIF, Graph notifications, and production Entra/OIDC: **PLANNED / DISABLED**.
+- Pulumi passphrase: **FUNCTIONAL but previously exposed in chat; rotation remains required before the final project security freeze**.
+
+## Phase 15I-D0C worker disposition truth
+
+- Worker terminal disposition semantics are CORRECTED + TESTED + DEPLOYED.
+- A terminal QUARANTINED result is durably recorded by the existing idempotency/quarantine persistence path before the transport ACK is returned.
+- Persistence failure or an unexpected handler exception does not ACK; it follows the existing retry/NACK path.
+- Retryable provider categories (RATE_LIMITED, TEMPORARY_FAILURE, TIMEOUT, CIRCUIT_OPEN) remain NACK/redelivery dispositions.
+- Pub/Sub remains at-least-once; existing application idempotency and BoundaryMesh-owned quarantine recovery remain in force.
+- The corrected Worker Pool revision is Ready on the D0C immutable digest. D1 verified one live transaction and D2 preserved the audit/attestation evidence.
+- Pub/Sub deadLetterPolicy remains unconfigured. Live quarantine ACK behavior was verified in D1.

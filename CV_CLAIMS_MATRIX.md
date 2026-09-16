@@ -64,7 +64,7 @@ This is portfolio work, not professional employment.
 | Data Boundary Firewall | **TESTED** / **LIVE VERIFIED LOCALLY** | Real transformation, not UI masking. Live Graph event: `ALLOW_WITH_TRANSFORMATION`, transformation_count=4 |
 | Boundary Enforcement Engine foundation | **TESTED** | Synthetic ControlVector plus real contract/egress |
 | expanded Boundary Enforcement Engine | **TESTED** / **LIVE VERIFIED LOCALLY** | Nine ControlVector fields. Live Graph event: contract PASS, egress PASS, outcome `ALLOW_WITH_TRANSFORMATION` |
-| integrated multi-control boundary crossing | **TESTED** / **LIVE VERIFIED LOCALLY** | Labs use `POST /api/v1/dev/crossings/evaluate`. Live Graph event used `evaluateWithoutDelivery` |
+| integrated multi-control boundary crossing | **TESTED** / **LIVE VERIFIED** | D1 used production `POST /api/v1/transactions` and reached the internal delivery boundary |
 | Outcomes ALLOW / TRANSFORM / QUARANTINE / REJECT | **TESTED** / **LIVE VERIFIED LOCALLY** | Live Graph event outcome `ALLOW_WITH_TRANSFORMATION` |
 | JUnit 5 | **TESTED** | Identity + webhook + engine suites |
 | ArchUnit | **TESTED** | Domain/application must not depend on Spring/cloud |
@@ -75,7 +75,7 @@ This is portfolio work, not professional employment.
 | consent / permission model | **TESTED** | Distinct from credential availability |
 | credential resolvability control | **TESTED** | PASS / FAIL / UNAVAILABLE |
 | connector safety control | **TESTED** | Circuit / configured destination |
-| Google Secret Manager | **LIVE** / **CONTAINERS ONLY** | API enabled. Four empty secrets. No versions. No IAM |
+| Google Secret Manager | **LIVE VERIFIED LOCALLY** | Four containers; exactly one enabled synthetic version each; resource-scoped workload IAM; Java adapters verified through ADC |
 | Quarantine & Recovery Orchestrator (local) | **TESTED** | State machine, eligibility, admin reprocess |
 | bounded reprocess | **TESTED** | Cap 3; `boundary.admin` |
 | delivery idempotency | **TESTED** | Distinct from inbound webhook replay |
@@ -83,13 +83,13 @@ This is portfolio work, not professional employment.
 | Resilience4j Circuit Breaker | **TESTED** | CLOSED / OPEN / HALF_OPEN |
 | WireMock | **TESTED** | External connector simulation |
 | Pub/Sub delivery decoupling | **IMPLEMENTED + EMULATOR TESTED** | Persist-before-publish. At-least-once + worker idempotency. Not LIVE |
-| Firestore Native access patterns | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** | Named DB `boundarymesh` LIVE / PROVISIONED. Residue CLEANED. Not Cloud Run workload-live |
-| Cloud Run API + worker | PLANNED | |
-| Cloud KMS EC_SIGN_P256_SHA256 | **IMPLEMENTED + UNIT TESTED** / **LIVE / PROVISIONED** | Adapter + DER→P1363. Key **LIVE** in GCP. Live sign **LIVE VERIFIED LOCALLY (15H-C)**. Private key never leaves KMS |
-| Cryptographic Exchange Attestation | **LIVE VERIFIED LOCALLY** | Local JCA P-256 SIGNED + verify VALID for one real Graph calendar event. Does not prove business truth. Cloud KMS adapter **IMPLEMENTED + UNIT TESTED**; live KMS **LIVE VERIFIED LOCALLY (15H-C)** |
+| Firestore Native access patterns | **IMPLEMENTED + EMULATOR TESTED + WORKLOAD LIVE VERIFIED** | Named DB `boundarymesh`; D1 API/worker persisted the transaction and delivery state. Disposable residue cleaned; evidence retained |
+| Cloud Run API Service + Worker Pool | **LIVE VERIFIED** | Private API Service and no-endpoint Worker Pool deployed on immutable images; one internal transaction verified in 15I-D1 |
+| Cloud KMS EC_SIGN_P256_SHA256 | **IMPLEMENTED + UNIT TESTED + WORKLOAD LIVE VERIFIED** / **LIVE / PROVISIONED** | Adapter + DER→P1363. D1 API workload signed with version 1. Private key never leaves KMS |
+| Cryptographic Exchange Attestation | **WORKLOAD LIVE VERIFIED** | D1 produced a SIGNED ES256 attestation; the Cloud KMS signer verified the normalized signature with the retrieved public key. Does not prove business truth |
 | RFC 8785 canonicalization | **TESTED** | Constrained application writer. Floats rejected. No Jackson default |
 | Attestation signature verification | **TESTED** | ECDSA P-256 P1363 + Base64. UNSIGNED is explicit |
-| SHA-256 tamper-evident audit chain | **TESTED** / **LIVE VERIFIED LOCALLY** | Live `m365-calendar` chain VALID: CONNECTOR_READ count=1, BOUNDARY_DECISION, ATTESTATION_CREATED. Not immutable |
+| SHA-256 tamper-evident audit chain | **TESTED** / **LIVE VERIFIED** | Deployed `quayforge-orders` chain VALID for the D1 transaction; append-only evidence preserved. Not immutable storage |
 | Deterministic audit canonicalization | **TESTED** | RFC 8785 subset over audit-entry/v1 |
 | Audit-chain verification | **TESTED** | Sequence, previous-hash, recalculated SHA-256 |
 | Concurrency-safe audit append | **TESTED** / **EMULATOR TESTED** / **LIVE VERIFIED LOCALLY** | In-memory per-chain lock; Firestore transactional append |
@@ -107,8 +107,8 @@ This is portfolio work, not professional employment.
 | Zero-resource Pulumi preview | **TESTED** | Phase 15B envelope-only preview. Superseded by 15D registry preview |
 | API Docker image definition | **IMPLEMENTED** / **LOCALLY TESTED** | `backend/api/Dockerfile` |
 | Worker Docker image definition | **IMPLEMENTED** / **LOCALLY TESTED** | `backend/worker/Dockerfile` |
-| API container Artifact Registry image | **PUSHED** / **REMOTE DIGEST VERIFIED** | `boundarymesh-api:phase15d`. See `infra/README.md` |
-| Worker container Artifact Registry image | **PUSHED** / **REMOTE DIGEST VERIFIED** | `boundarymesh-worker:phase15d`. See `infra/README.md` |
+| API container Artifact Registry image | **CURRENT IMAGE PUSHED / DEPLOYED** / **REMOTE DIGEST VERIFIED** | Corrected Phase 15I-C2 immutable digest; Phase 15D retained historically. See `infra/README.md` |
+| Worker container Artifact Registry image | **CURRENT IMAGE PUSHED / DEPLOYED** / **REMOTE DIGEST VERIFIED** | Phase 15I-C1 immutable digest; Phase 15D retained historically. See `infra/README.md` |
 | Artifact Registry Pulumi definition | **IMPLEMENTED** / **APPLIED** | One Docker repo `boundarymesh` in `europe-west4` |
 | Artifact Registry API | **LIVE** / **ENABLED IN GCP** | `artifactregistry.googleapis.com` via Pulumi; `disableOnDestroy=false` |
 | Artifact Registry repository | **LIVE** / **PROVISIONED IN GCP** | `projects/boundarymesh-dev/locations/europe-west4/repositories/boundarymesh` |
@@ -118,16 +118,16 @@ This is portfolio work, not professional employment.
 | Secret Manager API Pulumi definition | **IMPLEMENTED** / **APPLIED** | `secretmanager.googleapis.com`; `disableOnDestroy=false` |
 | Secret containers | **LIVE** / **PROVISIONED IN GCP** | `hmac-quayforge`, `covecrm-api`, `lumenway-api`, `rivertide-api` |
 | Secret Manager API in GCP | **LIVE** / **ENABLED IN GCP** | |
-| Secret containers in GCP | **LIVE** / **EMPTY** / **NO VERSIONS** | User-managed replication `europe-west4` |
-| Secret versions | PLANNED | No payloads in this phase |
-| Workload IAM | PLANNED | |
-| Cloud Run env-from-secret | PLANNED FOR PHASE 15I | Entra remains `BOUNDARYMESH_ENTRA_CLIENT_SECRET` |
+| Secret containers in GCP | **LIVE** / **ONE ENABLED VERSION EACH** | User-managed replication `europe-west4` |
+| Secret versions | **LIVE / SYNTHETIC HIGH-ENTROPY MATERIAL** | Values never entered source, Pulumi, chat, docs, or persistent temp files |
+| Workload IAM | **LIVE / APPLIED (15I-B1)** | Two keyless workload SAs; ten reviewed additive IAM members |
+| Cloud workload Secret Manager access | **IAM LIVE / D1 NOT EXERCISED** | Resource-scoped IAM; payloads live; this transaction failed closed before credential retrieval; Entra production composition disabled |
 | GCP provider / authentication | **CONFIGURED + VERIFIED LOCALLY** | ADC. No `GOOGLE_APPLICATION_CREDENTIALS`. No JSON keys |
 | GCP adapter module architecture | **IMPLEMENTED** / **TESTED** | `backend/gcp`. Domain/application remain cloud-independent |
 | GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |
-| Firestore production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY** | Not default-wired. `GoogleFirestoreFacade` against named DB `boundarymesh`. Residue **CLEANED** |
-| Pub/Sub production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED AGAINST REAL GCP** | Publisher + pull consumer in `backend/gcp`. Not default-wired. Not Cloud Run workload-live |
-| Pulumi TypeScript GCP resources | Artifact Registry **LIVE**; Secret Manager containers **LIVE** (empty); Firestore database **LIVE / PROVISIONED**; Pub/Sub topics + pull subscriptions **LIVE / PROVISIONED**; Cloud KMS key **LIVE / PROVISIONED** | Dead-letter forwarding, Cloud Run, Hosting |
+| Firestore production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Deployed API/worker composition persisted the D1 transaction; disposable outbox/idempotency residue was cleaned |
+| Pub/Sub production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Deployed API published the D1 event and Worker Pool consumed it; no dead-letter policy configured |
+| Pulumi TypeScript GCP resources | Artifact Registry **LIVE**; Secret Manager containers **LIVE** (versions intentionally outside Pulumi); Firestore database **LIVE / PROVISIONED**; Pub/Sub topics + pull subscriptions **LIVE / PROVISIONED**; Cloud KMS key **LIVE / PROVISIONED** | Dead-letter forwarding, Cloud Run, Hosting |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |
 | Gitleaks | PLANNED | |

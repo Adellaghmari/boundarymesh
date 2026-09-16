@@ -19,8 +19,8 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 | **12** | Cryptographic Exchange Attestation | **COMPLETE** local JCA P-256. Cloud KMS adapter **IMPLEMENTED + UNIT TESTED**; live KMS LIVE VERIFIED LOCALLY |
 | **13** | Integration Boundary Graph | **COMPLETE** state-driven Vue SVG |
 | **14** | M365 / Graph connector | **COMPLETE** harness + Entra architecture TESTED. Live tenant BLOCKED. Graph subscriptions PLANNED |
-| **15** | GCP + Pulumi cloud foundation | **15A–15G COMPLETE**. **15H-A COMPLETE** (KMS adapter + preview). **15H-B COMPLETE** (KMS infra **LIVE**). Outbox + Pub/Sub adapters **EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Pub/Sub infra **LIVE**. Live KMS sign **LIVE VERIFIED LOCALLY (15H-C)**. Dead-letter forwarding **PLANNED**. Remaining GCP **PLANNED** |
-| **16** | Remaining Pulumi / GCP infrastructure | Cloud Run, workload IAM, secret versions, hosting — **PLANNED**. KMS API/key ring/key already provisioned in 15H-B; signing live-verified in 15H-C. Workload KMS IAM is planned for 15I |
+| **15** | GCP + Pulumi cloud foundation | **15A–15H COMPLETE**. **15I-A PASS**: prod composition and Cloud Run resources previewed. **15I-B1 PASS**: identities/IAM live. **15I-B2 PASS**: four synthetic integration secret versions live and adapters verified. **15I-C1 PASS**: fresh images pushed and digest-pinned. **15I-C2 PASS**: Run API, private API Service, and Worker Pool deployed and Ready. **15I-D0B PASS**: private `POST /api/v1/transactions` ingress implemented, tested, deployed, and readiness-verified; 15I-D0C PASS: terminal quarantine ACK semantics corrected, tested, and deployed; functional workload E2E remains 15I-D1 |
+| **16** | Remaining Pulumi / GCP infrastructure | Firebase Hosting and WIF remain later. KMS infrastructure is already LIVE and locally verified |
 | **17** | GitHub WIF + CI/CD + AppSec | no JSON keys; Semgrep/Gitleaks/ZAP/Dependency-Check |
 | **18** | Public deployment + live verification | honest badges; Graph live only if real |
 | **19** | Hardening + grand final audit | rotation proof, chain tamper demo, CV matrix update, freeze |

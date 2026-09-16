@@ -46,7 +46,34 @@ class DeliveryInstructionHandlerTest {
     }
 
     @Test
-    void transientDeliveryNacks() {
+    void terminalQuarantineAcksAfterDurableIdempotencyRecord() {
+        RecordingDeliveryPort port = new RecordingDeliveryPort();
+        port.succeedWith(new DeliveryResult(
+                DeliveryResultKind.QUARANTINED,
+                0,
+                ProviderFailureCategory.CREDENTIAL_OR_CONSENT,
+                ReasonCode.CONNECTOR_UNAVAILABLE,
+                "connector endpoint is not configured",
+                Duration.ZERO,
+                "covecrm",
+                "sink.covecrm.activity",
+                "CLOSED",
+                null,
+                null,
+                null,
+                false));
+        InMemoryDeliveryIdempotencyStore store = new InMemoryDeliveryIdempotencyStore();
+        DeliveryInstructionHandler handler = new DeliveryInstructionHandler(port, store);
+        DeliveryInstructionMessage message = DeliveryInstructionMessage.of(OutboxFixtures.allowInstruction());
+
+        assertThat(handler.handle(message)).isEqualTo(ConsumeDisposition.ACK);
+        assertThat(store.previous(message.instructionId())).isPresent();
+        assertThat(handler.handle(message)).isEqualTo(ConsumeDisposition.ACK);
+        assertThat(port.invocationCount()).isEqualTo(1);
+    }
+
+    @Test
+    void transientDeliveryNacksWithoutDurableTerminalRecord() {
         RecordingDeliveryPort port = new RecordingDeliveryPort();
         port.succeedWith(new DeliveryResult(
                 DeliveryResultKind.QUARANTINED,
@@ -66,6 +93,44 @@ class DeliveryInstructionHandlerTest {
                 new DeliveryInstructionHandler(port, new InMemoryDeliveryIdempotencyStore());
         assertThat(handler.handle(DeliveryInstructionMessage.of(OutboxFixtures.allowInstruction())))
                 .isEqualTo(ConsumeDisposition.NACK);
+    }
+
+    @Test
+    void quarantinePersistenceFailureNacksInsteadOfFalselyAcknowledging() {
+        RecordingDeliveryPort port = new RecordingDeliveryPort();
+        port.succeedWith(new DeliveryResult(
+                DeliveryResultKind.QUARANTINED,
+                0,
+                ProviderFailureCategory.CREDENTIAL_OR_CONSENT,
+                ReasonCode.CONNECTOR_UNAVAILABLE,
+                "connector endpoint is not configured",
+                Duration.ZERO,
+                "covecrm",
+                "sink.covecrm.activity",
+                "CLOSED",
+                null,
+                null,
+                null,
+                false));
+        DeliveryInstructionHandler handler = new DeliveryInstructionHandler(port, new FailingIdempotencyStore());
+        assertThat(handler.handle(DeliveryInstructionMessage.of(OutboxFixtures.allowInstruction())))
+                .isEqualTo(ConsumeDisposition.NACK);
+    }
+
+    private static final class FailingIdempotencyStore
+            implements dev.adellaghmari.boundarymesh.application.delivery.DeliveryIdempotencyStore {
+        @Override
+        public java.util.Optional<DeliveryResult> previous(String deliveryInstructionId) {
+            return java.util.Optional.empty();
+        }
+
+        @Override
+        public void remember(String deliveryInstructionId, DeliveryResult result) {
+            throw new IllegalStateException("persistence unavailable");
+        }
+
+        @Override
+        public void clear() {}
     }
 
     @Test

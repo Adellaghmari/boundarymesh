@@ -66,4 +66,18 @@ class CredentialEvaluatorTest {
         assertThat(result.status()).isEqualTo(ControlStatus.UNAVAILABLE);
         assertThat(result.reasonCodes()).contains(ReasonCode.CREDENTIAL_PROVIDER_UNAVAILABLE);
     }
+
+    @Test
+    void productionSyntheticReferencesMatchTheProvisionedVersionOneSecrets() {
+        InMemoryCredentialCatalog production =
+                InMemoryCredentialCatalog.productionSyntheticDefaults(Instant.parse("2026-09-15T00:00:00Z"));
+        CredentialEvaluator productionEvaluator = new CredentialEvaluator(production);
+
+        assertThat(productionEvaluator.evaluate("COVECRM", "active").metadataRef())
+                .isEqualTo("covecrm-api:v1");
+        assertThat(productionEvaluator.evaluate("LUMENWAY", "active").metadataRef())
+                .isEqualTo("lumenway-api:v1");
+        assertThat(productionEvaluator.evaluate("RIVERTIDE", "active").metadataRef())
+                .isEqualTo("rivertide-api:v1");
+    }
 }
