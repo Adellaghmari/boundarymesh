@@ -27,7 +27,8 @@ onMounted(() => {
       <span class="truth-banner">LOCAL PROJECT DATA</span>
     </div>
     <p class="muted">
-      This is the Java process on this machine. It is not live cloud data. No GCP exists yet.
+      This checks the API configured for this browser session. In local development it is the Java
+      process on this machine; hosted browser access to the live private API is not deployed yet.
     </p>
 
     <div class="status-card__body" aria-live="polite">

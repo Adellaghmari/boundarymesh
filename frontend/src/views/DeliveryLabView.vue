@@ -53,7 +53,8 @@ const decisionEvent = computed(() => {
       <p>
         SYNTHETIC DEMO. After the Boundary Enforcement Engine allows a crossing, a delivery
         instruction may enter the local Camel worker. REJECT and pre-delivery QUARANTINE never reach
-        a connector. Pub/Sub remains planned.
+        a connector. The deployed cloud path uses Pub/Sub and a Worker Pool, but this screen still
+        exercises the local lab rather than that production path.
       </p>
     </header>
 

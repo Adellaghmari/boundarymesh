@@ -22,8 +22,9 @@ onMounted(async () => {
       </div>
       <p>
         Recoverable operational holds. Invalid JWT, invalid HMAC, and malicious replay are REJECT
-        and never become quarantine items. This list is in-memory and does not survive restart.
-        Firestore remains PLANNED.
+        and never become quarantine items. This browser view currently reads local in-memory state.
+        The cloud worker has recorded durable quarantine in Firestore, but browser readback is not
+        connected yet.
       </p>
     </header>
 

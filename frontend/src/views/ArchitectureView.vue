@@ -11,8 +11,8 @@ import TruthBanner from '@/components/TruthBanner.vue'
         <TruthBanner label="CURRENT VERSUS PLANNED" />
       </div>
       <p>
-        This page describes what Phases 1–13 actually run locally. It does not present the final
-        cloud architecture as deployed.
+        This console currently demonstrates the local control labs. Phase 15I separately deployed
+        and verified the private cloud transaction pipeline; browser access to it is Phase 15J work.
       </p>
     </header>
 
@@ -33,6 +33,8 @@ import TruthBanner from '@/components/TruthBanner.vue'
           <li>Tamper-evident SHA-256 audit chain</li>
           <li>Local ECDSA P-256 exchange attestations</li>
           <li>Microsoft Entra OIDC session architecture + Graph Calendar harness</li>
+          <li>Private Cloud Run API and Worker Pool with dedicated service identities</li>
+          <li>Live Firestore, Pub/Sub, and Cloud KMS transaction path</li>
         </ul>
       </article>
       <article class="card stack">
@@ -40,9 +42,9 @@ import TruthBanner from '@/components/TruthBanner.vue'
         <ul>
           <li>Live Microsoft tenant verification (when credentials exist)</li>
           <li>Microsoft Graph change notifications</li>
-          <li>GCP, Pub/Sub, Firestore</li>
-          <li>Secret Manager, Cloud KMS</li>
-          <li>Pulumi</li>
+          <li>Firebase Hosting and authenticated browser-to-private-API access</li>
+          <li>Browser readback of live transaction, audit, attestation, and delivery evidence</li>
+          <li>Production Entra/OIDC and external connector delivery</li>
         </ul>
       </article>
     </section>

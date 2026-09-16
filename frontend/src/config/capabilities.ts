@@ -1,21 +1,21 @@
 import type { CapabilityClaim } from '@/domain/types'
 
 /**
- * Manual frontend mirror of CV_CLAIMS_MATRIX.md for Phase 14.
+ * Manual frontend summary of reviewed project evidence through Phase 15I.
  * Not fetched from Git. Do not invent progress.
  */
 export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
   {
     id: 'java-backend',
     label: 'Java backend',
-    status: 'TESTED',
-    notes: 'Java 25 / Spring Boot 4.1.1 local API. Maven verify.',
+    status: 'LIVE VERIFIED',
+    notes: 'Java 25 / Spring Boot 4.1.1 private Cloud Run API. Production transaction ingress verified.',
   },
   {
     id: 'enforcement-engine',
     label: 'Boundary Enforcement Engine',
-    status: 'TESTED',
-    notes: 'All nine ControlVector fields are real local controls, including credential and connector safety.',
+    status: 'LIVE VERIFIED',
+    notes: 'The deployed API evaluated one synthetic production transaction through the real control pipeline.',
   },
   {
     id: 'vue-frontend',
@@ -54,25 +54,25 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     label: 'Credential & Consent Vault',
     status: 'TESTED',
     notes:
-      'Local reference/version/consent model. Google Secret Manager-backed vault remains PLANNED.',
+      'Local reference/version/consent model. Secret Manager containers and adapters are live; D1 did not exercise a deployed workload secret read.',
   },
   {
     id: 'quarantine-orchestrator',
     label: 'Quarantine & Recovery',
     status: 'TESTED',
-    notes: 'Local in-memory orchestrator and admin reprocess. Firestore persistence remains PLANNED.',
+    notes: 'Local reprocess is tested. The deployed worker durably recorded terminal quarantine and ACKed; browser recovery is not live.',
   },
   {
     id: 'audit-chain',
     label: 'Tamper-Evident Audit Chain',
-    status: 'TESTED',
-    notes: 'SHA-256 hash chain with RFC 8785 canonicalization. Local in-memory. Not immutable. Not Firestore.',
+    status: 'LIVE VERIFIED',
+    notes: 'The deployed transaction produced a valid Firestore-backed SHA-256 audit chain; this browser read view remains local.',
   },
   {
     id: 'exchange-attestation',
     label: 'Cryptographic Exchange Attestation',
-    status: 'TESTED',
-    notes: 'Local JCA ECDSA P-256. Cloud KMS remains PLANNED. Does not prove business data is true.',
+    status: 'LIVE VERIFIED',
+    notes: 'The deployed API signed a valid ES256 attestation with Cloud KMS; this browser read view remains local.',
   },
   {
     id: 'boundary-graph',
@@ -96,7 +96,7 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
   {
     id: 'gcp',
     label: 'GCP',
-    status: 'PLANNED',
-    notes: 'No Cloud Run, Pub/Sub, Firestore, Secret Manager, or KMS. Local JCA signer only.',
+    status: 'LIVE VERIFIED',
+    notes: 'Private Cloud Run API, Worker Pool, Firestore, Pub/Sub, KMS, and keyless workload IAM are live. Firebase Hosting is not deployed.',
   },
 ]

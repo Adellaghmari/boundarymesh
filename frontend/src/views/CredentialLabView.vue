@@ -33,7 +33,8 @@ async function rotate(): Promise<void> {
       <p>
         Application and domain code work with credential references and consent grants. Secret
         values are resolved only in the delivery worker, immediately before a connector call. Google
-        Secret Manager remains PLANNED.
+        Secret Manager infrastructure and adapters are live; the cloud D1 transaction did not need
+        a deployed workload secret read.
       </p>
     </header>
 

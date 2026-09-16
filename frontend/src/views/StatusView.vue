@@ -9,11 +9,12 @@ import { CAPABILITY_STATUS_COPY } from '@/domain/labels'
     <header class="stack">
       <div class="cluster">
         <h1>Project status</h1>
-        <TruthBanner label="NO LIVE CLOUD DATA" />
+        <TruthBanner label="PHASE 15I VERIFIED SNAPSHOT" />
       </div>
       <p>
-        Status labels come from a frontend claims model that mirrors the CV matrix. Nothing here is
-        LIVE VERIFIED. There is no public cloud deployment.
+        These labels summarize reviewed project evidence; they are not a live cloud status feed.
+        The private API and Worker Pool are verified, while Firebase Hosting and browser-to-cloud
+        connectivity are not deployed.
       </p>
     </header>
 

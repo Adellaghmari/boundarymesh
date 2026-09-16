@@ -23,8 +23,10 @@ import { OUTCOME_COPY } from '@/domain/labels'
         release board, and not a generic API client. A transaction is authenticated, authorized,
         verified, contract-checked, and data-governed before a delivery instruction can reach Apache
         Camel. Credential and consent checks sit in front of the connector. Microsoft Entra OIDC and
-        Microsoft Graph Calendar are implemented locally as a harness, with
-        live tenant verification only when configured. Secret Manager and Pub/Sub remain planned. A valid identity is not an automatic crossing.
+        Microsoft Graph Calendar are implemented locally as a harness, with live tenant verification
+        only when configured. The private cloud API, Pub/Sub, Firestore, KMS, and Worker Pool were
+        verified in Phase 15I; this browser console is not yet connected to that cloud runtime. A
+        valid identity is not an automatic crossing.
       </p>
     </section>
 
@@ -35,7 +37,7 @@ import { OUTCOME_COPY } from '@/domain/labels'
       <p class="muted">
         Every crossing is evaluated in this order. Credential and consent checks, Camel delivery,
         quarantine recovery, tamper-evident audit, and local cryptographic attestations are
-        implemented locally. Cloud KMS and Firestore remain planned.
+        implemented locally. Phase 15I also verified Firestore and Cloud KMS from deployed workloads.
       </p>
       <PipelineSteps />
     </section>

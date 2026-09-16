@@ -22,8 +22,9 @@ onMounted(() => {
       </div>
       <p>
         Cryptographic Exchange Attestation records what BoundaryMesh enforced for a terminal
-        crossing. Local ECDSA P-256 signatures. Cloud KMS remains planned. Signatures do not survive
-        process restart because the local key is ephemeral.
+        crossing. This screen currently reads local demo evidence signed by an ephemeral ECDSA P-256
+        key. The private cloud API has live Cloud KMS-signed evidence, but browser readback is not
+        connected yet.
       </p>
     </header>
     <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
