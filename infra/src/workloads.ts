@@ -4,9 +4,9 @@ import type { FoundationConfig } from "./config";
 export const API_SERVICE_ACCOUNT_ID = "boundarymesh-api" as const;
 export const WORKER_SERVICE_ACCOUNT_ID = "boundarymesh-worker" as const;
 
-export const PHASE_15I_C1_API_IMAGE =
+export const PHASE_15J_C1E_API_IMAGE =
     "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/" +
-    "boundarymesh-api@sha256:28e47427709d43a1a12b363cc28b7a72e6250ea966d4ecb89f8da0108e980529";
+    "boundarymesh-api@sha256:df4ca576227b1311194af1b3c821962a228bc7222d144eb4b4fbfb41590e072d";
 export const PHASE_15I_C1_WORKER_IMAGE =
     "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/" +
     "boundarymesh-worker@sha256:a031fd689c80faef122b2eb7a35c35c6cb04035f333c493e5d7decea1d08b76a";
@@ -140,7 +140,7 @@ export function defineWorkloads(foundation: FoundationConfig, dependencies: Work
                 containers: [
                     {
                         name: "api",
-                        image: PHASE_15I_C1_API_IMAGE,
+                        image: PHASE_15J_C1E_API_IMAGE,
                         ports: { name: "http1", containerPort: 8080 },
                         envs: [...apiEnvironment(foundation), { name: "BOUNDARYMESH_RUNTIME_MODE", value: "GCP" }],
                         resources: {

@@ -11,6 +11,9 @@ export interface FrontendEnv {
   firebaseApiKey: string
   firebaseAuthDomain: string
   firebaseProjectId: string
+  firebaseStorageBucket: string
+  firebaseMessagingSenderId: string
+  firebaseAppId: string
 }
 
 const mode = import.meta.env.VITE_APP_MODE === 'cloud' ? 'cloud' : 'local'
@@ -48,7 +51,11 @@ export const frontendEnv: FrontendEnv = {
   apiBaseUrl: mode === 'cloud' ? '' : readPublicBaseUrl(),
   apiTimeoutMs: readTimeoutMs(),
   mode,
-  firebaseApiKey: import.meta.env.VITE_FIREBASE_API_KEY?.trim() ?? '',
-  firebaseAuthDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN?.trim() ?? '',
-  firebaseProjectId: import.meta.env.VITE_FIREBASE_PROJECT_ID?.trim() ?? '',
+  firebaseApiKey: mode === 'cloud' ? firebaseProductionConfig.apiKey : import.meta.env.VITE_FIREBASE_API_KEY?.trim() ?? '',
+  firebaseAuthDomain: mode === 'cloud' ? firebaseProductionConfig.authDomain : import.meta.env.VITE_FIREBASE_AUTH_DOMAIN?.trim() ?? '',
+  firebaseProjectId: mode === 'cloud' ? firebaseProductionConfig.projectId : import.meta.env.VITE_FIREBASE_PROJECT_ID?.trim() ?? '',
+  firebaseStorageBucket: mode === 'cloud' ? firebaseProductionConfig.storageBucket : import.meta.env.VITE_FIREBASE_STORAGE_BUCKET?.trim() ?? '',
+  firebaseMessagingSenderId: mode === 'cloud' ? firebaseProductionConfig.messagingSenderId : import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID?.trim() ?? '',
+  firebaseAppId: mode === 'cloud' ? firebaseProductionConfig.appId : import.meta.env.VITE_FIREBASE_APP_ID?.trim() ?? '',
 }
+import { firebaseProductionConfig } from './firebaseProductionConfig'

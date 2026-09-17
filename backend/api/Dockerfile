@@ -13,6 +13,7 @@ COPY backend/domain backend/domain
 COPY backend/application backend/application
 COPY backend/gcp backend/gcp
 COPY backend/api backend/api
+COPY backend/web-edge backend/web-edge
 COPY backend/worker backend/worker
 COPY contracts /src/contracts
 

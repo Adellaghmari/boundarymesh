@@ -25,6 +25,9 @@ function firebaseAuth() {
       apiKey: frontendEnv.firebaseApiKey,
       authDomain: frontendEnv.firebaseAuthDomain,
       projectId: frontendEnv.firebaseProjectId,
+      storageBucket: frontendEnv.firebaseStorageBucket,
+      messagingSenderId: frontendEnv.firebaseMessagingSenderId,
+      appId: frontendEnv.firebaseAppId,
     })
     auth = initializeAuth(app, {
       persistence: inMemoryPersistence,

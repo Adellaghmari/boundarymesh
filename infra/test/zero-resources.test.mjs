@@ -96,7 +96,7 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.match(text, /minInstanceCount:\s*0/);
     assert.match(text, /maxInstanceCount:\s*2/);
     assert.match(text, /invokerIamDisabled:\s*false/);
-    assert.match(text, /PHASE_15I_C1_API_IMAGE/);
+    assert.match(text, /PHASE_15J_C1E_API_IMAGE/);
     assert.match(text, /PHASE_15I_C1_WORKER_IMAGE/);
     assert.equal(/\(default\)/.test(text), false);
     assert.equal(/client_secret|private_key|BEGIN [A-Z]+ PRIVATE/i.test(text), false);
