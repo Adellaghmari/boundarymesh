@@ -1,6 +1,6 @@
 # Phase 15J-B — secure web edge deployment preview
 
-Status: **implemented and locally tested; cloud deployment pending**. This phase does not deploy Firebase Hosting, the web edge, or a new core API image, and does not run a browser cloud transaction. Phase 15I's private core API and Worker Pool remain the live baseline.
+Status: **implemented and locally tested; deployed in Phase 15J-C2**. This phase itself did not deploy Firebase Hosting, the web edge, or a new core API image, and did not run a browser cloud transaction. Phase 15J-C2 later deployed the reviewed web edge and core API image update; Firebase Hosting and browser cloud E2E remain pending.
 
 ## Ownership discovery and deployment prerequisites
 
