@@ -1,11 +1,12 @@
 package dev.adellaghmari.boundarymesh.webedge;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -24,11 +25,11 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = {SessionController.class, ApiProxyController.class})
 @Import({WebEdgeSecurityConfig.class, WebEdgeSecurityTests.TestBeans.class})
@@ -85,7 +86,16 @@ class WebEdgeSecurityTests {
         mvc.perform(get("/api/v1/deliveries/" + INSTRUCTION)).andExpect(status().isUnauthorized());
         given(auth.verifySessionCookie("revoked")).willThrow(new InvalidSessionException());
         mvc.perform(get("/session/me").cookie(new Cookie(SessionController.SESSION_COOKIE, "revoked")))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code").value("SESSION_INVALID"));
+    }
+
+    @Test
+    void oldCookieNameIsNotAccepted() throws Exception {
+        mvc.perform(get("/session/me").cookie(new Cookie("__Host-bm_session", "signed-session")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code").value("SESSION_INVALID"));
+        verifyNoInteractions(auth);
     }
 
     @Test
@@ -122,7 +132,28 @@ class WebEdgeSecurityTests {
                                 org.hamcrest.Matchers.allOf(
                                         org.hamcrest.Matchers.containsString("HttpOnly"),
                                         org.hamcrest.Matchers.containsString("Secure"),
-                                        org.hamcrest.Matchers.containsString("SameSite=Lax"))));
+                                        org.hamcrest.Matchers.containsString("SameSite=Lax"),
+                                        org.hamcrest.Matchers.containsString("__session="),
+                                        org.hamcrest.Matchers.containsString("Path=/"),
+                                        org.hamcrest.Matchers.containsString("Max-Age=3600"),
+                                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Domain=")),
+                                        org.hamcrest.Matchers.not(
+                                                org.hamcrest.Matchers.containsString("__Host-bm_session")))));
+        verify(auth).createSessionCookie("token", 3_600_000L);
+    }
+
+    @Test
+    void validSessionReadUsesReservedHostingCookieAndRechecksOperator() throws Exception {
+        given(auth.verifySessionCookie("signed-session")).willReturn(approved());
+        mvc.perform(get("/session/me").cookie(sessionCookie()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("AUTHENTICATED"));
+        given(auth.verifySessionCookie("signed-session"))
+                .willReturn(new AuthGateway.Principal(
+                        "not-approved", "x@example.invalid", Instant.now().getEpochSecond(), true));
+        mvc.perform(get("/session/me").cookie(sessionCookie()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error_code").value("SESSION_INVALID"));
     }
 
     @Test
@@ -188,15 +219,24 @@ class WebEdgeSecurityTests {
                         .cookie(sessionCookie(), csrfCookie())
                         .header(CsrfGuard.HEADER, CSRF))
                 .andExpect(status().isNoContent())
-                .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Max-Age=0")));
+                .andExpect(header().string(
+                                "Set-Cookie",
+                                org.hamcrest.Matchers.allOf(
+                                        org.hamcrest.Matchers.containsString("__session="),
+                                        org.hamcrest.Matchers.containsString("Max-Age=0"),
+                                        org.hamcrest.Matchers.containsString("Path=/"),
+                                        org.hamcrest.Matchers.containsString("Secure"),
+                                        org.hamcrest.Matchers.containsString("HttpOnly"),
+                                        org.hamcrest.Matchers.containsString("SameSite=Lax"),
+                                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Domain=")))));
         verify(auth).revokeSessions("approved-uid");
     }
 
     @Test
     void genericAccessDeniedIsNotMisclassifiedAsCsrf() throws Exception {
         var response = new MockHttpServletResponse();
-        new StructuredAccessDeniedHandler().handle(
-                new MockHttpServletRequest(), response, new AccessDeniedException("denied"));
+        new StructuredAccessDeniedHandler()
+                .handle(new MockHttpServletRequest(), response, new AccessDeniedException("denied"));
         assertEquals(403, response.getStatus());
         assertEquals("{\"error_code\":\"ACCESS_DENIED\"}", response.getContentAsString());
     }

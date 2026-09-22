@@ -19,7 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/session")
 class SessionController {
-    static final String SESSION_COOKIE = "__Host-bm_session";
+    // Firebase Hosting forwards only this reserved cookie through Cloud Run rewrites.
+    static final String SESSION_COOKIE = "__session";
     private static final Duration SESSION_LIFETIME = Duration.ofHours(1);
 
     private final AuthGateway auth;

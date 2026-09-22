@@ -2,7 +2,7 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **15J-C3A.1 PASS** — Firebase Hosting now serves the cloud SPA. Its HTML shell and SPA fallback responses revalidate with `Cache-Control: no-cache`, while hashed assets retain immutable caching. Authenticated browser E2E remains deferred to Phase 15J-C3A. Final Pulumi preview: 39 unchanged, zero operations.
+**Phase:** **15J-C3A.5 PASS / DEPLOYMENT READY** — the web edge now issues the Firebase Hosting-compatible `__session` cookie. The new immutable BFF image is pushed and its one-update Pulumi preview passed, but it is not deployed. Hosted session and browser-to-private-core verification remain blocked until a controlled later deployment and retry.
 **Overall:** **PROJECT C — PHASE 15I FUNCTIONALLY COMPLETE; PHASE 15J HOSTING DEPLOYMENT VERIFIED**
 
 ## Completeness
@@ -33,6 +33,8 @@
 | Phase 15I-C2 Cloud Run deployment | **COMPLETE** — Run API enabled; private API Service and no-endpoint Worker Pool deployed and Ready on immutable images. One internal Firestore/Pub/Sub/KMS workload transaction was LIVE VERIFIED in Phase 15I-D1 |
 | Phase 15J-C2 web edge runtime deployment | **COMPLETE** — private core API updated to its reviewed immutable image; `boundarymesh-web` BFF is LIVE with a dedicated keyless identity, service-level core Invoker access, and BFF-only public transport. Unauthenticated, non-allowlisted, dev-route, and mutation-without-session/CSRF requests fail closed. Firebase Hosting has zero releases; authenticated browser session and browser-to-core application path remain deferred to 15J-C3. |
 | Phase 15J-C3A.1 Hosting cache-policy fix | **COMPLETE** — first Hosting release exposed stale SPA-shell caching at `/` and deep links. A second Hosting-only release applies `no-cache` to every SPA shell request while preserving immutable cache headers for hashed assets. Browser sign-in, authenticated BFF-to-core reads, and browser transactions remain unexecuted. |
+| Phase 15J-C3A.4 hosted session diagnostic | **BLOCKED** — three real logins returned 200, each followed by `GET /session/me` returning 401 / `SESSION_INVALID`. Firebase Hosting forwards only the reserved `__session` cookie to Cloud Run, while the live BFF issues `__Host-bm_session`. No transaction was submitted. |
+| Phase 15J-C3A.5 session cookie correction | **PASS / DEPLOYMENT READY / NOT DEPLOYED** — the BFF uses `__session` consistently for login, reads, and logout with existing cookie security and auth checks. One new immutable BFF image is pushed and pinned in Pulumi; preview shows only the BFF image update. Hosted authentication and browser-to-private-core reads are not yet reverified. |
 | Phase 15E Secret Manager | **COMPLETE** — API and four containers LIVE; Phase 15I-B2 added one enabled synthetic version per container. Adapter live-verified locally; D1 did not exercise a deployed secret read |
 | Phase 15F-A Firestore persistence + preview | **COMPLETE** — adapters in `backend/gcp`; emulator suite passed; preview approved |
 | Phase 15F-B Firestore infrastructure apply | **COMPLETE** — `firestore.googleapis.com` LIVE; database `boundarymesh` LIVE / PROVISIONED |
