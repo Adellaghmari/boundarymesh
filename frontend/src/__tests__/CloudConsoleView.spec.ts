@@ -29,15 +29,45 @@ describe('hosted production console', () => {
     vi.mocked(verifyAuditChain).mockReset()
   })
 
-  it('shows signed-out and unauthorized states without executing a lab call', async () => {
+  it('shows the operator message only for an explicit allowlist rejection without executing a lab call', async () => {
     vi.mocked(initializeCloudSession).mockResolvedValueOnce(null)
-    vi.mocked(signInOperator).mockRejectedValueOnce(new BoundaryMeshApiError('forbidden', 'Denied', { status: 403 }))
+    vi.mocked(signInOperator).mockRejectedValueOnce(new BoundaryMeshApiError('forbidden', 'Denied', {
+      status: 403, errorCode: 'OPERATOR_NOT_AUTHORIZED',
+    }))
     const wrapper = mount(CloudConsoleView)
     await flushPromises()
     expect(wrapper.text()).toContain('Sign in with your approved Google account')
     await wrapper.get('button').trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain('not on the operator allowlist')
+    expect(submitSyntheticTransaction).not.toHaveBeenCalled()
+  })
+
+  it('renders a session-security message for an explicit CSRF rejection', async () => {
+    vi.mocked(initializeCloudSession).mockResolvedValueOnce(null)
+    vi.mocked(signInOperator).mockRejectedValueOnce(new BoundaryMeshApiError('forbidden', 'Denied', {
+      status: 403, errorCode: 'CSRF_REJECTED',
+    }))
+    const wrapper = mount(CloudConsoleView)
+    await flushPromises()
+    await wrapper.get('button').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('secure session could not be established')
+    expect(wrapper.text()).not.toContain('not on the operator allowlist')
+    expect(submitSyntheticTransaction).not.toHaveBeenCalled()
+  })
+
+  it('does not mislabel an unknown forbidden response as an allowlist rejection', async () => {
+    vi.mocked(initializeCloudSession).mockResolvedValueOnce(null)
+    vi.mocked(signInOperator).mockRejectedValueOnce(new BoundaryMeshApiError('forbidden', 'Denied', {
+      status: 403, errorCode: 'ACCESS_DENIED',
+    }))
+    const wrapper = mount(CloudConsoleView)
+    await flushPromises()
+    await wrapper.get('button').trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('secure session request was rejected')
+    expect(wrapper.text()).not.toContain('not on the operator allowlist')
     expect(submitSyntheticTransaction).not.toHaveBeenCalled()
   })
 

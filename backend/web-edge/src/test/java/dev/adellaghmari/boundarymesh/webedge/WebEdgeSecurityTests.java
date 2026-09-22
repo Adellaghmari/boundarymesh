@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -25,6 +26,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.access.AccessDeniedException;
 
 @WebMvcTest(controllers = {SessionController.class, ApiProxyController.class})
 @Import({WebEdgeSecurityConfig.class, WebEdgeSecurityTests.TestBeans.class})
@@ -89,7 +93,8 @@ class WebEdgeSecurityTests {
         mvc.perform(post("/session/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"idToken\":\"token\"}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("CSRF_REJECTED"));
         given(auth.verifyIdToken("token"))
                 .willReturn(new AuthGateway.Principal(
                         "not-approved", "x@example.invalid", Instant.now().getEpochSecond(), true));
@@ -170,7 +175,9 @@ class WebEdgeSecurityTests {
                         .cookie(sessionCookie(), csrfCookie())
                         .header(CsrfGuard.HEADER, CSRF))
                 .andExpect(status().is4xxClientError());
-        mvc.perform(get("/api/v1/admin/session").cookie(sessionCookie())).andExpect(status().is4xxClientError());
+        mvc.perform(get("/api/v1/admin/session").cookie(sessionCookie()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error_code").value("ROUTE_NOT_ALLOWED"));
         mvc.perform(get("/api/v1/attestations").cookie(sessionCookie())).andExpect(status().is4xxClientError());
     }
 
@@ -183,5 +190,14 @@ class WebEdgeSecurityTests {
                 .andExpect(status().isNoContent())
                 .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("Max-Age=0")));
         verify(auth).revokeSessions("approved-uid");
+    }
+
+    @Test
+    void genericAccessDeniedIsNotMisclassifiedAsCsrf() throws Exception {
+        var response = new MockHttpServletResponse();
+        new StructuredAccessDeniedHandler().handle(
+                new MockHttpServletRequest(), response, new AccessDeniedException("denied"));
+        assertEquals(403, response.getStatus());
+        assertEquals("{\"error_code\":\"ACCESS_DENIED\"}", response.getContentAsString());
     }
 }

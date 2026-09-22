@@ -22,6 +22,9 @@ class WebEdgeSecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .formLogin(form -> form.disable())
                 .logout(logout -> logout.disable())
+                .exceptionHandling(exceptions -> exceptions
+                        .accessDeniedHandler(new StructuredAccessDeniedHandler())
+                        .authenticationEntryPoint(new StructuredAuthenticationEntryPoint()))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(
                                 HttpMethod.GET, "/actuator/health", "/session/bootstrap", "/session/me")
                         .permitAll()

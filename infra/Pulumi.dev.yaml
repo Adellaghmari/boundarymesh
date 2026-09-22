@@ -6,6 +6,6 @@ config:
   gcp:project: boundarymesh-dev
   gcp:region: europe-west4
   boundarymesh:environment: dev
-  boundarymesh:webEdgeImage: europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:70b4af9b62b5568aaf324088bcd9c74250ccc52da05e63c67bbb416ad69dcabb
+  boundarymesh:webEdgeImage: europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:d235f2c92e99fb9d86e5f2bd08f533e06308e7736e781c3afeeba917ed9e2f33
   boundarymesh:webOperatorUids: DIF5MgkLblWwgNHDCxLsi9E2hFD3
 encryptionsalt: v1:263PjWdiEvw=:v1:lXSg9vFcUjL6ZYG6:SPa41yRG0+5BJ7P4Cd3PbcTqAjfpUQ==

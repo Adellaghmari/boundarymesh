@@ -37,10 +37,19 @@ let active = true
 function handleError(error: unknown): void {
   if (error instanceof BoundaryMeshApiError && error.status === 401) {
     authState.value = 'expired'
-    message.value = 'Your session expired. Sign in again to continue.'
+    message.value = error.errorCode === 'RECENT_SIGN_IN_REQUIRED'
+      ? 'Sign in again to establish a recent secure session.'
+      : 'Your session expired. Sign in again to continue.'
   } else if (error instanceof BoundaryMeshApiError && error.status === 403) {
-    authState.value = 'unauthorized'
-    message.value = 'This account is not authorized to operate BoundaryMesh.'
+    if (error.errorCode === 'OPERATOR_NOT_AUTHORIZED') {
+      authState.value = 'unauthorized'
+      message.value = 'This account is not authorized to operate BoundaryMesh.'
+    } else {
+      authState.value = 'signed-out'
+      message.value = error.errorCode === 'CSRF_REJECTED'
+        ? 'The secure session could not be established. Refresh and try again.'
+        : 'The secure session request was rejected. Refresh and sign in again.'
+    }
   } else if (error instanceof BoundaryMeshApiError && error.status === 502) {
     message.value = 'The private BoundaryMesh API is temporarily unavailable.'
   } else if (error instanceof BoundaryMeshApiError && error.kind === 'unavailable') {

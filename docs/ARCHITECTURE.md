@@ -131,7 +131,7 @@ actually resolves.
 
 ## Frontend architecture
 
-Vue 3 SPA (Firebase Hosting remains PLANNED). Recruiter console uses a sticky premium header: Core destinations, Labs/Operations/Evidence dropdowns, Status, and a compact Recruiter/Operator control. Microsoft 365 Calendar lives under **Connections**, not a top-level `/m365` route.
+Vue 3 SPA is hosted on Firebase Hosting. The hosted browser authentication and BFF-to-private-core path remain pending controlled live verification. Recruiter console uses a sticky premium header: Core destinations, Labs/Operations/Evidence dropdowns, Status, and a compact Recruiter/Operator control. Microsoft 365 Calendar lives under **Connections**, not a top-level `/m365` route.
 
 | Route | Auth | Purpose |
 | --- | --- | --- |
