@@ -12,14 +12,25 @@ import java.time.Duration;
 
 /** Only the trusted BFF runtime holds the short-lived Google-signed Cloud Run ID token. */
 final class GoogleCoreApiClient implements CoreApiClient {
+    static final Duration PRODUCTION_REQUEST_TIMEOUT = Duration.ofSeconds(30);
+
     private final URI base;
     private final IdTokenCredentials credentials;
     private final HttpClient client;
+    private final Duration requestTimeout;
 
     GoogleCoreApiClient(URI base, IdTokenCredentials credentials, HttpClient client) {
+        this(base, credentials, client, PRODUCTION_REQUEST_TIMEOUT);
+    }
+
+    GoogleCoreApiClient(URI base, IdTokenCredentials credentials, HttpClient client, Duration requestTimeout) {
+        if (requestTimeout == null || requestTimeout.isZero() || requestTimeout.isNegative()) {
+            throw new IllegalArgumentException("core request timeout must be positive");
+        }
         this.base = base;
         this.credentials = credentials;
         this.client = client;
+        this.requestTimeout = requestTimeout;
     }
 
     @Override
@@ -28,7 +39,7 @@ final class GoogleCoreApiClient implements CoreApiClient {
             credentials.refreshIfExpired();
             String token = credentials.getAccessToken().getTokenValue();
             var request = HttpRequest.newBuilder(base.resolve(path))
-                    .timeout(Duration.ofSeconds(12))
+                    .timeout(requestTimeout)
                     .header("Authorization", "Bearer " + token)
                     .header("Accept", "application/json")
                     .method(
