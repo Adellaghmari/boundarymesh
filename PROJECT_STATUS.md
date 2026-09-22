@@ -2,8 +2,8 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **15J-C2 PASS** — the private Cloud Run API was updated to its reviewed immutable image and the separate public-transport web edge was deployed. The web edge is application-authenticated, fail-closed, and invokes the private core API with its dedicated keyless workload identity. Firebase Hosting has zero releases, so authenticated browser E2E remains deferred to Phase 15J-C3. Final Pulumi preview: 39 unchanged, zero operations.
-**Overall:** **PROJECT C — PHASE 15I FUNCTIONALLY COMPLETE; PHASE 15J-C2 RUNTIME DEPLOYMENT VERIFIED**
+**Phase:** **15J-C3A.1 PASS** — Firebase Hosting now serves the cloud SPA. Its HTML shell and SPA fallback responses revalidate with `Cache-Control: no-cache`, while hashed assets retain immutable caching. Authenticated browser E2E remains deferred to Phase 15J-C3A. Final Pulumi preview: 39 unchanged, zero operations.
+**Overall:** **PROJECT C — PHASE 15I FUNCTIONALLY COMPLETE; PHASE 15J HOSTING DEPLOYMENT VERIFIED**
 
 ## Completeness
 
@@ -32,6 +32,7 @@
 | Phase 15I-C1 production images | **COMPLETE** — current API/worker images built, smoke-tested, pushed, remote-digest verified, and pinned in Pulumi; workloads not deployed |
 | Phase 15I-C2 Cloud Run deployment | **COMPLETE** — Run API enabled; private API Service and no-endpoint Worker Pool deployed and Ready on immutable images. One internal Firestore/Pub/Sub/KMS workload transaction was LIVE VERIFIED in Phase 15I-D1 |
 | Phase 15J-C2 web edge runtime deployment | **COMPLETE** — private core API updated to its reviewed immutable image; `boundarymesh-web` BFF is LIVE with a dedicated keyless identity, service-level core Invoker access, and BFF-only public transport. Unauthenticated, non-allowlisted, dev-route, and mutation-without-session/CSRF requests fail closed. Firebase Hosting has zero releases; authenticated browser session and browser-to-core application path remain deferred to 15J-C3. |
+| Phase 15J-C3A.1 Hosting cache-policy fix | **COMPLETE** — first Hosting release exposed stale SPA-shell caching at `/` and deep links. A second Hosting-only release applies `no-cache` to every SPA shell request while preserving immutable cache headers for hashed assets. Browser sign-in, authenticated BFF-to-core reads, and browser transactions remain unexecuted. |
 | Phase 15E Secret Manager | **COMPLETE** — API and four containers LIVE; Phase 15I-B2 added one enabled synthetic version per container. Adapter live-verified locally; D1 did not exercise a deployed secret read |
 | Phase 15F-A Firestore persistence + preview | **COMPLETE** — adapters in `backend/gcp`; emulator suite passed; preview approved |
 | Phase 15F-B Firestore infrastructure apply | **COMPLETE** — `firestore.googleapis.com` LIVE; database `boundarymesh` LIVE / PROVISIONED |

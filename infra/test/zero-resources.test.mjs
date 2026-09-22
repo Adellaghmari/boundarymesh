@@ -133,6 +133,16 @@ test("Hosting rewrites select the BFF before the SPA and never target the privat
     assert.equal(hosting.rewrites[2].destination, "/index.html");
 });
 
+test("Hosting revalidates every SPA shell request before overriding only hashed assets", () => {
+    const hosting = JSON.parse(readFileSync(join(root, "..", "firebase.json"), "utf8")).hosting;
+    assert.deepEqual(hosting.headers.map((rule) => rule.source), ["**", "/assets/**"]);
+    const shellHeaders = Object.fromEntries(hosting.headers[0].headers.map(({ key, value }) => [key, value]));
+    const assetHeaders = Object.fromEntries(hosting.headers[1].headers.map(({ key, value }) => [key, value]));
+    assert.equal(shellHeaders["Cache-Control"], "no-cache");
+    assert.equal(assetHeaders["Cache-Control"], "public,max-age=31536000,immutable");
+    assert.equal(hosting.rewrites.at(-1).destination, "/index.html");
+});
+
 test("stack YAML is non-secret and pins the verified GCP project", () => {
     const stack = readFileSync(join(root, "Pulumi.dev.yaml"), "utf8");
     assert.equal(stack.includes("secure:"), false);

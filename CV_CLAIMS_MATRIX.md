@@ -140,7 +140,7 @@ This is portfolio work, not professional employment.
 | Frontend API integration | **TESTED** | health, ready, JWT evaluate, webhook lab |
 | Micrometer | **TESTED** | `boundarymesh.delivery.*`, quarantine/reprocess counters, R4j tagged metrics. No GCP export |
 | Cloud Logging / Monitoring / Trace | PLANNED | |
-| Firebase Hosting | PLANNED | |
+| Firebase Hosting | **LIVE** | Static cloud SPA deployed with non-stale HTML shell caching and immutable hashed assets; authenticated browser E2E remains unverified |
 | Public recruiter demo | PLANNED | |
 | Protected admin mutations | **TESTED** | Session CSRF on `/api/v1/admin/**`. Local `boundary.admin` reprocess remains |
 | Self-dogfood Git SHA / revision | PLANNED | |
