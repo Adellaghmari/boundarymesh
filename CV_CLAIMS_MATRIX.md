@@ -120,14 +120,14 @@ This is portfolio work, not professional employment.
 | Secret Manager API in GCP | **LIVE** / **ENABLED IN GCP** | |
 | Secret containers in GCP | **LIVE** / **ONE ENABLED VERSION EACH** | User-managed replication `europe-west4` |
 | Secret versions | **LIVE / SYNTHETIC HIGH-ENTROPY MATERIAL** | Values never entered source, Pulumi, chat, docs, or persistent temp files |
-| Workload IAM | **LIVE / APPLIED (15I-B1)** | Two keyless workload SAs; ten reviewed additive IAM members |
+| Workload IAM | **LIVE / APPLIED** | Keyless API, Worker, and Web workload SAs. The Web SA has service-level core Invoker access; the core has no public or project-wide Invoker grant |
 | Cloud workload Secret Manager access | **IAM LIVE / D1 NOT EXERCISED** | Resource-scoped IAM; payloads live; this transaction failed closed before credential retrieval; Entra production composition disabled |
 | GCP provider / authentication | **CONFIGURED + VERIFIED LOCALLY** | ADC. No `GOOGLE_APPLICATION_CREDENTIALS`. No JSON keys |
 | GCP adapter module architecture | **IMPLEMENTED** / **TESTED** | `backend/gcp`. Domain/application remain cloud-independent |
 | GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |
 | Firestore production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Deployed API/worker composition persisted the D1 transaction; disposable outbox/idempotency residue was cleaned |
 | Pub/Sub production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Deployed API published the D1 event and Worker Pool consumed it; no dead-letter policy configured |
-| Pulumi TypeScript GCP resources | Artifact Registry **LIVE**; Secret Manager containers **LIVE** (versions intentionally outside Pulumi); Firestore database **LIVE / PROVISIONED**; Pub/Sub topics + pull subscriptions **LIVE / PROVISIONED**; Cloud KMS key **LIVE / PROVISIONED** | Dead-letter forwarding, Cloud Run, Hosting |
+| Pulumi TypeScript GCP resources | **LIVE / 39 MANAGED RESOURCES / ZERO DRIFT** | Artifact Registry, Secret Manager containers, Firestore, Pub/Sub, KMS, private API, Worker Pool, and public-transport/authenticated Web BFF. Hosting is live but intentionally outside Pulumi; dead-letter forwarding remains unconfigured |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |
 | Gitleaks | PLANNED | |
@@ -140,7 +140,7 @@ This is portfolio work, not professional employment.
 | Frontend API integration | **TESTED** | health, ready, JWT evaluate, webhook lab |
 | Micrometer | **TESTED** | `boundarymesh.delivery.*`, quarantine/reprocess counters, R4j tagged metrics. No GCP export |
 | Cloud Logging / Monitoring / Trace | PLANNED | |
-| Firebase Hosting | **LIVE** | Static cloud SPA deployed with non-stale HTML shell caching and immutable hashed assets; authenticated browser E2E remains unverified |
+| Firebase Hosting + authenticated web edge | **LIVE VERIFIED** | Static SPA has non-stale HTML shell caching and immutable hashed assets. Real Google sign-in, `__session`, BFF authorization/CSRF, and one non-mutating keyless BFF → IAM-private-core attestation read returned HTTP 200. Hosted browser transaction remains not run |
 | Public recruiter demo | PLANNED | |
 | Protected admin mutations | **TESTED** | Session CSRF on `/api/v1/admin/**`. Local `boundary.admin` reprocess remains |
 | Self-dogfood Git SHA / revision | PLANNED | |

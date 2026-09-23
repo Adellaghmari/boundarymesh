@@ -2,8 +2,8 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **15J-C3A.5 PASS / DEPLOYMENT READY** — the web edge now issues the Firebase Hosting-compatible `__session` cookie. The new immutable BFF image is pushed and its one-update Pulumi preview passed, but it is not deployed. Hosted session and browser-to-private-core verification remain blocked until a controlled later deployment and retry.
-**Overall:** **PROJECT C — PHASE 15I FUNCTIONALLY COMPLETE; PHASE 15J HOSTING DEPLOYMENT VERIFIED**
+**Phase:** **15J-C3A LIVE VERIFIED / PASS** — Firebase Hosting, Google sign-in, the `__session` BFF session, operator authorization, CSRF, and one authenticated non-mutating browser → BFF → IAM-private-core read are live verified. Phase 15J-C3B and its exactly one controlled hosted browser transaction have not started.
+**Overall:** **PROJECT C — PHASE 15I FUNCTIONALLY COMPLETE; PHASE 15J-C3A LIVE VERIFIED; PHASE 15J IN PROGRESS**
 
 ## Completeness
 
@@ -35,6 +35,7 @@
 | Phase 15J-C3A.1 Hosting cache-policy fix | **COMPLETE** — first Hosting release exposed stale SPA-shell caching at `/` and deep links. A second Hosting-only release applies `no-cache` to every SPA shell request while preserving immutable cache headers for hashed assets. Browser sign-in, authenticated BFF-to-core reads, and browser transactions remain unexecuted. |
 | Phase 15J-C3A.4 hosted session diagnostic | **BLOCKED** — three real logins returned 200, each followed by `GET /session/me` returning 401 / `SESSION_INVALID`. Firebase Hosting forwards only the reserved `__session` cookie to Cloud Run, while the live BFF issues `__Host-bm_session`. No transaction was submitted. |
 | Phase 15J-C3A.5 session cookie correction | **PASS / DEPLOYMENT READY / NOT DEPLOYED** — the BFF uses `__session` consistently for login, reads, and logout with existing cookie security and auth checks. One new immutable BFF image is pushed and pinned in Pulumi; preview shows only the BFF image update. Hosted authentication and browser-to-private-core reads are not yet reverified. |
+| Phase 15J-C3A.8 hosted authentication and private-core read | **LIVE VERIFIED / PASS** — Hosting release 3 serves the corrected SPA; Google sign-in, `POST /session/login` 200, `GET /session/me` 200, `__session`, Firebase verification, operator authorization, CSRF, route allowlisting, and keyless BFF invocation of the private core all passed. The retained attestation summary returned 200 through `boundarymesh-web-00004-k48`; BFF duration was 17.284 seconds and core duration 16.561 seconds under the corrected bounded 30-second request timeout. No transaction or application mutation occurred. Final Pulumi preview: 39 unchanged, zero operations. |
 | Phase 15E Secret Manager | **COMPLETE** — API and four containers LIVE; Phase 15I-B2 added one enabled synthetic version per container. Adapter live-verified locally; D1 did not exercise a deployed secret read |
 | Phase 15F-A Firestore persistence + preview | **COMPLETE** — adapters in `backend/gcp`; emulator suite passed; preview approved |
 | Phase 15F-B Firestore infrastructure apply | **COMPLETE** — `firestore.googleapis.com` LIVE; database `boundarymesh` LIVE / PROVISIONED |

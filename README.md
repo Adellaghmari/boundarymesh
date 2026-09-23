@@ -68,7 +68,7 @@ Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** Co
 
 A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Firebase Hosting now serves the cloud SPA with a revalidating HTML shell and immutable hashed assets. Still **PLANNED:** Graph change notifications, WIF, production Entra/OIDC, and authenticated browser cloud E2E. Phase 15I-D1 executed one synthetic transaction through the private `POST /api/v1/transactions` route: workload Firestore, Cloud KMS signing, attestation, audit, outbox, Pub/Sub, Worker Pool consumption, idempotency, and terminal quarantine ACK were LIVE VERIFIED. External connector delivery remains intentionally disabled and unverified. Each synthetic integration secret has exactly one enabled high-entropy version; D1 did not exercise a credential read. Existing Firestore, Pub/Sub, and KMS resources remain unchanged. Dead-letter forwarding is not configured.
+Firebase Hosting now serves the cloud SPA with a revalidating HTML shell and immutable hashed assets. Hosted Firebase Google authentication, the HttpOnly `__session` BFF session, operator authorization, CSRF, and one non-mutating keyless browser → BFF → IAM-private-core attestation read are **LIVE VERIFIED**. The exactly one controlled hosted browser transaction remains **NOT YET RUN** and belongs to Phase 15J-C3B. Still **PLANNED:** Graph change notifications, WIF, and production Entra/OIDC. Phase 15I-D1 executed one synthetic transaction through the private `POST /api/v1/transactions` route: workload Firestore, Cloud KMS signing, attestation, audit, outbox, Pub/Sub, Worker Pool consumption, idempotency, and terminal quarantine ACK were LIVE VERIFIED. External connector delivery remains intentionally disabled and unverified. Each synthetic integration secret has exactly one enabled high-entropy version; D1 did not exercise a credential read. Existing Firestore, Pub/Sub, and KMS resources remain unchanged. Dead-letter forwarding is not configured.
 
 ## Navigation
 
@@ -128,12 +128,14 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — PHASE 15I FUNCTIONALLY COMPLETE.** Phase 14B live Microsoft Graph event crossing is recorded. Phases
+**PROJECT C — PHASE 15J-C3A LIVE VERIFIED / PASS; PHASE 15J IN PROGRESS.** Phase 14B live Microsoft Graph event crossing is recorded. Phases
 15A–15H are complete. Phase 15I deployed the private API Service and no-endpoint Worker Pool with
 two keyless workload identities and additive least-privilege IAM. D1 LIVE VERIFIED one internal
 cloud transaction through Firestore, Cloud KMS signing, signed attestation, audit, outbox, Pub/Sub,
-worker idempotency, and terminal quarantine ACK. Firebase Hosting serves the SPA, while authenticated
-browser E2E, external connector delivery, WIF, and production Entra/OIDC remain planned or disabled. The Pulumi passphrase remains functional
+worker idempotency, and terminal quarantine ACK. Firebase Hosting serves the SPA; hosted Firebase
+authentication and one non-mutating browser-to-private-core read are LIVE VERIFIED. The controlled hosted
+browser transaction, external connector delivery, WIF, and production Entra/OIDC remain not run, planned,
+or disabled. The Pulumi passphrase remains functional
 but was previously exposed in chat and must be rotated before the final project security freeze.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).

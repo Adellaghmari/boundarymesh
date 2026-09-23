@@ -79,8 +79,7 @@ Local backend remains `file://~`. GCS state is **PLANNED**.
 ## Gated next steps (not provisioned)
 
 - Pub/Sub dead-letter forwarding
-- Controlled workload end-to-end verification in Phase 15I-D
-- Firebase Hosting, pending final validation
+- Exactly one controlled hosted browser transaction in Phase 15J-C3B
 - WIF
 
 ## Local commands

@@ -131,7 +131,7 @@ actually resolves.
 
 ## Frontend architecture
 
-Vue 3 SPA is hosted on Firebase Hosting. The hosted browser authentication and BFF-to-private-core path remain pending controlled live verification. Recruiter console uses a sticky premium header: Core destinations, Labs/Operations/Evidence dropdowns, Status, and a compact Recruiter/Operator control. Microsoft 365 Calendar lives under **Connections**, not a top-level `/m365` route.
+Vue 3 SPA is hosted on Firebase Hosting. Hosted Google authentication, the Firebase-compatible HttpOnly `__session`, operator authorization, CSRF, and one non-mutating keyless BFF-to-IAM-private-core attestation read are live verified. The controlled hosted browser transaction remains not run. Recruiter console uses a sticky premium header: Core destinations, Labs/Operations/Evidence dropdowns, Status, and a compact Recruiter/Operator control. Microsoft 365 Calendar lives under **Connections**, not a top-level `/m365` route.
 
 | Route | Auth | Purpose |
 | --- | --- | --- |
