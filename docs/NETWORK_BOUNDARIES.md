@@ -16,7 +16,7 @@ Cloud Run Service  boundarymesh-api   (IAM-private)
         │     Secret Manager: hmac-quayforge only
         │
         ▼
-Pub/Sub  delivery-instructions   (IAM publish/subscribe)
+Pub/Sub  boundarymesh-deliveries   (IAM publish/subscribe)
         │
         ▼
 Cloud Run Worker Pool  boundarymesh-worker  (no endpoint, pull)
@@ -44,3 +44,8 @@ No VPC, no GKE, no service mesh. Egress from Cloud Run is the internet. Destinat
 Firebase Hosting rewrites only the reviewed session and application routes to `boundarymesh-web`; the browser never calls the private core URL. The BFF uses a 30-second bounded per-request timeout and a separate five-second connection timeout with no retries.
 
 The Firebase session cookie is `__session`, `Secure`, `HttpOnly`, `SameSite=Lax`, Path `/`, host-only, and limited to one hour.
+
+Phase 15J live-verified this complete route with exactly one synthetic hosted browser transaction.
+The BFF reached the IAM-private core keylessly; the core published one delivery instruction; the Worker
+persisted `QUARANTINED` before ACK. With no Rivertide endpoint configured, no external HTTP call or
+connector-secret retrieval occurred. See [PHASE_15J_FINAL.md](PHASE_15J_FINAL.md).

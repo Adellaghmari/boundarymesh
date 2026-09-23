@@ -1,6 +1,6 @@
 # Phase 15J-C3A — hosted authentication and private-core verification
 
-Status: **LIVE VERIFIED / PASS.** Phase 15J-C3B is **NOT STARTED**. No hosted browser transaction was submitted during C3A.
+Status at this historical gate: **LIVE VERIFIED / PASS.** No hosted browser transaction was submitted during C3A. Phase 15J-C3B later completed successfully; see [PHASE_15J_FINAL.md](PHASE_15J_FINAL.md) for the authoritative final freeze.
 
 ## Corrected gates
 
@@ -29,6 +29,6 @@ The browser called only the Firebase Hosting same-origin path. The BFF workload 
 
 No C3A request called `POST /api/v1/transactions`. The successful read created no transaction, outbox event, application Pub/Sub message, worker processing, idempotency record, attestation, transaction audit-chain entry, or quarantine state. API and Worker images remained unchanged. Firestore, Pub/Sub, KMS, Secret Manager, Firebase Auth, IAM, and Microsoft/Entra remained unchanged. Firebase Hosting has three releases, and Compute Engine API remains disabled.
 
-The final Pulumi preview reported 39 unchanged resources, zero creates, updates, replacements, or deletes, and exit code 0. Phase 15J remains in progress; C3B owns exactly one controlled hosted browser transaction.
+The final C3A Pulumi preview reported 39 unchanged resources, zero creates, updates, replacements, or deletes, and exit code 0. At this gate Phase 15J remained in progress; C3B later completed the exactly one controlled hosted browser transaction recorded in [PHASE_15J_FINAL.md](PHASE_15J_FINAL.md).
 
 The Pulumi passphrase remains functional but was previously exposed in chat. Rotation remains recommended before the final whole-project security freeze; C3A does not claim complete credential hygiene.

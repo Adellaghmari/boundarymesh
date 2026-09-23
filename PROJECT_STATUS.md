@@ -2,8 +2,8 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **15J-C3A LIVE VERIFIED / PASS** — Firebase Hosting, Google sign-in, the `__session` BFF session, operator authorization, CSRF, and one authenticated non-mutating browser → BFF → IAM-private-core read are live verified. Phase 15J-C3B and its exactly one controlled hosted browser transaction have not started.
-**Overall:** **PROJECT C — PHASE 15I FUNCTIONALLY COMPLETE; PHASE 15J-C3A LIVE VERIFIED; PHASE 15J IN PROGRESS**
+**Phase:** **15J LIVE VERIFIED / PASS** — the hosted authenticated SPA, secure BFF, keyless IAM-private core read, and exactly one controlled browser-origin transaction through KMS evidence, audit, outbox, Pub/Sub, Worker quarantine, durable persistence, and ACK are live verified.
+**Overall:** **PROJECT C — PHASE 15J FUNCTIONALLY COMPLETE; LIVE CLOUD VERIFIED; NOT YET FULLY SECURITY-FROZEN**
 
 ## Completeness
 
@@ -29,13 +29,14 @@
 | Phase 15B GCP project / provider validation | **IMPLEMENTED + LOCALLY VALIDATED** — `boundarymesh-dev`, `europe-west4`, ADC, local Pulumi backend, zero-resource preview |
 | Phase 15C GCP adapter module + emulator foundation | **IMPLEMENTED + TESTED** — `backend/gcp` |
 | Phase 15D Artifact Registry + container images | **COMPLETE / HISTORICAL** — registry and original images remain live and untouched |
-| Phase 15I-C1 production images | **COMPLETE** — current API/worker images built, smoke-tested, pushed, remote-digest verified, and pinned in Pulumi; workloads not deployed |
+| Phase 15I-C1 production images | **COMPLETE / HISTORICAL** — the initial API/Worker deployment candidates were built, smoke-tested, pushed, digest-verified, and pinned; later Phase 15I/15J revisions superseded those candidates and are live |
 | Phase 15I-C2 Cloud Run deployment | **COMPLETE** — Run API enabled; private API Service and no-endpoint Worker Pool deployed and Ready on immutable images. One internal Firestore/Pub/Sub/KMS workload transaction was LIVE VERIFIED in Phase 15I-D1 |
-| Phase 15J-C2 web edge runtime deployment | **COMPLETE** — private core API updated to its reviewed immutable image; `boundarymesh-web` BFF is LIVE with a dedicated keyless identity, service-level core Invoker access, and BFF-only public transport. Unauthenticated, non-allowlisted, dev-route, and mutation-without-session/CSRF requests fail closed. Firebase Hosting has zero releases; authenticated browser session and browser-to-core application path remain deferred to 15J-C3. |
+| Phase 15J-C2 web edge runtime deployment | **COMPLETE / HISTORICAL GATE** — private core API updated to its reviewed immutable image; `boundarymesh-web` BFF became live with a dedicated keyless identity, service-level core Invoker access, and BFF-only public transport. At that gate Hosting still had zero releases and authenticated browser verification was deferred; C3A later completed both. |
 | Phase 15J-C3A.1 Hosting cache-policy fix | **COMPLETE** — first Hosting release exposed stale SPA-shell caching at `/` and deep links. A second Hosting-only release applies `no-cache` to every SPA shell request while preserving immutable cache headers for hashed assets. Browser sign-in, authenticated BFF-to-core reads, and browser transactions remain unexecuted. |
 | Phase 15J-C3A.4 hosted session diagnostic | **BLOCKED** — three real logins returned 200, each followed by `GET /session/me` returning 401 / `SESSION_INVALID`. Firebase Hosting forwards only the reserved `__session` cookie to Cloud Run, while the live BFF issues `__Host-bm_session`. No transaction was submitted. |
-| Phase 15J-C3A.5 session cookie correction | **PASS / DEPLOYMENT READY / NOT DEPLOYED** — the BFF uses `__session` consistently for login, reads, and logout with existing cookie security and auth checks. One new immutable BFF image is pushed and pinned in Pulumi; preview shows only the BFF image update. Hosted authentication and browser-to-private-core reads are not yet reverified. |
+| Phase 15J-C3A.5 session cookie correction | **PASS / HISTORICAL IMPLEMENTATION GATE** — `__session` was implemented consistently for login, reads, and logout with existing cookie security and auth checks. At that gate the immutable image was pushed and previewed but not deployed; C3A.8 later live-verified the hosted session and browser-to-private-core read. |
 | Phase 15J-C3A.8 hosted authentication and private-core read | **LIVE VERIFIED / PASS** — Hosting release 3 serves the corrected SPA; Google sign-in, `POST /session/login` 200, `GET /session/me` 200, `__session`, Firebase verification, operator authorization, CSRF, route allowlisting, and keyless BFF invocation of the private core all passed. The retained attestation summary returned 200 through `boundarymesh-web-00004-k48`; BFF duration was 17.284 seconds and core duration 16.561 seconds under the corrected bounded 30-second request timeout. No transaction or application mutation occurred. Final Pulumi preview: 39 unchanged, zero operations. |
+| Phase 15J-C3B hosted transaction and cleanup | **LIVE VERIFIED / PASS** — exactly one browser-origin synthetic transaction returned `ALLOW` / `ACCEPTED_FOR_ASYNCHRONOUS_DELIVERY`, produced a SIGNED/VALID KMS-backed attestation, a VALID eight-entry audit chain, one published outbox instruction, one Worker receipt, durable terminal `QUARANTINED` state, one ACK, and zero NACK/redelivery/DLQ. Exact disposable outbox/idempotency records were removed; immutable/shared evidence remains valid. [Final evidence](docs/PHASE_15J_FINAL.md) |
 | Phase 15E Secret Manager | **COMPLETE** — API and four containers LIVE; Phase 15I-B2 added one enabled synthetic version per container. Adapter live-verified locally; D1 did not exercise a deployed secret read |
 | Phase 15F-A Firestore persistence + preview | **COMPLETE** — adapters in `backend/gcp`; emulator suite passed; preview approved |
 | Phase 15F-B Firestore infrastructure apply | **COMPLETE** — `firestore.googleapis.com` LIVE; database `boundarymesh` LIVE / PROVISIONED |
@@ -52,7 +53,7 @@
 | Application production IAM / Entra live | **LIVE VERIFIED LOCALLY** — common authority, personal Microsoft account, server-side session |
 | Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, one event normalized and enforced |
 | GCP project | **CREATED + BILLING LINKED** (`boundarymesh-dev`) |
-| GCP resources | Existing 18 resources unchanged. Phase 15I-B1 added 12 managed identity/IAM resources; Phase 15I-C2 added the Run API, private API Service, and Worker Pool. Live verification residue **CLEANED** |
+| GCP resources | **39 Pulumi-managed resources / ZERO DRIFT** plus three Firebase Hosting releases outside Pulumi. Private API, Worker Pool, authenticated Web BFF, Firestore, Pub/Sub, KMS, Secret Manager, and least-privilege IAM are live |
 | Microsoft credentials | **NONE CREATED in Git / this session** |
 | GCP service-account JSON keys | **NONE** |
 | Project A | **FROZEN** — not modified |
@@ -79,10 +80,10 @@
 2. Webhook & Subscription Defense — QuayForge HMAC **TESTED**; Graph subscriptions **PLANNED**.
 3. Contract Drift Firewall — **TESTED**.
 4. Data Boundary Firewall — **TESTED**; `m365-calendar-egress/v1` **LIVE VERIFIED LOCALLY**.
-5. Credential & Consent Vault — local model **TESTED**; Microsoft delegated consent mapped; Secret Manager **PLANNED**.
-6. Quarantine & Recovery Orchestrator — local **TESTED**; Firestore persistence LIVE VERIFIED in D1.
+5. Credential & Consent Vault — local model **TESTED**; Microsoft delegated consent mapped; Secret Manager infrastructure and adapters **LIVE VERIFIED**, while C3B correctly stopped before connector-secret retrieval.
+6. Quarantine & Recovery Orchestrator — local **TESTED**; Firestore-backed terminal quarantine persistence and ACK ordering **WORKLOAD LIVE VERIFIED**.
 
-Also: Tamper-Evident Audit Chain **LIVE VERIFIED LOCALLY** for the Graph event; Cryptographic Exchange Attestation **LIVE VERIFIED LOCALLY** (local JCA; Cloud KMS signing **LIVE VERIFIED LOCALLY**); Integration Boundary Graph **LIVE VERIFIED LOCALLY** for `m365-calendar` OBSERVED. Firestore adapters **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY**. Firestore database **LIVE / PROVISIONED**. Live verification residue **CLEANED**. Cloud Run workload persistence is **not** live.
+Also: the Tamper-Evident Audit Chain, KMS-backed Cryptographic Exchange Attestation, Firestore persistence, transactional outbox, Pub/Sub publish/consume, Worker idempotency, terminal quarantine, and persist-before-ACK behavior are **WORKLOAD LIVE VERIFIED**. Integration Boundary Graph remains **LIVE VERIFIED LOCALLY** for the Microsoft event. Disposable Phase 15J run residue is cleaned while signed/audit/shared evidence is preserved.
 
 ## LIVE MICROSOFT VERIFICATION (local, 2026-09-10)
 
@@ -107,14 +108,14 @@ Safe recorded result for the event pull:
 
 GET `/api/v1/microsoft/connector` still reports `LIVE_CONFIGURED` because that endpoint never calls Graph. `LIVE_VERIFIED` was the Operator pull response after Graph HTTP 2xx.
 
-## Phase 15I-D2 freeze truth
+## Phase 15I-D2 freeze truth (historical at the Phase 15I gate)
 
 - Cloud Run API and Worker Pool: **LIVE VERIFIED** and Ready.
 - Private `POST /api/v1/transactions`: **LIVE VERIFIED** through the internal cloud pipeline.
 - Firestore, Cloud KMS signing, Exchange Attestation, audit continuity, transactional outbox, Pub/Sub publish/consume, worker idempotency, and terminal ACK semantics: **LIVE VERIFIED**.
 - External connector delivery: **NOT LIVE**; connector configuration remains intentionally fail-closed.
 - Deployed workload Secret Manager reads: **NOT EXERCISED BY D1**; infrastructure and IAM remain live.
-- Firebase Hosting, WIF, Graph notifications, and production Entra/OIDC: **PLANNED / DISABLED**.
+- Firebase Hosting was still planned at this historical gate and became live in Phase 15J. WIF, Graph notifications, and production Entra/OIDC remain planned or disabled.
 - Pulumi passphrase: **FUNCTIONAL but previously exposed in chat; rotation remains required before the final project security freeze**.
 
 ## Phase 15I-D0C worker disposition truth
@@ -126,3 +127,11 @@ GET `/api/v1/microsoft/connector` still reports `LIVE_CONFIGURED` because that e
 - Pub/Sub remains at-least-once; existing application idempotency and BoundaryMesh-owned quarantine recovery remain in force.
 - The corrected Worker Pool revision is Ready on the D0C immutable digest. D1 verified one live transaction and D2 preserved the audit/attestation evidence.
 - Pub/Sub deadLetterPolicy remains unconfigured. Live quarantine ACK behavior was verified in D1.
+
+## Phase 15J final freeze truth
+
+- Phase 15J-C3A and Phase 15J-C3B: **LIVE VERIFIED / PASS**.
+- Exactly one hosted browser transaction is correlated end to end and preserved in [the final Phase 15J evidence](docs/PHASE_15J_FINAL.md).
+- Final Pulumi state: **39 unchanged / zero operations / exit 0**.
+- External connector delivery remains intentionally disabled; `provider_called=false`, attempts `0`.
+- The project is not fully security-frozen: the current exposed Pulumi passphrase and locally exposed, uncommitted Firebase password-hash signing material remain accepted follow-ups.

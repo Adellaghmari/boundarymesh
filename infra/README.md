@@ -23,68 +23,75 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | API image | CORRECTED 15I-C2 IMAGE PUSHED + DIGEST VERIFIED + DEPLOYED |
 | Worker image | PHASE 15I-C1 BUILT + SMOKE-TESTED + PUSHED + DIGEST VERIFIED + DEPLOYED |
 | Artifact Registry round-trip | LIVE VERIFIED |
-| Production composition | IMPLEMENTED + LOCALLY TESTED / NOT LIVE |
+| Production composition | LIVE VERIFIED |
 | Cloud Run API Service | LIVE / PRIVATE / READY |
 | Cloud Run Worker Pool | LIVE / READY / NO PUBLIC URL |
+| Cloud Run Web BFF | LIVE / READY / PUBLIC TRANSPORT + MANDATORY APPLICATION AUTH |
 | Secret Manager Pulumi definition | IMPLEMENTED + APPLIED |
 | Secret Manager API | LIVE / ENABLED IN GCP |
 | Secret containers | LIVE / PROVISIONED IN GCP |
 | Secret versions | FOUR TOTAL / EXACTLY ONE ENABLED SYNTHETIC VERSION PER CONTAINER |
-| Workload identities | TWO KEYLESS SERVICE ACCOUNTS / LIVE / PROVISIONED |
-| Workload IAM | LIVE / TEN ADDITIVE LEAST-PRIVILEGE MEMBERS APPLIED |
+| Workload identities | THREE KEYLESS SERVICE ACCOUNTS / LIVE / PROVISIONED / ZERO USER-MANAGED KEYS |
+| Workload IAM | LIVE / LEAST PRIVILEGE / BFF CORE INVOKER IS SERVICE-SCOPED |
 | Secret Manager workload access | LIVE / RESOURCE-SCOPED AUTHORIZATION ONLY |
-| Firestore persistence adapters | IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY |
+| Firestore persistence adapters | IMPLEMENTED + EMULATOR TESTED + WORKLOAD LIVE VERIFIED |
 | Firestore Pulumi definition | IMPLEMENTED + APPLIED |
 | Firestore API in GCP | LIVE / ENABLED IN GCP |
 | Firestore database in GCP | LIVE / PROVISIONED IN GCP |
-| Live Java SDK data path | LIVE VERIFIED LOCALLY / RESIDUE CLEANED |
-| Transactional outbox + Pub/Sub adapters | IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED LOCALLY |
+| Live Java SDK data path | WORKLOAD LIVE VERIFIED / DISPOSABLE RESIDUE CLEANED / EVIDENCE PRESERVED |
+| Transactional outbox + Pub/Sub adapters | IMPLEMENTED + EMULATOR TESTED + WORKLOAD LIVE VERIFIED |
 | Pub/Sub Pulumi | IMPLEMENTED + APPLIED |
 | Pub/Sub API in GCP | LIVE / ENABLED IN GCP |
 | Pub/Sub topics + pull subscriptions | LIVE / PROVISIONED IN GCP |
 | Dead-letter forwarding | PLANNED / NOT CONFIGURED |
-| Live Pub/Sub data path | LIVE VERIFIED LOCALLY / RESIDUE CLEANED |
+| Live Pub/Sub data path | WORKLOAD LIVE VERIFIED / ONE PUBLISH + ONE ACK / NO OBSERVED REDELIVERY |
 | Cloud KMS signer adapter | IMPLEMENTED + UNIT TESTED |
 | Cloud KMS Pulumi | IMPLEMENTED + APPLIED |
 | Cloud KMS API / key ring / crypto key in GCP | LIVE / PROVISIONED |
-| Live Cloud KMS signing | LIVE VERIFIED LOCALLY (15H-C) |
+| Live Cloud KMS signing | WORKLOAD LIVE VERIFIED / ES256 VERSION 1 VALID |
 | Workload KMS IAM | API-ONLY, CRYPTO-KEY-SCOPED / LIVE / APPLIED |
 | Phase 15I-A preview | 15 CREATE / 18 UNCHANGED / 0 UPDATE / 0 REPLACE / 0 DELETE |
 | Phase 15I-B1 targeted apply | 12 CREATED / NO OTHER OPERATIONS |
 | Phase 15I-B1 final preview | 3 CREATE / 30 UNCHANGED / 0 UPDATE / 0 REPLACE / 0 DELETE |
 | Phase 15I-B2 Secret Manager adapter proof | LIVE VERIFIED LOCALLY / PAYLOADS NOT PULUMI-MANAGED |
 | Phase 15I-C2 final preview | 33 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
+| Phase 15J final preview | 39 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
+| Firebase Hosting | LIVE / 3 RELEASES / OUTSIDE PULUMI OWNERSHIP |
 
 Target region: **`europe-west4`**.  
 Stack: **`dev`**.  
 GCP project: **`boundarymesh-dev`**.  
-Repository ID: **`boundarymesh`** (DOCKER). The API runs the corrected `phase15i-c2-fix-20260915-2345` image by immutable digest; the Worker Pool runs the verified Phase 15I-C1 digest. Phase 15D tags remain historical and untouched.
+Repository ID: **`boundarymesh`** (DOCKER). API, Worker, and Web BFF run immutable digest references. Phase 15D and intermediate Phase 15J tags remain historical and untouched.
 
-## Published image digests (2026-09-16)
+## Current deployed image digests (Phase 15J freeze)
 
-Current immutable Artifact Registry deployment candidates:
+Current immutable Artifact Registry deployment references:
 
 ```text
-europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api@sha256:445cb21117d659fe4430cfdfb1eef956555bba5dc570a15ed43478251feb3a97
+europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api@sha256:df4ca576227b1311194af1b3c821962a228bc7222d144eb4b4fbfb41590e072d
 
-europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker@sha256:5d9e0a3a442d3e3dbba8b424aa2cea79c6c97010a486cdd66eb3fd204f7071a6
-sha256:62570f5c928394b74b60071ed7d34cb534522ce7f4f8c39816b012d855fa3768
+europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker@sha256:a031fd689c80faef122b2eb7a35c35c6cb04035f333c493e5d7decea1d08b76a
+
+europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:90570617750bd39613482fd75d8434f1a47299ae8d35908ae0c81717374ee30a
 ```
 
-The API and Worker Pool are deployed on these immutable references. This documents deployment
-readiness only; Phase 15I-D remains required for functional workload verification.
+The API, Worker Pool, and Web BFF are deployed on these immutable references. Phase 15J live
+verified the authenticated hosted browser path and exactly one governed transaction through the
+internal cloud pipeline. External connector delivery remains intentionally disabled.
 
 Local backend remains `file://~`. GCS state is **PLANNED**.
 
 ## Gated next steps (not provisioned)
 
 - Pub/Sub dead-letter forwarding
-- Exactly one controlled hosted browser transaction in Phase 15J-C3B
-- WIF
+- Phase 16 remaining Pulumi / GCP infrastructure reconciliation
+- Phase 17 WIF / CI-CD / AppSec
+- Final credential-hygiene rotation and audit in its later gated phase
 
 ## Local commands
 
-The Pulumi passphrase is local secret material and must never be committed. Enter it only at
+The Pulumi passphrase is local secret material and must never be committed. The current value is a
+known accepted-risk credential exposed in chat and still requires later rotation. Enter it only at
 Pulumi's interactive prompt, or provide it through an approved local secret mechanism that does
 not write it into this repository or shell history. Repository documentation must contain
 placeholders only.
@@ -98,4 +105,4 @@ npm test
 pulumi preview
 ```
 
-Do not add another secret version or deploy Cloud Run before a later explicit gate.
+Do not mutate secrets, IAM, Hosting, or Cloud Run without a later explicit gate.

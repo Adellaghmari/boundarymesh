@@ -64,8 +64,8 @@ This is portfolio work, not professional employment.
 | Data Boundary Firewall | **TESTED** / **LIVE VERIFIED LOCALLY** | Real transformation, not UI masking. Live Graph event: `ALLOW_WITH_TRANSFORMATION`, transformation_count=4 |
 | Boundary Enforcement Engine foundation | **TESTED** | Synthetic ControlVector plus real contract/egress |
 | expanded Boundary Enforcement Engine | **TESTED** / **LIVE VERIFIED LOCALLY** | Nine ControlVector fields. Live Graph event: contract PASS, egress PASS, outcome `ALLOW_WITH_TRANSFORMATION` |
-| integrated multi-control boundary crossing | **TESTED** / **LIVE VERIFIED** | D1 used production `POST /api/v1/transactions` and reached the internal delivery boundary |
-| Outcomes ALLOW / TRANSFORM / QUARANTINE / REJECT | **TESTED** / **LIVE VERIFIED LOCALLY** | Live Graph event outcome `ALLOW_WITH_TRANSFORMATION` |
+| integrated multi-control boundary crossing | **TESTED** / **LIVE VERIFIED** | Phase 15J submitted exactly one authenticated hosted browser transaction through the private production API and complete internal delivery boundary |
+| Outcomes ALLOW / TRANSFORM / QUARANTINE / REJECT | **TESTED** / **LIVE VERIFIED** | Hosted production transaction returned `ALLOW`; the live Graph event returned `ALLOW_WITH_TRANSFORMATION`; remaining outcomes are tested |
 | JUnit 5 | **TESTED** | Identity + webhook + engine suites |
 | ArchUnit | **TESTED** | Domain/application must not depend on Spring/cloud |
 | Spotless | **TESTED** | Bound to `verify` |
@@ -78,18 +78,19 @@ This is portfolio work, not professional employment.
 | Google Secret Manager | **LIVE VERIFIED LOCALLY** | Four containers; exactly one enabled synthetic version each; resource-scoped workload IAM; Java adapters verified through ADC |
 | Quarantine & Recovery Orchestrator (local) | **TESTED** | State machine, eligibility, admin reprocess |
 | bounded reprocess | **TESTED** | Cap 3; `boundary.admin` |
-| delivery idempotency | **TESTED** | Distinct from inbound webhook replay |
+| delivery idempotency | **TESTED / WORKLOAD LIVE VERIFIED** | Exactly one Worker result persisted for the Phase 15J instruction; zero duplicate processing or redelivery observed |
+| transactional outbox | **TESTED / WORKLOAD LIVE VERIFIED** | One Phase 15J instruction moved to `PUBLISHED`; one corresponding Pub/Sub publish occurred before exact-ID cleanup |
 | Resilience4j Retry | **TESTED** | 3 total attempts; 400/401/403 never retried |
 | Resilience4j Circuit Breaker | **TESTED** | CLOSED / OPEN / HALF_OPEN |
 | WireMock | **TESTED** | External connector simulation |
-| Pub/Sub delivery decoupling | **IMPLEMENTED + EMULATOR TESTED** | Persist-before-publish. At-least-once + worker idempotency. Not LIVE |
-| Firestore Native access patterns | **IMPLEMENTED + EMULATOR TESTED + WORKLOAD LIVE VERIFIED** | Named DB `boundarymesh`; D1 API/worker persisted the transaction and delivery state. Disposable residue cleaned; evidence retained |
-| Cloud Run API Service + Worker Pool | **LIVE VERIFIED** | Private API Service and no-endpoint Worker Pool deployed on immutable images; one internal transaction verified in 15I-D1 |
-| Cloud KMS EC_SIGN_P256_SHA256 | **IMPLEMENTED + UNIT TESTED + WORKLOAD LIVE VERIFIED** / **LIVE / PROVISIONED** | Adapter + DER→P1363. D1 API workload signed with version 1. Private key never leaves KMS |
-| Cryptographic Exchange Attestation | **WORKLOAD LIVE VERIFIED** | D1 produced a SIGNED ES256 attestation; the Cloud KMS signer verified the normalized signature with the retrieved public key. Does not prove business truth |
+| Pub/Sub delivery decoupling | **IMPLEMENTED + EMULATOR TESTED + WORKLOAD LIVE VERIFIED** | Phase 15J proved one publish, one Worker receipt, one ACK, zero NACK/redelivery/DLQ, and zero remaining backlog |
+| Firestore Native access patterns | **IMPLEMENTED + EMULATOR TESTED + WORKLOAD LIVE VERIFIED** | Named DB `boundarymesh`; hosted API/Worker persisted evidence and terminal state. Disposable outbox/idempotency residue was removed; signed/audit/shared evidence remains |
+| Cloud Run API Service + Worker Pool | **LIVE VERIFIED** | IAM-private API Service and no-endpoint Worker Pool on immutable images processed the Phase 15J browser-origin transaction |
+| Cloud KMS EC_SIGN_P256_SHA256 | **IMPLEMENTED + UNIT TESTED + WORKLOAD LIVE VERIFIED** / **LIVE / PROVISIONED** | Phase 15J API workload signed with enabled version 1; private key never leaves KMS |
+| Cryptographic Exchange Attestation | **WORKLOAD LIVE VERIFIED** | Phase 15J preserved a SIGNED/VALID ES256 attestation correlated to the hosted `ALLOW` transaction. Does not prove business truth |
 | RFC 8785 canonicalization | **TESTED** | Constrained application writer. Floats rejected. No Jackson default |
 | Attestation signature verification | **TESTED** | ECDSA P-256 P1363 + Base64. UNSIGNED is explicit |
-| SHA-256 tamper-evident audit chain | **TESTED** / **LIVE VERIFIED** | Deployed `quayforge-orders` chain VALID for the D1 transaction; append-only evidence preserved. Not immutable storage |
+| SHA-256 tamper-evident audit chain | **TESTED** / **LIVE VERIFIED** | Deployed `quayforge-orders` chain remained VALID with eight contiguous entries after the Phase 15J transaction and cleanup. Not immutable storage |
 | Deterministic audit canonicalization | **TESTED** | RFC 8785 subset over audit-entry/v1 |
 | Audit-chain verification | **TESTED** | Sequence, previous-hash, recalculated SHA-256 |
 | Concurrency-safe audit append | **TESTED** / **EMULATOR TESTED** / **LIVE VERIFIED LOCALLY** | In-memory per-chain lock; Firestore transactional append |
@@ -121,12 +122,12 @@ This is portfolio work, not professional employment.
 | Secret containers in GCP | **LIVE** / **ONE ENABLED VERSION EACH** | User-managed replication `europe-west4` |
 | Secret versions | **LIVE / SYNTHETIC HIGH-ENTROPY MATERIAL** | Values never entered source, Pulumi, chat, docs, or persistent temp files |
 | Workload IAM | **LIVE / APPLIED** | Keyless API, Worker, and Web workload SAs. The Web SA has service-level core Invoker access; the core has no public or project-wide Invoker grant |
-| Cloud workload Secret Manager access | **IAM LIVE / D1 NOT EXERCISED** | Resource-scoped IAM; payloads live; this transaction failed closed before credential retrieval; Entra production composition disabled |
+| Cloud workload Secret Manager access | **IAM LIVE / HOSTED RUN NOT EXERCISED** | Resource-scoped IAM; the Phase 15J Worker stopped on the empty endpoint before connector credential retrieval; Entra production composition disabled |
 | GCP provider / authentication | **CONFIGURED + VERIFIED LOCALLY** | ADC. No `GOOGLE_APPLICATION_CREDENTIALS`. No JSON keys |
 | GCP adapter module architecture | **IMPLEMENTED** / **TESTED** | `backend/gcp`. Domain/application remain cloud-independent |
 | GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |
-| Firestore production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Deployed API/worker composition persisted the D1 transaction; disposable outbox/idempotency residue was cleaned |
-| Pub/Sub production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Deployed API published the D1 event and Worker Pool consumed it; no dead-letter policy configured |
+| Firestore production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Deployed hosted API/Worker path persisted the Phase 15J evidence and durable terminal result; exact disposable records were cleaned safely |
+| Pub/Sub production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Hosted API published exactly one Phase 15J event and Worker Pool consumed/ACKed it without observed redelivery; no dead-letter policy configured |
 | Pulumi TypeScript GCP resources | **LIVE / 39 MANAGED RESOURCES / ZERO DRIFT** | Artifact Registry, Secret Manager containers, Firestore, Pub/Sub, KMS, private API, Worker Pool, and public-transport/authenticated Web BFF. Hosting is live but intentionally outside Pulumi; dead-letter forwarding remains unconfigured |
 | GitHub Actions + GCP WIF | PLANNED | |
 | Semgrep | PLANNED | |
@@ -139,8 +140,8 @@ This is portfolio work, not professional employment.
 | Camel tests | **TESTED** | Worker `CamelDeliveryPipelineTest` + `ResilienceAndCircuitTest` against WireMock |
 | Frontend API integration | **TESTED** | health, ready, JWT evaluate, webhook lab |
 | Micrometer | **TESTED** | `boundarymesh.delivery.*`, quarantine/reprocess counters, R4j tagged metrics. No GCP export |
-| Cloud Logging / Monitoring / Trace | PLANNED | |
-| Firebase Hosting + authenticated web edge | **LIVE VERIFIED** | Static SPA has non-stale HTML shell caching and immutable hashed assets. Real Google sign-in, `__session`, BFF authorization/CSRF, and one non-mutating keyless BFF → IAM-private-core attestation read returned HTTP 200. Hosted browser transaction remains not run |
+| Cloud Logging / Monitoring / Trace | **LOGGING + MONITORING LIVE VERIFIED / TRACE PLANNED** | Cloud Run request/application logs and Pub/Sub ACK/backlog/DLQ metrics correlated the Phase 15J run; distributed tracing was not verified |
+| Firebase Hosting + authenticated web edge | **LIVE VERIFIED** | Static SPA caching, real Google sign-in, `__session`, BFF authorization/CSRF, keyless private-core access, and exactly one controlled hosted browser transaction are live verified |
 | Public recruiter demo | PLANNED | |
 | Protected admin mutations | **TESTED** | Session CSRF on `/api/v1/admin/**`. Local `boundary.admin` reprocess remains |
 | Self-dogfood Git SHA / revision | PLANNED | |

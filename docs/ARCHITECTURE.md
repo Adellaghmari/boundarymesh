@@ -20,18 +20,19 @@ the engine has decided.
 | Signatures | Cloud KMS ECDSA P-256 | Private key never leaves KMS |
 | IaC | Pulumi TypeScript + GCS state | Distinct from Terraform (B) |
 | CI identity | GitHub → GCP WIF | No JSON keys |
-| Admin identity | Microsoft Entra OIDC (BFF) | Real authorization, not login theatre |
+| Hosted operator identity | Firebase Google Auth + Web BFF session | Real authorization, no browser workload credentials |
+| Microsoft connector admin identity | Microsoft Entra OIDC (local BFF) | Delegated Graph authorization remains a distinct local integration |
 | Graph | Outlook Calendar, one deep connector | Contract harness TESTED; live Graph blocked without tenant |
 | Product shell | Custom Vue/SCSS premium header | Core / Labs / Operations / Evidence / Status; no UI framework |
 | AI | None | Deterministic policy is the product |
 
-## High-level flow (local now / cloud later)
+## High-level production flow
 
 ```text
-EXTERNAL SYSTEM  (QuayForge HMAC | JWT machine call | future Graph notification)
+TRUSTED CALLER / AUTHENTICATED WEB BFF
         │
         ▼
-PUBLIC BOUNDARY API  —  boundarymesh-api  (:8080)
+IAM-PRIVATE BOUNDARY API  —  boundarymesh-api  (:8080)
         │  identity / authorization / authenticity / freshness / replay
         │  contract / data egress
         │  credential resolvability (metadata) / connector safety
@@ -54,12 +55,12 @@ CLOUD RUN WORKER POOL  —  boundarymesh-worker  (no HTTP server or URL)
         │  DELIVERED | DUPLICATE_SUPPRESSED | QUARANTINED
 ```
 
-The `prod` Spring profile composes the existing Firestore, Pub/Sub, Cloud KMS, and Secret Manager
-adapters from `backend/gcp`; local/test profiles remain self-contained. Phase 15I-C2 deployed the
-private API Service and no-endpoint Worker Pool with the two keyless service accounts and existing
-least-privilege IAM. Both revisions are Ready. Secret versions are live, but workload data-path and
-connector behavior remain Phase 15I-D verification work. Existing Firestore, Pub/Sub, KMS, Secret
-Manager containers, and Artifact Registry remain unchanged. Dead-letter forwarding is still not configured.
+The `prod` Spring profile composes the Firestore, Pub/Sub, Cloud KMS, and Secret Manager adapters
+from `backend/gcp`; local/test profiles remain self-contained. The private API Service, no-endpoint
+Worker Pool, and authenticated Web BFF run under three dedicated keyless service accounts. Phase 15J
+live-verified one hosted transaction through the complete internal cloud path. The intentionally empty
+Rivertide endpoint produced durable terminal quarantine before ACK without resolving a connector secret
+or calling an external provider. Dead-letter forwarding remains unconfigured.
 
 ## Why this is not an API gateway
 
@@ -76,8 +77,8 @@ A gateway would authenticate optionally, rate-limit, and reverse-proxy. Boundary
 - Identity: dedicated keyless service account `boundarymesh-api`.
 - Permissions: Firestore data read/write, publish only to `boundarymesh-deliveries`, sign and read
   the public key only on `exchange-attestation`, and access only `hmac-quayforge`.
-- Phase 15I-A keeps Cloud Run invocation IAM-authenticated. The production Spring security
-  profile currently exposes health/readiness only; frontend/public authentication is a later gate.
+- Cloud Run invocation remains IAM-authenticated. Only the dedicated Web BFF service account has
+  service-level Invoker access; the core has no public or project-wide Invoker grant.
 
 ### `boundarymesh-worker` (Cloud Run Worker Pool)
 
@@ -131,7 +132,7 @@ actually resolves.
 
 ## Frontend architecture
 
-Vue 3 SPA is hosted on Firebase Hosting. Hosted Google authentication, the Firebase-compatible HttpOnly `__session`, operator authorization, CSRF, and one non-mutating keyless BFF-to-IAM-private-core attestation read are live verified. The controlled hosted browser transaction remains not run. Recruiter console uses a sticky premium header: Core destinations, Labs/Operations/Evidence dropdowns, Status, and a compact Recruiter/Operator control. Microsoft 365 Calendar lives under **Connections**, not a top-level `/m365` route.
+Vue 3 SPA is hosted on Firebase Hosting. Hosted Google authentication, the Firebase-compatible HttpOnly `__session`, operator authorization, CSRF, a non-mutating keyless BFF-to-IAM-private-core read, and exactly one controlled browser-origin governed transaction are live verified. The transaction reached durable Worker quarantine and ACK without external connector contact. Recruiter console uses a sticky premium header: Core destinations, Labs/Operations/Evidence dropdowns, Status, and a compact Recruiter/Operator control. Microsoft 365 Calendar lives under **Connections**, not a top-level `/m365` route.
 
 | Route | Auth | Purpose |
 | --- | --- | --- |
@@ -157,8 +158,9 @@ Three distinct cases, never mixed:
 
 | Case | Flow | Current status |
 | --- | --- | --- |
-| Recruiter | none | Public read + labeled harness POSTs |
-| Admin / operator | Entra OIDC authorization code, Spring BFF HttpOnly session | Implemented + TESTED. Live tenant **BLOCKED** without credentials |
+| Recruiter | none | Public static product shell; application routes remain session-gated |
+| Hosted operator | Firebase Google identity, Web BFF HttpOnly `__session` | **LIVE VERIFIED** with one controlled browser transaction |
+| Microsoft connector admin | Entra OIDC authorization code, local Spring BFF HttpOnly session | **LIVE VERIFIED LOCALLY** with delegated `Calendars.Read` |
 | Machine / API | Local JWT/JWKS resource server | **TESTED**. Entra client-credentials JWT remains PLANNED |
 
 **Spring Security chains (local):**

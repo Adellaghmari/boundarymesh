@@ -68,7 +68,7 @@ Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** Co
 
 A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Firebase Hosting now serves the cloud SPA with a revalidating HTML shell and immutable hashed assets. Hosted Firebase Google authentication, the HttpOnly `__session` BFF session, operator authorization, CSRF, and one non-mutating keyless browser → BFF → IAM-private-core attestation read are **LIVE VERIFIED**. The exactly one controlled hosted browser transaction remains **NOT YET RUN** and belongs to Phase 15J-C3B. Still **PLANNED:** Graph change notifications, WIF, and production Entra/OIDC. Phase 15I-D1 executed one synthetic transaction through the private `POST /api/v1/transactions` route: workload Firestore, Cloud KMS signing, attestation, audit, outbox, Pub/Sub, Worker Pool consumption, idempotency, and terminal quarantine ACK were LIVE VERIFIED. External connector delivery remains intentionally disabled and unverified. Each synthetic integration secret has exactly one enabled high-entropy version; D1 did not exercise a credential read. Existing Firestore, Pub/Sub, and KMS resources remain unchanged. Dead-letter forwarding is not configured.
+Firebase Hosting serves the cloud SPA with a revalidating HTML shell and immutable hashed assets. Hosted Firebase Google authentication, the HttpOnly `__session` BFF session, operator authorization, CSRF, and keyless browser → BFF → IAM-private-core access are **LIVE VERIFIED**. Phase 15J completed exactly one synthetic browser-origin transaction through Firestore, Cloud KMS signing, attestation, audit, outbox, Pub/Sub, Worker Pool consumption, idempotency, terminal quarantine, durable persistence, and ACK. External connector delivery remains intentionally disabled: no endpoint was configured, `provider_called=false`, and no connector secret was read. Graph change notifications, WIF, and production Entra/OIDC remain planned. Dead-letter forwarding is not configured. See the [Phase 15J final evidence](docs/PHASE_15J_FINAL.md).
 
 ## Navigation
 
@@ -128,15 +128,15 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — PHASE 15J-C3A LIVE VERIFIED / PASS; PHASE 15J IN PROGRESS.** Phase 14B live Microsoft Graph event crossing is recorded. Phases
+**PROJECT C — PHASE 15J LIVE VERIFIED / PASS; NOT YET FULLY SECURITY-FROZEN.** Phase 14B live Microsoft Graph event crossing is recorded. Phases
 15A–15H are complete. Phase 15I deployed the private API Service and no-endpoint Worker Pool with
 two keyless workload identities and additive least-privilege IAM. D1 LIVE VERIFIED one internal
 cloud transaction through Firestore, Cloud KMS signing, signed attestation, audit, outbox, Pub/Sub,
 worker idempotency, and terminal quarantine ACK. Firebase Hosting serves the SPA; hosted Firebase
-authentication and one non-mutating browser-to-private-core read are LIVE VERIFIED. The controlled hosted
-browser transaction, external connector delivery, WIF, and production Entra/OIDC remain not run, planned,
-or disabled. The Pulumi passphrase remains functional
-but was previously exposed in chat and must be rotated before the final project security freeze.
+authentication, a non-mutating browser-to-private-core read, and exactly one hosted governed transaction
+are LIVE VERIFIED. External connector delivery, WIF, and production Entra/OIDC remain not run, planned,
+or disabled. The current Pulumi passphrase remains an accepted exposed credential, and Firebase password-hash
+signing material appeared in local output without being committed or stored; both remain final security-hygiene follow-ups.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 
@@ -170,6 +170,7 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_M
 | [docs/NETWORK_BOUNDARIES.md](docs/NETWORK_BOUNDARIES.md) | Trust hops |
 | [docs/PULUMI.md](docs/PULUMI.md) | IaC |
 | [docs/GCP_ADAPTERS.md](docs/GCP_ADAPTERS.md) | GCP module boundary and port map |
+| [docs/PHASE_15J_FINAL.md](docs/PHASE_15J_FINAL.md) | Final hosted production verification and cleanup freeze |
 | [docs/CI_CD.md](docs/CI_CD.md) | GitHub WIF |
 | [docs/PHASE0_GATE.md](docs/PHASE0_GATE.md) | Final YES/NO gate |
 | [docs/PHASE1.md](docs/PHASE1.md) | Phase 1 implementation record |
