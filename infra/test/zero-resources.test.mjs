@@ -18,7 +18,6 @@ const forbidden = [
     /\bnew\s+gcp\.storage\./,
     /\bnew\s+gcp\.compute\./,
     /\bnew\s+gcp\.dns\./,
-    /\bnew\s+gcp\.iam\./,
     /\bnew\s+gcp\.Provider\b/,
 ];
 
@@ -100,7 +99,7 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.match(text, /PHASE_15I_C1_WORKER_IMAGE/);
     assert.equal(/\(default\)/.test(text), false);
     assert.equal(/client_secret|private_key|BEGIN [A-Z]+ PRIVATE/i.test(text), false);
-    assert.equal((text.match(/new gcp\.projects\.Service/g) ?? []).length, 6);
+    assert.equal((text.match(/new gcp\.projects\.Service/g) ?? []).length, 9);
     assert.equal((text.match(/new gcp\.artifactregistry\.Repository/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.secretmanager\.Secret\(/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.firestore\.Database/g) ?? []).length, 1);
@@ -108,7 +107,10 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.equal((text.match(/new gcp\.pubsub\.Subscription\(/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.kms\.KeyRing/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.kms\.CryptoKey\(/g) ?? []).length, 1);
-    assert.equal((text.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 3);
+    assert.equal((text.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 4);
+    assert.equal((text.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.iam\.WorkloadIdentityPool\(/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.iam\.WorkloadIdentityPoolProvider/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.projects\.IAMMember/g) ?? []).length, 3);
     assert.equal((text.match(/new gcp\.pubsub\.TopicIAMMember/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.pubsub\.SubscriptionIAMMember/g) ?? []).length, 1);
@@ -122,6 +124,80 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.match(edge, /name:\s*coreApi\.name,[\s\S]*?role:\s*"roles\/run\.invoker",\s*member:\s*principal/);
     assert.match(edge, /name:\s*service\.name,[\s\S]*?member:\s*"allUsers"/);
     assert.equal(/roles\/(owner|editor|run\.admin|cloudkms|pubsub|secretmanager|datastore)/i.test(edge), false);
+});
+
+test("GitHub WIF foundation defines exactly seven narrow, keyless resources", () => {
+    const wif = readFileSync(join(srcDir, "wif.ts"), "utf8");
+    const workflow = readFileSync(join(root, "..", ".github", "workflows", "wif-verify.yml"), "utf8");
+
+    assert.equal((wif.match(/new gcp\.projects\.Service/g) ?? []).length, 3);
+    assert.match(wif, /service:\s*"iam\.googleapis\.com"/);
+    assert.match(wif, /service:\s*"iamcredentials\.googleapis\.com"/);
+    assert.match(wif, /service:\s*"sts\.googleapis\.com"/);
+    assert.equal(/compute\.googleapis\.com/.test(wif), false);
+    assert.equal((wif.match(/disableOnDestroy:\s*false/g) ?? []).length, 3);
+
+    assert.equal((wif.match(/new gcp\.iam\.WorkloadIdentityPool\(/g) ?? []).length, 1);
+    assert.equal((wif.match(/new gcp\.iam\.WorkloadIdentityPoolProvider/g) ?? []).length, 1);
+    assert.match(wif, /GITHUB_WIF_POOL_ID = "boundarymesh-github"/);
+    assert.match(wif, /GITHUB_WIF_PROVIDER_ID = "github-actions"/);
+    assert.match(wif, /issuerUri:\s*"https:\/\/token\.actions\.githubusercontent\.com"/);
+    assert.equal(/allowedAudiences/.test(wif), false);
+
+    const mappings = [
+        ["google.subject", "assertion.sub"],
+        ["attribute.repository_id", "assertion.repository_id"],
+        ["attribute.repository_owner_id", "assertion.repository_owner_id"],
+        ["attribute.repository_visibility", "assertion.repository_visibility"],
+        ["attribute.ref", "assertion.ref"],
+        ["attribute.environment", "assertion.environment"],
+        ["attribute.workflow_ref", "assertion.workflow_ref"],
+        ["attribute.event_name", "assertion.event_name"],
+        ["attribute.repository", "assertion.repository"],
+    ];
+    for (const [attribute, assertion] of mappings) {
+        assert.ok(wif.includes(`"${attribute}": "${assertion}"`));
+    }
+
+    for (const requiredCondition of [
+        "1385415640",
+        "179922674",
+        "repository_visibility == 'private'",
+        "ref == 'refs/heads/main'",
+        "environment == 'boundarymesh-dev'",
+        "Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main",
+        "event_name == 'workflow_dispatch'",
+    ]) {
+        assert.ok(wif.includes(requiredCondition), `condition must include ${requiredCondition}`);
+    }
+    assert.equal(/job_workflow_ref/.test(wif), false);
+
+    assert.equal((wif.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 1);
+    assert.match(wif, /WIF_VERIFICATION_SERVICE_ACCOUNT_ID = "boundarymesh-wif-verify"/);
+    assert.equal(/new gcp\.serviceaccount\.Key/.test(wif), false);
+    assert.equal((wif.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 1);
+    assert.match(wif, /role:\s*"roles\/iam\.workloadIdentityUser"/);
+    assert.match(
+        wif,
+        /workloadIdentityPools\/\$\{GITHUB_WIF_POOL_ID\}\/attribute\.repository_id\/\$\{GITHUB_REPOSITORY_ID\}/,
+    );
+    assert.equal(/new gcp\.projects\.IAM(Member|Binding|Policy)/.test(wif), false);
+    assert.equal(/roles\/(owner|editor|run\.|artifactregistry\.|firebase|secretmanager|datastore|pubsub)/i.test(wif), false);
+    assert.equal(/API_SERVICE_ACCOUNT_ID|WORKER_SERVICE_ACCOUNT_ID|boundarymesh-web/.test(wif), false);
+
+    const resourceCreates = [
+        /new gcp\.projects\.Service/g,
+        /new gcp\.iam\.WorkloadIdentityPool\(/g,
+        /new gcp\.iam\.WorkloadIdentityPoolProvider/g,
+        /new gcp\.serviceaccount\.Account/g,
+        /new gcp\.serviceaccount\.IAMMember/g,
+    ].reduce((count, pattern) => count + (wif.match(pattern) ?? []).length, 0);
+    assert.equal(resourceCreates, 7);
+
+    assert.match(workflow, /^\s*workflow_dispatch:\s*$/m);
+    assert.match(workflow, /^\s*environment:\s*boundarymesh-dev\s*$/m);
+    assert.match(workflow, /^\s*contents:\s*read\s*$/m);
+    assert.match(workflow, /^\s*id-token:\s*write\s*$/m);
 });
 
 test("Hosting rewrites select the BFF before the SPA and never target the private API", () => {
