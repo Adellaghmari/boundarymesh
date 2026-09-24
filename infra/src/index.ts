@@ -15,6 +15,12 @@ import { defineFirestore } from "./firestore";
 import { defineKms } from "./kms";
 import { definePubSub } from "./pubsub";
 import { defineSecretManager, PHASE_15E_SECRET_IDS } from "./secrets";
+import {
+    defineSharedStateFoundation,
+    PULUMI_SECRETS_CRYPTO_KEY_NAME,
+    PULUMI_SECRETS_KEY_RING_NAME,
+    PULUMI_STATE_BACKEND_URL,
+} from "./shared-state";
 import { defineWorkloads } from "./workloads";
 import { defineWebEdge } from "./web-edge";
 import { defineGitHubWifFoundation } from "./wif";
@@ -33,6 +39,7 @@ const secretManager = defineSecretManager(foundation);
 const firestore = defineFirestore(foundation);
 const pubsub = definePubSub(foundation);
 const kms = defineKms(foundation);
+const sharedState = defineSharedStateFoundation(foundation, kms.kmsApi);
 const workloads = defineWorkloads(foundation, {
     deliveryTopic: pubsub.deliveryTopic,
     deliveryWorkerSubscription: pubsub.deliveryWorkerSubscription,
@@ -71,6 +78,13 @@ export const deliveryDlqTopicName = pubsub.deliveryDlqTopic.name;
 export const kmsApiService = kms.kmsApi.service;
 export const attestationKeyRingName = kms.keyRing.name;
 export const attestationCryptoKeyName = kms.cryptoKey.name;
+export const pulumiStateBucketName = sharedState.stateBucket.name;
+export const pulumiStateBackendUrl = PULUMI_STATE_BACKEND_URL;
+export const pulumiSecretsKeyRingName = PULUMI_SECRETS_KEY_RING_NAME;
+export const pulumiSecretsCryptoKeyName = PULUMI_SECRETS_CRYPTO_KEY_NAME;
+export const pulumiSecretsProviderUri =
+    `gcpkms://projects/${foundation.gcpProjectId}/locations/${foundation.region}` +
+    `/keyRings/${PULUMI_SECRETS_KEY_RING_NAME}/cryptoKeys/${PULUMI_SECRETS_CRYPTO_KEY_NAME}`;
 export const cloudRunApiService = workloads.runApi.service;
 export const apiServiceAccountEmail = workloads.apiServiceAccount.email;
 export const workerServiceAccountEmail = workloads.workerServiceAccount.email;

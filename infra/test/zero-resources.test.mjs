@@ -15,7 +15,6 @@ const forbidden = [
     /\bnew\s+gcp\.secretmanager\.SecretVersion\b/,
     /\bnew\s+gcp\.firebase\./,
     /\bnew\s+gcp\.serviceaccount\.Key\b/,
-    /\bnew\s+gcp\.storage\./,
     /\bnew\s+gcp\.compute\./,
     /\bnew\s+gcp\.dns\./,
     /\bnew\s+gcp\.Provider\b/,
@@ -105,8 +104,9 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.equal((text.match(/new gcp\.firestore\.Database/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.pubsub\.Topic\(/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.pubsub\.Subscription\(/g) ?? []).length, 2);
-    assert.equal((text.match(/new gcp\.kms\.KeyRing/g) ?? []).length, 1);
-    assert.equal((text.match(/new gcp\.kms\.CryptoKey\(/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.storage\.Bucket\(/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.kms\.KeyRing/g) ?? []).length, 2);
+    assert.equal((text.match(/new gcp\.kms\.CryptoKey\(/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 4);
     assert.equal((text.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.iam\.WorkloadIdentityPool\(/g) ?? []).length, 1);
