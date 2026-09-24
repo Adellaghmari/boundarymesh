@@ -28,13 +28,26 @@ playwright/.cache/
 .env.*
 !.env.example
 *.pem
+*.key
 *.p12
+*.pfx
 *.jks
 credentials.json
+credentials.db
+access_tokens.db
 **/secrets/
 service-account*.json
 application_default_credentials.json
 **/application_default_credentials.json
+
+# Local archives / handoff bundles
+*.zip
+*.7z
+*.rar
+
+# Temporary / backup files
+*.tmp
+*.bak
 
 # Pulumi local / infra emit
 .pulumi/
