@@ -88,19 +88,6 @@ export function defineGitHubWifFoundation(foundation: FoundationConfig) {
         { dependsOn: [iamApi] },
     );
 
-    const repositoryPrincipal =
-        `principalSet://iam.googleapis.com/projects/${GCP_PROJECT_NUMBER}/locations/global/` +
-        `workloadIdentityPools/${GITHUB_WIF_POOL_ID}/attribute.repository_id/${GITHUB_REPOSITORY_ID}`;
-    const verificationImpersonation = new gcp.serviceaccount.IAMMember(
-        "wif-verification-impersonation",
-        {
-            serviceAccountId: verificationServiceAccount.name,
-            role: "roles/iam.workloadIdentityUser",
-            member: repositoryPrincipal,
-        },
-        { dependsOn: [provider] },
-    );
-
     const environmentPrincipal =
         `principalSet://iam.googleapis.com/projects/${GCP_PROJECT_NUMBER}/locations/global/` +
         `workloadIdentityPools/${GITHUB_WIF_POOL_ID}/attribute.environment/${GITHUB_VERIFICATION_ENVIRONMENT}`;
@@ -121,7 +108,6 @@ export function defineGitHubWifFoundation(foundation: FoundationConfig) {
         pool,
         provider,
         verificationServiceAccount,
-        verificationImpersonation,
         verificationEnvironmentImpersonation,
     };
 }
