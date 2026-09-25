@@ -108,7 +108,7 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.equal((text.match(/new gcp\.kms\.KeyRing/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.kms\.CryptoKey\(/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 4);
-    assert.equal((text.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.iam\.WorkloadIdentityPool\(/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.iam\.WorkloadIdentityPoolProvider/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.projects\.IAMMember/g) ?? []).length, 3);
@@ -126,7 +126,7 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.equal(/roles\/(owner|editor|run\.admin|cloudkms|pubsub|secretmanager|datastore)/i.test(edge), false);
 });
 
-test("GitHub WIF foundation defines exactly seven narrow, keyless resources", () => {
+test("GitHub WIF foundation defines the narrow, keyless transition resources", () => {
     const wif = readFileSync(join(srcDir, "wif.ts"), "utf8");
     const workflow = readFileSync(join(root, "..", ".github", "workflows", "wif-verify.yml"), "utf8");
 
@@ -158,6 +158,7 @@ test("GitHub WIF foundation defines exactly seven narrow, keyless resources", ()
     for (const [attribute, assertion] of mappings) {
         assert.ok(wif.includes(`"${attribute}": "${assertion}"`));
     }
+    assert.equal((wif.match(/^\s*"(?:google|attribute)\.[^"]+":\s*"assertion\.[^"]+",$/gm) ?? []).length, 9);
 
     for (const requiredCondition of [
         "1385415640",
@@ -171,15 +172,27 @@ test("GitHub WIF foundation defines exactly seven narrow, keyless resources", ()
         assert.ok(wif.includes(requiredCondition), `condition must include ${requiredCondition}`);
     }
     assert.equal(/job_workflow_ref/.test(wif), false);
+    assert.equal(/\|\|/.test(wif), false);
+    assert.match(wif, /\]\.join\(" && "\)/);
 
     assert.equal((wif.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 1);
     assert.match(wif, /WIF_VERIFICATION_SERVICE_ACCOUNT_ID = "boundarymesh-wif-verify"/);
     assert.equal(/new gcp\.serviceaccount\.Key/.test(wif), false);
-    assert.equal((wif.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 1);
-    assert.match(wif, /role:\s*"roles\/iam\.workloadIdentityUser"/);
+    assert.equal((wif.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 2);
+    assert.equal((wif.match(/role:\s*"roles\/iam\.workloadIdentityUser"/g) ?? []).length, 2);
+    assert.equal((wif.match(/serviceAccountId:\s*verificationServiceAccount\.name/g) ?? []).length, 2);
     assert.match(
         wif,
         /workloadIdentityPools\/\$\{GITHUB_WIF_POOL_ID\}\/attribute\.repository_id\/\$\{GITHUB_REPOSITORY_ID\}/,
+    );
+    assert.match(wif, /GITHUB_VERIFICATION_ENVIRONMENT = "boundarymesh-dev"/);
+    assert.match(
+        wif,
+        /workloadIdentityPools\/\$\{GITHUB_WIF_POOL_ID\}\/attribute\.environment\/\$\{GITHUB_VERIFICATION_ENVIRONMENT\}/,
+    );
+    assert.match(
+        wif,
+        /"wif-verification-environment-impersonation"[\s\S]*?serviceAccountId:\s*verificationServiceAccount\.name,[\s\S]*?role:\s*"roles\/iam\.workloadIdentityUser",[\s\S]*?member:\s*environmentPrincipal/,
     );
     assert.equal(/new gcp\.projects\.IAM(Member|Binding|Policy)/.test(wif), false);
     assert.equal(/roles\/(owner|editor|run\.|artifactregistry\.|firebase|secretmanager|datastore|pubsub)/i.test(wif), false);
@@ -192,7 +205,7 @@ test("GitHub WIF foundation defines exactly seven narrow, keyless resources", ()
         /new gcp\.serviceaccount\.Account/g,
         /new gcp\.serviceaccount\.IAMMember/g,
     ].reduce((count, pattern) => count + (wif.match(pattern) ?? []).length, 0);
-    assert.equal(resourceCreates, 7);
+    assert.equal(resourceCreates, 8);
 
     assert.match(workflow, /^\s*workflow_dispatch:\s*$/m);
     assert.match(workflow, /^\s*environment:\s*boundarymesh-dev\s*$/m);

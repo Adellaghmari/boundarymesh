@@ -6,6 +6,7 @@ export const GITHUB_REPOSITORY_OWNER_ID = "179922674" as const;
 export const GCP_PROJECT_NUMBER = "891977254468" as const;
 export const GITHUB_WIF_POOL_ID = "boundarymesh-github" as const;
 export const GITHUB_WIF_PROVIDER_ID = "github-actions" as const;
+export const GITHUB_VERIFICATION_ENVIRONMENT = "boundarymesh-dev" as const;
 export const WIF_VERIFICATION_SERVICE_ACCOUNT_ID = "boundarymesh-wif-verify" as const;
 
 export const GITHUB_OIDC_ATTRIBUTE_MAPPING = {
@@ -100,6 +101,19 @@ export function defineGitHubWifFoundation(foundation: FoundationConfig) {
         { dependsOn: [provider] },
     );
 
+    const environmentPrincipal =
+        `principalSet://iam.googleapis.com/projects/${GCP_PROJECT_NUMBER}/locations/global/` +
+        `workloadIdentityPools/${GITHUB_WIF_POOL_ID}/attribute.environment/${GITHUB_VERIFICATION_ENVIRONMENT}`;
+    const verificationEnvironmentImpersonation = new gcp.serviceaccount.IAMMember(
+        "wif-verification-environment-impersonation",
+        {
+            serviceAccountId: verificationServiceAccount.name,
+            role: "roles/iam.workloadIdentityUser",
+            member: environmentPrincipal,
+        },
+        { dependsOn: [provider] },
+    );
+
     return {
         iamApi,
         iamCredentialsApi,
@@ -108,5 +122,6 @@ export function defineGitHubWifFoundation(foundation: FoundationConfig) {
         provider,
         verificationServiceAccount,
         verificationImpersonation,
+        verificationEnvironmentImpersonation,
     };
 }
