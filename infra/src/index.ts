@@ -10,6 +10,7 @@ import {
     type FoundationConfig,
     type TargetRegion,
 } from "./config";
+import { defineCiPreviewIdentity } from "./ci-preview";
 import { defineArtifactRegistry } from "./registry";
 import { defineFirestore } from "./firestore";
 import { defineKms } from "./kms";
@@ -48,6 +49,12 @@ const workloads = defineWorkloads(foundation, {
 });
 const webEdge = defineWebEdge(foundation, workloads.apiService, workloads.runApi);
 const githubWif = defineGitHubWifFoundation(foundation);
+const ciPreview = defineCiPreviewIdentity(foundation, {
+    iamApi: githubWif.iamApi,
+    stateBucket: sharedState.stateBucket,
+    stateSecretsCryptoKey: sharedState.secretsCryptoKey,
+    wifProvider: githubWif.provider,
+});
 
 export const phase15DScope = "ARTIFACT_REGISTRY_ONLY" as const;
 export const phase15EScope = "SECRET_CONTAINERS_ONLY" as const;
@@ -95,3 +102,5 @@ export const webEdgeServiceAccountEmail = webEdge.identity.email;
 export const githubWorkloadIdentityPoolName = githubWif.pool.name;
 export const githubWorkloadIdentityProviderName = githubWif.provider.name;
 export const wifVerificationServiceAccountEmail = githubWif.verificationServiceAccount.email;
+export const ciPreviewServiceAccountEmail = ciPreview.serviceAccount.email;
+export const ciStateReaderRoleName = ciPreview.stateReaderRole.name;
