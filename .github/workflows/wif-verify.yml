@@ -2,9 +2,21 @@ name: Verify keyless Google Cloud authentication
 
 on:
   workflow_dispatch:
+    inputs:
+      test_mode:
+        description: Authentication boundary to verify
+        required: true
+        default: positive
+        type: choice
+        options:
+          - positive
+          - cross_sa_denied
+          - wrong_context_denied
+          - missing_environment_denied
 
 jobs:
   verify:
+    if: ${{ inputs.test_mode == 'positive' }}
     name: Verify WIF authentication
     runs-on: ubuntu-latest
     environment: boundarymesh-dev
@@ -25,3 +37,157 @@ jobs:
       - name: Confirm keyless authentication
         shell: bash
         run: echo "Keyless Google Cloud authentication succeeded."
+
+  cross-sa-denial:
+    if: ${{ inputs.test_mode == 'cross_sa_denied' }}
+    name: Reject verification context impersonating CI service account
+    runs-on: ubuntu-latest
+    environment: boundarymesh-dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate admitted verification identity
+        id: admitted_auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: boundarymesh-dev
+          workload_identity_provider: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
+          service_account: boundarymesh-wif-verify@boundarymesh-dev.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Attempt forbidden CI service-account impersonation
+        id: forbidden_auth
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: boundarymesh-dev
+          workload_identity_provider: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
+          service_account: boundarymesh-ci-preview@boundarymesh-dev.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Confirm cross-service-account rejection
+        if: ${{ always() }}
+        shell: bash
+        env:
+          ADMITTED_OUTCOME: ${{ steps.admitted_auth.outcome }}
+          FORBIDDEN_OUTCOME: ${{ steps.forbidden_auth.outcome }}
+        run: |
+          if [[ "${ADMITTED_OUTCOME}" != "success" ]]; then
+            echo "::error::The admitted verification identity did not authenticate."
+            exit 1
+          fi
+          if [[ "${FORBIDDEN_OUTCOME}" != "failure" ]]; then
+            echo "::error::Forbidden CI service-account impersonation unexpectedly succeeded."
+            exit 1
+          fi
+          echo "Expected cross-service-account impersonation was rejected."
+
+  wrong-context-control:
+    if: ${{ inputs.test_mode == 'wrong_context_denied' }}
+    name: Prove verification context remains admitted
+    runs-on: ubuntu-latest
+    environment: boundarymesh-dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate admitted verification identity
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: boundarymesh-dev
+          workload_identity_provider: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
+          service_account: boundarymesh-wif-verify@boundarymesh-dev.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+          export_environment_variables: false
+
+  wrong-context-denial:
+    if: ${{ inputs.test_mode == 'wrong_context_denied' }}
+    needs: wrong-context-control
+    name: Reject verification workflow in CI environment
+    runs-on: ubuntu-latest
+    environment: boundarymesh-ci-preview
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Attempt mismatched workflow and environment context
+        id: forbidden_auth
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: boundarymesh-dev
+          workload_identity_provider: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
+          service_account: boundarymesh-ci-preview@boundarymesh-dev.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Confirm provider-context rejection
+        if: ${{ always() }}
+        shell: bash
+        env:
+          FORBIDDEN_OUTCOME: ${{ steps.forbidden_auth.outcome }}
+        run: |
+          if [[ "${FORBIDDEN_OUTCOME}" != "failure" ]]; then
+            echo "::error::Mismatched workflow and environment context unexpectedly authenticated."
+            exit 1
+          fi
+          echo "Expected provider-context mismatch was rejected."
+
+  missing-environment-control:
+    if: ${{ inputs.test_mode == 'missing_environment_denied' }}
+    name: Prove verification environment remains admitted
+    runs-on: ubuntu-latest
+    environment: boundarymesh-dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate admitted verification identity
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: boundarymesh-dev
+          workload_identity_provider: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
+          service_account: boundarymesh-wif-verify@boundarymesh-dev.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+          export_environment_variables: false
+
+  missing-environment-denial:
+    if: ${{ inputs.test_mode == 'missing_environment_denied' }}
+    needs: missing-environment-control
+    name: Reject token without environment claim
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Attempt authentication without a GitHub environment
+        id: forbidden_auth
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: boundarymesh-dev
+          workload_identity_provider: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
+          service_account: boundarymesh-wif-verify@boundarymesh-dev.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Confirm missing-environment rejection
+        if: ${{ always() }}
+        shell: bash
+        env:
+          FORBIDDEN_OUTCOME: ${{ steps.forbidden_auth.outcome }}
+        run: |
+          if [[ "${FORBIDDEN_OUTCOME}" != "failure" ]]; then
+            echo "::error::Missing-environment context unexpectedly authenticated."
+            exit 1
+          fi
+          echo "Expected missing-environment context was rejected."

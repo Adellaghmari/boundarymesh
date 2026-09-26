@@ -12,6 +12,8 @@ const wif = readFileSync(join(root, "src", "wif.ts"), "utf8");
 const stack = readFileSync(join(root, "Pulumi.dev.yaml"), "utf8");
 const workflowPath = join(repositoryRoot, ".github", "workflows", "infra-preview.yml");
 const workflow = readFileSync(workflowPath, "utf8");
+const verificationWorkflowPath = join(repositoryRoot, ".github", "workflows", "wif-verify.yml");
+const verificationWorkflow = readFileSync(verificationWorkflowPath, "utf8");
 
 const commonClaims = {
     repository_id: "1385415640",
@@ -189,6 +191,50 @@ test("dormant infrastructure preview workflow is manual, main-gated, and least p
     assert.match(workflow, /^\s{2}id-token:\s*write\s*$/m);
     assert.equal(/^\s*(push|pull_request|pull_request_target|schedule|workflow_call|repository_dispatch):/m.test(workflow), false);
     assert.equal(/^\s{2}(actions|checks|deployments|issues|packages|pull-requests|security-events|statuses):/m.test(workflow), false);
+});
+
+test("manual workflows expose only the bounded live federation test modes", () => {
+    assert.match(
+        workflow,
+        /options:\s*\n\s*- positive\s*\n\s*- cross_sa_denied\s*\n\s*- wrong_context_denied/,
+    );
+    assert.match(
+        verificationWorkflow,
+        /options:\s*\n\s*- positive\s*\n\s*- cross_sa_denied\s*\n\s*- wrong_context_denied\s*\n\s*- missing_environment_denied/,
+    );
+    for (const sourceText of [workflow, verificationWorkflow]) {
+        assert.match(sourceText, /^on:\s*\n\s{2}workflow_dispatch:\s*$/m);
+        assert.equal(
+            /^\s*(push|pull_request|pull_request_target|schedule|workflow_call|repository_dispatch):/m.test(
+                sourceText,
+            ),
+            false,
+        );
+        assert.equal(/^\s{2}(actions|checks|deployments|issues|packages|pull-requests|security-events|statuses):/m.test(sourceText), false);
+        assert.equal(/service_account_key|credentials_json|private_key|client_secret|roles\/iam\.serviceAccountTokenCreator/i.test(sourceText), false);
+        assert.equal(/\$\{\{\s*steps\.[^}]+\.outputs\.|toJSON\s*\(/i.test(sourceText), false);
+        assert.equal(/echo\s+.*(?:token|credential|secret|password)/i.test(sourceText), false);
+    }
+});
+
+test("negative harnesses prove provider and service-account boundaries without exporting credentials", () => {
+    for (const sourceText of [workflow, verificationWorkflow]) {
+        assert.match(sourceText, /id:\s*admitted_auth/);
+        assert.match(sourceText, /id:\s*forbidden_auth/);
+        assert.match(sourceText, /continue-on-error:\s*true/);
+        assert.match(sourceText, /if:\s*\$\{\{ always\(\) \}\}/);
+        assert.match(sourceText, /ADMITTED_OUTCOME:\s*\$\{\{ steps\.admitted_auth\.outcome \}\}/);
+        assert.match(sourceText, /FORBIDDEN_OUTCOME:\s*\$\{\{ steps\.forbidden_auth\.outcome \}\}/);
+        assert.match(sourceText, /create_credentials_file:\s*false/);
+        assert.match(sourceText, /export_environment_variables:\s*false/);
+        assert.match(sourceText, /google-github-actions\/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093/);
+    }
+
+    assert.match(workflow, /environment:\s*boundarymesh-ci-preview[\s\S]*?service_account:\s*boundarymesh-wif-verify@/);
+    assert.match(workflow, /environment:\s*boundarymesh-dev[\s\S]*?service_account:\s*boundarymesh-wif-verify@/);
+    assert.match(verificationWorkflow, /environment:\s*boundarymesh-dev[\s\S]*?service_account:\s*boundarymesh-ci-preview@/);
+    assert.match(verificationWorkflow, /environment:\s*boundarymesh-ci-preview[\s\S]*?service_account:\s*boundarymesh-ci-preview@/);
+    assert.match(verificationWorkflow, /missing-environment-denial:[\s\S]*?runs-on:\s*ubuntu-latest\s*\n\s*permissions:/);
 });
 
 test("infrastructure preview workflow uses only the frozen keyless identity and backend", () => {
