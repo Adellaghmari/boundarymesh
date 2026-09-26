@@ -127,7 +127,7 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.equal(/roles\/(owner|editor|run\.admin|cloudkms|pubsub|secretmanager|datastore)/i.test(edge), false);
 });
 
-test("GitHub WIF foundation defines only the narrow, keyless verification principal", () => {
+test("GitHub WIF foundation defines a tightly scoped provider and keyless verification principal", () => {
     const wif = readFileSync(join(srcDir, "wif.ts"), "utf8");
     const workflow = readFileSync(join(root, "..", ".github", "workflows", "wif-verify.yml"), "utf8");
 
@@ -165,15 +165,17 @@ test("GitHub WIF foundation defines only the narrow, keyless verification princi
         "1385415640",
         "179922674",
         "repository_visibility == 'private'",
-        "ref == 'refs/heads/main'",
-        "environment == 'boundarymesh-dev'",
+        'GITHUB_MAIN_REF = "refs/heads/main"',
+        'GITHUB_VERIFICATION_ENVIRONMENT = "boundarymesh-dev"',
         "Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main",
-        "event_name == 'workflow_dispatch'",
+        'GITHUB_CI_PREVIEW_ENVIRONMENT = "boundarymesh-ci-preview"',
+        "Adellaghmari/boundarymesh/.github/workflows/infra-preview.yml@refs/heads/main",
+        'GITHUB_WORKFLOW_DISPATCH_EVENT = "workflow_dispatch"',
     ]) {
         assert.ok(wif.includes(requiredCondition), `condition must include ${requiredCondition}`);
     }
     assert.equal(/job_workflow_ref/.test(wif), false);
-    assert.equal(/\|\|/.test(wif), false);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 1);
     assert.match(wif, /\]\.join\(" && "\)/);
 
     assert.equal((wif.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 1);

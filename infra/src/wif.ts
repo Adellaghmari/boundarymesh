@@ -6,7 +6,14 @@ export const GITHUB_REPOSITORY_OWNER_ID = "179922674" as const;
 export const GCP_PROJECT_NUMBER = "891977254468" as const;
 export const GITHUB_WIF_POOL_ID = "boundarymesh-github" as const;
 export const GITHUB_WIF_PROVIDER_ID = "github-actions" as const;
+export const GITHUB_MAIN_REF = "refs/heads/main" as const;
+export const GITHUB_WORKFLOW_DISPATCH_EVENT = "workflow_dispatch" as const;
 export const GITHUB_VERIFICATION_ENVIRONMENT = "boundarymesh-dev" as const;
+export const GITHUB_CI_PREVIEW_ENVIRONMENT = "boundarymesh-ci-preview" as const;
+export const GITHUB_VERIFICATION_WORKFLOW_REF =
+    "Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main" as const;
+export const GITHUB_CI_PREVIEW_WORKFLOW_REF =
+    "Adellaghmari/boundarymesh/.github/workflows/infra-preview.yml@refs/heads/main" as const;
 export const WIF_VERIFICATION_SERVICE_ACCOUNT_ID = "boundarymesh-wif-verify" as const;
 
 export const GITHUB_OIDC_ATTRIBUTE_MAPPING = {
@@ -21,15 +28,32 @@ export const GITHUB_OIDC_ATTRIBUTE_MAPPING = {
     "attribute.repository": "assertion.repository",
 } as const;
 
-export const GITHUB_OIDC_ATTRIBUTE_CONDITION = [
+export const GITHUB_OIDC_COMMON_CONDITIONS = [
     `assertion.repository_id == '${GITHUB_REPOSITORY_ID}'`,
     `assertion.repository_owner_id == '${GITHUB_REPOSITORY_OWNER_ID}'`,
     "assertion.repository_visibility == 'private'",
-    "assertion.ref == 'refs/heads/main'",
-    "assertion.environment == 'boundarymesh-dev'",
-    "assertion.workflow_ref == " +
-        "'Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main'",
-    "assertion.event_name == 'workflow_dispatch'",
+    `assertion.ref == '${GITHUB_MAIN_REF}'`,
+] as const;
+
+export const GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS = [
+    `assertion.environment == '${GITHUB_VERIFICATION_ENVIRONMENT}'`,
+    `assertion.workflow_ref == '${GITHUB_VERIFICATION_WORKFLOW_REF}'`,
+    `assertion.event_name == '${GITHUB_WORKFLOW_DISPATCH_EVENT}'`,
+] as const;
+
+export const GITHUB_OIDC_CI_PREVIEW_CONTEXT_CONDITIONS = [
+    `assertion.environment == '${GITHUB_CI_PREVIEW_ENVIRONMENT}'`,
+    `assertion.workflow_ref == '${GITHUB_CI_PREVIEW_WORKFLOW_REF}'`,
+    `assertion.event_name == '${GITHUB_WORKFLOW_DISPATCH_EVENT}'`,
+] as const;
+
+const privilegedContextsCondition =
+    `((${GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS.join(" && ")}) || ` +
+    `(${GITHUB_OIDC_CI_PREVIEW_CONTEXT_CONDITIONS.join(" && ")}))`;
+
+export const GITHUB_OIDC_ATTRIBUTE_CONDITION = [
+    ...GITHUB_OIDC_COMMON_CONDITIONS,
+    privilegedContextsCondition,
 ].join(" && ");
 
 export function defineGitHubWifFoundation(foundation: FoundationConfig) {
