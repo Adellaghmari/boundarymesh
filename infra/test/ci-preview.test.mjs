@@ -13,6 +13,34 @@ const stack = readFileSync(join(root, "Pulumi.dev.yaml"), "utf8");
 const workflowPath = join(repositoryRoot, ".github", "workflows", "infra-preview.yml");
 const workflow = readFileSync(workflowPath, "utf8");
 
+const commonClaims = {
+    repository_id: "1385415640",
+    repository_owner_id: "179922674",
+    repository_visibility: "private",
+    ref: "refs/heads/main",
+};
+const privilegedContexts = [
+    {
+        environment: "boundarymesh-dev",
+        workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main",
+        event_name: "workflow_dispatch",
+    },
+    {
+        environment: "boundarymesh-ci-preview",
+        workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/infra-preview.yml@refs/heads/main",
+        event_name: "workflow_dispatch",
+    },
+];
+
+function providerAllows(assertion) {
+    return (
+        Object.entries(commonClaims).every(([claim, expected]) => assertion[claim] === expected) &&
+        privilegedContexts.some((context) =>
+            Object.entries(context).every(([claim, expected]) => assertion[claim] === expected),
+        )
+    );
+}
+
 test("CI preview source defines exactly five narrowly scoped resources", () => {
     const resourceCreates = [
         /new gcp\.serviceaccount\.Account/g,
@@ -82,13 +110,64 @@ test("CI federation authorization is service-account and environment scoped", ()
     assert.equal(/new gcp\.projects\.IAM(?:Member|Binding|Policy)/.test(source), false);
 });
 
-test("verification provider remains byte-for-byte limited to its original context", () => {
-    assert.equal(/boundarymesh-ci-preview|infra-preview/.test(wif), false);
-    assert.equal(/\|\|/.test(wif), false);
-    assert.match(wif, /environment == 'boundarymesh-dev'/);
-    assert.match(wif, /Adellaghmari\/boundarymesh\/\.github\/workflows\/wif-verify\.yml@refs\/heads\/main/);
-    assert.match(wif, /event_name == 'workflow_dispatch'/);
+test("provider source expresses four immutable claims and exactly two privileged contexts", () => {
+    for (const expected of [
+        "1385415640",
+        "179922674",
+        "repository_visibility == 'private'",
+        "refs/heads/main",
+        "boundarymesh-dev",
+        "Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main",
+        "boundarymesh-ci-preview",
+        "Adellaghmari/boundarymesh/.github/workflows/infra-preview.yml@refs/heads/main",
+        "workflow_dispatch",
+    ]) {
+        assert.ok(wif.includes(expected), `provider condition must include ${expected}`);
+    }
+    assert.match(wif, /GITHUB_OIDC_COMMON_CONDITIONS = \[/);
+    assert.match(wif, /GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS = \[/);
+    assert.match(wif, /GITHUB_OIDC_CI_PREVIEW_CONTEXT_CONDITIONS = \[/);
+    assert.match(
+        wif,
+        /`\(\(\$\{GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS\.join\(" && "\)\}\) \|\| `/,
+    );
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 1);
     assert.equal((wif.match(/^\s*"(?:google|attribute)\.[^"]+":\s*"assertion\.[^"]+",$/gm) ?? []).length, 9);
+});
+
+test("provider semantics allow only the verification and CI preview contexts", () => {
+    for (const context of privilegedContexts) {
+        assert.equal(providerAllows({ ...commonClaims, ...context }), true);
+    }
+});
+
+test("provider semantics reject immutable-claim, context, workflow, ref, and event mutations", () => {
+    const verification = { ...commonClaims, ...privilegedContexts[0] };
+    const ciPreview = { ...commonClaims, ...privilegedContexts[1] };
+    const rejected = [
+        { ...verification, repository_id: "9999999999" },
+        { ...verification, repository_owner_id: "999999999" },
+        { ...verification, repository_visibility: "public" },
+        { ...verification, ref: "refs/heads/feature" },
+        { ...verification, ref: "refs/tags/v1.0.0" },
+        { ...verification, environment: "production" },
+        { ...verification, workflow_ref: privilegedContexts[1].workflow_ref },
+        { ...ciPreview, workflow_ref: privilegedContexts[0].workflow_ref },
+        {
+            ...verification,
+            workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/other.yml@refs/heads/main",
+        },
+        { ...verification, event_name: "push" },
+        { ...verification, event_name: "pull_request" },
+        { ...verification, event_name: "pull_request_target" },
+        { ...verification, event_name: "schedule" },
+        { ...verification, event_name: "workflow_call" },
+        { ...verification, event_name: "repository_dispatch" },
+    ];
+
+    for (const assertion of rejected) {
+        assert.equal(providerAllows(assertion), false);
+    }
 });
 
 test("CI preview remains without project reader or passphrase-backed secrets", () => {

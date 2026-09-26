@@ -20,8 +20,8 @@ interface CiPreviewDependencies {
 /**
  * Initial Phase 16C CI preview identity. It can read the migrated Pulumi state,
  * decrypt only that state's secrets, and be impersonated only by the future
- * environment-scoped GitHub context. The WIF provider intentionally does not
- * admit that context yet.
+ * environment-scoped GitHub context. Provider admission remains a separate,
+ * exact workflow-and-environment boundary.
  */
 export function defineCiPreviewIdentity(
     foundation: FoundationConfig,
