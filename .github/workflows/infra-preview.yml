@@ -1,0 +1,54 @@
+name: Preview BoundaryMesh infrastructure
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  preview:
+    name: Preview protected infrastructure
+    runs-on: ubuntu-latest
+    environment: boundarymesh-ci-preview
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - name: Check out protected source
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          project_id: boundarymesh-dev
+          workload_identity_provider: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
+          service_account: boundarymesh-ci-preview@boundarymesh-dev.iam.gserviceaccount.com
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: infra/package-lock.json
+
+      - name: Set up Pulumi CLI
+        uses: pulumi/setup-pulumi@b374ceb6168550de27c6eba92e01c1a774040e11 # v2.0.0
+        with:
+          pulumi-version: 3.262.0
+
+      - name: Install infrastructure dependencies
+        run: npm ci
+
+      - name: Build infrastructure program
+        run: npm run build
+
+      - name: Select shared Pulumi backend
+        run: pulumi login gs://bm-pulumi-state-eu4-21cad20b325f
+
+      - name: Preview infrastructure
+        run: pulumi preview --stack dev --diff --non-interactive --suppress-permalink

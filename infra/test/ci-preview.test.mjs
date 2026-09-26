@@ -10,6 +10,8 @@ const source = readFileSync(join(root, "src", "ci-preview.ts"), "utf8");
 const index = readFileSync(join(root, "src", "index.ts"), "utf8");
 const wif = readFileSync(join(root, "src", "wif.ts"), "utf8");
 const stack = readFileSync(join(root, "Pulumi.dev.yaml"), "utf8");
+const workflowPath = join(repositoryRoot, ".github", "workflows", "infra-preview.yml");
+const workflow = readFileSync(workflowPath, "utf8");
 
 test("CI preview source defines exactly five narrowly scoped resources", () => {
     const resourceCreates = [
@@ -89,10 +91,50 @@ test("verification provider remains byte-for-byte limited to its original contex
     assert.equal((wif.match(/^\s*"(?:google|attribute)\.[^"]+":\s*"assertion\.[^"]+",$/gm) ?? []).length, 9);
 });
 
-test("initial CI phase adds no project reader, workflow, or backend migration", () => {
+test("CI preview remains without project reader or passphrase-backed secrets", () => {
     assert.equal(/boundarymeshCiPreviewReader/.test(source + index), false);
     assert.equal(/new gcp\.projects\.IAM(?:Member|Binding|Policy)/.test(source), false);
-    assert.equal(existsSync(join(repositoryRoot, ".github", "workflows", "infra-preview.yml")), false);
+    assert.equal(existsSync(workflowPath), true);
     assert.equal(/backend:\s*gs:\/\//.test(stack), false);
-    assert.equal(/secretsprovider:\s*gcpkms:\/\//i.test(stack), false);
+    assert.match(
+        stack,
+        /secretsprovider:\s*gcpkms:\/\/projects\/boundarymesh-dev\/locations\/europe-west4\/keyRings\/boundarymesh-pulumi\/cryptoKeys\/state-secrets/,
+    );
+    assert.equal(/PULUMI_CONFIG_PASSPHRASE|passphrase/i.test(workflow), false);
+});
+
+test("dormant infrastructure preview workflow is manual, main-gated, and least privileged", () => {
+    assert.match(workflow, /^on:\s*\n\s{2}workflow_dispatch:\s*$/m);
+    assert.match(workflow, /^\s{4}environment:\s*boundarymesh-ci-preview\s*$/m);
+    assert.match(workflow, /^\s{2}contents:\s*read\s*$/m);
+    assert.match(workflow, /^\s{2}id-token:\s*write\s*$/m);
+    assert.equal(/^\s*(push|pull_request|pull_request_target|schedule|workflow_call|repository_dispatch):/m.test(workflow), false);
+    assert.equal(/^\s{2}(actions|checks|deployments|issues|packages|pull-requests|security-events|statuses):/m.test(workflow), false);
+});
+
+test("infrastructure preview workflow uses only the frozen keyless identity and backend", () => {
+    assert.match(
+        workflow,
+        /google-github-actions\/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093/,
+    );
+    assert.match(
+        workflow,
+        /projects\/891977254468\/locations\/global\/workloadIdentityPools\/boundarymesh-github\/providers\/github-actions/,
+    );
+    assert.match(workflow, /service_account:\s*boundarymesh-ci-preview@boundarymesh-dev\.iam\.gserviceaccount\.com/);
+    assert.match(workflow, /create_credentials_file:\s*true/);
+    assert.match(workflow, /export_environment_variables:\s*true/);
+    assert.match(workflow, /pulumi-version:\s*3\.262\.0/);
+    assert.match(workflow, /pulumi login gs:\/\/bm-pulumi-state-eu4-21cad20b325f/);
+    assert.equal(/service_account_key|credentials_json|private_key|client_secret|roles\/iam\.serviceAccountTokenCreator/i.test(workflow), false);
+});
+
+test("infrastructure workflow can only run the exact non-refresh preview", () => {
+    const pulumiCommands = workflow.match(/^\s*run:\s*pulumi\s+.*$/gm) ?? [];
+    assert.deepEqual(pulumiCommands.map((line) => line.trim()), [
+        "run: pulumi login gs://bm-pulumi-state-eu4-21cad20b325f",
+        "run: pulumi preview --stack dev --diff --non-interactive --suppress-permalink",
+    ]);
+    assert.equal(/\brefresh\b|pulumi\s+up|pulumi\s+destroy|pulumi\s+import|pulumi\s+stack\s+(migrate|change-secrets-provider)/i.test(workflow), false);
+    assert.equal(/echo\s+.*(?:token|credential|secret|password)/i.test(workflow), false);
 });
