@@ -8,4 +8,5 @@ config:
   boundarymesh:environment: dev
   boundarymesh:webEdgeImage: europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:90570617750bd39613482fd75d8434f1a47299ae8d35908ae0c81717374ee30a
   boundarymesh:webOperatorUids: DIF5MgkLblWwgNHDCxLsi9E2hFD3
-encryptionsalt: v1:263PjWdiEvw=:v1:lXSg9vFcUjL6ZYG6:SPa41yRG0+5BJ7P4Cd3PbcTqAjfpUQ==
+secretsprovider: gcpkms://projects/boundarymesh-dev/locations/europe-west4/keyRings/boundarymesh-pulumi/cryptoKeys/state-secrets
+encryptedkey: CiQA9GCAR3/xvUI4IzsPFUxld9S47lEUlpOiCCAhfLaIZxeTrKoSSQAt1X2pbimZp2uxdrd2+DzK+LN11estNdDYh+4Q62JxhxwppDcL4yppMi7Jl0DxHIw/JNUtVXeK8SBfeNTZ0yY+AjIunq42aKA=
