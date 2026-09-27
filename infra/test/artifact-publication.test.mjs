@@ -14,6 +14,7 @@ const registry = readFileSync(join(infraRoot, "src", "registry.ts"), "utf8");
 const wif = readFileSync(join(infraRoot, "src", "wif.ts"), "utf8");
 const templatePath = join(repositoryRoot, "docs", "templates", "artifact-publish.yml");
 const template = readFileSync(templatePath, "utf8");
+const workflow = readFileSync(join(repositoryRoot, ".github", "workflows", "artifact-publish.yml"), "utf8");
 const schema = JSON.parse(readFileSync(join(repositoryRoot, "contracts", "release-manifest", "v1.schema.json"), "utf8"));
 
 const sha = "a".repeat(40);
@@ -115,21 +116,22 @@ test("WIF publication branch is the exact third context and admits no other even
     }
 });
 
-test("publication workflow is dormant until its protected environment exists and is least privileged", () => {
-    assert.equal(existsSync(join(repositoryRoot, ".github", "workflows", "artifact-publish.yml")), false);
+test("publication workflow is manual-only, least privileged, and matches the reviewed contract", () => {
+    assert.equal(existsSync(join(repositoryRoot, ".github", "workflows", "artifact-publish.yml")), true);
     assert.match(template, /NON-RUNNABLE PHASE 16D WORKFLOW CONTRACT/);
-    assert.match(template, /^\s*workflow_dispatch:\s*$/m);
-    assert.match(template, /^\s{2}contents:\s*read\s*$/m);
-    assert.match(template, /^\s{2}id-token:\s*write\s*$/m);
-    assert.match(template, /^\s{4}environment:\s*boundarymesh-artifact-publish\s*$/m);
-    assert.match(template, /if: github\.ref == 'refs\/heads\/main'/);
-    assert.match(template, /service_account: boundarymesh-artifact-publish@boundarymesh-dev\.iam\.gserviceaccount\.com/);
-    const actions = [...template.matchAll(/uses:\s*[^@\s]+@([^\s]+)/g)].map((match) => match[1]);
+    assert.match(workflow, /^\s*workflow_dispatch:\s*$/m);
+    assert.match(workflow, /^\s{2}contents:\s*read\s*$/m);
+    assert.match(workflow, /^\s{2}id-token:\s*write\s*$/m);
+    assert.match(workflow, /^\s{4}environment:\s*boundarymesh-artifact-publish\s*$/m);
+    assert.match(workflow, /if: github\.ref == 'refs\/heads\/main'/);
+    assert.match(workflow, /service_account: boundarymesh-artifact-publish@boundarymesh-dev\.iam\.gserviceaccount\.com/);
+    assert.equal(/^(?:\s*)(?:push|pull_request|pull_request_target|schedule|workflow_call|repository_dispatch):/m.test(workflow), false);
+    const actions = [...workflow.matchAll(/uses:\s*[^@\s]+@([^\s]+)/g)].map((match) => match[1]);
     assert.ok(actions.length >= 5);
     assert.ok(actions.every((pin) => /^[0-9a-f]{40}$/.test(pin)));
-    assert.equal(/pulumi\s+(?:up|refresh)|gcloud\s+run\s+deploy|firebase\s+deploy|service_account_key|credentials_json|private_key|client_secret/i.test(template), false);
-    assert.equal(/echo\s+.*(?:token|credential|secret|password)/i.test(template), false);
-    assert.equal(/:latest\b/.test(template), false);
+    assert.equal(/pulumi\s+(?:up|refresh)|gcloud\s+run\s+deploy|firebase\s+deploy|service_account_key|credentials_json|private_key|client_secret/i.test(workflow), false);
+    assert.equal(/echo\s+.*(?:token|credential|secret|password)/i.test(workflow), false);
+    assert.equal(/:latest\b/.test(workflow), false);
 });
 
 test("all production Docker stages pin validated linux amd64 digests", () => {
