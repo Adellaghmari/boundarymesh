@@ -3,7 +3,7 @@
 # Artifact: backend/api/target/boundarymesh-api-0.1.0-SNAPSHOT.jar
 # Runtime configuration is injected by the environment. Do not bake secrets.
 
-FROM eclipse-temurin:25.0.4_7-jdk-noble AS build
+FROM eclipse-temurin:25.0.4_7-jdk-noble@sha256:6ee50f6bf158f3f5bb43b8b52985448743b5d3bfbcb0e99f3780c83d58ffa287 AS build
 
 WORKDIR /src
 COPY backend/mvnw backend/mvnw
@@ -22,7 +22,7 @@ RUN chmod +x mvnw \
     && ./mvnw -B -pl api -am package -DskipTests \
     && cp api/target/boundarymesh-api-0.1.0-SNAPSHOT.jar /tmp/app.jar
 
-FROM eclipse-temurin:25.0.4_7-jre-noble AS runtime
+FROM eclipse-temurin:25.0.4_7-jre-noble@sha256:ac58cdddfb2104865a2841af40dbf6e16f7473024519158aa0392cad33f9e00b AS runtime
 
 RUN groupadd --system --gid 10001 boundarymesh \
     && useradd --system --uid 10001 --gid 10001 --home-dir /app --shell /usr/sbin/nologin boundarymesh

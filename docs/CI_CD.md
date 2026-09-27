@@ -1,7 +1,7 @@
 # GitHub Actions and GCP Workload Identity Federation
 
-This document separates the **live-verified Phase 16C foundation** from the publication and
-deployment capabilities planned for Phases 16D through 16F. BoundaryMesh uses no long-lived GCP
+This document separates the **live-verified Phase 16C foundation** from the Phase 16D.1 publication
+architecture and deployment capabilities planned for later gates. BoundaryMesh uses no long-lived GCP
 service-account JSON key for CI.
 
 ## Live federation boundary
@@ -17,7 +17,7 @@ The provider requires these immutable claims for both admitted contexts:
 - private repository visibility
 - ref `refs/heads/main`
 
-It admits exactly these two context branches:
+The live provider admits exactly these two context branches:
 
 1. Environment `boundarymesh-dev`, workflow
    `Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main`, event
@@ -101,6 +101,19 @@ Audit review found no unexpected administrative activity. Both accounts remain k
 project-level or Token Creator roles. Compute Engine API remains intentionally disabled.
 
 ## Planned capabilities
+
+Phase 16D.1 adds source for an exact third manual publication context and a dedicated keyless
+`boundarymesh-artifact-publish` identity (the nearest valid form within GCP's 30-character account
+ID limit). The proposed identity has repository-scoped
+`roles/artifactregistry.writer` only on `boundarymesh` and `boundarymesh-releases`. The source also
+enables immutable Docker tags and defines a generic release repository. These changes are not live
+until a later reviewed apply.
+
+The publication contract is staged at `docs/templates/artifact-publish.yml`, outside GitHub's
+executable workflow directory. The `boundarymesh-artifact-publish` environment does not yet exist,
+and GitHub can create a missing environment when a job references it. The environment must be
+created and protected before the workflow is activated. No executable publication workflow,
+artifact publication, or deployment exists yet.
 
 Phase 16C does **not** implement general pull-request CI, artifact publication, or deployment.
 

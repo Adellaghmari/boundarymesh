@@ -99,7 +99,7 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.equal(/\(default\)/.test(text), false);
     assert.equal(/client_secret|private_key|BEGIN [A-Z]+ PRIVATE/i.test(text), false);
     assert.equal((text.match(/new gcp\.projects\.Service/g) ?? []).length, 9);
-    assert.equal((text.match(/new gcp\.artifactregistry\.Repository/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.artifactregistry\.Repository\(/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.secretmanager\.Secret\(/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.firestore\.Database/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.pubsub\.Topic\(/g) ?? []).length, 2);
@@ -107,8 +107,9 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.equal((text.match(/new gcp\.storage\.Bucket\(/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.kms\.KeyRing/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.kms\.CryptoKey\(/g) ?? []).length, 2);
-    assert.equal((text.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 5);
-    assert.equal((text.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 2);
+    assert.equal((text.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 6);
+    assert.equal((text.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 3);
+    assert.equal((text.match(/new gcp\.artifactregistry\.RepositoryIamMember/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.iam\.WorkloadIdentityPool\(/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.iam\.WorkloadIdentityPoolProvider/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.projects\.IAMMember/g) ?? []).length, 3);
@@ -170,12 +171,14 @@ test("GitHub WIF foundation defines a tightly scoped provider and keyless verifi
         "Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main",
         'GITHUB_CI_PREVIEW_ENVIRONMENT = "boundarymesh-ci-preview"',
         "Adellaghmari/boundarymesh/.github/workflows/infra-preview.yml@refs/heads/main",
+        'GITHUB_ARTIFACT_PUBLISH_ENVIRONMENT = "boundarymesh-artifact-publish"',
+        "Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main",
         'GITHUB_WORKFLOW_DISPATCH_EVENT = "workflow_dispatch"',
     ]) {
         assert.ok(wif.includes(requiredCondition), `condition must include ${requiredCondition}`);
     }
     assert.equal(/job_workflow_ref/.test(wif), false);
-    assert.equal((wif.match(/\|\|/g) ?? []).length, 1);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 2);
     assert.match(wif, /\]\.join\(" && "\)/);
 
     assert.equal((wif.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 1);

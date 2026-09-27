@@ -63,6 +63,7 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | WIF verification identity | LIVE VERIFIED / KEYLESS / NO PROJECT OR DEPLOYMENT ROLES |
 | CI preview identity | LIVE VERIFIED / KEYLESS / STATE READ + STATE-KEY DECRYPT ONLY |
 | Phase 16C.4 final preview | 54 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
+| Phase 16D.1 publication architecture | IMPLEMENTED IN SOURCE / TESTED LOCALLY / PREVIEWED (5 CREATE / 2 UPDATE / 52 UNCHANGED / 0 REPLACE / 0 DELETE); NOT LIVE OR PUBLISHED |
 | Current Pulumi state | 54 MANAGED RESOURCES / 55 RECORDS INCLUDING STACK ROOT / ZERO DRIFT |
 
 Target region: **`europe-west4`**.  
