@@ -11,6 +11,7 @@ import {
     type TargetRegion,
 } from "./config";
 import { defineCiPreviewIdentity } from "./ci-preview";
+import { defineArtifactPublication } from "./artifact-publication";
 import { defineArtifactRegistry } from "./registry";
 import { defineFirestore } from "./firestore";
 import { defineKms } from "./kms";
@@ -53,6 +54,12 @@ const ciPreview = defineCiPreviewIdentity(foundation, {
     iamApi: githubWif.iamApi,
     stateBucket: sharedState.stateBucket,
     stateSecretsCryptoKey: sharedState.secretsCryptoKey,
+    wifProvider: githubWif.provider,
+});
+const artifactPublication = defineArtifactPublication(foundation, {
+    artifactRegistryApi: registry.artifactRegistryApi,
+    dockerRepository: registry.repository,
+    iamApi: githubWif.iamApi,
     wifProvider: githubWif.provider,
 });
 
@@ -104,3 +111,6 @@ export const githubWorkloadIdentityProviderName = githubWif.provider.name;
 export const wifVerificationServiceAccountEmail = githubWif.verificationServiceAccount.email;
 export const ciPreviewServiceAccountEmail = ciPreview.serviceAccount.email;
 export const ciStateReaderRoleName = ciPreview.stateReaderRole.name;
+export const artifactPublisherServiceAccountEmail =
+    artifactPublication.publisherServiceAccount.email;
+export const releaseArtifactRepositoryId = artifactPublication.releaseRepository.repositoryId;

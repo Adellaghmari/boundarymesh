@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boundarymesh.dev/contracts/release-manifest/v1.schema.json",
+  "title": "BoundaryMesh immutable release manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "repository", "source", "publication", "artifacts", "sboms", "provenance", "toolVersions", "actionPins"],
+  "properties": {
+    "schemaVersion": { "const": "boundarymesh.release/v1" },
+    "repository": {
+      "type": "object", "additionalProperties": false,
+      "required": ["owner", "name", "id"],
+      "properties": {
+        "owner": { "const": "Adellaghmari" },
+        "name": { "const": "boundarymesh" },
+        "id": { "const": "1385415640" }
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["commitSha", "ref", "contractPath", "contractTreeSha"],
+      "properties": {
+        "commitSha": { "$ref": "#/$defs/gitSha" },
+        "ref": { "const": "refs/heads/main" },
+        "contractPath": { "type": "string", "minLength": 1 },
+        "contractTreeSha": { "$ref": "#/$defs/gitSha" }
+      }
+    },
+    "publication": {
+      "type": "object", "additionalProperties": false,
+      "required": ["workflowPath", "runId", "environment", "timestamp"],
+      "properties": {
+        "workflowPath": { "const": ".github/workflows/artifact-publish.yml" },
+        "runId": { "type": "string", "pattern": "^[0-9]+$" },
+        "environment": { "const": "boundarymesh-artifact-publish" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "artifacts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["api", "worker", "web", "frontend", "releaseManifest"],
+      "properties": {
+        "api": { "$ref": "#/$defs/image" },
+        "worker": { "$ref": "#/$defs/image" },
+        "web": { "$ref": "#/$defs/image" },
+        "frontend": {
+          "type": "object", "additionalProperties": false,
+          "required": ["repository", "package", "version", "filename", "sha256"],
+          "properties": {
+            "repository": { "const": "projects/boundarymesh-dev/locations/europe-west4/repositories/boundarymesh-releases" },
+            "package": { "const": "boundarymesh-frontend" },
+            "version": { "$ref": "#/$defs/gitSha" },
+            "filename": { "const": "frontend-dist.tar.gz" },
+            "sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "releaseManifest": {
+          "type": "object", "additionalProperties": false,
+          "required": ["repository", "package", "version", "filename", "sha256File", "hashStrategy"],
+          "properties": {
+            "repository": { "const": "projects/boundarymesh-dev/locations/europe-west4/repositories/boundarymesh-releases" },
+            "package": { "const": "boundarymesh-release" },
+            "version": { "$ref": "#/$defs/gitSha" },
+            "filename": { "const": "release-manifest.json" },
+            "sha256File": { "const": "release-manifest.json.sha256" },
+            "hashStrategy": { "const": "external-sha256-sidecar" }
+          }
+        }
+      }
+    },
+    "sboms": { "$ref": "#/$defs/evidenceList" },
+    "provenance": { "$ref": "#/$defs/evidenceList" },
+    "toolVersions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["java", "maven", "node", "npm", "docker", "buildx"],
+      "properties": {
+        "java": { "type": "string", "minLength": 1 },
+        "maven": { "type": "string", "minLength": 1 },
+        "node": { "type": "string", "minLength": 1 },
+        "npm": { "type": "string", "minLength": 1 },
+        "docker": { "type": "string", "minLength": 1 },
+        "buildx": { "type": "string", "minLength": 1 }
+      }
+    },
+    "actionPins": {
+      "type": "object", "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/gitSha" }
+    }
+  },
+  "$defs": {
+    "gitSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "ociDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "image": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "image", "digest"],
+      "properties": {
+        "repository": { "const": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh" },
+        "image": { "enum": ["boundarymesh-api", "boundarymesh-worker", "boundarymesh-web-edge"] },
+        "digest": { "$ref": "#/$defs/ociDigest" }
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["subject", "reference", "digest"],
+      "properties": {
+        "subject": { "type": "string", "minLength": 1 },
+        "reference": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "evidenceList": {
+      "type": "array", "minItems": 4, "items": { "$ref": "#/$defs/evidence" }
+    }
+  }
+}

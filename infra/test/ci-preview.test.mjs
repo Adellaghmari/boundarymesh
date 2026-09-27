@@ -32,6 +32,11 @@ const privilegedContexts = [
         workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/infra-preview.yml@refs/heads/main",
         event_name: "workflow_dispatch",
     },
+    {
+        environment: "boundarymesh-artifact-publish",
+        workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main",
+        event_name: "workflow_dispatch",
+    },
 ];
 
 function providerAllows(assertion) {
@@ -112,7 +117,7 @@ test("CI federation authorization is service-account and environment scoped", ()
     assert.equal(/new gcp\.projects\.IAM(?:Member|Binding|Policy)/.test(source), false);
 });
 
-test("provider source expresses four immutable claims and exactly two privileged contexts", () => {
+test("provider source expresses four immutable claims and exactly three privileged contexts", () => {
     for (const expected of [
         "1385415640",
         "179922674",
@@ -122,6 +127,8 @@ test("provider source expresses four immutable claims and exactly two privileged
         "Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main",
         "boundarymesh-ci-preview",
         "Adellaghmari/boundarymesh/.github/workflows/infra-preview.yml@refs/heads/main",
+        "boundarymesh-artifact-publish",
+        "Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main",
         "workflow_dispatch",
     ]) {
         assert.ok(wif.includes(expected), `provider condition must include ${expected}`);
@@ -129,15 +136,16 @@ test("provider source expresses four immutable claims and exactly two privileged
     assert.match(wif, /GITHUB_OIDC_COMMON_CONDITIONS = \[/);
     assert.match(wif, /GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS = \[/);
     assert.match(wif, /GITHUB_OIDC_CI_PREVIEW_CONTEXT_CONDITIONS = \[/);
+    assert.match(wif, /GITHUB_OIDC_ARTIFACT_PUBLISH_CONTEXT_CONDITIONS = \[/);
     assert.match(
         wif,
         /`\(\(\$\{GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS\.join\(" && "\)\}\) \|\| `/,
     );
-    assert.equal((wif.match(/\|\|/g) ?? []).length, 1);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 2);
     assert.equal((wif.match(/^\s*"(?:google|attribute)\.[^"]+":\s*"assertion\.[^"]+",$/gm) ?? []).length, 9);
 });
 
-test("provider semantics allow only the verification and CI preview contexts", () => {
+test("provider semantics allow only the verification, preview, and publication contexts", () => {
     for (const context of privilegedContexts) {
         assert.equal(providerAllows({ ...commonClaims, ...context }), true);
     }

@@ -21,6 +21,7 @@ export function defineArtifactRegistry(foundation: FoundationConfig) {
             format: "DOCKER",
             description: "BoundaryMesh OCI application images",
             mode: "STANDARD_REPOSITORY",
+            dockerConfig: { immutableTags: true },
         },
         { dependsOn: [artifactRegistryApi] },
     );
