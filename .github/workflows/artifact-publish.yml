@@ -1,0 +1,95 @@
+# Phase 16D immutable artifact-publication workflow.
+# This workflow is intentionally manual-only and does not deploy BoundaryMesh.
+name: Publish immutable BoundaryMesh artifacts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: boundarymesh-artifact-publish
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        id: auth
+        with:
+          project_id: boundarymesh-dev
+          workload_identity_provider: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
+          service_account: boundarymesh-artifact-publish@boundarymesh-dev.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
+        with:
+          registry: europe-west4-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build and publish exact-commit containers with SBOM and provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/main
+          test "$GITHUB_SHA" = "$(git rev-parse HEAD)"
+          for spec in \
+            "boundarymesh-api backend/api/Dockerfile" \
+            "boundarymesh-worker backend/worker/Dockerfile" \
+            "boundarymesh-web-edge backend/web-edge/Dockerfile"
+          do
+            set -- $spec
+            docker buildx build --platform linux/amd64 --file "$2" \
+              --tag "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/$1:${GITHUB_SHA}" \
+              --sbom=true --provenance=mode=max --push .
+            docker buildx imagetools inspect \
+              "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/$1:${GITHUB_SHA}"
+          done
+      - name: Build deterministic frontend release
+        shell: bash
+        env:
+          VITE_APP_MODE: cloud
+          SOURCE_DATE_EPOCH: ${{ github.event.repository.updated_at }}
+        run: |
+          set -euo pipefail
+          npm ci --prefix frontend
+          npm run build --prefix frontend
+          SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          node scripts/release/build-frontend-archive.mjs \
+            --input frontend/dist \
+            --output "release/frontend-dist.tar.gz" \
+            --source-date-epoch "$SOURCE_DATE_EPOCH"
+      - name: Generate immutable publication evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The implementation gate must populate exact remote OCI digests,
+          # SBOM/provenance references, tool versions, and action pins here.
+          node scripts/release/release-manifest.mjs \
+            --input release/publication-metadata.json \
+            --output release/release-manifest.json
+      - name: Publish and verify generic artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud artifacts generic upload --project=boundarymesh-dev --location=europe-west4 \
+            --repository=boundarymesh-releases --package=boundarymesh-frontend \
+            --version="$GITHUB_SHA" --source=release/frontend-dist.tar.gz
+          gcloud artifacts generic upload --project=boundarymesh-dev --location=europe-west4 \
+            --repository=boundarymesh-releases --package=boundarymesh-release \
+            --version="$GITHUB_SHA" --source=release/release-manifest.json
+          gcloud artifacts generic files list --project=boundarymesh-dev --location=europe-west4 \
+            --repository=boundarymesh-releases --package=boundarymesh-release --version="$GITHUB_SHA"
