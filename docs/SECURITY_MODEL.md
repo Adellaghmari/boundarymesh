@@ -83,20 +83,22 @@ Method security: `@PreAuthorize("hasAuthority('ROLE_SECURITY_ADMIN')")` on rotat
 
 Do not persist raw before/after payloads when Restricted fields are present. Persist **field names, actions, and SHA-256 of canonical transformed body**.
 
-## Workload IAM (live after Phase 15I-B1)
+## Workload and CI IAM (live through Phase 16C)
 
 | Principal | Firestore | Pub/Sub | Secret Manager | KMS |
 | --- | --- | --- | --- | --- |
 | `boundarymesh-api` | `roles/datastore.user` | publisher on delivery topic | accessor on `hmac-quayforge` only | signer + public-key viewer on attestation CryptoKey |
 | `boundarymesh-worker` | `roles/datastore.user` | subscriber on worker subscription only | accessor on three connector secrets only | **none** |
-| `sa-github-ci` | none | none | none | none (tests use emulators) |
-| `sa-github-deploy` | none | none | none | none; Cloud Run + Artifact Registry + Pulumi |
+| `boundarymesh-web` | none | none | none | **none**; service-level `roles/run.invoker` on the private API is its only core-call grant |
+| `boundarymesh-wif-verify` | none | none | none | **none**; WIF authentication proof only, with no project or deployment role |
+| `boundarymesh-ci-preview` | none | none | none | decrypt only on the dedicated Pulumi state key; state bucket access is limited to object get/list |
 
 Secret-level IAM, not `roles/secretmanager.secretAccessor` on the whole project. Pub/Sub and KMS
 roles are also resource-scoped. Firestore data IAM is project-scoped because collection-level IAM
-is not available for these server SDK operations. Both workload service accounts are keyless.
+is not available for these server SDK operations. All workload and CI service accounts are keyless.
 Secret authorization is live. Each approved integration secret has exactly one enabled synthetic
-version; values are absent from Pulumi and source. Workload access awaits Cloud Run verification.
+version; values are absent from Pulumi and source. The CI identities have no application-data access,
+project reader, deployment role, Token Creator role, or cross-service-account impersonation path.
 
 ## Microsoft Graph permission story
 

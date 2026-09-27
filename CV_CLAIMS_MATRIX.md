@@ -97,11 +97,12 @@ This is portfolio work, not professional employment.
 | ECDSA P-256 | **TESTED** | JCA `SHA256withECDSAinP1363Format` |
 | JCA asymmetric cryptography | **TESTED** | Ephemeral local key `local-jca-p256` |
 | state-driven Vue SVG/graph visualization | **TESTED** | Custom SVG, no graph library |
-| Pulumi TypeScript repository foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | `infra/` typecheck + zero-resource test. No `pulumi up` |
-| GCP project | **CREATED + BILLING LINKED** | `boundarymesh-dev`. No application resources |
+| Pulumi TypeScript repository foundation | **IMPLEMENTED / TESTED / LIVE VERIFIED** | `infra/` typecheck/tests/build; current shared stack previews zero drift |
+| GCP project | **CREATED + BILLING LINKED / LIVE** | `boundarymesh-dev`; production workloads and managed infrastructure are live |
 | gcloud local authentication | **CONFIGURED + VERIFIED** | Active project `boundarymesh-dev` |
 | Application Default Credentials | **CONFIGURED + VERIFIED LOCALLY** | Token discarded; ADC not in Git |
-| Pulumi local backend | **CONFIGURED + VERIFIED LOCALLY** | `file://~`. GCS state PLANNED |
+| Shared Pulumi GCS backend | **LIVE VERIFIED** | `gs://bm-pulumi-state-eu4-21cad20b325f`; versioning, uniform access, public-access prevention, protected ownership; 54 managed resources / 55 state records including stack root |
+| Pulumi GCP KMS secrets provider | **LIVE VERIFIED** | Dedicated `boundarymesh-pulumi/state-secrets` key in `europe-west4`; separate from application attestation signing |
 | Pulumi `dev` stack configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `gcp:project`, `gcp:region`, `boundarymesh:environment` |
 | GCP project configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `gcp:project = boundarymesh-dev` |
 | GCP region configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `europe-west4` |
@@ -128,8 +129,14 @@ This is portfolio work, not professional employment.
 | GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |
 | Firestore production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Deployed hosted API/Worker path persisted the Phase 15J evidence and durable terminal result; exact disposable records were cleaned safely |
 | Pub/Sub production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Hosted API published exactly one Phase 15J event and Worker Pool consumed/ACKed it without observed redelivery; no dead-letter policy configured |
-| Pulumi TypeScript GCP resources | **LIVE / 39 MANAGED RESOURCES / ZERO DRIFT** | Artifact Registry, Secret Manager containers, Firestore, Pub/Sub, KMS, private API, Worker Pool, and public-transport/authenticated Web BFF. Hosting is live but intentionally outside Pulumi; dead-letter forwarding remains unconfigured |
-| GitHub Actions + GCP WIF | PLANNED | |
+| Pulumi TypeScript GCP resources | **LIVE / 54 MANAGED RESOURCES / 55 STATE RECORDS / ZERO DRIFT** | Workloads and data services plus shared state, WIF, and least-privilege preview identity. Hosting is live but intentionally outside Pulumi; dead-letter forwarding remains unconfigured |
+| GitHub Actions + GCP WIF | **LIVE VERIFIED** | Keyless GitHub OIDC to active `boundarymesh-github/github-actions`; private repository numeric IDs, protected main, exact workflow, environment, and manual event constrained |
+| Separate WIF verification identity | **LIVE VERIFIED** | `boundarymesh-wif-verify`; environment-scoped federation only, zero keys, no project/deployment role, no Token Creator |
+| Least-privilege hosted Pulumi preview | **LIVE VERIFIED** | `boundarymesh-ci-preview`; state object get/list and state-key decrypt only. Run `36337930890` returned 54 unchanged / zero operations |
+| CI federation isolation | **LIVE VERIFIED** | Cross-SA impersonation denied; wrong workflow/environment and missing-environment contexts rejected; no unexpected administrative audit activity |
+| Immutable artifact publication | PLANNED | Phase 16D; no publisher identity/workflow or release-manifest pipeline implemented |
+| Controlled CD | PLANNED | Phase 16E; no automated deployment identity or workflow implemented |
+| SBOM / provenance / software artifact signing | PLANNED | Not implemented by Phase 16C |
 | Semgrep | PLANNED | |
 | Gitleaks | PLANNED | |
 | OWASP Dependency-Check | PLANNED | |
