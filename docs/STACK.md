@@ -91,10 +91,6 @@ Not central: Trivy / Syft / Cosign. Container scan may exist because Cloud Run i
 
 ## Module shape
 
-Phase 1 implements `backend/domain`, `backend/application`, `backend/api` only.
-
-## Module shape (later phases)
-
 ```text
 backend/
   domain/            # no Spring, no GCP, no Camel
@@ -103,15 +99,18 @@ backend/
   integration/       # contract, egress, replay, idempotency
   connectors/        # Graph, CRM, orders, settlements adapters
   camel/             # routes only — no policy decisions
-  gcp/               # Google Cloud adapters (Phase 15C boundary; no production clients yet)
-  persistence/       # Firestore ports + adapters (later, inside gcp)
+  gcp/               # production Firestore, Pub/Sub, KMS, Secret Manager adapters
+  persistence/       # persistence ports and local implementations
   audit/             # chain + attestation
   delivery/          # Pub/Sub publisher/consumer
   api/               # Spring MVC — Boundary API
   worker/            # Spring Boot — Delivery Worker
+  web/               # Spring Boot — authenticated Web BFF
 frontend/            # Vue 3 SPA
-infra/               # Pulumi TypeScript (Phase 15A foundation; zero resources)
+infra/               # Pulumi TypeScript; shared GCS/KMS state and 54 managed resources
 contracts/           # OpenAPI, AsyncAPI, JSON Schema (source of truth)
 ```
 
-Two deployable Spring Boot applications share `domain`, `application`, `integration`, `audit`. The API process does not call Graph. The worker process does not accept public ingress.
+Three deployable Spring Boot applications share the appropriate domain/application modules: the
+private API, no-endpoint Worker, and public-transport Web BFF with mandatory application auth. The
+API process does not call Graph. The worker process does not accept public ingress.

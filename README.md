@@ -68,7 +68,7 @@ Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** Co
 
 A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Firebase Hosting serves the cloud SPA with a revalidating HTML shell and immutable hashed assets. Hosted Firebase Google authentication, the HttpOnly `__session` BFF session, operator authorization, CSRF, and keyless browser → BFF → IAM-private-core access are **LIVE VERIFIED**. Phase 15J completed exactly one synthetic browser-origin transaction through Firestore, Cloud KMS signing, attestation, audit, outbox, Pub/Sub, Worker Pool consumption, idempotency, terminal quarantine, durable persistence, and ACK. External connector delivery remains intentionally disabled: no endpoint was configured, `provider_called=false`, and no connector secret was read. Graph change notifications, WIF, and production Entra/OIDC remain planned. Dead-letter forwarding is not configured. See the [Phase 15J final evidence](docs/PHASE_15J_FINAL.md).
+Firebase Hosting serves the cloud SPA with a revalidating HTML shell and immutable hashed assets. Hosted Firebase Google authentication, the HttpOnly `__session` BFF session, operator authorization, CSRF, and keyless browser → BFF → IAM-private-core access are **LIVE VERIFIED**. Phase 15J completed exactly one synthetic browser-origin transaction through Firestore, Cloud KMS signing, attestation, audit, outbox, Pub/Sub, Worker Pool consumption, idempotency, terminal quarantine, durable persistence, and ACK. Phase 16C then live verified shared GCS/KMS Pulumi state and keyless, least-privilege GitHub WIF preview. External connector delivery remains intentionally disabled: no endpoint was configured, `provider_called=false`, and no connector secret was read. Graph change notifications and production Entra/OIDC remain planned. Dead-letter forwarding is not configured. See the [Phase 15J final evidence](docs/PHASE_15J_FINAL.md) and [Phase 16C final evidence](docs/PHASE_16C_FINAL.md).
 
 ## Navigation
 
@@ -128,15 +128,14 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — PHASE 15J LIVE VERIFIED / PASS; NOT YET FULLY SECURITY-FROZEN.** Phase 14B live Microsoft Graph event crossing is recorded. Phases
-15A–15H are complete. Phase 15I deployed the private API Service and no-endpoint Worker Pool with
-two keyless workload identities and additive least-privilege IAM. D1 LIVE VERIFIED one internal
-cloud transaction through Firestore, Cloud KMS signing, signed attestation, audit, outbox, Pub/Sub,
-worker idempotency, and terminal quarantine ACK. Firebase Hosting serves the SPA; hosted Firebase
-authentication, a non-mutating browser-to-private-core read, and exactly one hosted governed transaction
-are LIVE VERIFIED. External connector delivery, WIF, and production Entra/OIDC remain not run, planned,
-or disabled. The current Pulumi passphrase remains an accepted exposed credential, and Firebase password-hash
-signing material appeared in local output without being committed or stored; both remain final security-hygiene follow-ups.
+**PROJECT C — PHASE 16C CLOSED / PASS / SOURCE-FROZEN; NOT YET FULLY SECURITY-FROZEN.** Phase 15J
+live verified the hosted Firebase SPA, authenticated Web BFF, private API, Worker, and exactly one
+governed synthetic transaction. Phase 16C moved the 54-resource stack to a shared GCS backend with
+a dedicated GCP KMS secrets provider, then live verified keyless GitHub WIF and a least-privilege,
+read-only hosted Pulumi preview. Immutable artifact publication, controlled CD, and final CI/CD
+verification remain Phase 16D, 16E, and 16F. External connector delivery and production Entra/OIDC
+remain disabled or unverified. The previously exposed historical Pulumi passphrase and locally
+exposed, uncommitted Firebase password-hash signing material remain final security-hygiene follow-ups.
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
 
@@ -171,7 +170,8 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_M
 | [docs/PULUMI.md](docs/PULUMI.md) | IaC |
 | [docs/GCP_ADAPTERS.md](docs/GCP_ADAPTERS.md) | GCP module boundary and port map |
 | [docs/PHASE_15J_FINAL.md](docs/PHASE_15J_FINAL.md) | Final hosted production verification and cleanup freeze |
-| [docs/CI_CD.md](docs/CI_CD.md) | GitHub WIF |
+| [docs/PHASE_16C_FINAL.md](docs/PHASE_16C_FINAL.md) | Shared-state and keyless CI-preview live evidence |
+| [docs/CI_CD.md](docs/CI_CD.md) | Live GitHub WIF/preview boundary and planned publication/CD |
 | [docs/PHASE0_GATE.md](docs/PHASE0_GATE.md) | Final YES/NO gate |
 | [docs/PHASE1.md](docs/PHASE1.md) | Phase 1 implementation record |
 | [docs/PHASE2.md](docs/PHASE2.md) | Phase 2 Vue console record |

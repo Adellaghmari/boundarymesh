@@ -204,15 +204,15 @@ Removed at Phase 0: Kubernetes, Kafka, Redis, RabbitMQ, service mesh, Spring Clo
 
 Spring Cloud Gateway is **NOT APPROPRIATE**: it would turn the product into “a gateway with plugins.” Enforcement stays in the application.
 
-## Repository layout (later phases — do not scaffold empty code now)
+## Repository layout
 
 ```text
 backend/          Java modules (Phase 1)
 frontend/         Vue app (Phase 2)
 contracts/        schemas (Phase 5)
-infra/            Pulumi TypeScript foundation (Phase 15A–15B; zero resources)
-backend/gcp       Cloud adapter boundary (Phase 15C; no production clients)
-.github/workflows (Phase 17)
+infra/            Pulumi TypeScript; 54 managed resources on shared GCS/KMS state
+backend/gcp       Production Google Cloud adapters used by the live API and Worker
+.github/workflows (Phase 16C verification/preview live; Phase 16D-16F publication/CD planned)
 docs/             this folder
 ```
 

@@ -19,10 +19,14 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 | **12** | Cryptographic Exchange Attestation | **COMPLETE** local JCA P-256. Cloud KMS adapter **IMPLEMENTED + UNIT TESTED**; live KMS LIVE VERIFIED LOCALLY |
 | **13** | Integration Boundary Graph | **COMPLETE** state-driven Vue SVG |
 | **14** | M365 / Graph connector | **COMPLETE** harness + Entra architecture TESTED. Live tenant BLOCKED. Graph subscriptions PLANNED |
-| **15** | GCP + Pulumi cloud foundation and hosted verification | **COMPLETE / LIVE VERIFIED.** Phase 15I deployed and verified the private core/Worker path. Phase 15J deployed Firebase Hosting and the secure Web BFF, then verified exactly one authenticated browser-origin transaction through KMS evidence, audit, outbox, Pub/Sub, durable Worker quarantine, and ACK. Final Pulumi state: 39 unchanged / zero operations |
-| **16** | Remaining Pulumi / GCP infrastructure | Reconcile remaining infrastructure roadmap items and state-backend ownership. Firebase Hosting is already LIVE outside Pulumi; WIF remains Phase 17 |
-| **17** | GitHub WIF + CI/CD + AppSec | no JSON keys; Semgrep/Gitleaks/ZAP/Dependency-Check |
-| **18** | Public deployment + live verification | honest badges; Graph live only if real |
+| **15** | GCP + Pulumi cloud foundation and hosted verification | **COMPLETE / LIVE VERIFIED.** Phase 15I deployed and verified the private core/Worker path. Phase 15J deployed Firebase Hosting and the secure Web BFF, then verified exactly one authenticated browser-origin transaction through KMS evidence, audit, outbox, Pub/Sub, durable Worker quarantine, and ACK. Historical Phase 15J freeze: 39 unchanged / zero operations |
+| **16C** | Shared state and keyless CI preview | **CLOSED / PASS / LIVE VERIFIED.** Pulumi uses the protected GCS DIY backend and dedicated GCP KMS secrets provider. GitHub WIF admits exactly the manual main-only verification and infrastructure-preview contexts. Separate keyless identities proved positive preview and negative isolation paths. Current Pulumi state: 54 managed resources / 55 records including the stack root; 54 unchanged / zero operations |
+| **16C.5** | Documentation and source-of-truth freeze | **PASS / SOURCE-FROZEN.** Repository truth reconciled with the Phase 16C live state; documentation-only, with no new cloud capability |
+| **16D** | Immutable artifact publication | **PLANNED / NOT IMPLEMENTED.** Build exact-commit artifacts, publish immutably, and record digest/commit traceability through a separately reviewed identity and workflow |
+| **16E** | Controlled CD | **PLANNED / NOT IMPLEMENTED.** Explicitly approved, least-privilege deployment using immutable artifacts |
+| **16F** | Live CI/CD verification and freeze | **PLANNED / NOT IMPLEMENTED.** Prove publication/deployment boundaries, rollback, and zero-key operation before declaring CI/CD complete |
+| **17** | Application security automation | **PLANNED.** Semgrep, Gitleaks, Dependency-Check, Dependabot, and appropriately gated ZAP |
+| **18** | Additional public hardening | **PLANNED.** Honest badges and optional cost-reviewed edge controls; Graph live only if real |
 | **19** | Hardening + grand final audit | rotation proof, chain tamper demo, CV matrix update, freeze |
 
 ## Adjustments vs original sketch
@@ -33,7 +37,7 @@ Phase 0 is this lock. **Do not execute later phases in Phase 0.** Sequencing is 
 
 ## Stop conditions per phase
 
-Each phase updates `PROJECT_STATUS.md` and `CV_CLAIMS_MATRIX.md`. A claim becomes `LIVE VERIFIED` only when a dated phase evidence record proves the real deployed path; Phase 15J is such a record.
+Each phase updates `PROJECT_STATUS.md` and `CV_CLAIMS_MATRIX.md`. A claim becomes `LIVE VERIFIED` only when dated evidence proves the real path; Phase 15J and Phase 16C.4 have such evidence. Phase 16 remains in progress until 16D, 16E, and 16F complete.
 
 ## Non-goals until a new ADR
 

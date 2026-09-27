@@ -57,6 +57,13 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | Phase 15I-C2 final preview | 33 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
 | Phase 15J final preview | 39 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
 | Firebase Hosting | LIVE / 3 RELEASES / OUTSIDE PULUMI OWNERSHIP |
+| Pulumi shared backend | LIVE / GCS DIY / VERSIONED / PUBLIC ACCESS PREVENTED |
+| Pulumi secrets provider | LIVE / DEDICATED GCP KMS KEY |
+| GitHub WIF provider | LIVE / ACTIVE / EXACTLY TWO MANUAL MAIN-ONLY CONTEXTS |
+| WIF verification identity | LIVE VERIFIED / KEYLESS / NO PROJECT OR DEPLOYMENT ROLES |
+| CI preview identity | LIVE VERIFIED / KEYLESS / STATE READ + STATE-KEY DECRYPT ONLY |
+| Phase 16C.4 final preview | 54 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
+| Current Pulumi state | 54 MANAGED RESOURCES / 55 RECORDS INCLUDING STACK ROOT / ZERO DRIFT |
 
 Target region: **`europe-west4`**.  
 Stack: **`dev`**.  
@@ -79,29 +86,35 @@ The API, Worker Pool, and Web BFF are deployed on these immutable references. Ph
 verified the authenticated hosted browser path and exactly one governed transaction through the
 internal cloud pipeline. External connector delivery remains intentionally disabled.
 
-Local backend remains `file://~`. GCS state is **PLANNED**.
+Current backend: `gs://bm-pulumi-state-eu4-21cad20b325f`. Stack secrets use
+`gcpkms://projects/boundarymesh-dev/locations/europe-west4/keyRings/boundarymesh-pulumi/cryptoKeys/state-secrets`.
+The historical `file://~` backend and passphrase-backed state were superseded by the controlled
+Phase 16C migration. The independently protected pre-migration backup remains rollback evidence;
+it is not the active backend.
 
 ## Gated next steps (not provisioned)
 
 - Pub/Sub dead-letter forwarding
-- Phase 16 remaining Pulumi / GCP infrastructure reconciliation
-- Phase 17 WIF / CI-CD / AppSec
+- Phase 16D immutable artifact publication
+- Phase 16E controlled CD
+- Phase 16F live CI/CD verification and freeze
+- Application-security automation after the CI/CD foundation
 - Final credential-hygiene rotation and audit in its later gated phase
 
 ## Local commands
 
-The Pulumi passphrase is local secret material and must never be committed. The current value is a
-known accepted-risk credential exposed in chat and still requires later rotation. Enter it only at
-Pulumi's interactive prompt, or provide it through an approved local secret mechanism that does
-not write it into this repository or shell history. Repository documentation must contain
-placeholders only.
+The active stack uses the GCP KMS secrets provider and does not need the historical passphrase.
+The previously exposed passphrase remains accepted-risk historical credential material until the
+final security-hygiene audit confirms retirement and recovery-boundary handling. Never commit,
+print, or place either credential class in shell history.
 
 ```powershell
 cd infra
-npm install
+npm ci
 npm run typecheck
 npm run build
 npm test
+pulumi login gs://bm-pulumi-state-eu4-21cad20b325f
 pulumi preview
 ```
 

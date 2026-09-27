@@ -103,16 +103,17 @@ Playwright starts the local **worker + API** and the Vite app. It covers Deliver
 - Bearer JWT resource server unchanged
 - No live Microsoft network in `mvn verify`
 
-## Live (Phase 18)
+## Live cloud verification
 
 - Public smoke GET /health, /overview
 - Real Cloud Run revision
 - Real KMS verify if key exists
 - Graph **only if** tenant path marked live
 
-## AppSec in CI
+## AppSec in CI (planned after Phase 16 foundation)
 
-Semgrep, Gitleaks, OWASP Dependency-Check, Dependabot. ZAP baseline against public URL after deploy (Phase 17/18).
+Semgrep, Gitleaks, OWASP Dependency-Check, Dependabot, and a gated ZAP baseline remain planned.
+They are not part of the live-verified Phase 16C preview workflow.
 
 ## Coverage intent
 
