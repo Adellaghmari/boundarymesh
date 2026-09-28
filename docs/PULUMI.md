@@ -2,14 +2,14 @@
 
 Primary IaC: **Pulumi + TypeScript**. Terraform is forbidden for Project C.
 
-## Current state (Phase 16C.4 live verified)
+## Current state (Phase 16D live verified)
 
 - Project/stack: `boundarymesh/dev`
 - Pulumi CLI baseline: `3.262.0`
 - Backend: GCS DIY backend `gs://bm-pulumi-state-eu4-21cad20b325f`
 - Secrets provider: `gcpkms://projects/boundarymesh-dev/locations/europe-west4/keyRings/boundarymesh-pulumi/cryptoKeys/state-secrets`
-- State: **54 managed resources / 55 records including one `pulumi:pulumi:Stack` root**
-- Final accepted preview: **54 unchanged / zero operations / exit 0**
+- State: **59 managed resources**
+- Final accepted preview: **59 unchanged / zero operations / exit 0**
 
 The state bucket uses uniform bucket-level access, public-access prevention, versioning, protected
 Pulumi ownership, and bounded noncurrent-version retention. The state KMS key is separate from the
@@ -22,7 +22,7 @@ provider. The previously exposed passphrase remains an accepted historical secur
 this migration does not erase that history.
 
 The Phase 15 sections below are historical provisioning records. Their resource counts and gate
-statements describe those phases, not the current 54-resource stack.
+statements describe those phases, not the current 59-resource stack.
 
 ## Phase 15H-B (applied)
 
@@ -110,7 +110,7 @@ Current stack: `dev`. A production stack remains future work and is not implied 
 ## State ownership
 
 The active GCS DIY backend is `gs://bm-pulumi-state-eu4-21cad20b325f`. Pulumi owns the protected
-bucket, its dedicated KMS key ring/key, and all 54 managed resources in one `dev` stack. Firebase
+bucket, its dedicated KMS key ring/key, and all 59 managed resources in one `dev` stack. Firebase
 Hosting releases remain intentionally outside Pulumi ownership. Secret Manager payloads also remain
 outside Pulumi state; Pulumi manages the containers and IAM boundaries only.
 
@@ -128,8 +128,9 @@ source, chat, logs, or placeholder SecretVersions.
 
 - **LIVE:** `.github/workflows/infra-preview.yml` runs only by `workflow_dispatch` from protected `main` in environment `boundarymesh-ci-preview`.
 - **LIVE:** `boundarymesh-ci-preview` authenticates keylessly and can read/decrypt only the shared stack state. Run `36337930890` returned 54 unchanged / zero operations.
-- **NOT IMPLEMENTED:** pull-request automation, artifact publication, and infrastructure/application deployment.
-- **PLANNED:** Phase 16D immutable publication, Phase 16E controlled CD with explicit approval, then Phase 16F live verification and freeze.
+- **LIVE:** the Phase 16D publisher foundation adds a dedicated keyless publisher, exact third WIF context, immutable Docker tags, a Generic release repository, and repository-scoped writers. Run `36492495801` published and independently verified one immutable release.
+- **NOT IMPLEMENTED:** pull-request automation and infrastructure/application deployment.
+- **PLANNED:** Phase 16E controlled CD with explicit approval, then Phase 16F live verification and freeze.
 - Rollback remains a reviewed operation using versioned state and known-good immutable workload digests. CI preview has no rollback or mutation permission.
 
 ## Resources Pulumi manages
@@ -137,6 +138,7 @@ source, chat, logs, or placeholder SecretVersions.
 Two Cloud Run Services, one Cloud Run Worker Pool, three keyless workload SAs, Pub/Sub
 topic/subscription/DLQ, Firestore Native database, attestation KMS key ring/key, Secret Manager
 **ids**, Artifact Registry, shared-state bucket and KMS resources, WIF pool/provider, two keyless CI
-identities, and scoped IAM members/roles. Firebase Hosting releases are live but outside Pulumi.
+identities, a keyless publication identity, the Generic release repository, and scoped IAM
+members/roles. Firebase Hosting releases are live but outside Pulumi.
 
 No GKE. No VPC. No SQL.

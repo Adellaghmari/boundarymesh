@@ -210,9 +210,9 @@ Spring Cloud Gateway is **NOT APPROPRIATE**: it would turn the product into “a
 backend/          Java modules (Phase 1)
 frontend/         Vue app (Phase 2)
 contracts/        schemas (Phase 5)
-infra/            Pulumi TypeScript; 54 managed resources on shared GCS/KMS state
+infra/            Pulumi TypeScript; 59 managed resources on shared GCS/KMS state
 backend/gcp       Production Google Cloud adapters used by the live API and Worker
-.github/workflows (Phase 16C verification/preview live; Phase 16D-16F publication/CD planned)
+.github/workflows Phase 16C verification/preview and Phase 16D publication live; Phase 16E-16F CD/freeze planned
 docs/             this folder
 ```
 

@@ -1,6 +1,8 @@
 # Phase 16D.1 — immutable artifact publication architecture
 
-Status: **IMPLEMENTED IN SOURCE / TESTED LOCALLY / PREVIEWED**.
+Historical gate status: **IMPLEMENTED IN SOURCE / TESTED LOCALLY / PREVIEWED**. Phase 16D later
+completed live publication and independent verification; current truth is recorded in
+[PHASE_16D_FINAL.md](PHASE_16D_FINAL.md).
 
 Phase 16D separates publication from deployment. The planned publisher identity is
 `boundarymesh-artifact-publish@boundarymesh-dev.iam.gserviceaccount.com` (the nearest valid form

@@ -110,6 +110,21 @@ Playwright starts the local **worker + API** and the Vite app. It covers Deliver
 - Real KMS verify if key exists
 - Graph **only if** tenant path marked live
 
+## Immutable publication verification (Phase 16D)
+
+- Focused publication integration: 10 passing before the final protected merge sequence
+- Infrastructure suite after the checksum-sidecar repair: 34 passing
+- Three exact-source OCI tags resolve to one digest each
+- API, Worker, and Web Edge BuildKit SBOM/provenance references match the published manifest
+- Downloaded frontend archive and release-manifest sidecars verify against the actual published bytes
+- Downloaded frontend SBOM is normalized CycloneDX 1.5
+- Downloaded frontend provenance binds the archive hash as an unsigned in-toto/SLSA subject
+- Downloaded release manifest validates against `contracts/release-manifest/v1.schema.json`
+- Post-publication Pulumi preview: 59 unchanged / zero operations / exit 0
+
+These are separate focused gates; their counts must not be summed into a fabricated global total.
+Publication verification does not prove deployment.
+
 ## AppSec in CI (planned after Phase 16 foundation)
 
 Semgrep, Gitleaks, OWASP Dependency-Check, Dependabot, and a gated ZAP baseline remain planned.

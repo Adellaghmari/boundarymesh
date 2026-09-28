@@ -2,8 +2,8 @@
 
 **Project:** BoundaryMesh (Project C)  
 **Tagline:** Secure every system crossing.  
-**Phase:** **16C CLOSED / PASS / SOURCE-FROZEN** — shared Pulumi state, keyless verification, least-privilege hosted preview, negative isolation proofs, and authoritative documentation are reconciled.
-**Overall:** **PROJECT C — PHASE 16C FOUNDATION LIVE VERIFIED AND SOURCE-FROZEN; PHASE 16D/16E/16F AND FINAL SECURITY HYGIENE REMAIN**
+**Phase:** **16D CLOSED / PASS / LIVE VERIFIED / SOURCE-FROZEN** — the keyless publication foundation, protected workflow, immutable four-subject release, and read-back evidence are reconciled.
+**Overall:** **PROJECT C — PHASE 16D IMMUTABLE ARTIFACT PUBLICATION LIVE VERIFIED AND SOURCE-FROZEN; PHASE 16E/16F AND FINAL SECURITY HYGIENE REMAIN**
 
 ## Completeness
 
@@ -37,13 +37,14 @@
 | Phase 15J-C3A.5 session cookie correction | **PASS / HISTORICAL IMPLEMENTATION GATE** — `__session` was implemented consistently for login, reads, and logout with existing cookie security and auth checks. At that gate the immutable image was pushed and previewed but not deployed; C3A.8 later live-verified the hosted session and browser-to-private-core read. |
 | Phase 15J-C3A.8 hosted authentication and private-core read | **LIVE VERIFIED / PASS** — Hosting release 3 serves the corrected SPA; Google sign-in, `POST /session/login` 200, `GET /session/me` 200, `__session`, Firebase verification, operator authorization, CSRF, route allowlisting, and keyless BFF invocation of the private core all passed. The retained attestation summary returned 200 through `boundarymesh-web-00004-k48`; BFF duration was 17.284 seconds and core duration 16.561 seconds under the corrected bounded 30-second request timeout. No transaction or application mutation occurred. Final Pulumi preview: 39 unchanged, zero operations. |
 | Phase 15J-C3B hosted transaction and cleanup | **LIVE VERIFIED / PASS** — exactly one browser-origin synthetic transaction returned `ALLOW` / `ACCEPTED_FOR_ASYNCHRONOUS_DELIVERY`, produced a SIGNED/VALID KMS-backed attestation, a VALID eight-entry audit chain, one published outbox instruction, one Worker receipt, durable terminal `QUARANTINED` state, one ACK, and zero NACK/redelivery/DLQ. Exact disposable outbox/idempotency records were removed; immutable/shared evidence remains valid. [Final evidence](docs/PHASE_15J_FINAL.md) |
-| Phase 16C shared Pulumi state | **LIVE VERIFIED / PASS** — stack `boundarymesh/dev` uses `gs://bm-pulumi-state-eu4-21cad20b325f`; secrets use the dedicated `state-secrets` GCP KMS key in `europe-west4`. Current state is 54 managed resources / 55 records including one stack root. |
+| Phase 16C shared Pulumi state | **LIVE VERIFIED / PASS** — stack `boundarymesh/dev` uses `gs://bm-pulumi-state-eu4-21cad20b325f`; secrets use the dedicated `state-secrets` GCP KMS key in `europe-west4`. The Phase 16C freeze contained 54 managed resources / 55 records including one stack root. |
 | Phase 16C WIF verification identity | **LIVE VERIFIED / PASS** — `boundarymesh-wif-verify` is keyless, environment-scoped to `boundarymesh-dev`, has no project/deployment role and no Token Creator role, and is admitted only by the exact manual main-branch verification workflow context. |
 | Phase 16C CI preview identity | **LIVE VERIFIED / PASS** — `boundarymesh-ci-preview` is keyless and environment-scoped to `boundarymesh-ci-preview`; it can only list/get objects in the state bucket and decrypt with the dedicated state KMS key. It has no state write/delete, KMS encrypt, project reader, deployment, application-data, or Token Creator permission. |
 | Phase 16C.4 hosted preview and isolation | **CLOSED / PASS / LIVE VERIFIED** — GitHub run `36337930890` at `f19498bd06d484e3295d98de63cdd2211ada2999` authenticated keylessly and returned 54 unchanged / zero operations. Cross-SA impersonation, wrong workflow/environment, and missing-environment contexts were rejected at the intended WIF/IAM boundaries. |
 | Phase 16C.5 documentation freeze | **PASS / SOURCE-FROZEN** — roadmap, state, CI/CD, infrastructure, and CV claims are reconciled. The gate made no workflow dispatch, cloud mutation, Pulumi state mutation, publication, or deployment. |
-| Phase 16D.1 publication architecture | **IMPLEMENTED IN SOURCE / TESTED LOCALLY / PREVIEWED** — dedicated keyless publisher, two repository-scoped writer grants, immutable Docker tags, generic release repository, exact third WIF context, pinned bases, deterministic frontend archive, manifest schema/tooling, and a non-runnable workflow contract. Preview: 5 creates, 2 updates, 52 unchanged, no replace/delete. No cloud/GitHub mutation or publication has occurred. |
-| Phase 16D.2+ / 16E / 16F | **PLANNED / NOT IMPLEMENTED** — protected publication environment/source freeze and live publication, controlled CD, then live verification and CI/CD freeze. |
+| Phase 16D immutable artifact publication | **CLOSED / PASS / LIVE VERIFIED / SOURCE-FROZEN** — dedicated keyless publisher, exact third WIF context, repository-scoped writers, immutable OCI tags, Generic source-SHA versions, protected manual workflow, and four-subject evidence. Run `36492495801` published and independently verified the release bound to source `a876a7bfa5fa86f88e8387efb557773281daa6e6`. Deployment was not performed. [Final evidence](docs/PHASE_16D_FINAL.md) |
+| Phase 16E controlled CD | **NOT STARTED** — must consume the frozen Phase 16D manifest and artifact digests without rebuilding, retagging, or republishing. |
+| Phase 16F live CI/CD verification and freeze | **NOT STARTED** — follows controlled deployment and rollback verification. |
 | Phase 15E Secret Manager | **COMPLETE** — API and four containers LIVE; Phase 15I-B2 added one enabled synthetic version per container. Adapter live-verified locally; D1 did not exercise a deployed secret read |
 | Phase 15F-A Firestore persistence + preview | **COMPLETE** — adapters in `backend/gcp`; emulator suite passed; preview approved |
 | Phase 15F-B Firestore infrastructure apply | **COMPLETE** — `firestore.googleapis.com` LIVE; database `boundarymesh` LIVE / PROVISIONED |
@@ -60,7 +61,7 @@
 | Application production IAM / Entra live | **LIVE VERIFIED LOCALLY** — common authority, personal Microsoft account, server-side session |
 | Microsoft Graph live calendar read | **LIVE VERIFIED LOCALLY** — provider 200, one event normalized and enforced |
 | GCP project | **CREATED + BILLING LINKED** (`boundarymesh-dev`) |
-| GCP resources | **54 Pulumi-managed resources / 55 state records including stack root / ZERO DRIFT** plus three Firebase Hosting releases outside Pulumi. Private API, Worker Pool, authenticated Web BFF, Firestore, Pub/Sub, KMS, Secret Manager, shared state, WIF, and least-privilege CI preview IAM are live |
+| GCP resources | **59 Pulumi-managed resources / ZERO DRIFT** plus three Firebase Hosting releases outside Pulumi. Private API, Worker Pool, authenticated Web BFF, Firestore, Pub/Sub, KMS, Secret Manager, shared state, WIF, least-privilege CI preview IAM, and the publication foundation are live |
 | Microsoft credentials | **NONE CREATED in Git / this session** |
 | GCP service-account JSON keys | **NONE** |
 | Project A | **FROZEN** — not modified |
@@ -147,9 +148,20 @@ GET `/api/v1/microsoft/connector` still reports `LIVE_CONFIGURED` because that e
 
 - Phase 16C.4 is **CLOSED / PASS / LIVE VERIFIED**; Phase 16C.5 reconciles and source-freezes its documentation.
 - Current Pulumi backend: `gs://bm-pulumi-state-eu4-21cad20b325f`; current secrets provider: `gcpkms://projects/boundarymesh-dev/locations/europe-west4/keyRings/boundarymesh-pulumi/cryptoKeys/state-secrets`.
-- Current stack: **54 managed resources / 55 records including one stack root / zero drift**.
-- The WIF provider admits exactly two manual, private-repository, main-branch contexts: `wif-verify.yml` with `boundarymesh-dev`, and `infra-preview.yml` with `boundarymesh-ci-preview`.
+- At the Phase 16C freeze, the stack contained **54 managed resources / 55 records including one stack root / zero drift**.
+- At the Phase 16C freeze, the WIF provider admitted exactly two manual, private-repository, main-branch contexts: `wif-verify.yml` with `boundarymesh-dev`, and `infra-preview.yml` with `boundarymesh-ci-preview`. Phase 16D later added the publication context.
 - The verification and preview service accounts are separate, keyless, environment-scoped, have no direct project roles, and have no Token Creator role. The preview identity can only read state objects and decrypt the dedicated state key.
 - Positive preview and bounded negative trust tests are live verified. They do not prove artifact publication or deployment permissions.
 - Compute Engine API remains intentionally **DISABLED**. Its regions warning during Pulumi preview is accepted and non-fatal; it does not authorize enabling the API.
-- Immutable publication, controlled CD, and live CI/CD freeze remain Phase 16D, 16E, and 16F. Final credential/security hygiene remains unresolved and must not be described as complete.
+- Phase 16D immutable publication is complete and live verified. Controlled CD and the final live CI/CD freeze remain Phase 16E and Phase 16F. Final credential/security hygiene remains unresolved and must not be described as complete.
+
+## Phase 16D final freeze truth
+
+- Phase 16D is **CLOSED / PASS / LIVE VERIFIED / SOURCE-FROZEN**.
+- Successful publication run `36492495801` is permanently bound to release source SHA `a876a7bfa5fa86f88e8387efb557773281daa6e6`.
+- The release contains immutable API, Worker, Web Edge, and frontend identities with exactly four SBOM and four provenance subjects. Frontend provenance is unsigned; no software-signing claim is made.
+- Release manifest SHA-256: `ecdbaf88710ff73fd694c5c4e13c0a8ce300fdacf2a3761064b7511bd627300d`.
+- The publisher is keyless, has zero direct project roles, and has only environment-scoped federation plus writer access on the two Artifact Registry repositories.
+- Historical run `36490169553` failed closed before remote writes because of the frontend checksum-sidecar working-directory defect; it left no residue.
+- Current Pulumi state is **59 unchanged / zero operations / exit 0**. Compute Engine API remains intentionally disabled.
+- Publication did not deploy or promote the release. Phase 16E must consume the frozen manifest and must not rebuild or republish it.

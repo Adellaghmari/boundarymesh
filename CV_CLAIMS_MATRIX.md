@@ -101,7 +101,7 @@ This is portfolio work, not professional employment.
 | GCP project | **CREATED + BILLING LINKED / LIVE** | `boundarymesh-dev`; production workloads and managed infrastructure are live |
 | gcloud local authentication | **CONFIGURED + VERIFIED** | Active project `boundarymesh-dev` |
 | Application Default Credentials | **CONFIGURED + VERIFIED LOCALLY** | Token discarded; ADC not in Git |
-| Shared Pulumi GCS backend | **LIVE VERIFIED** | `gs://bm-pulumi-state-eu4-21cad20b325f`; versioning, uniform access, public-access prevention, protected ownership; 54 managed resources / 55 state records including stack root |
+| Shared Pulumi GCS backend | **LIVE VERIFIED** | `gs://bm-pulumi-state-eu4-21cad20b325f`; versioning, uniform access, public-access prevention, protected ownership; current stack has 59 managed resources |
 | Pulumi GCP KMS secrets provider | **LIVE VERIFIED** | Dedicated `boundarymesh-pulumi/state-secrets` key in `europe-west4`; separate from application attestation signing |
 | Pulumi `dev` stack configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `gcp:project`, `gcp:region`, `boundarymesh:environment` |
 | GCP project configuration | **IMPLEMENTED** / **LOCALLY VALIDATED** | `gcp:project = boundarymesh-dev` |
@@ -129,14 +129,16 @@ This is portfolio work, not professional employment.
 | GCP emulator test foundation | **IMPLEMENTED** / **LOCALLY VALIDATED** | Opt-in `gcp-emulator` tag. Default verify needs no ADC |
 | Firestore production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Deployed hosted API/Worker path persisted the Phase 15J evidence and durable terminal result; exact disposable records were cleaned safely |
 | Pub/Sub production adapter | **IMPLEMENTED + EMULATOR TESTED + LIVE VERIFIED** | Hosted API published exactly one Phase 15J event and Worker Pool consumed/ACKed it without observed redelivery; no dead-letter policy configured |
-| Pulumi TypeScript GCP resources | **LIVE / 54 MANAGED RESOURCES / 55 STATE RECORDS / ZERO DRIFT** | Workloads and data services plus shared state, WIF, and least-privilege preview identity. Hosting is live but intentionally outside Pulumi; dead-letter forwarding remains unconfigured |
+| Pulumi TypeScript GCP resources | **LIVE / 59 MANAGED RESOURCES / ZERO DRIFT** | Workloads and data services plus shared state, WIF, least-privilege preview identity, and publication foundation. Hosting is live but intentionally outside Pulumi; dead-letter forwarding remains unconfigured |
 | GitHub Actions + GCP WIF | **LIVE VERIFIED** | Keyless GitHub OIDC to active `boundarymesh-github/github-actions`; private repository numeric IDs, protected main, exact workflow, environment, and manual event constrained |
 | Separate WIF verification identity | **LIVE VERIFIED** | `boundarymesh-wif-verify`; environment-scoped federation only, zero keys, no project/deployment role, no Token Creator |
 | Least-privilege hosted Pulumi preview | **LIVE VERIFIED** | `boundarymesh-ci-preview`; state object get/list and state-key decrypt only. Run `36337930890` returned 54 unchanged / zero operations |
 | CI federation isolation | **LIVE VERIFIED** | Cross-SA impersonation denied; wrong workflow/environment and missing-environment contexts rejected; no unexpected administrative audit activity |
-| Immutable artifact publication | PLANNED | Phase 16D; no publisher identity/workflow or release-manifest pipeline implemented |
-| Controlled CD | PLANNED | Phase 16E; no automated deployment identity or workflow implemented |
-| SBOM / provenance / software artifact signing | PLANNED | Not implemented by Phase 16C |
+| Immutable artifact publication | **PUBLISHED / IMMUTABLE / LIVE VERIFIED** | Phase 16D run `36492495801`; exact-source OCI images and Generic frontend/release packages bound to `a876a7bfa5fa86f88e8387efb557773281daa6e6`. Publication is not deployment |
+| Dedicated publication identity | **LIVE VERIFIED / KEYLESS / LEAST PRIVILEGE** | Environment-scoped WIF; zero project roles/keys; writer only on the Docker and Generic repositories |
+| Controlled CD | **NOT STARTED** | Phase 16E must deploy the frozen Phase 16D manifest/digests without rebuilding or republishing |
+| SBOM / provenance | **PUBLISHED / LIVE VERIFIED** | Exactly four subjects: BuildKit OCI evidence for API/Worker/Web and CycloneDX 1.5 plus unsigned in-toto/SLSA evidence for frontend |
+| Software artifact signing | **NOT IMPLEMENTED / NOT CLAIMED** | No signing key or signed provenance claim exists for the Phase 16D release |
 | Semgrep | PLANNED | |
 | Gitleaks | PLANNED | |
 | OWASP Dependency-Check | PLANNED | |
