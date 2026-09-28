@@ -5,6 +5,8 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { buildDeterministicFrontendArchive } from "../../scripts/release/build-frontend-archive.mjs";
+import { generateFrontendProvenance, generateFrontendSbom } from "../../scripts/release/frontend-evidence.mjs";
+import { buildPublicationMetadata, writePublicationMetadata } from "../../scripts/release/publication-metadata.mjs";
 import { serializeReleaseManifest, writeReleaseManifest } from "../../scripts/release/release-manifest.mjs";
 
 const infraRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -74,6 +76,31 @@ function manifestFixture() {
     };
 }
 
+function buildArchiveFixture(temp) {
+    const input = join(temp, "dist");
+    mkdirSync(join(input, "assets"), { recursive: true });
+    writeFileSync(join(input, "index.html"), "<main>BoundaryMesh</main>\n");
+    writeFileSync(join(input, "assets", "app-abc.js"), "console.log('stable');\n");
+    const archive = join(temp, "frontend-dist.tar.gz");
+    const result = buildDeterministicFrontendArchive({ inputDirectory: input, outputFile: archive, sourceDateEpoch: 1700000000 });
+    return { archive, ...result };
+}
+
+function fakeOciEvidence(temp, subject) {
+    const directory = join(temp, subject);
+    mkdirSync(directory, { recursive: true });
+    writeFileSync(join(directory, `${subject}.metadata.json`), JSON.stringify({ "containerimage.digest": digest }));
+    writeFileSync(join(directory, `${subject}.index.json`), JSON.stringify({ manifests: [{ annotations: { "vnd.docker.reference.type": "attestation-manifest" } }] }));
+    writeFileSync(join(directory, `${subject}.sbom.json`), JSON.stringify({ bomFormat: "CycloneDX", components: [{ name: subject }] }));
+    writeFileSync(join(directory, `${subject}.provenance.json`), JSON.stringify({ _type: "https://in-toto.io/Statement/v1", subject: [{ name: subject }] }));
+    return {
+        metadataFile: join(directory, `${subject}.metadata.json`),
+        indexFile: join(directory, `${subject}.index.json`),
+        sbomFile: join(directory, `${subject}.sbom.json`),
+        provenanceFile: join(directory, `${subject}.provenance.json`),
+    };
+}
+
 test("publication identity is dedicated, keyless, and creates exactly five scoped resources", () => {
     const creates = [
         /new gcp\.serviceaccount\.Account/g,
@@ -132,6 +159,26 @@ test("publication workflow is manual-only, least privileged, and matches the rev
     assert.equal(/pulumi\s+(?:up|refresh)|gcloud\s+run\s+deploy|firebase\s+deploy|service_account_key|credentials_json|private_key|client_secret/i.test(workflow), false);
     assert.equal(/echo\s+.*(?:token|credential|secret|password)/i.test(workflow), false);
     assert.equal(/:latest\b/.test(workflow), false);
+    assert.match(workflow, /docker buildx build[\s\S]*--metadata-file/);
+    assert.match(workflow, /imagetools inspect "\$reference" --raw/);
+    assert.match(workflow, /imagetools inspect "\$reference" --format '\{\{json \.SBOM\}\}'/);
+    assert.match(workflow, /imagetools inspect "\$reference" --format '\{\{json \.Provenance\}\}'/);
+    assert.match(workflow, /frontend-evidence\.mjs sbom/);
+    assert.match(workflow, /frontend-evidence\.mjs provenance/);
+    assert.match(workflow, /publication-metadata\.mjs/);
+    assert.match(workflow, /release\/frontend-dist\.tar\.gz\.sha256/);
+    assert.match(workflow, /release\/release-manifest\.json\.sha256/);
+    assert.match(workflow, /--source-directory=release\/frontend-package/);
+    assert.match(workflow, /--source-directory=release\/release-package/);
+    assert.equal(/artifacts generic upload[^\n]*--source=/.test(workflow), false);
+    const collisionCheck = workflow.indexOf("Verify immutable publication targets are absent");
+    const firstRemoteWrite = workflow.indexOf("Remote-write boundary: immutable OCI publication begins");
+    const metadataGeneration = workflow.indexOf("Generate immutable publication metadata and release manifest");
+    const manifestGeneration = workflow.indexOf("release-manifest.mjs");
+    assert.ok(collisionCheck >= 0 && firstRemoteWrite > collisionCheck);
+    assert.ok(workflow.indexOf("frontend-sbom.cdx.json") < firstRemoteWrite);
+    assert.ok(workflow.indexOf("frontend-dist.tar.gz.intoto.json") < firstRemoteWrite);
+    assert.ok(metadataGeneration > firstRemoteWrite && manifestGeneration > metadataGeneration);
 });
 
 test("all production Docker stages pin validated linux amd64 digests", () => {
@@ -158,6 +205,77 @@ test("frontend archive is deterministic and normalizes ustar metadata", () => {
         assert.deepEqual(readFileSync(first), readFileSync(second));
         assert.equal(a.entryCount, 2);
         assert.match(readFileSync(`${first}.sha256`, "utf8"), new RegExp(`^${a.sha256}  first\\.tar\\.gz\\n$`));
+    } finally {
+        rmSync(temp, { recursive: true, force: true });
+    }
+});
+
+test("frontend supply-chain evidence is standard, unsigned, and bound to the deterministic archive", () => {
+    const temp = mkdtempSync(join(tmpdir(), "boundarymesh-frontend-evidence-"));
+    try {
+        const { archive, sha256 } = buildArchiveFixture(temp);
+        const sbomFile = join(temp, "frontend-sbom.cdx.json");
+        const provenanceFile = join(temp, "frontend-dist.tar.gz.intoto.json");
+        const sbom = generateFrontendSbom({ frontendDirectory: join(repositoryRoot, "frontend"), outputFile: sbomFile });
+        assert.equal(sbom.sbom.bomFormat, "CycloneDX");
+        assert.equal(sbom.sbom.specVersion, "1.5");
+        assert.equal(sbom.sbom.metadata.component.type, "application");
+        assert.equal(sbom.sbom.metadata.component.name, "frontend");
+        assert.equal(Object.hasOwn(sbom.sbom, "serialNumber"), false);
+        assert.equal(Object.hasOwn(sbom.sbom.metadata, "timestamp"), false);
+        const provenance = generateFrontendProvenance({
+            archiveFile: archive, outputFile: provenanceFile, sourceCommit: sha, sourceRef: "refs/heads/main",
+            workflowPath: ".github/workflows/artifact-publish.yml",
+            workflowRef: "Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main",
+            runId: "123456", runAttempt: "1", environment: "boundarymesh-artifact-publish", timestamp: "2026-09-27T12:00:00.000Z",
+            materialFiles: [
+                { uri: "file:frontend/package-lock.json", file: join(repositoryRoot, "frontend", "package-lock.json") },
+                { uri: "file:frontend/package.json", file: join(repositoryRoot, "frontend", "package.json") },
+                { uri: "file:scripts/release/build-frontend-archive.mjs", file: join(repositoryRoot, "scripts", "release", "build-frontend-archive.mjs") },
+            ], nodeVersion: "v22", npmVersion: "11",
+        });
+        assert.equal(provenance.provenance._type, "https://in-toto.io/Statement/v1");
+        assert.equal(provenance.provenance.predicateType, "https://slsa.dev/provenance/v1");
+        assert.equal(provenance.provenance.subject[0].digest.sha256, sha256);
+        assert.equal(provenance.provenance.predicate.buildDefinition.externalParameters.sourceCommit, sha);
+        assert.equal(provenance.provenance.predicate.buildDefinition.externalParameters.sourceRef, "refs/heads/main");
+        assert.equal(JSON.stringify(provenance.provenance).includes("signature"), false);
+    } finally {
+        rmSync(temp, { recursive: true, force: true });
+    }
+});
+
+test("publication metadata carries four truthful evidence subjects into the release manifest", () => {
+    const temp = mkdtempSync(join(tmpdir(), "boundarymesh-publication-metadata-"));
+    try {
+        const { archive } = buildArchiveFixture(temp);
+        const sbomFile = join(temp, "frontend-sbom.cdx.json");
+        const provenanceFile = join(temp, "frontend-dist.tar.gz.intoto.json");
+        generateFrontendSbom({ frontendDirectory: join(repositoryRoot, "frontend"), outputFile: sbomFile });
+        generateFrontendProvenance({
+            archiveFile: archive, outputFile: provenanceFile, sourceCommit: sha, sourceRef: "refs/heads/main",
+            workflowPath: ".github/workflows/artifact-publish.yml",
+            workflowRef: "Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main",
+            runId: "123456", runAttempt: "1", environment: "boundarymesh-artifact-publish", timestamp: "2026-09-27T12:00:00.000Z",
+            materialFiles: [{ uri: "file:frontend/package-lock.json", file: join(repositoryRoot, "frontend", "package-lock.json") }], nodeVersion: "v22", npmVersion: "11",
+        });
+        const input = {
+            source: { commitSha: sha, contractTreeSha: sha }, publication: { runId: "123456", timestamp: "2026-09-27T12:00:00.000Z" },
+            images: { api: fakeOciEvidence(temp, "api"), worker: fakeOciEvidence(temp, "worker"), web: fakeOciEvidence(temp, "web") },
+            frontend: { archiveFile: archive, archiveSidecarFile: `${archive}.sha256`, sbomFile, provenanceFile },
+            toolVersions: { java: "25", maven: "3.9", node: "22", npm: "11", docker: "29", buildx: "0.36" },
+            actionPins: { checkout: sha, auth: sha },
+        };
+        const metadata = buildPublicationMetadata(input);
+        assert.deepEqual(metadata.sboms.map(({ subject }) => subject), ["api", "worker", "web", "frontend"]);
+        assert.deepEqual(metadata.provenance.map(({ subject }) => subject), ["api", "worker", "web", "frontend"]);
+        assert.match(metadata.sboms[3].reference, /boundarymesh-frontend\/versions\/a{40}\/files\/frontend-sbom\.cdx\.json$/);
+        assert.match(metadata.provenance[3].reference, /frontend-dist\.tar\.gz\.intoto\.json$/);
+        const metadataFile = join(temp, "publication-metadata.json");
+        writePublicationMetadata({ outputFile: metadataFile, ...input });
+        const manifestFile = join(temp, "release-manifest.json");
+        writeReleaseManifest({ inputFile: metadataFile, outputFile: manifestFile });
+        assert.ok(existsSync(`${manifestFile}.sha256`));
     } finally {
         rmSync(temp, { recursive: true, force: true });
     }

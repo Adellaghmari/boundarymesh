@@ -40,56 +40,130 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Build and publish exact-commit containers with SBOM and provenance
+      - name: Verify immutable publication targets are absent
         shell: bash
         run: |
           set -euo pipefail
           test "$GITHUB_REF" = refs/heads/main
           test "$GITHUB_SHA" = "$(git rev-parse HEAD)"
-          for spec in \
-            "boundarymesh-api backend/api/Dockerfile" \
-            "boundarymesh-worker backend/worker/Dockerfile" \
-            "boundarymesh-web-edge backend/web-edge/Dockerfile"
-          do
-            set -- $spec
-            docker buildx build --platform linux/amd64 --file "$2" \
-              --tag "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/$1:${GITHUB_SHA}" \
-              --sbom=true --provenance=mode=max --push .
-            docker buildx imagetools inspect \
-              "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/$1:${GITHUB_SHA}"
+          registry="europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh"
+          for image in boundarymesh-api boundarymesh-worker boundarymesh-web-edge; do
+            if gcloud artifacts docker tags list "$registry/$image" --format='value(tag)' | grep -Fqx "$GITHUB_SHA"; then
+              echo "Immutable OCI tag already exists for $image; refusing publication." >&2
+              exit 1
+            fi
           done
-      - name: Build deterministic frontend release
+          for package in boundarymesh-frontend boundarymesh-release; do
+            if gcloud artifacts versions list --project=boundarymesh-dev --location=europe-west4 \
+              --repository=boundarymesh-releases --package="$package" --format='value(name)' | \
+              grep -Fqx "projects/boundarymesh-dev/locations/europe-west4/repositories/boundarymesh-releases/packages/$package/versions/$GITHUB_SHA"; then
+              echo "Immutable Generic version already exists for $package; refusing publication." >&2
+              exit 1
+            fi
+          done
+          mkdir -p release/oci-evidence release/frontend-package release/release-package
+          printf 'PUBLICATION_TIMESTAMP=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+      - name: Build deterministic frontend release and generated evidence
         shell: bash
         env:
           VITE_APP_MODE: cloud
-          SOURCE_DATE_EPOCH: ${{ github.event.repository.updated_at }}
         run: |
           set -euo pipefail
           npm ci --prefix frontend
           npm run build --prefix frontend
           SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
           node scripts/release/build-frontend-archive.mjs \
-            --input frontend/dist \
-            --output "release/frontend-dist.tar.gz" \
+            --input frontend/dist --output release/frontend-dist.tar.gz \
             --source-date-epoch "$SOURCE_DATE_EPOCH"
-      - name: Generate immutable publication evidence
+          sha256sum --check release/frontend-dist.tar.gz.sha256
+          node scripts/release/frontend-evidence.mjs sbom \
+            --frontend frontend --output release/frontend-sbom.cdx.json
+          node scripts/release/frontend-evidence.mjs provenance \
+            --archive release/frontend-dist.tar.gz --output release/frontend-dist.tar.gz.intoto.json \
+            --source-commit "$GITHUB_SHA" --source-ref refs/heads/main \
+            --workflow-path .github/workflows/artifact-publish.yml \
+            --workflow-ref "Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main" \
+            --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --environment boundarymesh-artifact-publish --timestamp "$PUBLICATION_TIMESTAMP" \
+            --node-version "$(node --version)" --npm-version "$(npm --version)" \
+            --lockfile frontend/package-lock.json --package-json frontend/package.json \
+            --archive-tool scripts/release/build-frontend-archive.mjs
+      - name: Verify local publication-manifest integration before remote writes
         shell: bash
         run: |
           set -euo pipefail
-          # The implementation gate must populate exact remote OCI digests,
-          # SBOM/provenance references, tool versions, and action pins here.
+          node --test infra/test/artifact-publication.test.mjs
+      - name: Publish exact-commit containers with SBOM and provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Remote-write boundary: immutable OCI publication begins. Later failures require manual investigation; no automatic deletion or retry occurs."
+          registry="europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh"
+          for spec in \
+            "api boundarymesh-api backend/api/Dockerfile" \
+            "worker boundarymesh-worker backend/worker/Dockerfile" \
+            "web boundarymesh-web-edge backend/web-edge/Dockerfile"
+          do
+            set -- $spec
+            subject="$1"
+            image="$2"
+            dockerfile="$3"
+            evidence_dir="release/oci-evidence/$subject"
+            mkdir -p "$evidence_dir"
+            reference="$registry/$image:$GITHUB_SHA"
+            docker buildx build --platform linux/amd64 --file "$dockerfile" \
+              --tag "$reference" --sbom=true --provenance=mode=max --push \
+              --metadata-file "$evidence_dir/$subject.metadata.json" .
+            docker buildx imagetools inspect "$reference" --raw > "$evidence_dir/$subject.index.json"
+            docker buildx imagetools inspect "$reference" --format '{{json .SBOM}}' > "$evidence_dir/$subject.sbom.json"
+            docker buildx imagetools inspect "$reference" --format '{{json .Provenance}}' > "$evidence_dir/$subject.provenance.json"
+          done
+      - name: Generate immutable publication metadata and release manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          contract_tree_sha="$(git rev-parse "$GITHUB_SHA:contracts/release-manifest")"
+          node scripts/release/publication-metadata.mjs \
+            --output release/publication-metadata.json \
+            --source-commit "$GITHUB_SHA" --contract-tree-sha "$contract_tree_sha" \
+            --run-id "$GITHUB_RUN_ID" --timestamp "$PUBLICATION_TIMESTAMP" \
+            --frontend-archive release/frontend-dist.tar.gz \
+            --frontend-archive-sidecar release/frontend-dist.tar.gz.sha256 \
+            --frontend-sbom release/frontend-sbom.cdx.json \
+            --frontend-provenance release/frontend-dist.tar.gz.intoto.json \
+            --image api=release/oci-evidence/api --image worker=release/oci-evidence/worker --image web=release/oci-evidence/web \
+            --tool-version "java=$(java -version 2>&1 | sed -n '1p')" \
+            --tool-version "maven=$(mvn --version | sed -n '1p')" \
+            --tool-version "node=$(node --version)" --tool-version "npm=$(npm --version)" \
+            --tool-version "docker=$(docker --version)" --tool-version "buildx=$(docker buildx version)" \
+            --action-pin actions/checkout=de0fac2e4500dabe0009e67214ff5f5447ce83dd \
+            --action-pin google-github-actions/auth=7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 \
+            --action-pin google-github-actions/setup-gcloud=aa5489c8933f4cc7a4f7d45035b3b1440c9c10db \
+            --action-pin docker/setup-buildx-action=f87e5991a6d7451dcb8d9637bfbc97413f497069 \
+            --action-pin docker/login-action=dbcb813823bdd20940b903addbd779551569679f \
+            --action-pin actions/setup-node=395ad3262231945c25e8478fd5baf05154b1d79f
           node scripts/release/release-manifest.mjs \
-            --input release/publication-metadata.json \
-            --output release/release-manifest.json
-      - name: Publish and verify generic artifacts
+            --input release/publication-metadata.json --output release/release-manifest.json
+          sha256sum --check release/release-manifest.json.sha256
+      - name: Publish and verify immutable generic release files
         shell: bash
         run: |
           set -euo pipefail
+          cp release/frontend-dist.tar.gz release/frontend-dist.tar.gz.sha256 \
+            release/frontend-sbom.cdx.json release/frontend-dist.tar.gz.intoto.json release/frontend-package/
+          cp release/release-manifest.json release/release-manifest.json.sha256 release/release-package/
           gcloud artifacts generic upload --project=boundarymesh-dev --location=europe-west4 \
             --repository=boundarymesh-releases --package=boundarymesh-frontend \
-            --version="$GITHUB_SHA" --source=release/frontend-dist.tar.gz
+            --version="$GITHUB_SHA" --source-directory=release/frontend-package
           gcloud artifacts generic upload --project=boundarymesh-dev --location=europe-west4 \
             --repository=boundarymesh-releases --package=boundarymesh-release \
-            --version="$GITHUB_SHA" --source=release/release-manifest.json
-          gcloud artifacts generic files list --project=boundarymesh-dev --location=europe-west4 \
+            --version="$GITHUB_SHA" --source-directory=release/release-package
+          gcloud artifacts files list --project=boundarymesh-dev --location=europe-west4 \
+            --repository=boundarymesh-releases --package=boundarymesh-frontend --version="$GITHUB_SHA"
+          gcloud artifacts files list --project=boundarymesh-dev --location=europe-west4 \
             --repository=boundarymesh-releases --package=boundarymesh-release --version="$GITHUB_SHA"
+      - name: Publication summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Published immutable BoundaryMesh release evidence for commit $GITHUB_SHA."

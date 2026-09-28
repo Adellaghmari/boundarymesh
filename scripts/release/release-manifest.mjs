@@ -36,14 +36,19 @@ function validateImage(image, path, expectedImage) {
 }
 
 function validateEvidenceList(entries, path) {
-    if (!Array.isArray(entries) || entries.length < 4) {
-        throw new Error(`${path} must contain container and frontend evidence.`);
+    if (!Array.isArray(entries) || entries.length !== 4) {
+        throw new Error(`${path} must contain exactly API, worker, web, and frontend evidence.`);
     }
+    const subjects = new Set();
     for (const [index, entry] of entries.entries()) {
         requireExactKeys(entry, `${path}[${index}]`, ["subject", "reference", "digest"]);
-        requireString(entry?.subject, `${path}[${index}].subject`);
+        requireString(entry?.subject, `${path}[${index}].subject`, /^(api|worker|web|frontend)$/);
+        subjects.add(entry.subject);
         requireString(entry?.reference, `${path}[${index}].reference`);
         requireString(entry?.digest, `${path}[${index}].digest`, SHA256);
+    }
+    if (subjects.size !== 4 || !["api", "worker", "web", "frontend"].every((subject) => subjects.has(subject))) {
+        throw new Error(`${path} must contain one evidence entry for each release subject.`);
     }
 }
 
