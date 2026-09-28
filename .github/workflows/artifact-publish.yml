@@ -75,7 +75,10 @@ jobs:
           node scripts/release/build-frontend-archive.mjs \
             --input frontend/dist --output release/frontend-dist.tar.gz \
             --source-date-epoch "$SOURCE_DATE_EPOCH"
-          sha256sum --check release/frontend-dist.tar.gz.sha256
+          (
+            cd release
+            sha256sum --check frontend-dist.tar.gz.sha256
+          )
           node scripts/release/frontend-evidence.mjs sbom \
             --frontend frontend --output release/frontend-sbom.cdx.json
           node scripts/release/frontend-evidence.mjs provenance \
@@ -144,7 +147,10 @@ jobs:
             --action-pin actions/setup-node=395ad3262231945c25e8478fd5baf05154b1d79f
           node scripts/release/release-manifest.mjs \
             --input release/publication-metadata.json --output release/release-manifest.json
-          sha256sum --check release/release-manifest.json.sha256
+          (
+            cd release
+            sha256sum --check release-manifest.json.sha256
+          )
       - name: Publish and verify immutable generic release files
         shell: bash
         run: |

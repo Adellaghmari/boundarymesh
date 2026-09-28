@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync, existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -22,6 +23,24 @@ const schema = JSON.parse(readFileSync(join(repositoryRoot, "contracts", "releas
 const sha = "a".repeat(40);
 const hash = "b".repeat(64);
 const digest = `sha256:${"c".repeat(64)}`;
+
+function resolveSha256sum() {
+    const candidates = process.platform === "win32"
+        ? ["sha256sum", "C:\\Program Files\\Git\\usr\\bin\\sha256sum.exe"]
+        : ["sha256sum"];
+    for (const candidate of candidates) {
+        const probe = spawnSync(candidate, ["--version"], { encoding: "utf8" });
+        if (!probe.error && probe.status === 0) return candidate;
+    }
+    throw new Error("GNU sha256sum is required for publication sidecar tests.");
+}
+
+function verifySidecar(directory, sidecar) {
+    return spawnSync(resolveSha256sum(), ["--check", sidecar], {
+        cwd: directory,
+        encoding: "utf8",
+    });
+}
 
 function manifestFixture() {
     const image = (name) => ({
@@ -168,6 +187,9 @@ test("publication workflow is manual-only, least privileged, and matches the rev
     assert.match(workflow, /publication-metadata\.mjs/);
     assert.match(workflow, /release\/frontend-dist\.tar\.gz\.sha256/);
     assert.match(workflow, /release\/release-manifest\.json\.sha256/);
+    assert.match(workflow, /cd release\s+sha256sum --check frontend-dist\.tar\.gz\.sha256/);
+    assert.match(workflow, /cd release\s+sha256sum --check release-manifest\.json\.sha256/);
+    assert.equal(/sha256sum --check release\/(?:frontend-dist\.tar\.gz|release-manifest\.json)\.sha256/.test(workflow), false);
     assert.match(workflow, /--source-directory=release\/frontend-package/);
     assert.match(workflow, /--source-directory=release\/release-package/);
     assert.equal(/artifacts generic upload[^\n]*--source=/.test(workflow), false);
@@ -205,6 +227,40 @@ test("frontend archive is deterministic and normalizes ustar metadata", () => {
         assert.deepEqual(readFileSync(first), readFileSync(second));
         assert.equal(a.entryCount, 2);
         assert.match(readFileSync(`${first}.sha256`, "utf8"), new RegExp(`^${a.sha256}  first\\.tar\\.gz\\n$`));
+    } finally {
+        rmSync(temp, { recursive: true, force: true });
+    }
+});
+
+test("portable publication sidecars are verified from their own directory and fail closed", () => {
+    const temp = mkdtempSync(join(tmpdir(), "boundarymesh-sidecars-"));
+    const release = join(temp, "release");
+    mkdirSync(release);
+    try {
+        const input = join(temp, "dist");
+        mkdirSync(input);
+        writeFileSync(join(input, "index.html"), "<main>BoundaryMesh</main>\n");
+        const archive = join(release, "frontend-dist.tar.gz");
+        buildDeterministicFrontendArchive({ inputDirectory: input, outputFile: archive, sourceDateEpoch: 1700000000 });
+        assert.match(readFileSync(`${archive}.sha256`, "utf8"), /^[0-9a-f]{64}  frontend-dist\.tar\.gz\n$/);
+        assert.equal(verifySidecar(release, "frontend-dist.tar.gz.sha256").status, 0);
+        assert.notEqual(verifySidecar(temp, "release/frontend-dist.tar.gz.sha256").status, 0);
+
+        const manifest = join(release, "release-manifest.json");
+        writeFileSync(join(temp, "manifest-input.json"), JSON.stringify(manifestFixture()));
+        writeReleaseManifest({ inputFile: join(temp, "manifest-input.json"), outputFile: manifest });
+        assert.match(readFileSync(`${manifest}.sha256`, "utf8"), /^[0-9a-f]{64}  release-manifest\.json\n$/);
+        assert.equal(verifySidecar(release, "release-manifest.json.sha256").status, 0);
+
+        const tampered = join(temp, "tampered");
+        mkdirSync(tampered);
+        copyFileSync(manifest, join(tampered, "release-manifest.json"));
+        copyFileSync(`${manifest}.sha256`, join(tampered, "release-manifest.json.sha256"));
+        writeFileSync(join(tampered, "release-manifest.json"), "{}\n");
+        assert.notEqual(verifySidecar(tampered, "release-manifest.json.sha256").status, 0);
+
+        rmSync(archive);
+        assert.notEqual(verifySidecar(release, "frontend-dist.tar.gz.sha256").status, 0);
     } finally {
         rmSync(temp, { recursive: true, force: true });
     }
