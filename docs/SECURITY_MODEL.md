@@ -83,7 +83,7 @@ Method security: `@PreAuthorize("hasAuthority('ROLE_SECURITY_ADMIN')")` on rotat
 
 Do not persist raw before/after payloads when Restricted fields are present. Persist **field names, actions, and SHA-256 of canonical transformed body**.
 
-## Workload and CI IAM (live through Phase 16C)
+## Workload and CI IAM (live through Phase 16D)
 
 | Principal | Firestore | Pub/Sub | Secret Manager | KMS |
 | --- | --- | --- | --- | --- |
@@ -92,13 +92,32 @@ Do not persist raw before/after payloads when Restricted fields are present. Per
 | `boundarymesh-web` | none | none | none | **none**; service-level `roles/run.invoker` on the private API is its only core-call grant |
 | `boundarymesh-wif-verify` | none | none | none | **none**; WIF authentication proof only, with no project or deployment role |
 | `boundarymesh-ci-preview` | none | none | none | decrypt only on the dedicated Pulumi state key; state bucket access is limited to object get/list |
+| `boundarymesh-artifact-publish` | none | none | none | **none**; writer only on the Docker and Generic Artifact Registry repositories |
 
 Secret-level IAM, not `roles/secretmanager.secretAccessor` on the whole project. Pub/Sub and KMS
 roles are also resource-scoped. Firestore data IAM is project-scoped because collection-level IAM
 is not available for these server SDK operations. All workload and CI service accounts are keyless.
 Secret authorization is live. Each approved integration secret has exactly one enabled synthetic
-version; values are absent from Pulumi and source. The CI identities have no application-data access,
-project reader, deployment role, Token Creator role, or cross-service-account impersonation path.
+version; values are absent from Pulumi and source. The verification and preview identities have no
+application-data access, project reader, deployment role, Token Creator role, or cross-service-account
+impersonation path. The publisher likewise has no project or deployment role and is restricted to
+repository-scoped Artifact Registry writer grants through its exact publication environment.
+
+## Artifact publication boundary
+
+Phase 16D publishes three digest-resolved OCI images and two source-SHA-versioned Generic packages.
+The Docker repository has immutable tags. The release manifest records exactly four SBOM and four
+provenance subjects: attached BuildKit OCI evidence for API, Worker, and Web Edge, plus CycloneDX 1.5
+and unsigned in-toto/SLSA evidence for frontend. No signing key exists and no signed-software claim is
+made.
+
+Publication and deployment are separate trust boundaries. The publication identity cannot update
+Cloud Run, Firebase Hosting, IAM/WIF, Pulumi state, or application data. Phase 16E must consume the
+frozen release manifest and its digests; it must not rebuild or retag the release.
+
+Audit evidence observed two `GenerateAccessToken` events for the publisher identity. Artifact
+Registry Data Access events were not observable in the queried stream, so the documentation does not
+claim complete per-write audit visibility.
 
 ## Microsoft Graph permission story
 

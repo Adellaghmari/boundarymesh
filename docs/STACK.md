@@ -107,7 +107,7 @@ backend/
   worker/            # Spring Boot — Delivery Worker
   web/               # Spring Boot — authenticated Web BFF
 frontend/            # Vue 3 SPA
-infra/               # Pulumi TypeScript; shared GCS/KMS state and 54 managed resources
+infra/               # Pulumi TypeScript; shared GCS/KMS state and 59 managed resources
 contracts/           # OpenAPI, AsyncAPI, JSON Schema (source of truth)
 ```
 

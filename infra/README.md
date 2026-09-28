@@ -59,12 +59,13 @@ Authentication uses workstation **Application Default Credentials**. Do not set 
 | Firebase Hosting | LIVE / 3 RELEASES / OUTSIDE PULUMI OWNERSHIP |
 | Pulumi shared backend | LIVE / GCS DIY / VERSIONED / PUBLIC ACCESS PREVENTED |
 | Pulumi secrets provider | LIVE / DEDICATED GCP KMS KEY |
-| GitHub WIF provider | LIVE / ACTIVE / EXACTLY TWO MANUAL MAIN-ONLY CONTEXTS |
+| GitHub WIF provider | LIVE / ACTIVE / EXACTLY THREE MANUAL MAIN-ONLY CONTEXTS |
 | WIF verification identity | LIVE VERIFIED / KEYLESS / NO PROJECT OR DEPLOYMENT ROLES |
 | CI preview identity | LIVE VERIFIED / KEYLESS / STATE READ + STATE-KEY DECRYPT ONLY |
 | Phase 16C.4 final preview | 54 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
-| Phase 16D.1 publication architecture | IMPLEMENTED IN SOURCE / TESTED LOCALLY / PREVIEWED (5 CREATE / 2 UPDATE / 52 UNCHANGED / 0 REPLACE / 0 DELETE); NOT LIVE OR PUBLISHED |
-| Current Pulumi state | 54 MANAGED RESOURCES / 55 RECORDS INCLUDING STACK ROOT / ZERO DRIFT |
+| Phase 16D publication foundation | LIVE VERIFIED / KEYLESS PUBLISHER / REPOSITORY-SCOPED WRITERS / IMMUTABLE TAGS |
+| Phase 16D immutable release | PUBLISHED / IMMUTABLE / LIVE VERIFIED / NOT DEPLOYED |
+| Current Pulumi state | 59 MANAGED RESOURCES / ZERO DRIFT |
 
 Target region: **`europe-west4`**.  
 Stack: **`dev`**.  
@@ -87,6 +88,26 @@ The API, Worker Pool, and Web BFF are deployed on these immutable references. Ph
 verified the authenticated hosted browser path and exactly one governed transaction through the
 internal cloud pipeline. External connector delivery remains intentionally disabled.
 
+## Published Phase 16D release (not deployed)
+
+Publication run `36492495801` produced one immutable release bound to source SHA
+`a876a7bfa5fa86f88e8387efb557773281daa6e6`. Its release manifest SHA-256 is
+`ecdbaf88710ff73fd694c5c4e13c0a8ce300fdacf2a3761064b7511bd627300d`.
+
+The published OCI digests are:
+
+```text
+boundarymesh-api@sha256:bcfd9b01a3189228f583fa3f5d1ed8797f73d214af85bea4d84caeedfa0db8d7
+boundarymesh-worker@sha256:7b1841487a2d1b3751e8bc63ee5323965e76ebeae9ae581c95b672f50154bb2d
+boundarymesh-web-edge@sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04
+```
+
+The Generic packages are `boundarymesh-frontend/a876a7bfa5fa86f88e8387efb557773281daa6e6`
+and `boundarymesh-release/a876a7bfa5fa86f88e8387efb557773281daa6e6`. Publication did not
+change the deployed Phase 15J images above. Phase 16E must consume the published manifest and exact
+digests without rebuilding, retagging, or republishing. See
+[`docs/PHASE_16D_FINAL.md`](../docs/PHASE_16D_FINAL.md).
+
 Current backend: `gs://bm-pulumi-state-eu4-21cad20b325f`. Stack secrets use
 `gcpkms://projects/boundarymesh-dev/locations/europe-west4/keyRings/boundarymesh-pulumi/cryptoKeys/state-secrets`.
 The historical `file://~` backend and passphrase-backed state were superseded by the controlled
@@ -96,7 +117,6 @@ it is not the active backend.
 ## Gated next steps (not provisioned)
 
 - Pub/Sub dead-letter forwarding
-- Phase 16D immutable artifact publication
 - Phase 16E controlled CD
 - Phase 16F live CI/CD verification and freeze
 - Application-security automation after the CI/CD foundation
