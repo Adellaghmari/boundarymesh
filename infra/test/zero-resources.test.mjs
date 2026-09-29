@@ -99,7 +99,7 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.equal(/\(default\)/.test(text), false);
     assert.equal(/client_secret|private_key|BEGIN [A-Z]+ PRIVATE/i.test(text), false);
     assert.equal((text.match(/new gcp\.projects\.Service/g) ?? []).length, 9);
-    assert.equal((text.match(/new gcp\.artifactregistry\.Repository\(/g) ?? []).length, 2);
+    assert.equal((text.match(/new gcp\.artifactregistry\.Repository\(/g) ?? []).length, 3);
     assert.equal((text.match(/new gcp\.secretmanager\.Secret\(/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.firestore\.Database/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.pubsub\.Topic\(/g) ?? []).length, 2);
@@ -107,20 +107,21 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.equal((text.match(/new gcp\.storage\.Bucket\(/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.kms\.KeyRing/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.kms\.CryptoKey\(/g) ?? []).length, 2);
-    assert.equal((text.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 6);
-    assert.equal((text.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 3);
-    assert.equal((text.match(/new gcp\.artifactregistry\.RepositoryIamMember/g) ?? []).length, 2);
+    assert.equal((text.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 8);
+    assert.equal((text.match(/new gcp\.serviceaccount\.IAMMember/g) ?? []).length, 6);
+    assert.equal((text.match(/new gcp\.artifactregistry\.RepositoryIamMember/g) ?? []).length, 6);
     assert.equal((text.match(/new gcp\.iam\.WorkloadIdentityPool\(/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.iam\.WorkloadIdentityPoolProvider/g) ?? []).length, 1);
-    assert.equal((text.match(/new gcp\.projects\.IAMMember/g) ?? []).length, 3);
+    assert.equal((text.match(/new gcp\.projects\.IAMMember/g) ?? []).length, 4);
     assert.equal((text.match(/new gcp\.pubsub\.TopicIAMMember/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.pubsub\.SubscriptionIAMMember/g) ?? []).length, 1);
     assert.equal((text.match(/new gcp\.kms\.CryptoKeyIAMMember/g) ?? []).length, 3);
     assert.equal((text.match(/new gcp\.secretmanager\.SecretIamMember/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.cloudrunv2\.Service\(/g) ?? []).length, 2);
-    assert.equal((text.match(/new gcp\.cloudrunv2\.WorkerPool/g) ?? []).length, 1);
-    assert.equal((text.match(/new gcp\.cloudrunv2\.ServiceIamMember/g) ?? []).length, 2);
-    assert.equal((text.match(/new gcp\.projects\.IAMCustomRole/g) ?? []).length, 2);
+    assert.equal((text.match(/new gcp\.cloudrunv2\.WorkerPool\(/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.cloudrunv2\.ServiceIamMember/g) ?? []).length, 5);
+    assert.equal((text.match(/new gcp\.cloudrunv2\.WorkerPoolIamMember/g) ?? []).length, 1);
+    assert.equal((text.match(/new gcp\.projects\.IAMCustomRole/g) ?? []).length, 3);
     assert.equal((text.match(/new gcp\.storage\.BucketIAMMember/g) ?? []).length, 1);
     const edge = readFileSync(join(srcDir, "web-edge.ts"), "utf8");
     assert.match(edge, /name:\s*coreApi\.name,[\s\S]*?role:\s*"roles\/run\.invoker",\s*member:\s*principal/);
@@ -173,12 +174,15 @@ test("GitHub WIF foundation defines a tightly scoped provider and keyless verifi
         "Adellaghmari/boundarymesh/.github/workflows/infra-preview.yml@refs/heads/main",
         'GITHUB_ARTIFACT_PUBLISH_ENVIRONMENT = "boundarymesh-artifact-publish"',
         "Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main",
+        'GITHUB_RUNTIME_DEPLOY_ENVIRONMENT = "boundarymesh-deploy"',
+        'GITHUB_HOSTING_DEPLOY_ENVIRONMENT = "boundarymesh-hosting-deploy"',
+        "Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main",
         'GITHUB_WORKFLOW_DISPATCH_EVENT = "workflow_dispatch"',
     ]) {
         assert.ok(wif.includes(requiredCondition), `condition must include ${requiredCondition}`);
     }
     assert.equal(/job_workflow_ref/.test(wif), false);
-    assert.equal((wif.match(/\|\|/g) ?? []).length, 2);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 4);
     assert.match(wif, /\]\.join\(" && "\)/);
 
     assert.equal((wif.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 1);

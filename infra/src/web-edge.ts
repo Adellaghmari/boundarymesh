@@ -2,6 +2,12 @@ import * as gcp from "@pulumi/gcp";
 import * as pulumi from "@pulumi/pulumi";
 import type { FoundationConfig } from "./config";
 
+export const WEB_RELEASE_OWNERSHIP_PATHS = [
+    "template.containers[0].image",
+    "template.revision",
+    "traffics",
+] as const;
+
 /**
  * 15J-B preview-only web edge. Before 15J-C apply, replace the pending image with
  * the pushed immutable digest and configure an authorized Firebase UID.
@@ -94,7 +100,10 @@ export function defineWebEdge(
             traffics: [{ type: "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST", percent: 100 }],
             labels: { system: "boundarymesh", workload: "web-edge" },
         },
-        { dependsOn: [runApi, coreInvoker, authMember] },
+        {
+            dependsOn: [runApi, coreInvoker, authMember],
+            ignoreChanges: [...WEB_RELEASE_OWNERSHIP_PATHS],
+        },
     );
 
     // Only the BFF is public at Cloud Run transport. The core API stays IAM-private.

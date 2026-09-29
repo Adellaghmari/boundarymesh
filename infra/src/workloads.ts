@@ -3,6 +3,16 @@ import type { FoundationConfig } from "./config";
 
 export const API_SERVICE_ACCOUNT_ID = "boundarymesh-api" as const;
 export const WORKER_SERVICE_ACCOUNT_ID = "boundarymesh-worker" as const;
+export const API_RELEASE_OWNERSHIP_PATHS = [
+    "template.containers[0].image",
+    "template.revision",
+    "traffics",
+] as const;
+export const WORKER_RELEASE_OWNERSHIP_PATHS = [
+    "template.containers[0].image",
+    "template.revision",
+    "instanceSplits",
+] as const;
 
 export const PHASE_15J_C1E_API_IMAGE =
     "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/" +
@@ -169,6 +179,7 @@ export function defineWorkloads(foundation: FoundationConfig, dependencies: Work
         },
         {
             dependsOn: [runApi, apiFirestore, apiPublisher, apiKmsSigner, apiKmsPublicKeyViewer, apiWebhookSecret],
+            ignoreChanges: [...API_RELEASE_OWNERSHIP_PATHS],
         },
     );
 
@@ -196,7 +207,10 @@ export function defineWorkloads(foundation: FoundationConfig, dependencies: Work
             instanceSplits: [{ type: "INSTANCE_SPLIT_ALLOCATION_TYPE_LATEST", percent: 100 }],
             labels: { system: "boundarymesh", workload: "worker", phase: "15i-c1-preview" },
         },
-        { dependsOn: [runApi, workerFirestore, workerSubscriber, ...workerSecretAccess] },
+        {
+            dependsOn: [runApi, workerFirestore, workerSubscriber, ...workerSecretAccess],
+            ignoreChanges: [...WORKER_RELEASE_OWNERSHIP_PATHS],
+        },
     );
 
     return {

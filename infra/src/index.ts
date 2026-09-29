@@ -12,6 +12,7 @@ import {
 } from "./config";
 import { defineCiPreviewIdentity } from "./ci-preview";
 import { defineArtifactPublication } from "./artifact-publication";
+import { defineDeploymentFoundation } from "./deployment-foundation";
 import { defineArtifactRegistry } from "./registry";
 import { defineFirestore } from "./firestore";
 import { defineKms } from "./kms";
@@ -61,6 +62,19 @@ const artifactPublication = defineArtifactPublication(foundation, {
     dockerRepository: registry.repository,
     iamApi: githubWif.iamApi,
     wifProvider: githubWif.provider,
+});
+const deploymentFoundation = defineDeploymentFoundation(foundation, {
+    artifactRegistryApi: registry.artifactRegistryApi,
+    dockerRepository: registry.repository,
+    releaseRepository: artifactPublication.releaseRepository,
+    iamApi: githubWif.iamApi,
+    wifProvider: githubWif.provider,
+    apiService: workloads.apiService,
+    webService: webEdge.service,
+    workerPool: workloads.workerPool,
+    apiServiceAccount: workloads.apiServiceAccount,
+    webServiceAccount: webEdge.identity,
+    workerServiceAccount: workloads.workerServiceAccount,
 });
 
 export const phase15DScope = "ARTIFACT_REGISTRY_ONLY" as const;
@@ -114,3 +128,6 @@ export const ciStateReaderRoleName = ciPreview.stateReaderRole.name;
 export const artifactPublisherServiceAccountEmail =
     artifactPublication.publisherServiceAccount.email;
 export const releaseArtifactRepositoryId = artifactPublication.releaseRepository.repositoryId;
+export const runtimeDeployServiceAccountEmail = deploymentFoundation.runtimeDeployServiceAccount.email;
+export const hostingDeployServiceAccountEmail = deploymentFoundation.hostingDeployServiceAccount.email;
+export const deploymentEvidenceRepositoryId = deploymentFoundation.evidenceRepository.repositoryId;

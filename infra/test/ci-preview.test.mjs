@@ -37,6 +37,16 @@ const privilegedContexts = [
         workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main",
         event_name: "workflow_dispatch",
     },
+    {
+        environment: "boundarymesh-deploy",
+        workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main",
+        event_name: "workflow_dispatch",
+    },
+    {
+        environment: "boundarymesh-hosting-deploy",
+        workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main",
+        event_name: "workflow_dispatch",
+    },
 ];
 
 function providerAllows(assertion) {
@@ -117,7 +127,7 @@ test("CI federation authorization is service-account and environment scoped", ()
     assert.equal(/new gcp\.projects\.IAM(?:Member|Binding|Policy)/.test(source), false);
 });
 
-test("provider source expresses four immutable claims and exactly three privileged contexts", () => {
+test("provider source expresses four immutable claims and exactly five privileged contexts", () => {
     for (const expected of [
         "1385415640",
         "179922674",
@@ -129,6 +139,9 @@ test("provider source expresses four immutable claims and exactly three privileg
         "Adellaghmari/boundarymesh/.github/workflows/infra-preview.yml@refs/heads/main",
         "boundarymesh-artifact-publish",
         "Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main",
+        "boundarymesh-deploy",
+        "boundarymesh-hosting-deploy",
+        "Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main",
         "workflow_dispatch",
     ]) {
         assert.ok(wif.includes(expected), `provider condition must include ${expected}`);
@@ -137,15 +150,17 @@ test("provider source expresses four immutable claims and exactly three privileg
     assert.match(wif, /GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS = \[/);
     assert.match(wif, /GITHUB_OIDC_CI_PREVIEW_CONTEXT_CONDITIONS = \[/);
     assert.match(wif, /GITHUB_OIDC_ARTIFACT_PUBLISH_CONTEXT_CONDITIONS = \[/);
+    assert.match(wif, /GITHUB_OIDC_RUNTIME_DEPLOY_CONTEXT_CONDITIONS = \[/);
+    assert.match(wif, /GITHUB_OIDC_HOSTING_DEPLOY_CONTEXT_CONDITIONS = \[/);
     assert.match(
         wif,
         /`\(\(\$\{GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS\.join\(" && "\)\}\) \|\| `/,
     );
-    assert.equal((wif.match(/\|\|/g) ?? []).length, 2);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 4);
     assert.equal((wif.match(/^\s*"(?:google|attribute)\.[^"]+":\s*"assertion\.[^"]+",$/gm) ?? []).length, 9);
 });
 
-test("provider semantics allow only the verification, preview, and publication contexts", () => {
+test("provider semantics allow only the five exact privileged contexts", () => {
     for (const context of privilegedContexts) {
         assert.equal(providerAllows({ ...commonClaims, ...context }), true);
     }
@@ -154,6 +169,8 @@ test("provider semantics allow only the verification, preview, and publication c
 test("provider semantics reject immutable-claim, context, workflow, ref, and event mutations", () => {
     const verification = { ...commonClaims, ...privilegedContexts[0] };
     const ciPreview = { ...commonClaims, ...privilegedContexts[1] };
+    const runtimeDeploy = { ...commonClaims, ...privilegedContexts[3] };
+    const hostingDeploy = { ...commonClaims, ...privilegedContexts[4] };
     const rejected = [
         { ...verification, repository_id: "9999999999" },
         { ...verification, repository_owner_id: "999999999" },
@@ -163,6 +180,10 @@ test("provider semantics reject immutable-claim, context, workflow, ref, and eve
         { ...verification, environment: "production" },
         { ...verification, workflow_ref: privilegedContexts[1].workflow_ref },
         { ...ciPreview, workflow_ref: privilegedContexts[0].workflow_ref },
+        { ...runtimeDeploy, environment: "boundarymesh-deploy-other" },
+        { ...hostingDeploy, environment: "boundarymesh-hosting-deploy-other" },
+        { ...runtimeDeploy, workflow_ref: privilegedContexts[2].workflow_ref },
+        { ...hostingDeploy, event_name: "push" },
         {
             ...verification,
             workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/other.yml@refs/heads/main",

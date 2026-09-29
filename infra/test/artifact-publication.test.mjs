@@ -153,10 +153,10 @@ test("Artifact Registry publication is immutable, regional, repository-scoped, a
     assert.match(source, /repository:\s*releaseRepository\.repositoryId/);
 });
 
-test("WIF publication branch is the exact third context and admits no other event", () => {
+test("WIF publication context remains exact when deployment contexts are added", () => {
     assert.match(wif, /GITHUB_ARTIFACT_PUBLISH_ENVIRONMENT = "boundarymesh-artifact-publish"/);
     assert.match(wif, /GITHUB_ARTIFACT_PUBLISH_WORKFLOW_REF =\s*\n\s*"Adellaghmari\/boundarymesh\/\.github\/workflows\/artifact-publish\.yml@refs\/heads\/main"/);
-    assert.equal((wif.match(/\|\|/g) ?? []).length, 2);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 4);
     for (const forbidden of ["push", "pull_request", "pull_request_target", "schedule", "workflow_call", "repository_dispatch"]) {
         assert.equal(new RegExp(`event_name == ['\"]${forbidden}`).test(wif), false);
     }
