@@ -1,0 +1,434 @@
+name: Deploy immutable BoundaryMesh release
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: One controlled deployment operation
+        required: true
+        type: choice
+        options:
+          - stage
+          - promote
+          - rollback
+      stage_run_id:
+        description: Exact successful stage run ID (promote/rollback only)
+        required: false
+        type: string
+        default: ""
+      promotion_run_id:
+        description: Exact promotion run ID (rollback only)
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: boundarymesh-production-deployment
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+  GCP_PROJECT: boundarymesh-dev
+  GCP_REGION: europe-west4
+  WIF_PROVIDER: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
+  RUNTIME_DEPLOY_SA: boundarymesh-deploy@boundarymesh-dev.iam.gserviceaccount.com
+  HOSTING_DEPLOY_SA: boundarymesh-hosting-deploy@boundarymesh-dev.iam.gserviceaccount.com
+
+jobs:
+  validate-release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    outputs:
+      started_at: ${{ steps.context.outputs.started_at }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scripts/deploy/package-lock.json
+      - name: Install pinned deployment tooling
+        run: npm ci --prefix scripts/deploy --ignore-scripts
+      - name: Validate bounded dispatch inputs
+        run: >-
+          node scripts/deploy/contract.mjs validate-inputs
+          --operation '${{ inputs.operation }}'
+          --stage-run-id '${{ inputs.stage_run_id }}'
+          --promotion-run-id '${{ inputs.promotion_run_id }}'
+      - id: context
+        name: Record safe workflow context
+        run: echo "started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Download and verify the immutable published release
+        run: node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
+
+  stage-runtime:
+    if: inputs.operation == 'stage' && github.ref == 'refs/heads/main'
+    needs: validate-release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    outputs:
+      result_b64: ${{ steps.result.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scripts/deploy/package-lock.json
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Reverify release and stage zero-traffic runtime candidates
+        run: |
+          node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
+          node scripts/deploy/cloud-runtime.mjs stage --manifest "$RUNNER_TEMP/release/release-manifest.json" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/runtime.json"
+      - id: result
+        run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/runtime.json")" >> "$GITHUB_OUTPUT"
+
+  stage-hosting:
+    if: inputs.operation == 'stage' && github.ref == 'refs/heads/main'
+    needs: validate-release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-hosting-deploy
+    outputs:
+      result_b64: ${{ steps.result.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scripts/deploy/package-lock.json
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.HOSTING_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Reverify release and stage exact frontend on bounded preview channel
+        run: |
+          node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
+          node scripts/deploy/artifacts.mjs download-frontend --destination "$RUNNER_TEMP/frontend-package"
+          mkdir -p "$RUNNER_TEMP/hosting"
+          node scripts/deploy/cloud-hosting.mjs stage --manifest "$RUNNER_TEMP/release/release-manifest.json" --archive "$RUNNER_TEMP/frontend-package/frontend-dist.tar.gz" --work-dir "$RUNNER_TEMP/hosting" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/hosting.json"
+      - id: result
+        run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/hosting.json")" >> "$GITHUB_OUTPUT"
+
+  record-stage-evidence:
+    if: inputs.operation == 'stage' && github.ref == 'refs/heads/main'
+    needs: [validate-release, stage-runtime, stage-hosting]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with: { node-version: "22" }
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Compose and publish immutable stage evidence
+        env:
+          RUNTIME_B64: ${{ needs.stage-runtime.outputs.result_b64 }}
+          HOSTING_B64: ${{ needs.stage-hosting.outputs.result_b64 }}
+          STARTED_AT: ${{ needs.validate-release.outputs.started_at }}
+        run: |
+          node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
+          node scripts/deploy/evidence.mjs decode-json --value "$RUNTIME_B64" > "$RUNNER_TEMP/runtime.json"
+          node scripts/deploy/evidence.mjs decode-json --value "$HOSTING_B64" > "$RUNNER_TEMP/hosting.json"
+          node scripts/deploy/evidence.mjs build --operation stage --runtime "$RUNNER_TEMP/runtime.json" --hosting "$RUNNER_TEMP/hosting.json" --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" --sha "$GITHUB_SHA" --ref "$GITHUB_REF" --started-at "$STARTED_AT" --output-dir "$RUNNER_TEMP/evidence"
+          node scripts/deploy/artifacts.mjs publish-evidence --operation stage --run-id "$GITHUB_RUN_ID" --directory "$RUNNER_TEMP/evidence"
+
+  load-stage-evidence:
+    if: inputs.operation == 'promote' && github.ref == 'refs/heads/main'
+    needs: validate-release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    outputs:
+      evidence_b64: ${{ steps.evidence.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with: { node-version: "22" }
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - run: node scripts/deploy/artifacts.mjs download-evidence --operation stage --run-id '${{ inputs.stage_run_id }}' --destination "$RUNNER_TEMP/stage-evidence"
+      - id: evidence
+        run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/stage-evidence/deployment-evidence.json")" >> "$GITHUB_OUTPUT"
+
+  promotion-hosting-preflight:
+    if: inputs.operation == 'promote' && github.ref == 'refs/heads/main'
+    needs: [validate-release, load-stage-evidence]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-hosting-deploy
+    outputs:
+      baseline: ${{ steps.baseline.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with: { node-version: "22" }
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.HOSTING_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Reject stale Hosting baseline before runtime promotion
+        env: { EVIDENCE_B64: "${{ needs.load-stage-evidence.outputs.evidence_b64 }}" }
+        run: |
+          node scripts/deploy/evidence.mjs decode --value "$EVIDENCE_B64" > "$RUNNER_TEMP/stage.json"
+          node scripts/deploy/cloud-hosting.mjs assert-baseline --evidence "$RUNNER_TEMP/stage.json" --output "$RUNNER_TEMP/hosting-baseline.json"
+      - id: baseline
+        run: echo "value=$(cat "$RUNNER_TEMP/hosting-baseline.json" | tr -d '\n')" >> "$GITHUB_OUTPUT"
+
+  promote-runtime:
+    if: inputs.operation == 'promote' && github.ref == 'refs/heads/main'
+    needs: [validate-release, load-stage-evidence, promotion-hosting-preflight]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    outputs:
+      result_b64: ${{ steps.result.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with: { node-version: "22" }
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Promote exact recorded candidates in API-Web-Worker order
+        env:
+          EVIDENCE_B64: ${{ needs.load-stage-evidence.outputs.evidence_b64 }}
+          HOSTING_BASELINE: ${{ needs.promotion-hosting-preflight.outputs.baseline }}
+        run: |
+          node scripts/deploy/evidence.mjs decode --value "$EVIDENCE_B64" > "$RUNNER_TEMP/stage.json"
+          node scripts/deploy/cloud-runtime.mjs promote --evidence "$RUNNER_TEMP/stage.json" --hosting-baseline "$HOSTING_BASELINE" --output "$RUNNER_TEMP/runtime.json"
+      - id: result
+        run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/runtime.json")" >> "$GITHUB_OUTPUT"
+
+  promote-hosting:
+    if: inputs.operation == 'promote' && github.ref == 'refs/heads/main'
+    needs: [validate-release, load-stage-evidence, promote-runtime]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-hosting-deploy
+    outputs:
+      result_b64: ${{ steps.result.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with: { node-version: "22" }
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.HOSTING_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Promote the exact tested preview version to live
+        env: { EVIDENCE_B64: "${{ needs.load-stage-evidence.outputs.evidence_b64 }}" }
+        run: |
+          node scripts/deploy/evidence.mjs decode --value "$EVIDENCE_B64" > "$RUNNER_TEMP/stage.json"
+          node scripts/deploy/cloud-hosting.mjs promote --evidence "$RUNNER_TEMP/stage.json" --output "$RUNNER_TEMP/hosting.json"
+      - id: result
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/hosting.json" ]]; then
+            echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/hosting.json")" >> "$GITHUB_OUTPUT"
+          fi
+
+  record-promote-evidence:
+    if: always() && inputs.operation == 'promote' && github.ref == 'refs/heads/main' && needs.validate-release.result == 'success' && needs.load-stage-evidence.result == 'success'
+    needs: [validate-release, load-stage-evidence, promote-runtime, promote-hosting]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with: { node-version: "22" }
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Compose and publish immutable promotion evidence
+        env:
+          RUNTIME_B64: ${{ needs.promote-runtime.outputs.result_b64 }}
+          HOSTING_B64: ${{ needs.promote-hosting.outputs.result_b64 }}
+          PRIOR_B64: ${{ needs.load-stage-evidence.outputs.evidence_b64 }}
+          STARTED_AT: ${{ needs.validate-release.outputs.started_at }}
+          RUNTIME_JOB_RESULT: ${{ needs.promote-runtime.result }}
+          HOSTING_JOB_RESULT: ${{ needs.promote-hosting.result }}
+        run: |
+          node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
+          node scripts/deploy/evidence.mjs decode --value "$PRIOR_B64" > "$RUNNER_TEMP/stage.json"
+          node scripts/deploy/cloud-runtime.mjs snapshot --output "$RUNNER_TEMP/runtime-snapshot.json"
+          OUTCOME=$(node scripts/deploy/evidence.mjs observe-promotion --prior-evidence "$RUNNER_TEMP/stage.json" --runtime-snapshot "$RUNNER_TEMP/runtime-snapshot.json" --runtime-result "$RUNTIME_JOB_RESULT" --hosting-result "$HOSTING_JOB_RESULT" --runtime-value "$RUNTIME_B64" --hosting-value "$HOSTING_B64" --runtime-output "$RUNNER_TEMP/runtime.json" --hosting-output "$RUNNER_TEMP/hosting.json")
+          node scripts/deploy/evidence.mjs build --operation promote --outcome "$OUTCOME" --runtime "$RUNNER_TEMP/runtime.json" --hosting "$RUNNER_TEMP/hosting.json" --prior-evidence "$RUNNER_TEMP/stage.json" --stage-run-id '${{ inputs.stage_run_id }}' --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" --sha "$GITHUB_SHA" --ref "$GITHUB_REF" --started-at "$STARTED_AT" --output-dir "$RUNNER_TEMP/evidence"
+          node scripts/deploy/artifacts.mjs publish-evidence --operation promote --run-id "$GITHUB_RUN_ID" --directory "$RUNNER_TEMP/evidence"
+
+  load-promotion-evidence:
+    if: inputs.operation == 'rollback' && github.ref == 'refs/heads/main'
+    needs: validate-release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    outputs:
+      evidence_b64: ${{ steps.evidence.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with: { node-version: "22" }
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Download exact promotion evidence
+        run: |
+          node scripts/deploy/artifacts.mjs download-evidence --operation promote --run-id '${{ inputs.promotion_run_id }}' --destination "$RUNNER_TEMP/promotion-evidence"
+          node scripts/deploy/evidence.mjs assert-reference --document "$RUNNER_TEMP/promotion-evidence/deployment-evidence.json" --operation promote --run-id '${{ inputs.promotion_run_id }}' --stage-run-id '${{ inputs.stage_run_id }}'
+      - id: evidence
+        run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/promotion-evidence/deployment-evidence.json")" >> "$GITHUB_OUTPUT"
+
+  rollback-hosting:
+    if: inputs.operation == 'rollback' && github.ref == 'refs/heads/main'
+    needs: [validate-release, load-promotion-evidence]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-hosting-deploy
+    outputs:
+      result_b64: ${{ steps.result.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with: { node-version: "22" }
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.HOSTING_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Restore the exact recorded Hosting version first
+        env: { EVIDENCE_B64: "${{ needs.load-promotion-evidence.outputs.evidence_b64 }}" }
+        run: |
+          node scripts/deploy/evidence.mjs decode --value "$EVIDENCE_B64" > "$RUNNER_TEMP/promotion.json"
+          node scripts/deploy/cloud-hosting.mjs rollback --evidence "$RUNNER_TEMP/promotion.json" --output "$RUNNER_TEMP/hosting.json"
+      - id: result
+        run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/hosting.json")" >> "$GITHUB_OUTPUT"
+
+  rollback-runtime:
+    if: inputs.operation == 'rollback' && github.ref == 'refs/heads/main'
+    needs: [validate-release, load-promotion-evidence, rollback-hosting]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    outputs:
+      result_b64: ${{ steps.result.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with: { node-version: "22" }
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Restore Worker-Web-API from exact retained revisions
+        env: { EVIDENCE_B64: "${{ needs.load-promotion-evidence.outputs.evidence_b64 }}" }
+        run: |
+          node scripts/deploy/evidence.mjs decode --value "$EVIDENCE_B64" > "$RUNNER_TEMP/promotion.json"
+          node scripts/deploy/cloud-runtime.mjs rollback --evidence "$RUNNER_TEMP/promotion.json" --output "$RUNNER_TEMP/runtime.json"
+      - id: result
+        run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/runtime.json")" >> "$GITHUB_OUTPUT"
+
+  record-rollback-evidence:
+    if: inputs.operation == 'rollback' && github.ref == 'refs/heads/main'
+    needs: [validate-release, load-promotion-evidence, rollback-hosting, rollback-runtime]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with: { node-version: "22" }
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Compose and publish immutable rollback evidence
+        env:
+          RUNTIME_B64: ${{ needs.rollback-runtime.outputs.result_b64 }}
+          HOSTING_B64: ${{ needs.rollback-hosting.outputs.result_b64 }}
+          PRIOR_B64: ${{ needs.load-promotion-evidence.outputs.evidence_b64 }}
+          STARTED_AT: ${{ needs.validate-release.outputs.started_at }}
+        run: |
+          node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
+          node scripts/deploy/evidence.mjs decode-json --value "$RUNTIME_B64" > "$RUNNER_TEMP/runtime.json"
+          node scripts/deploy/evidence.mjs decode-json --value "$HOSTING_B64" > "$RUNNER_TEMP/hosting.json"
+          node scripts/deploy/evidence.mjs decode --value "$PRIOR_B64" > "$RUNNER_TEMP/promotion.json"
+          node scripts/deploy/evidence.mjs build --operation rollback --runtime "$RUNNER_TEMP/runtime.json" --hosting "$RUNNER_TEMP/hosting.json" --prior-evidence "$RUNNER_TEMP/promotion.json" --stage-run-id '${{ inputs.stage_run_id }}' --promotion-run-id '${{ inputs.promotion_run_id }}' --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT" --sha "$GITHUB_SHA" --ref "$GITHUB_REF" --started-at "$STARTED_AT" --output-dir "$RUNNER_TEMP/evidence"
+          node scripts/deploy/artifacts.mjs publish-evidence --operation rollback --run-id "$GITHUB_RUN_ID" --directory "$RUNNER_TEMP/evidence"

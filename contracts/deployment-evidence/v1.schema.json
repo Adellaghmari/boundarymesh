@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://boundarymesh.dev/contracts/deployment-evidence/v1.schema.json",
+  "title": "BoundaryMesh controlled deployment evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "operation", "status", "release", "workflow", "environments", "references", "runtime", "hosting", "checks", "timestamps", "rollback"],
+  "properties": {
+    "schemaVersion": { "const": "boundarymesh.deployment/v1" },
+    "operation": { "enum": ["stage", "promote", "rollback"] },
+    "status": { "enum": ["STAGED", "PROMOTED", "PROMOTION_FAILED", "ROLLED_BACK"] },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceSha", "manifestSha256", "publicationRunId"],
+      "properties": {
+        "sourceSha": { "$ref": "#/$defs/gitSha" },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "publicationRunId": { "$ref": "#/$defs/runId" }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "runAttempt", "sha", "ref", "path"],
+      "properties": {
+        "runId": { "$ref": "#/$defs/runId" },
+        "runAttempt": { "$ref": "#/$defs/runId" },
+        "sha": { "$ref": "#/$defs/gitSha" },
+        "ref": { "const": "refs/heads/main" },
+        "path": { "const": ".github/workflows/deploy-release.yml" }
+      }
+    },
+    "environments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "hosting"],
+      "properties": {
+        "runtime": { "const": "boundarymesh-deploy" },
+        "hosting": { "const": "boundarymesh-hosting-deploy" }
+      }
+    },
+    "references": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stageRunId", "promotionRunId"],
+      "properties": {
+        "stageRunId": { "type": ["string", "null"], "pattern": "^[1-9][0-9]*$" },
+        "promotionRunId": { "type": ["string", "null"], "pattern": "^[1-9][0-9]*$" }
+      }
+    },
+    "runtime": { "$ref": "#/$defs/runtimeEvidence" },
+    "hosting": { "$ref": "#/$defs/hostingEvidence" },
+    "checks": { "$ref": "#/$defs/checks" },
+    "timestamps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["startedAt", "completedAt"],
+      "properties": {
+        "startedAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["apiRevision", "webRevision", "workerRevision", "firebaseVersion"],
+      "properties": {
+        "apiRevision": { "type": "string", "minLength": 1 },
+        "webRevision": { "type": "string", "minLength": 1 },
+        "workerRevision": { "type": "string", "minLength": 1 },
+        "firebaseVersion": { "type": "string", "minLength": 1 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "operation": { "const": "stage" } }, "required": ["operation"] },
+      "then": {
+        "properties": {
+          "status": { "const": "STAGED" },
+          "references": {
+            "type": "object",
+            "properties": { "stageRunId": { "type": "null" }, "promotionRunId": { "type": "null" } }
+          },
+          "runtime": { "type": "object", "properties": { "result": { "type": "object", "required": ["candidates"], "properties": { "candidates": {} } } } },
+          "hosting": { "type": "object", "properties": { "result": { "type": "object", "required": ["channel", "version", "url"], "properties": { "channel": {}, "version": {}, "url": {} } } } }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "operation": { "const": "promote" } }, "required": ["operation"] },
+      "then": {
+        "properties": {
+          "status": { "enum": ["PROMOTED", "PROMOTION_FAILED"] },
+          "references": {
+            "type": "object",
+            "properties": { "stageRunId": { "$ref": "#/$defs/runId" }, "promotionRunId": { "type": "null" } }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "operation": { "const": "rollback" } }, "required": ["operation"] },
+      "then": {
+        "properties": {
+          "status": { "const": "ROLLED_BACK" },
+          "references": {
+            "type": "object",
+            "properties": { "stageRunId": { "$ref": "#/$defs/runId" }, "promotionRunId": { "$ref": "#/$defs/runId" } }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "gitSha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "runId": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+    "runtimeEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "before", "result", "checks"],
+      "properties": {
+        "operation": { "enum": ["stage", "promote", "rollback"] },
+        "before": {
+          "type": "object", "additionalProperties": false,
+          "required": ["api", "web", "worker"],
+          "properties": {
+            "api": { "$ref": "#/$defs/serviceState" },
+            "web": { "$ref": "#/$defs/serviceState" },
+            "worker": { "$ref": "#/$defs/workerState" }
+          }
+        },
+        "result": {
+          "type": "object", "minProperties": 1,
+          "properties": {
+            "candidates": { "$ref": "#/$defs/candidates" },
+            "api": { "$ref": "#/$defs/serviceState" },
+            "web": { "$ref": "#/$defs/serviceState" },
+            "worker": { "$ref": "#/$defs/workerState" }
+          },
+          "additionalProperties": false
+        },
+        "checks": { "$ref": "#/$defs/checks" }
+      }
+    },
+    "hostingEvidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["operation", "before", "result", "checks"],
+      "properties": {
+        "operation": { "enum": ["stage", "promote", "rollback"] },
+        "before": { "$ref": "#/$defs/hostingState" },
+        "result": {
+          "type": "object", "minProperties": 1,
+          "properties": {
+            "site": { "type": "string", "minLength": 1 },
+            "release": { "type": ["string", "null"] },
+            "version": { "type": "string", "minLength": 1 },
+            "releaseTime": { "type": "string", "format": "date-time" },
+            "channel": { "type": "string", "pattern": "^bm-[1-9][0-9]*$" },
+            "url": { "type": "string", "format": "uri", "pattern": "^https://" }
+          },
+          "additionalProperties": false
+        },
+        "checks": { "$ref": "#/$defs/checks" }
+      }
+    },
+    "trafficEntry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "revision", "percent", "tag"],
+      "properties": {
+        "type": { "type": ["string", "null"] },
+        "revision": { "type": ["string", "null"] },
+        "percent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "tag": { "type": ["string", "null"] }
+      }
+    },
+    "serviceState": {
+      "type": "object", "additionalProperties": false,
+      "required": ["revision", "image", "traffic"],
+      "properties": {
+        "revision": { "type": "string", "minLength": 1 },
+        "image": { "type": "string", "pattern": "@sha256:[0-9a-f]{64}$" },
+        "traffic": { "type": "array", "items": { "$ref": "#/$defs/trafficEntry" }, "minItems": 1 }
+      }
+    },
+    "workerState": {
+      "type": "object", "additionalProperties": false,
+      "required": ["revision", "image", "split"],
+      "properties": {
+        "revision": { "type": "string", "minLength": 1 },
+        "image": { "type": "string", "pattern": "@sha256:[0-9a-f]{64}$" },
+        "split": { "type": "array", "items": { "$ref": "#/$defs/trafficEntry" }, "minItems": 1 }
+      }
+    },
+    "candidateService": {
+      "type": "object", "additionalProperties": false,
+      "required": ["revision", "image", "traffic", "health"],
+      "properties": {
+        "revision": { "type": "string", "minLength": 1 },
+        "image": { "type": "string", "pattern": "@sha256:[0-9a-f]{64}$" },
+        "traffic": { "type": "array", "items": { "$ref": "#/$defs/trafficEntry" }, "minItems": 1 },
+        "health": {
+          "type": "object", "additionalProperties": false,
+          "required": ["path", "status"],
+          "properties": { "path": { "type": "string" }, "status": { "type": "integer", "minimum": 200, "maximum": 299 } }
+        }
+      }
+    },
+    "candidateWorker": {
+      "type": "object", "additionalProperties": false,
+      "required": ["revision", "image", "split", "ready"],
+      "properties": {
+        "revision": { "type": "string", "minLength": 1 },
+        "image": { "type": "string", "pattern": "@sha256:[0-9a-f]{64}$" },
+        "split": { "type": "array", "items": { "$ref": "#/$defs/trafficEntry" }, "minItems": 1 },
+        "ready": { "const": true }
+      }
+    },
+    "candidates": {
+      "type": "object", "additionalProperties": false,
+      "required": ["api", "web", "worker"],
+      "properties": {
+        "api": { "$ref": "#/$defs/candidateService" },
+        "web": { "$ref": "#/$defs/candidateService" },
+        "worker": { "$ref": "#/$defs/candidateWorker" }
+      }
+    },
+    "hostingState": {
+      "type": "object", "additionalProperties": false,
+      "required": ["site", "release", "version", "releaseTime"],
+      "properties": {
+        "site": { "const": "boundarymesh-dev" },
+        "release": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "pattern": "^sites/boundarymesh-dev/versions/[A-Za-z0-9_-]+$" },
+        "releaseTime": { "type": "string", "format": "date-time" }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" },
+      "minProperties": 1
+    }
+  }
+}

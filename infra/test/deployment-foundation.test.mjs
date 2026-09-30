@@ -145,8 +145,8 @@ test("release ownership fences contain only the reviewed property paths", () => 
     }
 });
 
-test("deployment workflow remains absent and no deploy commands or credentials are introduced", () => {
-    assert.equal(existsSync(join(repositoryRoot, ".github", "workflows", "deploy-release.yml")), false);
+test("dormant deployment workflow source is present without expanding the infrastructure foundation", () => {
+    assert.equal(existsSync(join(repositoryRoot, ".github", "workflows", "deploy-release.yml")), true);
     assert.equal(/gcloud\s+run|firebase\s+deploy|pulumi\s+(?:up|refresh)|compute\.googleapis\.com/i.test(source), false);
     assert.equal(/service_account_key|credentials_json|private_key|client_secret|firebase_token/i.test(source), false);
 });
