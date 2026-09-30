@@ -17,6 +17,19 @@ const FIREBASE_BIN = join(here, "node_modules", "firebase-tools", "lib", "bin", 
 const QUOTA_PROJECT = loadFrozenRelease().project;
 const MAX_API_RESPONSE_BYTES = 5 * 1024 * 1024;
 const MAX_HOSTED_RESPONSE_BYTES = 20 * 1024 * 1024;
+const MAX_DIAGNOSTIC_MESSAGE_LENGTH = 2048;
+const MAX_DIAGNOSTIC_FIELD_LENGTH = 1024;
+const MAX_ERROR_INFO_ENTRIES = 8;
+const ERROR_INFO_TYPE = "type.googleapis.com/google.rpc.ErrorInfo";
+const SAFE_ERROR_INFO_METADATA = new Set([
+    "service",
+    "permission",
+    "resource",
+    "consumer",
+    "quota_project",
+    "project",
+    "site",
+]);
 const FORBIDDEN_OPERATIONS = Object.freeze([
     "firebase init",
     "hosting:sites:create",
@@ -29,14 +42,83 @@ function accessToken() {
     return runChecked("gcloud", ["auth", "print-access-token", "--quiet"], { capture: true }).stdout.trim();
 }
 
-async function hostingResponse(path, { method = "GET", body } = {}) {
-    const response = await fetch(`https://firebasehosting.googleapis.com/v1beta1/${path}`, {
-        method,
-        headers: { Authorization: `Bearer ${accessToken()}`, "x-goog-user-project": QUOTA_PROJECT, ...(body !== undefined ? { "Content-Type": "application/json" } : {}) },
-        body: body !== undefined ? JSON.stringify(body) : undefined,
-        redirect: "error",
-        signal: AbortSignal.timeout(60_000),
+function sanitizedString(value, maximumLength = MAX_DIAGNOSTIC_FIELD_LENGTH) {
+    if (typeof value !== "string") return undefined;
+    const redacted = value
+        .replace(/-----BEGIN (?:RSA |EC )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC )?PRIVATE KEY-----/g, "[REDACTED_PRIVATE_KEY]")
+        .replace(/[\u0000-\u001f\u007f]+/g, " ")
+        .replace(/\bBearer\s+[^\s,;]+/gi, "Bearer [REDACTED]")
+        .replace(/\bya29\.[A-Za-z0-9._-]+\b/g, "[REDACTED_TOKEN]")
+        .replace(/\b(?:github_pat_|gh[pousr]_)[A-Za-z0-9_]+\b/gi, "[REDACTED_TOKEN]")
+        .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, "[REDACTED_TOKEN]")
+        .replace(/["']?(?:authorization|private_key|client_email|client_secret|access_token|id_token|refresh_token|github_token|cookie|set-cookie)["']?\s*[:=]\s*(?:"[^"]*"|'[^']*'|[^,;}\s]+)/gi, "[REDACTED]");
+    return redacted.replace(/\s+/g, " ").trim().slice(0, maximumLength);
+}
+
+export function sanitizeFirebaseHostingError({ httpStatus, payload, networkError } = {}) {
+    const googleError = payload && typeof payload === "object" && payload.error && typeof payload.error === "object"
+        ? payload.error
+        : {};
+    const message = sanitizedString(
+        typeof googleError.message === "string" ? googleError.message : networkError?.message,
+        MAX_DIAGNOSTIC_MESSAGE_LENGTH,
+    );
+    const diagnostic = {
+        httpStatus: Number.isInteger(httpStatus) ? httpStatus : null,
+        error: {
+            ...(Number.isInteger(googleError.code) ? { code: googleError.code } : {}),
+            ...(sanitizedString(googleError.status, 128) ? { status: sanitizedString(googleError.status, 128) } : {}),
+            ...(message ? { message } : {}),
+        },
+    };
+    const errorInfo = (Array.isArray(googleError.details) ? googleError.details : [])
+        .filter((detail) => detail && typeof detail === "object" && detail["@type"] === ERROR_INFO_TYPE)
+        .slice(0, MAX_ERROR_INFO_ENTRIES)
+        .map((detail) => {
+            const metadata = {};
+            if (detail.metadata && typeof detail.metadata === "object" && !Array.isArray(detail.metadata)) {
+                for (const key of SAFE_ERROR_INFO_METADATA) {
+                    const value = sanitizedString(detail.metadata[key]);
+                    if (value) metadata[key] = value;
+                }
+            }
+            return {
+                ...(sanitizedString(detail.reason, 256) ? { reason: sanitizedString(detail.reason, 256) } : {}),
+                ...(sanitizedString(detail.domain, 256) ? { domain: sanitizedString(detail.domain, 256) } : {}),
+                ...(Object.keys(metadata).length ? { metadata } : {}),
+            };
+        })
+        .filter((entry) => Object.keys(entry).length);
+    if (errorInfo.length) diagnostic.errorInfo = errorInfo;
+    return diagnostic;
+}
+
+export function firebaseHostingResponseValue(response) {
+    if (response?.ok === true) return response.payload;
+    const diagnostic = sanitizeFirebaseHostingError({
+        httpStatus: response?.status,
+        payload: response?.payload,
+        networkError: response?.networkError,
     });
+    const error = new Error(`Firebase Hosting request failed: ${JSON.stringify(diagnostic)}`);
+    error.name = "FirebaseHostingRequestError";
+    error.diagnostic = diagnostic;
+    throw error;
+}
+
+async function hostingResponse(path, { method = "GET", body } = {}) {
+    let response;
+    try {
+        response = await fetch(`https://firebasehosting.googleapis.com/v1beta1/${path}`, {
+            method,
+            headers: { Authorization: `Bearer ${accessToken()}`, "x-goog-user-project": QUOTA_PROJECT, ...(body !== undefined ? { "Content-Type": "application/json" } : {}) },
+            body: body !== undefined ? JSON.stringify(body) : undefined,
+            redirect: "error",
+            signal: AbortSignal.timeout(60_000),
+        });
+    } catch (networkError) {
+        return { status: null, ok: false, payload: null, networkError };
+    }
     const declaredLength = Number(response.headers.get("content-length") ?? 0);
     if (declaredLength > MAX_API_RESPONSE_BYTES) throw new Error("Firebase Hosting API response exceeded the bounded size limit.");
     const bytes = Buffer.from(await response.arrayBuffer());
@@ -50,8 +132,7 @@ async function hostingResponse(path, { method = "GET", body } = {}) {
 
 async function hostingRequest(path, options = {}) {
     const response = await hostingResponse(path, options);
-    if (!response.ok) throw new Error(`Firebase Hosting request failed with HTTP ${response.status}: ${response.payload?.error?.status ?? "UNKNOWN"}`);
-    return response.payload;
+    return firebaseHostingResponseValue(response);
 }
 
 export function assertHostingCommand(args, lock = loadFrozenRelease()) {

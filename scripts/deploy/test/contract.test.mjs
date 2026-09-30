@@ -26,7 +26,12 @@ import {
 } from "../contract.mjs";
 import { buildEvidence } from "../evidence.mjs";
 import { assertEvidenceLookupAbsent, assertExactOciLookup } from "../artifacts.mjs";
-import { assertHostingCommand, assertPreviewChannelLookupAbsent } from "../cloud-hosting.mjs";
+import {
+    assertHostingCommand,
+    assertPreviewChannelLookupAbsent,
+    firebaseHostingResponseValue,
+    sanitizeFirebaseHostingError,
+} from "../cloud-hosting.mjs";
 import { activeProductionRevision, assertRuntimePreflightMatches } from "../cloud-runtime.mjs";
 
 const fixture = join(import.meta.dirname, "fixtures", "release-manifest.json");
@@ -291,6 +296,148 @@ test("Firebase command fence rejects project/site lifecycle and project switchin
     assert.doesNotThrow(() => assertHostingCommand(["hosting:channel:deploy", "bm-100", "--project", "boundarymesh-dev"]));
     assert.throws(() => assertHostingCommand(["hosting:sites:create", "other", "--project", "boundarymesh-dev"]), /Forbidden/);
     assert.throws(() => assertHostingCommand(["hosting:channel:deploy", "bm-100", "--project", "other"]), /frozen project/);
+});
+
+test("Firebase diagnostics extract only allowlisted Google ErrorInfo fields", () => {
+    const diagnostic = sanitizeFirebaseHostingError({
+        httpStatus: 403,
+        payload: {
+            error: {
+                code: 403,
+                status: "PERMISSION_DENIED",
+                message: "The caller lacks a required permission.",
+                details: [{
+                    "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                    reason: "IAM_PERMISSION_DENIED",
+                    domain: "googleapis.com",
+                    metadata: {
+                        // Hypothetical parser fixture, not observed run evidence.
+                        permission: "serviceusage.services.use",
+                        service: "firebasehosting.googleapis.com",
+                        resource: "projects/boundarymesh-dev",
+                        consumer: "projects/boundarymesh-dev",
+                        quota_project: "boundarymesh-dev",
+                        project: "boundarymesh-dev",
+                        site: "boundarymesh-dev",
+                        internal_debug_context: "must-not-appear",
+                    },
+                }],
+            },
+        },
+    });
+    assert.deepEqual(diagnostic, {
+        httpStatus: 403,
+        error: {
+            code: 403,
+            status: "PERMISSION_DENIED",
+            message: "The caller lacks a required permission.",
+        },
+        errorInfo: [{
+            reason: "IAM_PERMISSION_DENIED",
+            domain: "googleapis.com",
+            metadata: {
+                service: "firebasehosting.googleapis.com",
+                permission: "serviceusage.services.use",
+                resource: "projects/boundarymesh-dev",
+                consumer: "projects/boundarymesh-dev",
+                quota_project: "boundarymesh-dev",
+                project: "boundarymesh-dev",
+                site: "boundarymesh-dev",
+            },
+        }],
+    });
+});
+
+test("Firebase diagnostics support message-only errors and ignore unknown detail types", () => {
+    const diagnostic = sanitizeFirebaseHostingError({
+        httpStatus: 403,
+        payload: {
+            error: {
+                message: "Request denied.",
+                details: [
+                    { "@type": "type.googleapis.com/google.rpc.DebugInfo", detail: "unsafe-debug-detail" },
+                    null,
+                    "malformed",
+                ],
+            },
+        },
+    });
+    assert.deepEqual(diagnostic, { httpStatus: 403, error: { message: "Request denied." } });
+    assert.doesNotMatch(JSON.stringify(diagnostic), /unsafe-debug-detail/);
+});
+
+test("Firebase diagnostics bound messages and sanitize control characters", () => {
+    const diagnostic = sanitizeFirebaseHostingError({
+        httpStatus: 403,
+        payload: { error: { message: `${"x".repeat(2500)}\nforged-log-line\u0000` } },
+    });
+    assert.equal(diagnostic.error.message.length, 2048);
+    assert.doesNotMatch(diagnostic.error.message, /[\u0000-\u001f\u007f]/);
+});
+
+test("Firebase diagnostics fail closed for missing payloads and network errors", () => {
+    assert.deepEqual(sanitizeFirebaseHostingError({ httpStatus: 503 }), { httpStatus: 503, error: {} });
+    let networkError;
+    assert.throws(
+        () => firebaseHostingResponseValue({ ok: false, networkError: new TypeError("fetch failed") }),
+        (error) => {
+            networkError = error;
+            return error.name === "FirebaseHostingRequestError";
+        },
+    );
+    assert.deepEqual(networkError.diagnostic, { httpStatus: null, error: { message: "fetch failed" } });
+    assert.match(networkError.message, /Firebase Hosting request failed/);
+});
+
+test("Firebase diagnostics never disclose credentials, headers, or unknown payload fields", () => {
+    const sentinels = [
+        "bearer-secret-123",
+        "private-key-secret-456",
+        "service-account-secret@example.test",
+        "github-token-secret-789",
+        "header-secret-abc",
+        "environment-secret-def",
+        "unknown-metadata-secret-ghi",
+        "ya29.access-token-secret",
+        "github_pat_token_secret",
+        "eyJheader.payload.signature",
+        "pem-private-key-secret",
+    ];
+    let captured;
+    assert.throws(
+        () => firebaseHostingResponseValue({
+            status: 403,
+            ok: false,
+            payload: {
+                error: {
+                    code: 403,
+                    status: "PERMISSION_DENIED",
+                    message: `Authorization: Bearer ${sentinels[0]} private_key=${sentinels[1]} client_email=${sentinels[2]} github_token=${sentinels[3]} ${sentinels[7]} ${sentinels[8]} ${sentinels[9]} -----BEGIN PRIVATE KEY-----${sentinels[10]}-----END PRIVATE KEY-----`,
+                    details: [{
+                        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                        reason: "DENIED",
+                        domain: "googleapis.com",
+                        metadata: { unsafe: sentinels[6] },
+                    }],
+                },
+                headers: { Authorization: `Bearer ${sentinels[4]}` },
+                credential: { private_key: sentinels[1], client_email: sentinels[2] },
+                env: { GITHUB_TOKEN: sentinels[5] },
+            },
+        }),
+        (error) => {
+            captured = error;
+            return error.name === "FirebaseHostingRequestError";
+        },
+    );
+    const rendered = `${captured.message}\n${JSON.stringify(captured.diagnostic)}`;
+    for (const sentinel of sentinels) assert.doesNotMatch(rendered, new RegExp(sentinel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.doesNotMatch(rendered, /Bearer bearer-secret/);
+});
+
+test("Firebase success responses remain unchanged", () => {
+    const payload = { name: "projects/boundarymesh-dev/sites/boundarymesh-dev" };
+    assert.equal(firebaseHostingResponseValue({ status: 200, ok: true, payload }), payload);
 });
 
 test("evidence collision lookup accepts only the exact canonical NOT_FOUND result", () => {
