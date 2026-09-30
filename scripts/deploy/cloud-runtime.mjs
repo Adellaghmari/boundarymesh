@@ -9,6 +9,7 @@ import {
     loadFrozenRelease,
     normalizeTraffic,
     runtimeInvariant,
+    sha256Bytes,
     verifyFrozenReleaseFile,
 } from "./contract.mjs";
 import { runChecked } from "./process.mjs";
@@ -233,9 +234,33 @@ async function readAll(lock = loadFrozenRelease()) {
     return { api, web, worker, apiIam, webIam, workerIam };
 }
 
-export async function stageRuntime({ manifestPath, runId, lock = loadFrozenRelease() }) {
+async function runtimePreflightSnapshot(all) {
+    const baseline = await productionRuntimeState(all);
+    const invariants = Object.fromEntries(["api", "web", "worker"].map((subject) => [
+        subject,
+        sha256Bytes(Buffer.from(canonicalJson(runtimeInvariant(all[subject], all[`${subject}Iam`])))),
+    ]));
+    return {
+        baseline,
+        etags: { api: all.api.etag, web: all.web.etag, worker: all.worker.etag },
+        invariants,
+    };
+}
+
+export function assertRuntimePreflightMatches(current, approved) {
+    if (!approved || canonicalJson(current) !== canonicalJson(approved)) {
+        throw new Error("Runtime baseline or ETag changed after global stage preflight.");
+    }
+}
+
+export async function preflightRuntime({ lock = loadFrozenRelease() } = {}) {
+    return runtimePreflightSnapshot(await readAll(lock));
+}
+
+export async function stageRuntime({ manifestPath, runId, preflight, lock = loadFrozenRelease() }) {
     const manifest = verifyFrozenReleaseFile(manifestPath, lock);
     const before = await readAll(lock);
+    assertRuntimePreflightMatches(await runtimePreflightSnapshot(before), preflight);
     const beforePublic = await productionRuntimeState(before);
     const candidates = {};
     for (const subject of ["api", "web"]) {
@@ -341,7 +366,13 @@ async function main() {
     const output = resolve(option("--output"));
     let result;
     if (command === "stage") {
-        result = await stageRuntime({ manifestPath: resolve(option("--manifest")), runId: option("--run-id") });
+        result = await stageRuntime({
+            manifestPath: resolve(option("--manifest")),
+            runId: option("--run-id"),
+            preflight: JSON.parse(readFileSync(resolve(option("--preflight")), "utf8")),
+        });
+    } else if (command === "preflight") {
+        result = await preflightRuntime();
     } else if (command === "promote") {
         result = await promoteRuntime({ stageEvidence: JSON.parse(readFileSync(option("--evidence"), "utf8")), currentHosting: JSON.parse(option("--hosting-baseline")) });
     } else if (command === "rollback") {

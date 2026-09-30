@@ -25,8 +25,9 @@ import {
     writeDeploymentEvidence,
 } from "../contract.mjs";
 import { buildEvidence } from "../evidence.mjs";
-import { assertHostingCommand } from "../cloud-hosting.mjs";
-import { activeProductionRevision } from "../cloud-runtime.mjs";
+import { assertEvidenceLookupAbsent, assertExactOciLookup } from "../artifacts.mjs";
+import { assertHostingCommand, assertPreviewChannelLookupAbsent } from "../cloud-hosting.mjs";
+import { activeProductionRevision, assertRuntimePreflightMatches } from "../cloud-runtime.mjs";
 
 const fixture = join(import.meta.dirname, "fixtures", "release-manifest.json");
 const lock = loadFrozenRelease();
@@ -290,4 +291,62 @@ test("Firebase command fence rejects project/site lifecycle and project switchin
     assert.doesNotThrow(() => assertHostingCommand(["hosting:channel:deploy", "bm-100", "--project", "boundarymesh-dev"]));
     assert.throws(() => assertHostingCommand(["hosting:sites:create", "other", "--project", "boundarymesh-dev"]), /Forbidden/);
     assert.throws(() => assertHostingCommand(["hosting:channel:deploy", "bm-100", "--project", "other"]), /frozen project/);
+});
+
+test("evidence collision lookup accepts only the exact canonical NOT_FOUND result", () => {
+    const lookup = {
+        project: lock.project,
+        location: lock.region,
+        repository: lock.deploymentEvidence.repository,
+        packageName: lock.deploymentEvidence.package,
+        version: evidenceVersion("stage", "100"),
+    };
+    const absent = { status: 1, stdout: "", stderr: "ERROR: NOT_FOUND: Requested entity was not found." };
+    assert.deepEqual(assertEvidenceLookupAbsent(absent, lookup, lookup), { version: lookup.version, absent: true });
+    assert.throws(() => assertEvidenceLookupAbsent({ status: 0, stdout: "{}", stderr: "" }, lookup, lookup), /already exists/);
+    for (const stderr of [
+        "ERROR: PERMISSION_DENIED: denied",
+        "ERROR: UNAUTHENTICATED: login",
+        "ERROR: UNAVAILABLE: network failure",
+        "connection reset",
+        "{}",
+    ]) {
+        assert.throws(() => assertEvidenceLookupAbsent({ status: 1, stdout: "", stderr }, lookup, lookup), /without proving absence|canonical trustworthy/);
+    }
+    assert.throws(() => assertEvidenceLookupAbsent(absent, { ...lookup, repository: "wrong" }, lookup), /exact frozen repository/);
+    assert.throws(() => assertEvidenceLookupAbsent(absent, { ...lookup, packageName: "wrong" }, lookup), /exact frozen repository/);
+});
+
+test("OCI preflight accepts only the exact immutable digest identity", () => {
+    const reference = image("boundarymesh-api", lock.images.api);
+    const valid = { status: 0, stdout: JSON.stringify({ image_summary: { fully_qualified_digest: reference } }), stderr: "" };
+    assert.equal(assertExactOciLookup(valid, reference), reference);
+    assert.throws(() => assertExactOciLookup({ status: 1, stdout: "", stderr: "NOT_FOUND" }, reference), /lookup failed/);
+    assert.throws(() => assertExactOciLookup({ status: 0, stdout: "not-json", stderr: "" }, reference), /malformed JSON/);
+    assert.throws(() => assertExactOciLookup({ status: 0, stdout: JSON.stringify({ image_summary: { fully_qualified_digest: image("boundarymesh-api", `sha256:${"0".repeat(64)}`) } }), stderr: "" }, reference), /different digest/);
+});
+
+test("preview collision lookup accepts only exact-site canonical absence", () => {
+    const lookup = { site: "boundarymesh-dev", channel: "bm-100", resource: "sites/boundarymesh-dev/channels/bm-100" };
+    const absent = { status: 404, ok: false, payload: { error: { code: 404, status: "NOT_FOUND" } } };
+    assert.deepEqual(assertPreviewChannelLookupAbsent(absent, lookup, lookup), { channel: "bm-100", absent: true });
+    assert.throws(() => assertPreviewChannelLookupAbsent({ status: 200, ok: true, payload: { name: lookup.resource } }, lookup, lookup), /already exists/);
+    assert.throws(() => assertPreviewChannelLookupAbsent({ status: 200, ok: true, payload: { name: "sites/boundarymesh-dev/channels/other" } }, lookup, lookup), /wrong project\/site/);
+    assert.throws(() => assertPreviewChannelLookupAbsent({ status: 403, ok: false, payload: { error: { code: 403, status: "PERMISSION_DENIED" } } }, lookup, lookup), /without proving exact absence/);
+    assert.throws(() => assertPreviewChannelLookupAbsent({ status: 404, ok: false, payload: {} }, lookup, lookup), /without proving exact absence/);
+    assert.throws(() => assertPreviewChannelLookupAbsent(absent, { ...lookup, site: "other" }, lookup), /exact frozen site/);
+    const differentChannel = { status: 404, ok: false, payload: { error: { code: 404, status: "NOT_FOUND" } } };
+    assert.doesNotThrow(() => assertPreviewChannelLookupAbsent(differentChannel, lookup, lookup));
+});
+
+test("mutation-time runtime baseline requires exact preflight ETags and fingerprints", () => {
+    const approved = {
+        baseline: { api: { revision: "a" }, web: { revision: "w" }, worker: { revision: "x" } },
+        etags: { api: "1", web: "2", worker: "3" },
+        invariants: { api: "a", web: "b", worker: "c" },
+    };
+    assert.doesNotThrow(() => assertRuntimePreflightMatches(structuredClone(approved), approved));
+    const changed = structuredClone(approved);
+    changed.etags.api = "changed";
+    assert.throws(() => assertRuntimePreflightMatches(changed, approved), /changed after global stage preflight/);
 });
