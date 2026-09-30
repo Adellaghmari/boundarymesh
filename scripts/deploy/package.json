@@ -1,0 +1,23 @@
+{
+  "name": "boundarymesh-deployment-tooling",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "firebase-tools": "15.32.0",
+    "tar": "7.5.22",
+    "yaml": "2.9.1"
+  },
+  "overrides": {
+    "@opentelemetry/core": "2.8.0",
+    "uuid": "11.1.1"
+  }
+}

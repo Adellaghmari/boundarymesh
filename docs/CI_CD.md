@@ -17,7 +17,7 @@ The provider requires these immutable claims for all admitted contexts:
 - private repository visibility
 - ref `refs/heads/main`
 
-The live provider admits exactly these three context branches:
+The live provider admits exactly these five context branches:
 
 1. Environment `boundarymesh-dev`, workflow
    `Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main`, event
@@ -27,6 +27,12 @@ The live provider admits exactly these three context branches:
    `workflow_dispatch`.
 3. Environment `boundarymesh-artifact-publish`, workflow
    `Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main`, event
+   `workflow_dispatch`.
+4. Environment `boundarymesh-deploy`, workflow
+   `Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main`, event
+   `workflow_dispatch`.
+5. Environment `boundarymesh-hosting-deploy`, workflow
+   `Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main`, event
    `workflow_dispatch`.
 
 Repository name is mapped for context but immutable numeric repository and owner IDs form the
@@ -74,7 +80,23 @@ the exact publication context. It has zero user-managed keys, zero direct projec
 It has no deployment, runtime, application-data, Pulumi-state, state-KMS, Token Creator, or Service
 Account User role.
 
-The three service accounts have separate environment-scoped `roles/iam.workloadIdentityUser`
+### Runtime-deployment identity
+
+`boundarymesh-deploy@boundarymesh-dev.iam.gserviceaccount.com` is impersonable only by the
+`attribute.environment/boundarymesh-deploy` principal set after the provider admits the exact
+deployment workflow context. It is keyless and holds only the resource-scoped permissions required
+to inspect immutable release evidence, stage and shift the three existing Cloud Run workloads, and
+write immutable deployment evidence. It cannot deploy Firebase Hosting or change IAM/WIF.
+
+### Hosting-deployment identity
+
+`boundarymesh-hosting-deploy@boundarymesh-dev.iam.gserviceaccount.com` is impersonable only by the
+`attribute.environment/boundarymesh-hosting-deploy` principal set after the provider admits the exact
+deployment workflow context. It is keyless and holds only the resource-scoped permissions required
+to inspect the frozen frontend release, create a bounded Hosting preview, and promote or restore an
+exact Hosting version. It cannot update Cloud Run or change IAM/WIF.
+
+The five service accounts have separate environment-scoped `roles/iam.workloadIdentityUser`
 bindings. Their workflows and environments cannot be interchanged under the provider condition.
 
 ## Live workflows
@@ -148,15 +170,29 @@ before any remote write. It left no artifact residue and was repaired through pr
 ## Remaining capabilities
 
 Phase 16C did **not** implement general pull-request CI or deployment. Phase 16D implemented
-publication, but publication remains separate from deployment.
+publication, and Phase 16E has established the split-authority deployment foundation. Publication
+remains separate from deployment, and the controlled deployment workflow source remains dormant
+until protected merge and a later explicitly approved human dispatch.
 
-- **Phase 16E — controlled CD:** explicit approval, immutable manifest/digest inputs, narrowly scoped
-  deployment identity, post-deployment verification, and rollback. It must consume the frozen Phase
-  16D release rather than rebuilding or republishing it.
+- **Phase 16E — controlled CD:** the split runtime/Hosting identities and environments are live; the
+  current source gate adds explicit stage/promote/rollback operations, immutable manifest/digest
+  inputs, post-operation verification, and retained rollback evidence. It consumes the frozen Phase
+  16D release without rebuilding or republishing it.
 - **Phase 16F — live verification and CI/CD freeze:** positive and negative deployment-boundary
   evidence, traceability, zero-key reconfirmation, and documentation freeze.
 - Application-security automation such as Semgrep, Gitleaks, Dependency-Check, Dependabot, and ZAP
   remains planned and is not part of the live preview workflow.
 
-No speculative deployment service account is represented as existing. Final security hygiene,
-including historical credential-contamination review, remains unresolved until a later explicit gate.
+## Dormant controlled deployment source
+
+Phase 16E.4a implements the controlled deployment workflow and supporting validators on a feature
+branch. Until protected merge, `.github/workflows/deploy-release.yml` is not registered on the
+default branch and has zero runs. The source consumes only the frozen Phase 16D release, separates
+runtime and Hosting WIF identities by job and GitHub environment, stages zero-allocation Cloud Run
+candidates plus a bounded Hosting preview, and requires later human dispatches for promotion and
+rollback. It writes immutable, hash-bound deployment evidence only after a complete operation.
+There is no application build, republish, automatic promotion, or automatic rollback path. See
+[PHASE_16E4A.md](PHASE_16E4A.md).
+
+Final security hygiene, including historical credential-contamination review, remains unresolved
+until a later explicit gate.

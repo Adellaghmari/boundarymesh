@@ -1,0 +1,112 @@
+{
+  "actionPins": {
+    "actions/checkout": "de0fac2e4500dabe0009e67214ff5f5447ce83dd",
+    "actions/setup-node": "395ad3262231945c25e8478fd5baf05154b1d79f",
+    "docker/login-action": "dbcb813823bdd20940b903addbd779551569679f",
+    "docker/setup-buildx-action": "f87e5991a6d7451dcb8d9637bfbc97413f497069",
+    "google-github-actions/auth": "7c6bc770dae815cd3e89ee6cdf493a5fab2cc093",
+    "google-github-actions/setup-gcloud": "aa5489c8933f4cc7a4f7d45035b3b1440c9c10db"
+  },
+  "artifacts": {
+    "api": {
+      "digest": "sha256:bcfd9b01a3189228f583fa3f5d1ed8797f73d214af85bea4d84caeedfa0db8d7",
+      "image": "boundarymesh-api",
+      "repository": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh"
+    },
+    "frontend": {
+      "filename": "frontend-dist.tar.gz",
+      "package": "boundarymesh-frontend",
+      "repository": "projects/boundarymesh-dev/locations/europe-west4/repositories/boundarymesh-releases",
+      "sha256": "80d4cfa4e88cac297c7a130ac5c83d68b468b06b60e04537c5060cb275943d84",
+      "version": "a876a7bfa5fa86f88e8387efb557773281daa6e6"
+    },
+    "releaseManifest": {
+      "filename": "release-manifest.json",
+      "hashStrategy": "external-sha256-sidecar",
+      "package": "boundarymesh-release",
+      "repository": "projects/boundarymesh-dev/locations/europe-west4/repositories/boundarymesh-releases",
+      "sha256File": "release-manifest.json.sha256",
+      "version": "a876a7bfa5fa86f88e8387efb557773281daa6e6"
+    },
+    "web": {
+      "digest": "sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04",
+      "image": "boundarymesh-web-edge",
+      "repository": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh"
+    },
+    "worker": {
+      "digest": "sha256:7b1841487a2d1b3751e8bc63ee5323965e76ebeae9ae581c95b672f50154bb2d",
+      "image": "boundarymesh-worker",
+      "repository": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh"
+    }
+  },
+  "provenance": [
+    {
+      "digest": "13ee67693f079803bf17c8ab0f4406f17094046cf9d80ed0e2ee258bf1df69c3",
+      "reference": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api@sha256:bcfd9b01a3189228f583fa3f5d1ed8797f73d214af85bea4d84caeedfa0db8d7#provenance",
+      "subject": "api"
+    },
+    {
+      "digest": "a80fca7185dbd0bb7eb0679a3a352772576a7961b3aed9300b6d75790bed0f8f",
+      "reference": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker@sha256:7b1841487a2d1b3751e8bc63ee5323965e76ebeae9ae581c95b672f50154bb2d#provenance",
+      "subject": "worker"
+    },
+    {
+      "digest": "75a1f3d585e7303c759ed1a8e81339eea9788c4eb6a45778a5dbfd030de48db4",
+      "reference": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04#provenance",
+      "subject": "web"
+    },
+    {
+      "digest": "ea38564bcf23e8be9f6b8149b575576504ef99d9c54de5c4b5a090db0d37b277",
+      "reference": "projects/boundarymesh-dev/locations/europe-west4/repositories/boundarymesh-releases/packages/boundarymesh-frontend/versions/a876a7bfa5fa86f88e8387efb557773281daa6e6/files/frontend-dist.tar.gz.intoto.json",
+      "subject": "frontend"
+    }
+  ],
+  "publication": {
+    "environment": "boundarymesh-artifact-publish",
+    "runId": "36492495801",
+    "timestamp": "2026-09-28T22:28:07Z",
+    "workflowPath": ".github/workflows/artifact-publish.yml"
+  },
+  "repository": {
+    "id": "1385415640",
+    "name": "boundarymesh",
+    "owner": "Adellaghmari"
+  },
+  "sboms": [
+    {
+      "digest": "293cbd1327ddb318b53ff244f422e0b971af61e6be39d283a1a790dd2375d37f",
+      "reference": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api@sha256:bcfd9b01a3189228f583fa3f5d1ed8797f73d214af85bea4d84caeedfa0db8d7#sbom",
+      "subject": "api"
+    },
+    {
+      "digest": "4153092dcc4cb82577ceebbfdb66bdd2c535f4f9de48161d7956ad24e9d49d33",
+      "reference": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker@sha256:7b1841487a2d1b3751e8bc63ee5323965e76ebeae9ae581c95b672f50154bb2d#sbom",
+      "subject": "worker"
+    },
+    {
+      "digest": "19a9cbfb8fee4827ac8828179ac07b108f02a7f05321dad2db15d1e3ccb9f55d",
+      "reference": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04#sbom",
+      "subject": "web"
+    },
+    {
+      "digest": "8f63892fb2c0f8d1623b9889ff70220c2324e58822831acd54c0ce008f06d175",
+      "reference": "projects/boundarymesh-dev/locations/europe-west4/repositories/boundarymesh-releases/packages/boundarymesh-frontend/versions/a876a7bfa5fa86f88e8387efb557773281daa6e6/files/frontend-sbom.cdx.json",
+      "subject": "frontend"
+    }
+  ],
+  "schemaVersion": "boundarymesh.release/v1",
+  "source": {
+    "commitSha": "a876a7bfa5fa86f88e8387efb557773281daa6e6",
+    "contractPath": "contracts/release-manifest/v1.schema.json",
+    "contractTreeSha": "877cee5fdd507be66d09227c625d75402fbf84cc",
+    "ref": "refs/heads/main"
+  },
+  "toolVersions": {
+    "buildx": "github.com/docker/buildx v0.37.1 0b265a9f62db554fa9aba6dd19e1bd5704bc7d8a",
+    "docker": "Docker version 28.0.4, build b8034c0",
+    "java": "openjdk version \"17.0.20.1\" 2026-08-18",
+    "maven": "Apache Maven 3.9.16 (2bdd9fddda4b155ebf8000e807eb73fd829a51d5)",
+    "node": "v22.23.2",
+    "npm": "10.9.8"
+  }
+}
