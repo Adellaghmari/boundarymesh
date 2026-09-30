@@ -4,8 +4,10 @@ import { fileURLToPath } from "node:url";
 import {
     canonicalJson,
     extractFrontendArchive,
+    inspectFrontendArchive,
     loadFrozenRelease,
     materializeFrozenFirebaseConfig,
+    sha256File,
     verifyFrozenReleaseFile,
 } from "./contract.mjs";
 import { runChecked } from "./process.mjs";
@@ -27,7 +29,7 @@ function accessToken() {
     return runChecked("gcloud", ["auth", "print-access-token", "--quiet"], { capture: true }).stdout.trim();
 }
 
-async function hostingRequest(path, { method = "GET", body } = {}) {
+async function hostingResponse(path, { method = "GET", body } = {}) {
     const response = await fetch(`https://firebasehosting.googleapis.com/v1beta1/${path}`, {
         method,
         headers: { Authorization: `Bearer ${accessToken()}`, "x-goog-user-project": QUOTA_PROJECT, ...(body !== undefined ? { "Content-Type": "application/json" } : {}) },
@@ -39,9 +41,17 @@ async function hostingRequest(path, { method = "GET", body } = {}) {
     if (declaredLength > MAX_API_RESPONSE_BYTES) throw new Error("Firebase Hosting API response exceeded the bounded size limit.");
     const bytes = Buffer.from(await response.arrayBuffer());
     if (bytes.length > MAX_API_RESPONSE_BYTES) throw new Error("Firebase Hosting API response exceeded the bounded size limit.");
-    const payload = bytes.length ? JSON.parse(bytes.toString("utf8")) : null;
-    if (!response.ok) throw new Error(`Firebase Hosting request failed with HTTP ${response.status}: ${payload?.error?.status ?? "UNKNOWN"}`);
-    return payload;
+    let payload = null;
+    if (bytes.length) {
+        try { payload = JSON.parse(bytes.toString("utf8")); } catch { throw new Error("Firebase Hosting API returned malformed JSON."); }
+    }
+    return { status: response.status, ok: response.ok, payload };
+}
+
+async function hostingRequest(path, options = {}) {
+    const response = await hostingResponse(path, options);
+    if (!response.ok) throw new Error(`Firebase Hosting request failed with HTTP ${response.status}: ${response.payload?.error?.status ?? "UNKNOWN"}`);
+    return response.payload;
 }
 
 export function assertHostingCommand(args, lock = loadFrozenRelease()) {
@@ -76,6 +86,49 @@ export async function assertHostingBaseline(stageEvidence, lock = loadFrozenRele
     const current = await readHostingBaseline(lock);
     if (canonicalJson(current) !== canonicalJson(stageEvidence.hosting.before)) throw new Error("Stale Firebase live baseline; refusing promotion.");
     return current;
+}
+
+function previewLookup(site, channel) {
+    return { site, channel, resource: `sites/${site}/channels/${channel}` };
+}
+
+export function assertPreviewChannelLookupAbsent(response, actualLookup, expectedLookup) {
+    if (canonicalJson(actualLookup) !== canonicalJson(expectedLookup)) {
+        throw new Error("Preview-channel lookup did not use the exact frozen site and derived channel.");
+    }
+    if (response.status === 200) {
+        if (response.payload?.name !== expectedLookup.resource) throw new Error("Preview-channel lookup returned the wrong project/site resource.");
+        throw new Error(`Firebase preview channel already exists: ${expectedLookup.channel}`);
+    }
+    if (response.status !== 404 || response.payload?.error?.code !== 404 || response.payload?.error?.status !== "NOT_FOUND") {
+        throw new Error("Preview-channel collision preflight failed without proving exact absence.");
+    }
+    return { channel: expectedLookup.channel, absent: true };
+}
+
+export async function assertPreviewChannelAbsent(runId, { lock = loadFrozenRelease(), lookup = hostingResponse } = {}) {
+    if (!/^[1-9][0-9]*$/.test(runId)) throw new Error("GITHUB_RUN_ID must be numeric.");
+    const expected = previewLookup(lock.firebase.site, `bm-${runId}`);
+    const response = await lookup(expected.resource);
+    return assertPreviewChannelLookupAbsent(response, expected, previewLookup(lock.firebase.site, `bm-${runId}`));
+}
+
+export async function preflightHosting({ manifestPath, archivePath, workDirectory, runId, lock = loadFrozenRelease() }) {
+    verifyFrozenReleaseFile(manifestPath, lock);
+    await inspectFrontendArchive(archivePath);
+    if (sha256File(archivePath) !== lock.frontend.archiveSha256) throw new Error("Frontend archive SHA-256 differs from the frozen lock.");
+    const configPath = join(workDirectory, "firebase.json");
+    materializeFrozenFirebaseConfig({ destination: configPath, lock });
+    const before = await readHostingBaseline(lock);
+    const preview = await assertPreviewChannelAbsent(runId, { lock });
+    return {
+        before,
+        channel: preview.channel,
+        manifestSha256: lock.releaseManifestSha256,
+        frontendSha256: lock.frontend.archiveSha256,
+        firebaseConfigSha256: sha256File(configPath),
+        previewAbsent: true,
+    };
 }
 
 function findPreview(result) {
@@ -134,7 +187,7 @@ export async function verifyHostedVersion(baseUrl) {
     };
 }
 
-export async function stageHosting({ manifestPath, archivePath, workDirectory, runId, lock = loadFrozenRelease() }) {
+export async function stageHosting({ manifestPath, archivePath, workDirectory, runId, preflight, lock = loadFrozenRelease() }) {
     verifyFrozenReleaseFile(manifestPath, lock);
     if (!/^[1-9][0-9]*$/.test(runId)) throw new Error("GITHUB_RUN_ID must be numeric.");
     const before = await readHostingBaseline(lock);
@@ -142,6 +195,14 @@ export async function stageHosting({ manifestPath, archivePath, workDirectory, r
     await extractFrontendArchive({ archivePath, destination: publicDirectory, lock });
     materializeFrozenFirebaseConfig({ destination: join(workDirectory, "firebase.json"), lock });
     const channelId = `bm-${runId}`;
+    if (!preflight || canonicalJson(before) !== canonicalJson(preflight.before) || preflight.channel !== channelId || preflight.previewAbsent !== true) {
+        throw new Error("Firebase Hosting baseline or preview-channel proof changed after global stage preflight.");
+    }
+    const mutationBaseline = await readHostingBaseline(lock);
+    if (canonicalJson(mutationBaseline) !== canonicalJson(preflight.before)) {
+        throw new Error("Firebase Hosting live baseline changed immediately before preview mutation.");
+    }
+    await assertPreviewChannelAbsent(runId, { lock });
     const result = firebase(["hosting:channel:deploy", channelId, "--project", lock.firebase.project, "--expires", "7d", "--non-interactive", "--json"], { cwd: workDirectory, lock });
     const preview = findPreview(result);
     if (preview.channel && preview.channel !== channelId) throw new Error("Firebase deployed an unexpected preview channel.");
@@ -194,7 +255,20 @@ async function main() {
     let result;
     try {
         if (command === "stage") {
-            result = await stageHosting({ manifestPath: resolve(option("--manifest")), archivePath: resolve(option("--archive")), workDirectory: resolve(option("--work-dir")), runId: option("--run-id") });
+            result = await stageHosting({
+                manifestPath: resolve(option("--manifest")),
+                archivePath: resolve(option("--archive")),
+                workDirectory: resolve(option("--work-dir")),
+                runId: option("--run-id"),
+                preflight: JSON.parse(readFileSync(resolve(option("--preflight")), "utf8")),
+            });
+        } else if (command === "preflight") {
+            result = await preflightHosting({
+                manifestPath: resolve(option("--manifest")),
+                archivePath: resolve(option("--archive")),
+                workDirectory: resolve(option("--work-dir")),
+                runId: option("--run-id"),
+            });
         } else if (command === "promote") {
             result = await promoteHosting({ stageEvidence: JSON.parse(readFileSync(option("--evidence"), "utf8")) });
         } else if (command === "rollback") {

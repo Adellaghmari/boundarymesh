@@ -13,6 +13,21 @@ const hosting = readFileSync(join(root, "scripts", "deploy", "cloud-hosting.mjs"
 const artifacts = readFileSync(join(root, "scripts", "deploy", "artifacts.mjs"), "utf8");
 const lock = JSON.parse(readFileSync(join(root, "scripts", "deploy", "frozen-release.json"), "utf8"));
 
+function dependencies(name) {
+    const needs = workflow.jobs[name].needs ?? [];
+    return Array.isArray(needs) ? needs : [needs];
+}
+
+function ancestors(name, found = new Set()) {
+    for (const dependency of dependencies(name)) {
+        if (!found.has(dependency)) {
+            found.add(dependency);
+            ancestors(dependency, found);
+        }
+    }
+    return found;
+}
+
 test("workflow has only manual dispatch, bounded operations, main guards, and serialized production mutation", () => {
     assert.deepEqual(Object.keys(workflow.on), ["workflow_dispatch"]);
     assert.deepEqual(workflow.on.workflow_dispatch.inputs.operation.options, ["stage", "promote", "rollback"]);
@@ -56,6 +71,58 @@ test("stage, promotion, and rollback are separate human-dispatched paths", () =>
     assert.doesNotMatch(workflowText, /workflow_dispatches|gh workflow run|actions\/workflows\/.*dispatches/);
     assert.match(workflow.jobs["record-promote-evidence"].if, /always\(\)/);
     assert.match(JSON.stringify(workflow.jobs["record-promote-evidence"]), /observe-promotion/);
+});
+
+test("both stage mutations are behind every authority-separated preflight and the explicit barrier", () => {
+    const required = ["validate-release", "stage-preflight-runtime", "stage-preflight-hosting", "stage-preflight-barrier"];
+    for (const name of ["stage-runtime", "stage-hosting"]) {
+        const reachable = ancestors(name);
+        for (const dependency of required) assert.ok(reachable.has(dependency), `${name} can bypass ${dependency}`);
+    }
+    assert.deepEqual(dependencies("stage-preflight-barrier").sort(), ["stage-preflight-hosting", "stage-preflight-runtime", "validate-release"]);
+    assert.equal(workflow.jobs["stage-preflight-runtime"].environment, "boundarymesh-deploy");
+    assert.equal(workflow.jobs["stage-preflight-hosting"].environment, "boundarymesh-hosting-deploy");
+});
+
+test("preflight jobs contain every global validation and no mutating command", () => {
+    const runtimePreflight = JSON.stringify(workflow.jobs["stage-preflight-runtime"]);
+    const hostingPreflight = JSON.stringify(workflow.jobs["stage-preflight-hosting"]);
+    assert.match(runtimePreflight, /download-release/);
+    assert.match(runtimePreflight, /artifacts\.mjs preflight-stage/);
+    assert.match(runtimePreflight, /cloud-runtime\.mjs preflight/);
+    assert.match(hostingPreflight, /download-release/);
+    assert.match(hostingPreflight, /download-frontend/);
+    assert.match(hostingPreflight, /cloud-hosting\.mjs preflight/);
+    for (const body of [runtimePreflight, hostingPreflight]) {
+        assert.doesNotMatch(body, /cloud-runtime\.mjs stage|cloud-hosting\.mjs stage|hosting:channel:deploy|artifacts generic upload|publish-evidence/);
+    }
+    assert.match(artifacts, /preflightStageArtifacts/);
+    assert.match(artifacts, /assertExactOciLookup/);
+    assert.match(artifacts, /assertEvidenceVersionAbsent/);
+    assert.match(hosting, /preflightHosting/);
+    assert.match(hosting, /assertPreviewChannelAbsent/);
+    assert.match(hosting, /inspectFrontendArchive/);
+    assert.match(hosting, /materializeFrozenFirebaseConfig/);
+});
+
+test("mutation jobs revalidate preflight baselines before their first writes", () => {
+    const runtimeStage = JSON.stringify(workflow.jobs["stage-runtime"]);
+    const hostingStage = JSON.stringify(workflow.jobs["stage-hosting"]);
+    assert.match(runtimeStage, /--preflight/);
+    assert.match(hostingStage, /--preflight/);
+    assert.match(runtime, /assertRuntimePreflightMatches\(await runtimePreflightSnapshot\(before\), preflight\)/);
+    assert.ok(runtime.indexOf("assertRuntimePreflightMatches(await runtimePreflightSnapshot(before), preflight)") < runtime.indexOf("await patchResource(current"));
+    assert.match(hosting, /canonicalJson\(before\) !== canonicalJson\(preflight\.before\)/);
+    assert.match(hosting, /const mutationBaseline = await readHostingBaseline\(lock\)/);
+    assert.ok(hosting.indexOf("const mutationBaseline = await readHostingBaseline(lock)") < hosting.indexOf('firebase(["hosting:channel:deploy"'));
+    assert.ok(hosting.lastIndexOf("await assertPreviewChannelAbsent(runId") < hosting.indexOf('firebase(["hosting:channel:deploy"'));
+    assert.match(artifacts, /assertEvidenceVersionAbsent\(\{ operation, runId, lock \}\)/);
+});
+
+test("stage evidence requires both mutations and cannot publish for partial success", () => {
+    assert.deepEqual(dependencies("record-stage-evidence").sort(), ["stage-hosting", "stage-runtime", "validate-release"]);
+    assert.doesNotMatch(workflow.jobs["record-stage-evidence"].if, /always\(\)/);
+    assert.match(workflow.jobs["record-stage-evidence"].if, /operation == 'stage'/);
 });
 
 test("promotion and rollback require exact immutable evidence run references", () => {
@@ -132,7 +199,7 @@ test("Hosting operations are fixed to one site, safe archive, preview stage, and
 
 test("only deployment evidence is uploaded and immutable collisions fail first", () => {
     assert.match(artifacts, /Immutable deployment evidence version already exists/);
-    assert.match(artifacts, /trustworthy not-found result/);
+    assert.match(artifacts, /canonical trustworthy NOT_FOUND result/);
     assert.match(artifacts, /unexpected deployment evidence file set/);
     assert.match(artifacts, /lock\.deploymentEvidence\.repository/);
     assert.doesNotMatch(artifacts, /docker\s+push|boundarymesh-frontend.*upload|boundarymesh-release.*upload/);

@@ -76,9 +76,82 @@ jobs:
       - name: Download and verify the immutable published release
         run: node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
 
-  stage-runtime:
+  stage-preflight-runtime:
     if: inputs.operation == 'stage' && github.ref == 'refs/heads/main'
     needs: validate-release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    outputs:
+      value: ${{ steps.result.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scripts/deploy/package-lock.json
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Verify immutable artifacts, evidence absence, and runtime baseline
+        run: |
+          node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
+          node scripts/deploy/artifacts.mjs preflight-stage --manifest "$RUNNER_TEMP/release/release-manifest.json" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/artifact-preflight.json"
+          node scripts/deploy/cloud-runtime.mjs preflight --output "$RUNNER_TEMP/runtime-preflight.json"
+      - id: result
+        run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/runtime-preflight.json")" >> "$GITHUB_OUTPUT"
+
+  stage-preflight-hosting:
+    if: inputs.operation == 'stage' && github.ref == 'refs/heads/main'
+    needs: validate-release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-hosting-deploy
+    outputs:
+      value: ${{ steps.result.outputs.value }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scripts/deploy/package-lock.json
+      - run: npm ci --prefix scripts/deploy --ignore-scripts
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.HOSTING_DEPLOY_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Verify frontend, Firebase baseline, and preview-channel absence
+        run: |
+          node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
+          node scripts/deploy/artifacts.mjs download-frontend --destination "$RUNNER_TEMP/frontend-package"
+          mkdir -p "$RUNNER_TEMP/hosting-preflight"
+          node scripts/deploy/cloud-hosting.mjs preflight --manifest "$RUNNER_TEMP/release/release-manifest.json" --archive "$RUNNER_TEMP/frontend-package/frontend-dist.tar.gz" --work-dir "$RUNNER_TEMP/hosting-preflight" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/hosting-preflight.json"
+      - id: result
+        run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/hosting-preflight.json")" >> "$GITHUB_OUTPUT"
+
+  stage-preflight-barrier:
+    if: inputs.operation == 'stage' && github.ref == 'refs/heads/main'
+    needs: [validate-release, stage-preflight-runtime, stage-preflight-hosting]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - run: echo "All authority-separated stage preflights passed."
+
+  stage-runtime:
+    if: inputs.operation == 'stage' && github.ref == 'refs/heads/main'
+    needs: [validate-release, stage-preflight-runtime, stage-preflight-hosting, stage-preflight-barrier]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: boundarymesh-deploy
@@ -101,15 +174,18 @@ jobs:
           export_environment_variables: true
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
       - name: Reverify release and stage zero-traffic runtime candidates
+        env:
+          PREFLIGHT_B64: ${{ needs.stage-preflight-runtime.outputs.value }}
         run: |
           node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
-          node scripts/deploy/cloud-runtime.mjs stage --manifest "$RUNNER_TEMP/release/release-manifest.json" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/runtime.json"
+          node scripts/deploy/evidence.mjs decode-json --value "$PREFLIGHT_B64" > "$RUNNER_TEMP/runtime-preflight.json"
+          node scripts/deploy/cloud-runtime.mjs stage --manifest "$RUNNER_TEMP/release/release-manifest.json" --preflight "$RUNNER_TEMP/runtime-preflight.json" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/runtime.json"
       - id: result
         run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/runtime.json")" >> "$GITHUB_OUTPUT"
 
   stage-hosting:
     if: inputs.operation == 'stage' && github.ref == 'refs/heads/main'
-    needs: validate-release
+    needs: [validate-release, stage-preflight-runtime, stage-preflight-hosting, stage-preflight-barrier]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: boundarymesh-hosting-deploy
@@ -132,11 +208,14 @@ jobs:
           export_environment_variables: true
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
       - name: Reverify release and stage exact frontend on bounded preview channel
+        env:
+          PREFLIGHT_B64: ${{ needs.stage-preflight-hosting.outputs.value }}
         run: |
           node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
           node scripts/deploy/artifacts.mjs download-frontend --destination "$RUNNER_TEMP/frontend-package"
           mkdir -p "$RUNNER_TEMP/hosting"
-          node scripts/deploy/cloud-hosting.mjs stage --manifest "$RUNNER_TEMP/release/release-manifest.json" --archive "$RUNNER_TEMP/frontend-package/frontend-dist.tar.gz" --work-dir "$RUNNER_TEMP/hosting" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/hosting.json"
+          node scripts/deploy/evidence.mjs decode-json --value "$PREFLIGHT_B64" > "$RUNNER_TEMP/hosting-preflight.json"
+          node scripts/deploy/cloud-hosting.mjs stage --manifest "$RUNNER_TEMP/release/release-manifest.json" --archive "$RUNNER_TEMP/frontend-package/frontend-dist.tar.gz" --work-dir "$RUNNER_TEMP/hosting" --preflight "$RUNNER_TEMP/hosting-preflight.json" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/hosting.json"
       - id: result
         run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/hosting.json")" >> "$GITHUB_OUTPUT"
 
