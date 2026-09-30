@@ -10,6 +10,7 @@ import {
 export const RUNTIME_DEPLOY_SERVICE_ACCOUNT_ID = "boundarymesh-deploy" as const;
 export const HOSTING_DEPLOY_SERVICE_ACCOUNT_ID = "boundarymesh-hosting-deploy" as const;
 export const CONTROLLED_RUN_DEPLOY_ROLE_ID = "boundarymeshControlledRunDeployer" as const;
+export const HOSTING_QUOTA_CONSUMER_ROLE_ID = "boundarymeshHostingQuotaConsumer" as const;
 export const DEPLOYMENT_EVIDENCE_REPOSITORY_ID = "boundarymesh-deployments" as const;
 
 /**
@@ -31,6 +32,9 @@ export const CONTROLLED_RUN_DEPLOY_PERMISSIONS = [
 export const FIREBASE_HOSTING_ROLE = "roles/firebasehosting.admin" as const;
 export const ARTIFACT_READER_ROLE = "roles/artifactregistry.reader" as const;
 export const ARTIFACT_WRITER_ROLE = "roles/artifactregistry.writer" as const;
+export const HOSTING_QUOTA_CONSUMER_PERMISSIONS = [
+    "serviceusage.services.use",
+] as const;
 export const HOSTING_WORKFLOW_FORBIDDEN_OPERATIONS = [
     "firebase hosting:sites:create",
     "firebase hosting:sites:delete",
@@ -213,6 +217,26 @@ export function defineDeploymentFoundation(
         role: FIREBASE_HOSTING_ROLE,
         member: hostingPrincipal,
     });
+    const hostingQuotaConsumerRole = new gcp.projects.IAMCustomRole(
+        "hosting-quota-consumer-role",
+        {
+            project: foundation.gcpProjectId,
+            roleId: HOSTING_QUOTA_CONSUMER_ROLE_ID,
+            title: "BoundaryMesh Hosting Quota Consumer",
+            description:
+                "Allows the isolated BoundaryMesh Firebase Hosting deployment identity to designate " +
+                "boundarymesh-dev as the quota project for Firebase Hosting API requests.",
+            permissions: [...HOSTING_QUOTA_CONSUMER_PERMISSIONS],
+        },
+    );
+    const hostingQuotaConsumer = new gcp.projects.IAMMember(
+        "hosting-deploy-quota-consumer",
+        {
+            project: foundation.gcpProjectId,
+            role: hostingQuotaConsumerRole.name,
+            member: hostingPrincipal,
+        },
+    );
 
     const evidenceRepository = new gcp.artifactregistry.Repository(
         "boundarymesh-deployments",
@@ -253,6 +277,8 @@ export function defineDeploymentFoundation(
         runtimeReleaseReader,
         hostingReleaseReader,
         hostingAdmin,
+        hostingQuotaConsumerRole,
+        hostingQuotaConsumer,
         evidenceRepository,
         evidenceWriter,
     };

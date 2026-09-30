@@ -110,6 +110,35 @@ test("Hosting Admin is project scoped only to the Hosting identity and its exces
     ]);
 });
 
+test("Hosting quota-project use is an exact single-permission custom role", () => {
+    assert.match(source, /HOSTING_QUOTA_CONSUMER_ROLE_ID = "boundarymeshHostingQuotaConsumer"/);
+    assert.deepEqual(stringArray(source, "HOSTING_QUOTA_CONSUMER_PERMISSIONS"), [
+        "serviceusage.services.use",
+    ]);
+    assert.equal(stringArray(source, "HOSTING_QUOTA_CONSUMER_PERMISSIONS").length, 1);
+    assert.match(source, /title: "BoundaryMesh Hosting Quota Consumer"/);
+    assert.match(
+        source,
+        /description:[\s\S]*?"Allows the isolated BoundaryMesh Firebase Hosting deployment identity to designate "[\s\S]*?"boundarymesh-dev as the quota project for Firebase Hosting API requests\."/,
+    );
+    assert.match(
+        source,
+        /"hosting-quota-consumer-role"[\s\S]*?roleId: HOSTING_QUOTA_CONSUMER_ROLE_ID[\s\S]*?permissions: \[\.\.\.HOSTING_QUOTA_CONSUMER_PERMISSIONS\]/,
+    );
+});
+
+test("Hosting quota-project use is bound only to the Hosting deploy identity", () => {
+    assert.equal((source.match(/role: hostingQuotaConsumerRole\.name/g) ?? []).length, 1);
+    assert.match(
+        source,
+        /"hosting-deploy-quota-consumer"[\s\S]*?role: hostingQuotaConsumerRole\.name,[\s\S]*?member: hostingPrincipal/,
+    );
+    assert.equal(
+        /roles\/serviceusage\.(?:serviceUsageConsumer|serviceUsageAdmin)|roles\/(?:editor|owner)/.test(source),
+        false,
+    );
+});
+
 test("deployment evidence repository is isolated, generic, regional, and protected", () => {
     assert.match(source, /DEPLOYMENT_EVIDENCE_REPOSITORY_ID = "boundarymesh-deployments"/);
     assert.match(source, /repositoryId: DEPLOYMENT_EVIDENCE_REPOSITORY_ID/);
