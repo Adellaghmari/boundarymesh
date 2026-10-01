@@ -62,6 +62,27 @@ test("runtime and Hosting authority remain in separate jobs and use exact identi
     assert.equal(workflow.env.WIF_PROVIDER, "projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions");
 });
 
+test("runtime health uses fresh keyless ID tokens with the base service audience", () => {
+    assert.equal(workflow.env.API_SERVICE_URL, "https://boundarymesh-api-jjt6nkfsna-ez.a.run.app");
+    for (const name of ["stage-preflight-runtime", "stage-runtime", "promote-runtime"]) {
+        const job = workflow.jobs[name];
+        const auth = job.steps.find((step) => step.id === "runtime-health-auth");
+        assert.ok(auth, `${name} has no runtime health auth step`);
+        assert.equal(auth.uses, "google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093");
+        assert.equal(auth.with.service_account, "${{ env.RUNTIME_DEPLOY_SA }}");
+        assert.equal(auth.with.token_format, "id_token");
+        assert.equal(auth.with.id_token_audience, "${{ env.API_SERVICE_URL }}");
+        assert.equal(auth.with.credentials_json, undefined);
+        const healthStep = job.steps.find((step) =>
+            String(step.run ?? "").includes("cloud-runtime.mjs") &&
+            (String(step.run).includes(" preflight ") || String(step.run).includes(" stage ") || String(step.run).includes(" promote ")));
+        assert.equal(healthStep.env.BOUNDARYMESH_API_HEALTH_ID_TOKEN, "${{ steps.runtime-health-auth.outputs.id_token }}");
+        assert.ok(job.steps.indexOf(auth) < job.steps.indexOf(healthStep));
+    }
+    assert.doesNotMatch(runtime, /print-identity-token|credentials_json|service-account.*key/i);
+    assert.doesNotMatch(workflowText, /credentials_json|echo\s+.*BOUNDARYMESH_API_HEALTH_ID_TOKEN/i);
+});
+
 test("stage, promotion, and rollback are separate human-dispatched paths", () => {
     assert.match(workflow.jobs["stage-runtime"].if, /operation == 'stage'/);
     assert.match(workflow.jobs["promote-runtime"].if, /operation == 'promote'/);
@@ -116,8 +137,9 @@ test("mutation jobs revalidate preflight baselines before their first writes", (
     assert.ok(runtime.indexOf("assertRuntimePreflightMatches(await runtimePreflightSnapshot(before), preflight)") < runtime.indexOf("await patchResource(current"));
     assert.match(hosting, /canonicalJson\(before\) !== canonicalJson\(preflight\.before\)/);
     assert.match(hosting, /const mutationBaseline = await readHostingBaseline\(lock\)/);
-    assert.ok(hosting.indexOf("const mutationBaseline = await readHostingBaseline(lock)") < hosting.indexOf('firebase(["hosting:channel:deploy"'));
-    assert.ok(hosting.lastIndexOf("await assertPreviewChannelAbsent(runId") < hosting.indexOf('firebase(["hosting:channel:deploy"'));
+    const deployPreview = hosting.indexOf("await deployPreview(runId");
+    assert.ok(hosting.indexOf("const mutationBaseline = await readHostingBaseline(lock)") < deployPreview);
+    assert.ok(hosting.lastIndexOf("await assertPreviewChannelAbsent(runId") < deployPreview);
     assert.match(artifacts, /assertEvidenceVersionAbsent\(\{ operation, runId, lock \}\)/);
 });
 

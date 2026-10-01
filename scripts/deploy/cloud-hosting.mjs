@@ -145,17 +145,11 @@ export function assertHostingCommand(args, lock = loadFrozenRelease()) {
 function firebase(args, { cwd, lock = loadFrozenRelease() } = {}) {
     if (!existsSync(FIREBASE_BIN)) throw new Error("Pinned firebase-tools is not installed in scripts/deploy.");
     assertHostingCommand(args, lock);
-    const result = runChecked(process.execPath, [FIREBASE_BIN, ...args], {
+    runChecked(process.execPath, [FIREBASE_BIN, ...args], {
         cwd,
         capture: true,
         sanitizeFailureOutput: true,
     });
-    try { return JSON.parse(result.stdout); } catch { /* Some CLI releases prefix progress output. */ }
-    const lines = result.stdout.trim().split(/\r?\n/).filter(Boolean);
-    for (let index = lines.length - 1; index >= 0; index -= 1) {
-        try { return JSON.parse(lines[index]); } catch { /* Firebase may emit progress before its JSON result. */ }
-    }
-    throw new Error("Firebase CLI did not emit the required JSON result.");
 }
 
 export async function readHostingBaseline(lock = loadFrozenRelease()) {
@@ -216,14 +210,61 @@ export async function preflightHosting({ manifestPath, archivePath, workDirector
     };
 }
 
-function findPreview(result) {
-    const source = result.result ?? result;
-    const channel = source.channel ?? source;
-    const url = channel.url ?? source.url;
-    const version = channel.version?.name ?? channel.version ?? source.version?.name ?? source.version;
-    const release = channel.release?.name ?? source.release?.name ?? source.release;
-    if (!url || !version) throw new Error("Firebase preview result omitted its URL or immutable version identity.");
-    return { url, version, release: release ?? null, channel: channel.id ?? source.channelId ?? null };
+export function assertAuthoritativePreviewResult({ channel, version, runId, site }) {
+    const channelId = `bm-${runId}`;
+    const channelName = `sites/${site}/channels/${channelId}`;
+    if (!channel || channel.name !== channelName) throw new Error("Firebase REST returned the wrong preview channel.");
+    let url;
+    try { url = new URL(channel.url); } catch { throw new Error("Firebase preview channel omitted a valid URL."); }
+    if (url.protocol !== "https:" || !url.hostname.startsWith(`${site}--${channelId}-`) || !url.hostname.endsWith(".web.app")) {
+        throw new Error("Firebase preview channel URL does not match the exact site and channel.");
+    }
+    const releaseName = channel.release?.name;
+    const versionName = channel.release?.version?.name;
+    if (!new RegExp(`^sites/${site}/channels/${channelId}/releases/[A-Za-z0-9_-]+$`).test(releaseName ?? "")) {
+        throw new Error("Firebase preview channel has no exact immutable release.");
+    }
+    if (!new RegExp(`^sites/${site}/versions/[A-Za-z0-9_-]+$`).test(versionName ?? "")) {
+        throw new Error("Firebase preview release has no exact site version.");
+    }
+    if (!version || version.name !== versionName) throw new Error("Firebase REST returned the wrong released version.");
+    if (version.status !== "FINALIZED" || typeof version.finalizeTime !== "string" || !version.finalizeTime) {
+        throw new Error("Firebase preview version is not FINALIZED.");
+    }
+    return { url: channel.url, version: versionName, release: releaseName, channel: channelId };
+}
+
+export async function readAuthoritativePreview(runId, {
+    lock = loadFrozenRelease(),
+    request = hostingRequest,
+} = {}) {
+    if (!/^[1-9][0-9]*$/.test(runId)) throw new Error("GITHUB_RUN_ID must be numeric.");
+    const channelId = `bm-${runId}`;
+    const channel = await request(`sites/${lock.firebase.site}/channels/${channelId}`);
+    const versionName = channel?.release?.version?.name;
+    if (!new RegExp(`^sites/${lock.firebase.site}/versions/[A-Za-z0-9_-]+$`).test(versionName ?? "")) {
+        throw new Error("Firebase preview channel has no exact released version.");
+    }
+    const version = await request(versionName);
+    return assertAuthoritativePreviewResult({ channel, version, runId, site: lock.firebase.site });
+}
+
+export async function deployPreview(runId, {
+    workDirectory,
+    lock = loadFrozenRelease(),
+    cliDeploy = firebase,
+    request = hostingRequest,
+} = {}) {
+    const channelId = `bm-${runId}`;
+    cliDeploy([
+        "hosting:channel:deploy",
+        channelId,
+        "--project", lock.firebase.project,
+        "--expires", "7d",
+        "--non-interactive",
+        "--json",
+    ], { cwd: workDirectory, lock });
+    return readAuthoritativePreview(runId, { lock, request });
 }
 
 async function fetchResponse(url) {
@@ -288,9 +329,7 @@ export async function stageHosting({ manifestPath, archivePath, workDirectory, r
         throw new Error("Firebase Hosting live baseline changed immediately before preview mutation.");
     }
     await assertPreviewChannelAbsent(runId, { lock });
-    const result = firebase(["hosting:channel:deploy", channelId, "--project", lock.firebase.project, "--expires", "7d", "--non-interactive", "--json"], { cwd: workDirectory, lock });
-    const preview = findPreview(result);
-    if (preview.channel && preview.channel !== channelId) throw new Error("Firebase deployed an unexpected preview channel.");
+    const preview = await deployPreview(runId, { workDirectory, lock });
     const checks = await verifyHostedVersion(preview.url);
     const afterLive = await readHostingBaseline(lock);
     if (canonicalJson(before) !== canonicalJson(afterLive)) throw new Error("Stage unexpectedly changed the Firebase live release.");

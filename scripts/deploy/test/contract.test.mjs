@@ -27,8 +27,10 @@ import {
 import { buildEvidence } from "../evidence.mjs";
 import { assertEvidenceLookupAbsent, assertExactOciLookup } from "../artifacts.mjs";
 import {
+    assertAuthoritativePreviewResult,
     assertHostingCommand,
     assertPreviewChannelLookupAbsent,
+    deployPreview,
     firebaseHostingResponseValue,
     sanitizeFirebaseHostingError,
 } from "../cloud-hosting.mjs";
@@ -38,6 +40,8 @@ import {
     assertRevisionImage,
     assertRuntimePreflightMatches,
     cloudRunResponseValue,
+    health,
+    requireHealthIdToken,
     sanitizeCloudRunError,
     selectRuntimeManifest,
 } from "../cloud-runtime.mjs";
@@ -318,6 +322,125 @@ test("Firebase command fence rejects project/site lifecycle and project switchin
     assert.doesNotThrow(() => assertHostingCommand(["hosting:channel:deploy", "bm-100", "--project", "boundarymesh-dev"]));
     assert.throws(() => assertHostingCommand(["hosting:sites:create", "other", "--project", "boundarymesh-dev"]), /Forbidden/);
     assert.throws(() => assertHostingCommand(["hosting:channel:deploy", "bm-100", "--project", "other"]), /frozen project/);
+});
+
+function previewRestState({ status = "FINALIZED", channelId = "bm-100", versionSite = "boundarymesh-dev", url = "https://boundarymesh-dev--bm-100-abc.web.app" } = {}) {
+    const versionName = `sites/${versionSite}/versions/preview100`;
+    return {
+        channel: {
+            name: `sites/boundarymesh-dev/channels/${channelId}`,
+            url,
+            release: {
+                name: `sites/boundarymesh-dev/channels/${channelId}/releases/release100`,
+                version: { name: versionName },
+            },
+        },
+        version: {
+            name: versionName,
+            status,
+            ...(status === "FINALIZED" ? { finalizeTime: "2026-10-01T18:41:37Z" } : {}),
+        },
+    };
+}
+
+test("Hosting deploy ignores CLI JSON shape and trusts exact FINALIZED REST state", async () => {
+    const valid = previewRestState();
+    let cliCalls = 0;
+    const requested = [];
+    const result = await deployPreview("100", {
+        workDirectory: "/tmp/hosting",
+        cliDeploy: () => {
+            cliCalls += 1;
+            return { undocumented: { changed: "shape" } };
+        },
+        request: async (path) => {
+            requested.push(path);
+            return path.includes("/versions/") ? valid.version : valid.channel;
+        },
+    });
+    assert.equal(cliCalls, 1);
+    assert.deepEqual(requested, [
+        "sites/boundarymesh-dev/channels/bm-100",
+        "sites/boundarymesh-dev/versions/preview100",
+    ]);
+    assert.deepEqual(result, {
+        channel: "bm-100",
+        release: "sites/boundarymesh-dev/channels/bm-100/releases/release100",
+        version: "sites/boundarymesh-dev/versions/preview100",
+        url: "https://boundarymesh-dev--bm-100-abc.web.app",
+    });
+});
+
+test("Hosting authoritative result rejects missing, wrong, or non-finalized REST resources", () => {
+    const valid = previewRestState();
+    assert.throws(() => assertAuthoritativePreviewResult({ channel: null, version: valid.version, runId: "100", site: "boundarymesh-dev" }), /wrong preview channel/);
+    assert.throws(() => assertAuthoritativePreviewResult({ channel: { ...valid.channel, release: undefined }, version: valid.version, runId: "100", site: "boundarymesh-dev" }), /no exact immutable release/);
+    assert.throws(() => assertAuthoritativePreviewResult({ ...valid, channel: { ...valid.channel, name: "sites/boundarymesh-dev/channels/bm-999" }, runId: "100", site: "boundarymesh-dev" }), /wrong preview channel/);
+    assert.throws(() => assertAuthoritativePreviewResult({ ...valid, channel: { ...valid.channel, url: undefined }, runId: "100", site: "boundarymesh-dev" }), /valid URL/);
+    assert.throws(() => assertAuthoritativePreviewResult({ ...valid, version: { ...valid.version, name: "sites/other/versions/preview100" }, runId: "100", site: "boundarymesh-dev" }), /wrong released version/);
+    for (const status of ["CREATED", "ABANDONED"]) {
+        const state = previewRestState({ status });
+        assert.throws(() => assertAuthoritativePreviewResult({ ...state, runId: "100", site: "boundarymesh-dev" }), /not FINALIZED/);
+    }
+    assert.doesNotThrow(() => assertAuthoritativePreviewResult({ ...valid, runId: "100", site: "boundarymesh-dev" }));
+});
+
+test("Hosting CLI failure aborts before authoritative REST classification", async () => {
+    let restCalls = 0;
+    await assert.rejects(() => deployPreview("100", {
+        workDirectory: "/tmp/hosting",
+        cliDeploy: () => { throw new Error("Firebase CLI failed."); },
+        request: async () => {
+            restCalls += 1;
+            return {};
+        },
+    }), /Firebase CLI failed/);
+    assert.equal(restCalls, 0);
+});
+
+test("health token contract separates base audience from tagged request endpoint", async () => {
+    const token = "header.payload.signature";
+    const calls = [];
+    const result = await health("https://candidate-100---boundarymesh-api.example.run.app", {
+        audience: "https://boundarymesh-api.example.run.app",
+        path: "/api/v1/health",
+        token,
+        fetchImpl: async (url, options) => {
+            calls.push({ url: String(url), options });
+            return { ok: true, status: 200 };
+        },
+    });
+    assert.equal(calls[0].url, "https://candidate-100---boundarymesh-api.example.run.app/api/v1/health");
+    assert.equal(calls[0].options.headers.Authorization, `Bearer ${token}`);
+    assert.deepEqual(result, { path: "/api/v1/health", status: 200 });
+    assert.doesNotMatch(JSON.stringify(result), new RegExp(token.replace(/\./g, "\\.")));
+});
+
+test("health token failures are fail-closed before requests and non-2xx is rejected", async () => {
+    assert.throws(() => requireHealthIdToken({}), /missing or malformed/);
+    let calls = 0;
+    const previous = process.env.BOUNDARYMESH_API_HEALTH_ID_TOKEN;
+    delete process.env.BOUNDARYMESH_API_HEALTH_ID_TOKEN;
+    try {
+        await assert.rejects(() => health("https://candidate.example.run.app", {
+            audience: "https://service.example.run.app",
+            path: "/api/v1/health",
+            fetchImpl: async () => {
+                calls += 1;
+                return { ok: true, status: 200 };
+            },
+        }), /missing or malformed/);
+    } finally {
+        if (previous === undefined) delete process.env.BOUNDARYMESH_API_HEALTH_ID_TOKEN;
+        else process.env.BOUNDARYMESH_API_HEALTH_ID_TOKEN = previous;
+    }
+    assert.equal(calls, 0);
+    await assert.rejects(() => health("https://candidate.example.run.app", {
+        audience: "https://service.example.run.app",
+        path: "/api/v1/health",
+        token: "header.payload.signature",
+        fetchImpl: async () => ({ ok: false, status: 503 }),
+    }), /HTTP 503/);
 });
 
 test("Firebase diagnostics extract only allowlisted Google ErrorInfo fields", () => {

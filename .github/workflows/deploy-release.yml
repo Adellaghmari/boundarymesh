@@ -37,6 +37,7 @@ env:
   WIF_PROVIDER: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
   RUNTIME_DEPLOY_SA: boundarymesh-deploy@boundarymesh-dev.iam.gserviceaccount.com
   HOSTING_DEPLOY_SA: boundarymesh-hosting-deploy@boundarymesh-dev.iam.gserviceaccount.com
+  API_SERVICE_URL: https://boundarymesh-api-jjt6nkfsna-ez.a.run.app
 
 jobs:
   validate-release:
@@ -93,14 +94,19 @@ jobs:
           cache: npm
           cache-dependency-path: scripts/deploy/package-lock.json
       - run: npm ci --prefix scripts/deploy --ignore-scripts
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+      - id: runtime-health-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          token_format: id_token
+          id_token_audience: ${{ env.API_SERVICE_URL }}
           create_credentials_file: true
           export_environment_variables: true
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
       - name: Verify immutable artifacts, evidence absence, and runtime baseline
+        env:
+          BOUNDARYMESH_API_HEALTH_ID_TOKEN: ${{ steps.runtime-health-auth.outputs.id_token }}
         run: |
           node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
           node scripts/deploy/artifacts.mjs preflight-stage --manifest "$RUNNER_TEMP/release/release-manifest.json" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/artifact-preflight.json"
@@ -166,16 +172,20 @@ jobs:
           cache: npm
           cache-dependency-path: scripts/deploy/package-lock.json
       - run: npm ci --prefix scripts/deploy --ignore-scripts
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+      - id: runtime-health-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          token_format: id_token
+          id_token_audience: ${{ env.API_SERVICE_URL }}
           create_credentials_file: true
           export_environment_variables: true
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
       - name: Reverify release and stage zero-traffic runtime candidates
         env:
           PREFLIGHT_B64: ${{ needs.stage-preflight-runtime.outputs.value }}
+          BOUNDARYMESH_API_HEALTH_ID_TOKEN: ${{ steps.runtime-health-auth.outputs.id_token }}
         run: |
           node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
           node scripts/deploy/evidence.mjs decode-json --value "$PREFLIGHT_B64" > "$RUNNER_TEMP/runtime-preflight.json"
@@ -314,10 +324,13 @@ jobs:
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
         with: { node-version: "22" }
       - run: npm ci --prefix scripts/deploy --ignore-scripts
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+      - id: runtime-health-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          token_format: id_token
+          id_token_audience: ${{ env.API_SERVICE_URL }}
           create_credentials_file: true
           export_environment_variables: true
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
@@ -325,6 +338,7 @@ jobs:
         env:
           EVIDENCE_B64: ${{ needs.load-stage-evidence.outputs.evidence_b64 }}
           HOSTING_BASELINE: ${{ needs.promotion-hosting-preflight.outputs.baseline }}
+          BOUNDARYMESH_API_HEALTH_ID_TOKEN: ${{ steps.runtime-health-auth.outputs.id_token }}
         run: |
           node scripts/deploy/evidence.mjs decode --value "$EVIDENCE_B64" > "$RUNNER_TEMP/stage.json"
           node scripts/deploy/cloud-runtime.mjs promote --evidence "$RUNNER_TEMP/stage.json" --hosting-baseline "$HOSTING_BASELINE" --output "$RUNNER_TEMP/runtime.json"
