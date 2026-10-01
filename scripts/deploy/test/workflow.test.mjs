@@ -89,7 +89,7 @@ test("preflight jobs contain every global validation and no mutating command", (
     const hostingPreflight = JSON.stringify(workflow.jobs["stage-preflight-hosting"]);
     assert.match(runtimePreflight, /download-release/);
     assert.match(runtimePreflight, /artifacts\.mjs preflight-stage/);
-    assert.match(runtimePreflight, /cloud-runtime\.mjs preflight/);
+    assert.match(runtimePreflight, /cloud-runtime\.mjs preflight --manifest/);
     assert.match(hostingPreflight, /download-release/);
     assert.match(hostingPreflight, /download-frontend/);
     assert.match(hostingPreflight, /cloud-hosting\.mjs preflight/);
@@ -98,6 +98,8 @@ test("preflight jobs contain every global validation and no mutating command", (
     }
     assert.match(artifacts, /preflightStageArtifacts/);
     assert.match(artifacts, /assertExactOciLookup/);
+    assert.match(runtime, /resolveRuntimeImageContracts/);
+    assert.match(runtime, /selectRuntimeManifest/);
     assert.match(artifacts, /assertEvidenceVersionAbsent/);
     assert.match(hosting, /preflightHosting/);
     assert.match(hosting, /assertPreviewChannelAbsent/);

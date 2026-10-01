@@ -194,12 +194,44 @@
         "split": { "type": "array", "items": { "$ref": "#/$defs/trafficEntry" }, "minItems": 1 }
       }
     },
+    "imageResolution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["parentDigest", "parentMediaType", "runtimeDigest", "runtimeMediaType", "platform", "relationship"],
+      "properties": {
+        "parentDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "parentMediaType": {
+          "enum": [
+            "application/vnd.oci.image.index.v1+json",
+            "application/vnd.docker.distribution.manifest.list.v2+json",
+            "application/vnd.oci.image.manifest.v1+json",
+            "application/vnd.docker.distribution.manifest.v2+json"
+          ]
+        },
+        "runtimeDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "runtimeMediaType": {
+          "enum": [
+            "application/vnd.oci.image.manifest.v1+json",
+            "application/vnd.docker.distribution.manifest.v2+json"
+          ]
+        },
+        "platform": {
+          "type": "object", "additionalProperties": false,
+          "required": ["os", "architecture"],
+          "properties": {
+            "os": { "const": "linux" },
+            "architecture": { "const": "amd64" }
+          }
+        },
+        "relationship": { "enum": ["single-manifest", "oci-index-child"] }
+      }
+    },
     "candidateService": {
       "type": "object", "additionalProperties": false,
-      "required": ["revision", "image", "traffic", "health"],
+      "required": ["revision", "image", "imageResolution", "traffic", "health"],
       "properties": {
         "revision": { "type": "string", "minLength": 1 },
         "image": { "type": "string", "pattern": "@sha256:[0-9a-f]{64}$" },
+        "imageResolution": { "$ref": "#/$defs/imageResolution" },
         "traffic": { "type": "array", "items": { "$ref": "#/$defs/trafficEntry" }, "minItems": 1 },
         "health": {
           "type": "object", "additionalProperties": false,
@@ -210,10 +242,11 @@
     },
     "candidateWorker": {
       "type": "object", "additionalProperties": false,
-      "required": ["revision", "image", "split", "ready"],
+      "required": ["revision", "image", "imageResolution", "split", "ready"],
       "properties": {
         "revision": { "type": "string", "minLength": 1 },
         "image": { "type": "string", "pattern": "@sha256:[0-9a-f]{64}$" },
+        "imageResolution": { "$ref": "#/$defs/imageResolution" },
         "split": { "type": "array", "items": { "$ref": "#/$defs/trafficEntry" }, "minItems": 1 },
         "ready": { "const": true }
       }

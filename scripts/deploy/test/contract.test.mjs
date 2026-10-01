@@ -34,9 +34,12 @@ import {
 } from "../cloud-hosting.mjs";
 import {
     activeProductionRevision,
+    assertOciPreflightMatches,
+    assertRevisionImage,
     assertRuntimePreflightMatches,
     cloudRunResponseValue,
     sanitizeCloudRunError,
+    selectRuntimeManifest,
 } from "../cloud-runtime.mjs";
 import { runChecked, sanitizeChildProcessDiagnostics } from "../process.mjs";
 
@@ -45,6 +48,19 @@ const lock = loadFrozenRelease();
 const image = (name, digest) => `europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/${name}@${digest}`;
 const traffic = (revision, percent = 100, tag = null) => [{ type: "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION", revision, percent, tag }];
 const split = (revision, percent = 100) => [{ type: "INSTANCE_SPLIT_ALLOCATION_TYPE_REVISION", revision, percent, tag: null }];
+const runtimeDigests = {
+    api: "sha256:41e70a6fc2acd7716b91de754f28e4ac4f1a9b1cb05467a44d1f7986f2c2eff9",
+    web: "sha256:3c6c39778e5df4445ad9e71db5e0ff188dfd751094b5fb8cdc520bfdbd050109",
+    worker: "sha256:32e4c4aebc758f01053d3488e35e80d0294ce59e13031fb2a55c71dbaac426ed",
+};
+const imageResolution = (subject) => ({
+    parentDigest: lock.images[subject],
+    parentMediaType: "application/vnd.oci.image.index.v1+json",
+    runtimeDigest: runtimeDigests[subject],
+    runtimeMediaType: "application/vnd.oci.image.manifest.v1+json",
+    platform: { os: "linux", architecture: "amd64" },
+    relationship: "oci-index-child",
+});
 
 function stageParts() {
     const apiImage = image("boundarymesh-api", lock.images.api);
@@ -58,9 +74,9 @@ function stageParts() {
                 worker: { revision: "boundarymesh-worker-00002-v6j", image: workerImage, split: split("boundarymesh-worker-00002-v6j") },
             },
             candidates: {
-                api: { revision: "boundarymesh-api-c-100", image: apiImage, traffic: [...traffic("boundarymesh-api-00004-9hw"), ...traffic("boundarymesh-api-c-100", 0, "candidate-100")], health: { path: "/api/v1/health", status: 200 } },
-                web: { revision: "boundarymesh-web-c-100", image: webImage, traffic: [...traffic("boundarymesh-web-00004-k48"), ...traffic("boundarymesh-web-c-100", 0, "candidate-100")], health: { path: "/actuator/health", status: 200 } },
-                worker: { revision: "boundarymesh-worker-c-100", image: workerImage, split: [...split("boundarymesh-worker-00002-v6j"), ...split("boundarymesh-worker-c-100", 0)], ready: true },
+                api: { revision: "boundarymesh-api-c-100", image: apiImage, imageResolution: imageResolution("api"), traffic: [...traffic("boundarymesh-api-00004-9hw"), ...traffic("boundarymesh-api-c-100", 0, "candidate-100")], health: { path: "/api/v1/health", status: 200 } },
+                web: { revision: "boundarymesh-web-c-100", image: webImage, imageResolution: imageResolution("web"), traffic: [...traffic("boundarymesh-web-00004-k48"), ...traffic("boundarymesh-web-c-100", 0, "candidate-100")], health: { path: "/actuator/health", status: 200 } },
+                worker: { revision: "boundarymesh-worker-c-100", image: workerImage, imageResolution: imageResolution("worker"), split: [...split("boundarymesh-worker-00002-v6j"), ...split("boundarymesh-worker-c-100", 0)], ready: true },
             },
             checks: { iamUnchanged: true },
         },
@@ -682,6 +698,143 @@ test("OCI preflight accepts only the exact immutable digest identity", () => {
     assert.throws(() => assertExactOciLookup({ status: 1, stdout: "", stderr: "NOT_FOUND" }, reference), /lookup failed/);
     assert.throws(() => assertExactOciLookup({ status: 0, stdout: "not-json", stderr: "" }, reference), /malformed JSON/);
     assert.throws(() => assertExactOciLookup({ status: 0, stdout: JSON.stringify({ image_summary: { fully_qualified_digest: image("boundarymesh-api", `sha256:${"0".repeat(64)}`) } }), stderr: "" }, reference), /different digest/);
+});
+
+test("OCI platform contract accepts a single OCI or Docker image manifest", () => {
+    const document = {
+        schemaVersion: 2,
+        config: { digest: `sha256:${"1".repeat(64)}` },
+        layers: [],
+    };
+    for (const mediaType of [
+        "application/vnd.oci.image.manifest.v1+json",
+        "application/vnd.docker.distribution.manifest.v2+json",
+    ]) {
+        assert.deepEqual(
+            selectRuntimeManifest({ frozenDigest: lock.images.api, mediaType, document }),
+            {
+                parentDigest: lock.images.api,
+                parentMediaType: mediaType,
+                runtimeDigest: lock.images.api,
+                runtimeMediaType: mediaType,
+                platform: { os: "linux", architecture: "amd64" },
+                relationship: "single-manifest",
+            },
+        );
+    }
+});
+
+test("OCI platform contract selects exactly one linux amd64 child from a multi-platform index", () => {
+    const amd64 = `sha256:${"2".repeat(64)}`;
+    const arm64 = `sha256:${"3".repeat(64)}`;
+    const contract = selectRuntimeManifest({
+        frozenDigest: lock.images.api,
+        mediaType: "application/vnd.oci.image.index.v1+json",
+        document: {
+            schemaVersion: 2,
+            manifests: [
+                { mediaType: "application/vnd.oci.image.manifest.v1+json", digest: arm64, platform: { os: "linux", architecture: "arm64" } },
+                { mediaType: "application/vnd.oci.image.manifest.v1+json", digest: amd64, platform: { os: "linux", architecture: "amd64" } },
+            ],
+        },
+    });
+    assert.equal(contract.runtimeDigest, amd64);
+    assert.equal(contract.relationship, "oci-index-child");
+});
+
+test("OCI platform contract ignores BuildKit attestation manifests", () => {
+    const runnable = `sha256:${"4".repeat(64)}`;
+    const attestation = `sha256:${"5".repeat(64)}`;
+    const contract = selectRuntimeManifest({
+        frozenDigest: lock.images.api,
+        mediaType: "application/vnd.oci.image.index.v1+json",
+        document: {
+            schemaVersion: 2,
+            manifests: [
+                { mediaType: "application/vnd.oci.image.manifest.v1+json", digest: runnable, platform: { os: "linux", architecture: "amd64" } },
+                {
+                    mediaType: "application/vnd.oci.image.manifest.v1+json",
+                    digest: attestation,
+                    platform: { os: "unknown", architecture: "unknown" },
+                    annotations: {
+                        "vnd.docker.reference.digest": runnable,
+                        "vnd.docker.reference.type": "attestation-manifest",
+                    },
+                },
+            ],
+        },
+    });
+    assert.equal(contract.runtimeDigest, runnable);
+});
+
+test("OCI platform contract rejects zero or multiple runnable linux amd64 children", () => {
+    const descriptor = (digit, architecture = "amd64") => ({
+        mediaType: "application/vnd.oci.image.manifest.v1+json",
+        digest: `sha256:${digit.repeat(64)}`,
+        platform: { os: "linux", architecture },
+    });
+    const index = (manifests) => ({
+        frozenDigest: lock.images.api,
+        mediaType: "application/vnd.oci.image.index.v1+json",
+        document: { schemaVersion: 2, manifests },
+    });
+    assert.throws(() => selectRuntimeManifest(index([descriptor("6", "arm64")])), /exactly one runnable linux\/amd64/);
+    assert.throws(() => selectRuntimeManifest(index([descriptor("7"), descriptor("8")])), /exactly one runnable linux\/amd64/);
+});
+
+test("OCI platform contract rejects malformed indexes and descriptors", () => {
+    assert.throws(
+        () => selectRuntimeManifest({
+            frozenDigest: lock.images.api,
+            mediaType: "application/vnd.oci.image.index.v1+json",
+            document: { schemaVersion: 2, manifests: "not-an-array" },
+        }),
+        /neither a runnable image manifest nor an image index/,
+    );
+    assert.throws(
+        () => selectRuntimeManifest({
+            frozenDigest: lock.images.api,
+            mediaType: "application/vnd.oci.image.index.v1+json",
+            document: {
+                schemaVersion: 2,
+                manifests: [{ mediaType: "application/vnd.oci.image.manifest.v1+json", digest: "bad", platform: { os: "linux", architecture: "amd64" } }],
+            },
+        }),
+        /exactly one runnable linux\/amd64/,
+    );
+});
+
+test("candidate revision assertion accepts only the precomputed exact runtime digest", () => {
+    const frozenImage = image("boundarymesh-api", lock.images.api);
+    const contract = imageResolution("api");
+    assert.doesNotThrow(() => assertRevisionImage({
+        containers: [{ image: image("boundarymesh-api", contract.runtimeDigest) }],
+    }, frozenImage, contract));
+    assert.throws(() => assertRevisionImage({
+        containers: [{ image: image("boundarymesh-api", `sha256:${"9".repeat(64)}`) }],
+    }, frozenImage, contract), /exact allowed runtime platform digest/);
+    assert.throws(() => assertRevisionImage({
+        containers: [{ imageDigest: `sha256:${"a".repeat(64)}` }],
+    }, frozenImage, contract), /exact allowed runtime platform digest/);
+    assert.throws(() => assertRevisionImage({
+        containers: [{ image: image("boundarymesh-api", contract.runtimeDigest) }],
+    }, frozenImage, { ...contract, parentDigest: `sha256:${"b".repeat(64)}` }), /not bound to the frozen parent/);
+});
+
+test("OCI preflight contracts stay bound to every frozen parent and exact platform", () => {
+    const manifest = verifyFrozenReleaseFile(fixture);
+    const contracts = Object.fromEntries(["api", "web", "worker"].map((subject) => [
+        subject,
+        imageResolution(subject),
+    ]));
+    assert.equal(assertOciPreflightMatches(manifest, contracts), contracts);
+    assert.throws(
+        () => assertOciPreflightMatches(manifest, {
+            ...contracts,
+            web: { ...contracts.web, platform: { os: "linux", architecture: "arm64" } },
+        }),
+        /web OCI preflight contract/,
+    );
 });
 
 test("preview collision lookup accepts only exact-site canonical absence", () => {

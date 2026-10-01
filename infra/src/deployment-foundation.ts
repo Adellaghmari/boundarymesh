@@ -11,6 +11,7 @@ export const RUNTIME_DEPLOY_SERVICE_ACCOUNT_ID = "boundarymesh-deploy" as const;
 export const HOSTING_DEPLOY_SERVICE_ACCOUNT_ID = "boundarymesh-hosting-deploy" as const;
 export const CONTROLLED_RUN_DEPLOY_ROLE_ID = "boundarymeshControlledRunDeployer" as const;
 export const RUN_OPERATION_READER_ROLE_ID = "boundarymeshRunOperationReader" as const;
+export const HOSTING_RUN_READER_ROLE_ID = "boundarymeshHostingRunReader" as const;
 export const HOSTING_QUOTA_CONSUMER_ROLE_ID = "boundarymeshHostingQuotaConsumer" as const;
 export const DEPLOYMENT_EVIDENCE_REPOSITORY_ID = "boundarymesh-deployments" as const;
 
@@ -31,6 +32,9 @@ export const CONTROLLED_RUN_DEPLOY_PERMISSIONS = [
 ] as const;
 export const RUN_OPERATION_READER_PERMISSIONS = [
     "run.operations.get",
+] as const;
+export const HOSTING_RUN_READER_PERMISSIONS = [
+    "run.services.get",
 ] as const;
 
 export const FIREBASE_HOSTING_ROLE = "roles/firebasehosting.admin" as const;
@@ -232,6 +236,28 @@ export function defineDeploymentFoundation(
             member: hostingPrincipal,
         },
     );
+    const hostingRunReaderRole = new gcp.projects.IAMCustomRole(
+        "hosting-run-reader-role",
+        {
+            project: foundation.gcpProjectId,
+            roleId: HOSTING_RUN_READER_ROLE_ID,
+            title: "BoundaryMesh Hosting Run Reader",
+            description:
+                "Allows the isolated Firebase Hosting deployment identity to read only the " +
+                "BoundaryMesh Web Cloud Run service required to validate Hosting rewrites.",
+            permissions: [...HOSTING_RUN_READER_PERMISSIONS],
+        },
+    );
+    const hostingWebRunReader = new gcp.cloudrunv2.ServiceIamMember(
+        "hosting-deploy-web-run-reader",
+        {
+            project: foundation.gcpProjectId,
+            location: foundation.region,
+            name: dependencies.webService.name,
+            role: hostingRunReaderRole.name,
+            member: hostingPrincipal,
+        },
+    );
 
     // Firebase Hosting currently supports predefined roles rather than custom
     // roles. This project-level grant is isolated to the Hosting-only identity.
@@ -302,6 +328,8 @@ export function defineDeploymentFoundation(
         runtimeDockerReader,
         runtimeReleaseReader,
         hostingReleaseReader,
+        hostingRunReaderRole,
+        hostingWebRunReader,
         hostingAdmin,
         hostingQuotaConsumerRole,
         hostingQuotaConsumer,

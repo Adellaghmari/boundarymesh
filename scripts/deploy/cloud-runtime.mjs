@@ -26,6 +26,16 @@ const MAX_DIAGNOSTIC_MESSAGE_LENGTH = 2048;
 const MAX_DIAGNOSTIC_FIELD_LENGTH = 1024;
 const MAX_ERROR_INFO_ENTRIES = 8;
 const ERROR_INFO_TYPE = "type.googleapis.com/google.rpc.ErrorInfo";
+const OCI_DIGEST = /^sha256:[0-9a-f]{64}$/;
+const OCI_MANIFEST_MEDIA_TYPES = new Set([
+    "application/vnd.oci.image.manifest.v1+json",
+    "application/vnd.docker.distribution.manifest.v2+json",
+]);
+const OCI_INDEX_MEDIA_TYPES = new Set([
+    "application/vnd.oci.image.index.v1+json",
+    "application/vnd.docker.distribution.manifest.list.v2+json",
+]);
+const OCI_ACCEPT = [...OCI_INDEX_MEDIA_TYPES, ...OCI_MANIFEST_MEDIA_TYPES].join(", ");
 const SAFE_ERROR_INFO_METADATA = new Set([
     "service",
     "permission",
@@ -103,6 +113,136 @@ export function cloudRunResponseValue(response) {
 
 function accessToken() {
     return runChecked("gcloud", ["auth", "print-access-token", "--quiet"], { capture: true }).stdout.trim();
+}
+
+function parseFrozenImageReference(reference) {
+    const match = String(reference).match(/^([^/]+)\/(.+)@(sha256:[0-9a-f]{64})$/);
+    if (!match) throw new Error("Frozen runtime image is not an immutable OCI digest reference.");
+    return { registry: match[1], repository: match[2], digest: match[3] };
+}
+
+function assertRunnableManifest(document, mediaType) {
+    if (!document || typeof document !== "object" || Array.isArray(document) ||
+        document.schemaVersion !== 2 || !OCI_MANIFEST_MEDIA_TYPES.has(mediaType) ||
+        !document.config || !OCI_DIGEST.test(document.config.digest ?? "") ||
+        !Array.isArray(document.layers)) {
+        throw new Error("OCI runtime manifest is malformed or not runnable.");
+    }
+}
+
+export function selectRuntimeManifest({
+    frozenDigest,
+    mediaType,
+    document,
+    os = "linux",
+    architecture = "amd64",
+}) {
+    if (!OCI_DIGEST.test(frozenDigest ?? "") || !document || typeof document !== "object" ||
+        Array.isArray(document) || document.schemaVersion !== 2) {
+        throw new Error("Frozen OCI manifest document is malformed.");
+    }
+    if (OCI_MANIFEST_MEDIA_TYPES.has(mediaType)) {
+        assertRunnableManifest(document, mediaType);
+        return {
+            parentDigest: frozenDigest,
+            parentMediaType: mediaType,
+            runtimeDigest: frozenDigest,
+            runtimeMediaType: mediaType,
+            platform: { os, architecture },
+            relationship: "single-manifest",
+        };
+    }
+    if (!OCI_INDEX_MEDIA_TYPES.has(mediaType) || !Array.isArray(document.manifests)) {
+        throw new Error("Frozen OCI object is neither a runnable image manifest nor an image index.");
+    }
+    const candidates = document.manifests.filter((descriptor) =>
+        descriptor && typeof descriptor === "object" &&
+        OCI_MANIFEST_MEDIA_TYPES.has(descriptor.mediaType) &&
+        OCI_DIGEST.test(descriptor.digest ?? "") &&
+        descriptor.platform?.os === os &&
+        descriptor.platform?.architecture === architecture &&
+        descriptor.annotations?.["vnd.docker.reference.type"] !== "attestation-manifest"
+    );
+    if (candidates.length !== 1) {
+        throw new Error(`Frozen OCI index must contain exactly one runnable ${os}/${architecture} manifest.`);
+    }
+    return {
+        parentDigest: frozenDigest,
+        parentMediaType: mediaType,
+        runtimeDigest: candidates[0].digest,
+        runtimeMediaType: candidates[0].mediaType,
+        platform: { os, architecture },
+        relationship: "oci-index-child",
+    };
+}
+
+async function fetchOciManifest(registry, repository, digest, token) {
+    const response = await fetch(`https://${registry}/v2/${repository}/manifests/${digest}`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: OCI_ACCEPT },
+        redirect: "error",
+        signal: AbortSignal.timeout(60_000),
+    });
+    if (!response.ok) throw new Error(`OCI registry manifest lookup failed with HTTP ${response.status}.`);
+    const declaredLength = Number(response.headers.get("content-length") ?? 0);
+    if (declaredLength > MAX_API_RESPONSE_BYTES) throw new Error("OCI registry manifest exceeded the bounded size limit.");
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (bytes.length > MAX_API_RESPONSE_BYTES) throw new Error("OCI registry manifest exceeded the bounded size limit.");
+    const actualDigest = `sha256:${sha256Bytes(bytes)}`;
+    if (actualDigest !== digest || response.headers.get("docker-content-digest") !== digest) {
+        throw new Error("OCI registry response does not cryptographically match the requested digest.");
+    }
+    let document;
+    try { document = JSON.parse(bytes.toString("utf8")); } catch { throw new Error("OCI registry returned malformed JSON."); }
+    const mediaType = String(document.mediaType ?? response.headers.get("content-type") ?? "").split(";")[0].trim();
+    return { document, mediaType };
+}
+
+export async function resolveFrozenRuntimeImage(reference, { token = accessToken() } = {}) {
+    const { registry, repository, digest } = parseFrozenImageReference(reference);
+    const parent = await fetchOciManifest(registry, repository, digest, token);
+    const contract = selectRuntimeManifest({
+        frozenDigest: digest,
+        mediaType: parent.mediaType,
+        document: parent.document,
+    });
+    if (contract.relationship === "oci-index-child") {
+        const child = await fetchOciManifest(registry, repository, contract.runtimeDigest, token);
+        assertRunnableManifest(child.document, child.mediaType);
+        if (child.mediaType !== contract.runtimeMediaType) {
+            throw new Error("OCI child manifest media type differs from its signed index descriptor.");
+        }
+    }
+    return contract;
+}
+
+async function resolveRuntimeImageContracts(manifest) {
+    const token = accessToken();
+    return Object.fromEntries(await Promise.all(["api", "web", "worker"].map(async (subject) => {
+        const artifact = manifest.artifacts[subject];
+        const reference = `${artifact.repository}/${artifact.image}@${artifact.digest}`;
+        return [subject, await resolveFrozenRuntimeImage(reference, { token })];
+    })));
+}
+
+export function assertOciPreflightMatches(manifest, contracts) {
+    for (const subject of ["api", "web", "worker"]) {
+        const contract = contracts?.[subject];
+        if (!contract || contract.parentDigest !== manifest.artifacts[subject].digest ||
+            !OCI_DIGEST.test(contract.runtimeDigest ?? "") ||
+            contract.platform?.os !== "linux" || contract.platform?.architecture !== "amd64" ||
+            !["single-manifest", "oci-index-child"].includes(contract.relationship) ||
+            !OCI_MANIFEST_MEDIA_TYPES.has(contract.runtimeMediaType) ||
+            (contract.relationship === "single-manifest" &&
+                (!OCI_MANIFEST_MEDIA_TYPES.has(contract.parentMediaType) ||
+                    contract.runtimeMediaType !== contract.parentMediaType ||
+                    contract.runtimeDigest !== contract.parentDigest)) ||
+            (contract.relationship === "oci-index-child" &&
+                (!OCI_INDEX_MEDIA_TYPES.has(contract.parentMediaType) ||
+                    contract.runtimeDigest === contract.parentDigest))) {
+            throw new Error(`${subject} OCI preflight contract differs from the frozen runtime artifact.`);
+        }
+    }
+    return contracts;
 }
 
 async function request(path, { method = "GET", query = {}, body, expected = [200], token = accessToken() } = {}) {
@@ -267,9 +407,14 @@ async function getRevision(revisionName) {
     return request(revisionName);
 }
 
-function assertRevisionImage(revision, expectedImage) {
-    if (revision.containers?.[0]?.imageDigest !== expectedImage.split("@")[1] && revision.containers?.[0]?.image !== expectedImage) {
-        throw new Error("Candidate revision does not contain the frozen image digest.");
+export function assertRevisionImage(revision, expectedImage, contract) {
+    const frozenDigest = expectedImage.split("@")[1];
+    if (contract?.parentDigest !== frozenDigest) throw new Error("Candidate OCI contract is not bound to the frozen parent digest.");
+    const resolvedImage = revision.containers?.[0]?.image;
+    const resolvedDigest = revision.containers?.[0]?.imageDigest ??
+        String(resolvedImage ?? "").match(/@(sha256:[0-9a-f]{64})$/)?.[1];
+    if (resolvedDigest !== contract.runtimeDigest) {
+        throw new Error("Candidate revision does not contain the exact allowed runtime platform digest.");
     }
 }
 
@@ -334,17 +479,28 @@ async function runtimePreflightSnapshot(all) {
 }
 
 export function assertRuntimePreflightMatches(current, approved) {
-    if (!approved || canonicalJson(current) !== canonicalJson(approved)) {
+    const approvedRuntime = approved && {
+        baseline: approved.baseline,
+        etags: approved.etags,
+        invariants: approved.invariants,
+    };
+    if (!approvedRuntime || canonicalJson(current) !== canonicalJson(approvedRuntime)) {
         throw new Error("Runtime baseline or ETag changed after global stage preflight.");
     }
 }
 
-export async function preflightRuntime({ lock = loadFrozenRelease() } = {}) {
-    return runtimePreflightSnapshot(await readAll(lock));
+export async function preflightRuntime({ manifestPath, lock = loadFrozenRelease() } = {}) {
+    if (!manifestPath) throw new Error("Runtime preflight requires the frozen release manifest.");
+    const manifest = verifyFrozenReleaseFile(manifestPath, lock);
+    return {
+        ...(await runtimePreflightSnapshot(await readAll(lock))),
+        oci: await resolveRuntimeImageContracts(manifest),
+    };
 }
 
 export async function stageRuntime({ manifestPath, runId, preflight, lock = loadFrozenRelease() }) {
     const manifest = verifyFrozenReleaseFile(manifestPath, lock);
+    const oci = assertOciPreflightMatches(manifest, preflight?.oci);
     const before = await readAll(lock);
     assertRuntimePreflightMatches(await runtimePreflightSnapshot(before), preflight);
     const beforePublic = await productionRuntimeState(before);
@@ -361,13 +517,13 @@ export async function stageRuntime({ manifestPath, runId, preflight, lock = load
         assertEtag(current.etag, before[subject].etag);
         assertInvariantUnchanged(runtimeInvariant(current, before[`${subject}Iam`]), runtimeInvariant(after, iam), `${subject} stage`);
         const revisionResource = await getRevision(`${after.name}/revisions/${revision}`);
-        assertRevisionImage(revisionResource, image);
+        assertRevisionImage(revisionResource, image, oci[subject]);
         const trafficStatus = (after.trafficStatuses ?? []).find((entry) => revisionId(entry.revision) === revision);
         if (Number(trafficStatus?.percent ?? 0) !== 0 || trafficStatus?.tag !== stageTag(runId)) throw new Error(`${subject} candidate received production traffic.`);
         const check = subject === "api"
             ? await health(trafficStatus.uri, { audience: after.uri, path: "/api/v1/health" })
             : await health(trafficStatus.uri, { path: "/actuator/health" });
-        candidates[subject] = { revision, image, traffic: normalizeTraffic(traffic), health: check };
+        candidates[subject] = { revision, image, imageResolution: oci[subject], traffic: normalizeTraffic(traffic), health: check };
     }
     const currentWorker = before.worker;
     const workerRevision = stageRevision(WORKER, runId);
@@ -378,10 +534,10 @@ export async function stageRuntime({ manifestPath, runId, preflight, lock = load
     const workerIam = await getIam(afterWorker.name);
     assertInvariantUnchanged(runtimeInvariant(currentWorker, before.workerIam), runtimeInvariant(afterWorker, workerIam), "worker stage");
     const workerRevisionResource = await getRevision(`${afterWorker.name}/revisions/${workerRevision}`);
-    assertRevisionImage(workerRevisionResource, workerImage);
+    assertRevisionImage(workerRevisionResource, workerImage, oci.worker);
     const workerStatus = (afterWorker.instanceSplitStatuses ?? []).find((entry) => revisionId(entry.revision) === workerRevision);
     if (Number(workerStatus?.percent ?? 0) !== 0) throw new Error("Worker candidate received production instances.");
-    candidates.worker = { revision: workerRevision, image: workerImage, split: normalizeTraffic(instanceSplits), ready: true };
+    candidates.worker = { revision: workerRevision, image: workerImage, imageResolution: oci.worker, split: normalizeTraffic(instanceSplits), ready: true };
     const final = await readAll(lock);
     assertIamBoundary(final);
     assertStageBaseline({ ...(await productionRuntimeState(final)), hosting: null }, { ...beforePublic, hosting: null });
@@ -458,7 +614,7 @@ async function main() {
             preflight: JSON.parse(readFileSync(resolve(option("--preflight")), "utf8")),
         });
     } else if (command === "preflight") {
-        result = await preflightRuntime();
+        result = await preflightRuntime({ manifestPath: resolve(option("--manifest")) });
     } else if (command === "promote") {
         result = await promoteRuntime({ stageEvidence: JSON.parse(readFileSync(option("--evidence"), "utf8")), currentHosting: JSON.parse(option("--hosting-baseline")) });
     } else if (command === "rollback") {

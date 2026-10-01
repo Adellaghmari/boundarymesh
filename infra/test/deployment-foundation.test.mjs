@@ -90,8 +90,30 @@ test("Run operation polling uses an exact project-level single-permission role",
     );
 });
 
+test("Hosting Cloud Run read uses an exact Web-service-scoped single-permission role", () => {
+    assert.match(source, /HOSTING_RUN_READER_ROLE_ID = "boundarymeshHostingRunReader"/);
+    assert.deepEqual(stringArray(source, "HOSTING_RUN_READER_PERMISSIONS"), [
+        "run.services.get",
+    ]);
+    assert.equal(stringArray(source, "HOSTING_RUN_READER_PERMISSIONS").length, 1);
+    assert.match(source, /title: "BoundaryMesh Hosting Run Reader"/);
+    assert.match(
+        source,
+        /"hosting-run-reader-role"[\s\S]*?roleId: HOSTING_RUN_READER_ROLE_ID[\s\S]*?permissions: \[\.\.\.HOSTING_RUN_READER_PERMISSIONS\]/,
+    );
+    assert.equal((source.match(/role: hostingRunReaderRole\.name/g) ?? []).length, 1);
+    assert.match(
+        source,
+        /"hosting-deploy-web-run-reader"[\s\S]*?name: dependencies\.webService\.name,[\s\S]*?role: hostingRunReaderRole\.name,[\s\S]*?member: hostingPrincipal/,
+    );
+    assert.equal(/"hosting-deploy-web-run-reader"\s*,\s*\{[^}]*member: runtimePrincipal/.test(source), false);
+    assert.equal(/new gcp\.projects\.IAMMember\(\s*"[^"]+",\s*\{[^}]*hostingRunReaderRole\.name/.test(source), false);
+    assert.equal(/roles\/run\.(?:admin|developer|viewer)/.test(source), false);
+    assert.equal(/roles\/firebase\.(?:admin|developAdmin)/.test(source), false);
+});
+
 test("Run role, actAs, and Invoker grants are resource scoped", () => {
-    assert.equal((source.match(/new gcp\.cloudrunv2\.ServiceIamMember/g) ?? []).length, 3);
+    assert.equal((source.match(/new gcp\.cloudrunv2\.ServiceIamMember/g) ?? []).length, 4);
     assert.equal((source.match(/new gcp\.cloudrunv2\.WorkerPoolIamMember/g) ?? []).length, 1);
     for (const target of ["dependencies.apiService.name", "dependencies.webService.name", "dependencies.workerPool.name"]) {
         assert.ok(source.includes(`name: ${target}`));

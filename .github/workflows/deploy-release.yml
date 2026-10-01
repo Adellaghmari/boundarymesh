@@ -104,7 +104,7 @@ jobs:
         run: |
           node scripts/deploy/artifacts.mjs download-release --destination "$RUNNER_TEMP/release"
           node scripts/deploy/artifacts.mjs preflight-stage --manifest "$RUNNER_TEMP/release/release-manifest.json" --run-id "$GITHUB_RUN_ID" --output "$RUNNER_TEMP/artifact-preflight.json"
-          node scripts/deploy/cloud-runtime.mjs preflight --output "$RUNNER_TEMP/runtime-preflight.json"
+          node scripts/deploy/cloud-runtime.mjs preflight --manifest "$RUNNER_TEMP/release/release-manifest.json" --output "$RUNNER_TEMP/runtime-preflight.json"
       - id: result
         run: echo "value=$(node scripts/deploy/evidence.mjs encode --file "$RUNNER_TEMP/runtime-preflight.json")" >> "$GITHUB_OUTPUT"
 
