@@ -32,7 +32,13 @@ import {
     firebaseHostingResponseValue,
     sanitizeFirebaseHostingError,
 } from "../cloud-hosting.mjs";
-import { activeProductionRevision, assertRuntimePreflightMatches } from "../cloud-runtime.mjs";
+import {
+    activeProductionRevision,
+    assertRuntimePreflightMatches,
+    cloudRunResponseValue,
+    sanitizeCloudRunError,
+} from "../cloud-runtime.mjs";
+import { runChecked, sanitizeChildProcessDiagnostics } from "../process.mjs";
 
 const fixture = join(import.meta.dirname, "fixtures", "release-manifest.json");
 const lock = loadFrozenRelease();
@@ -438,6 +444,211 @@ test("Firebase diagnostics never disclose credentials, headers, or unknown paylo
 test("Firebase success responses remain unchanged", () => {
     const payload = { name: "projects/boundarymesh-dev/sites/boundarymesh-dev" };
     assert.equal(firebaseHostingResponseValue({ status: 200, ok: true, payload }), payload);
+});
+
+test("Cloud Run diagnostics extract only allowlisted Google ErrorInfo fields", () => {
+    const diagnostic = sanitizeCloudRunError({
+        httpStatus: 403,
+        payload: {
+            error: {
+                code: 403,
+                status: "PERMISSION_DENIED",
+                message: "The caller cannot poll this operation.",
+                details: [{
+                    "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                    reason: "IAM_PERMISSION_DENIED",
+                    domain: "googleapis.com",
+                    metadata: {
+                        service: "run.googleapis.com",
+                        permission: "run.operations.get",
+                        resource: "projects/boundarymesh-dev/locations/europe-west4/operations/operation-1",
+                        consumer: "projects/boundarymesh-dev",
+                        quota_project: "boundarymesh-dev",
+                        project: "boundarymesh-dev",
+                        location: "europe-west4",
+                        operation: "operation-1",
+                        unsafe_debug_context: "must-not-appear",
+                    },
+                }],
+            },
+        },
+    });
+    assert.deepEqual(diagnostic, {
+        httpStatus: 403,
+        error: {
+            code: 403,
+            status: "PERMISSION_DENIED",
+            message: "The caller cannot poll this operation.",
+        },
+        errorInfo: [{
+            reason: "IAM_PERMISSION_DENIED",
+            domain: "googleapis.com",
+            metadata: {
+                service: "run.googleapis.com",
+                permission: "run.operations.get",
+                resource: "projects/boundarymesh-dev/locations/europe-west4/operations/operation-1",
+                consumer: "projects/boundarymesh-dev",
+                quota_project: "boundarymesh-dev",
+                project: "boundarymesh-dev",
+                location: "europe-west4",
+                operation: "operation-1",
+            },
+        }],
+    });
+    assert.doesNotMatch(JSON.stringify(diagnostic), /must-not-appear/);
+});
+
+test("Cloud Run diagnostics support message-only errors and ignore malformed or unknown details", () => {
+    const diagnostic = sanitizeCloudRunError({
+        httpStatus: 403,
+        payload: {
+            error: {
+                message: "Request denied.",
+                details: [
+                    { "@type": "type.googleapis.com/google.rpc.DebugInfo", detail: "unsafe" },
+                    null,
+                    "malformed",
+                    { "@type": "type.googleapis.com/google.rpc.ErrorInfo", metadata: [] },
+                ],
+            },
+        },
+    });
+    assert.deepEqual(diagnostic, { httpStatus: 403, error: { message: "Request denied." } });
+});
+
+test("Cloud Run diagnostics bound messages and sanitize control characters", () => {
+    const diagnostic = sanitizeCloudRunError({
+        httpStatus: 403,
+        payload: { error: { message: `${"x".repeat(2500)}\nforged\u0000line` } },
+    });
+    assert.equal(diagnostic.error.message.length, 2048);
+    assert.doesNotMatch(diagnostic.error.message, /[\u0000-\u001f\u007f]/);
+});
+
+test("Cloud Run diagnostics fail closed for missing payloads and preserve success values", () => {
+    assert.deepEqual(sanitizeCloudRunError({ httpStatus: 503 }), { httpStatus: 503, error: {} });
+    let failure;
+    assert.throws(
+        () => cloudRunResponseValue({ status: 403, ok: false }),
+        (error) => {
+            failure = error;
+            return error.name === "CloudRunRequestError";
+        },
+    );
+    assert.deepEqual(failure.diagnostic, { httpStatus: 403, error: {} });
+    const payload = { name: "projects/p/locations/r/operations/o" };
+    assert.equal(cloudRunResponseValue({ status: 200, ok: true, payload }), payload);
+});
+
+test("Cloud Run diagnostics never disclose credentials, headers, or unknown payload fields", () => {
+    const sentinels = [
+        "bearer-runtime-secret",
+        "private-runtime-secret",
+        "runtime-secret@example.test",
+        "github_pat_runtime_secret",
+        "unknown-runtime-secret",
+        "ya29.runtime-token-secret",
+        "eyJruntime.header.signature",
+        "pem-runtime-secret",
+    ];
+    let captured;
+    assert.throws(
+        () => cloudRunResponseValue({
+            status: 403,
+            ok: false,
+            payload: {
+                error: {
+                    code: 403,
+                    message: `Authorization: Bearer ${sentinels[0]} private_key=${sentinels[1]} client_email=${sentinels[2]} github_token=${sentinels[3]} ${sentinels[5]} ${sentinels[6]} -----BEGIN PRIVATE KEY-----${sentinels[7]}-----END PRIVATE KEY-----`,
+                    details: [{
+                        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                        metadata: { unsafe: sentinels[4] },
+                    }],
+                },
+                headers: { Authorization: `Bearer ${sentinels[0]}` },
+                env: { PRIVATE_KEY: sentinels[1] },
+            },
+        }),
+        (error) => {
+            captured = error;
+            return error.name === "CloudRunRequestError";
+        },
+    );
+    const rendered = `${captured.message}\n${JSON.stringify(captured.diagnostic)}`;
+    for (const sentinel of sentinels) {
+        assert.doesNotMatch(rendered, new RegExp(sentinel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    }
+});
+
+test("Firebase child diagnostics retain useful stderr, stdout, both streams, and empty output", () => {
+    assert.deepEqual(
+        sanitizeChildProcessDiagnostics({ stderr: "Error: permission denied" }),
+        { stderr: "Error: permission denied" },
+    );
+    assert.deepEqual(
+        sanitizeChildProcessDiagnostics({ stdout: JSON.stringify({ status: "PERMISSION_DENIED" }) }),
+        { stdout: JSON.stringify({ status: "PERMISSION_DENIED" }) },
+    );
+    assert.deepEqual(
+        sanitizeChildProcessDiagnostics({ stdout: "stdout detail", stderr: "stderr detail" }),
+        { stdout: "stdout detail", stderr: "stderr detail" },
+    );
+    assert.deepEqual(sanitizeChildProcessDiagnostics({ stdout: "", stderr: "" }), {});
+});
+
+test("Firebase child diagnostics bound output and normalize control characters", () => {
+    const diagnostic = sanitizeChildProcessDiagnostics({
+        stdout: `${"x".repeat(5000)}\nforged\u0000line`,
+        stderr: `${"y".repeat(5000)}\r\nother`,
+    });
+    assert.equal(diagnostic.stdout.length, 4096);
+    assert.equal(diagnostic.stderr.length, 4096);
+    assert.doesNotMatch(`${diagnostic.stdout}${diagnostic.stderr}`, /[\u0000-\u001f\u007f]/);
+});
+
+test("Firebase child diagnostics redact token, key, credential, cookie, and API-key sentinels", () => {
+    const sentinels = [
+        "child-bearer-secret",
+        "eyJchild.header.signature",
+        "child-private-key-secret",
+        "child-credential-secret",
+        "child-cookie-secret",
+        "AIza1234567890abcdefghijklmnopqrstuvwxyz",
+        "github_pat_child_secret",
+        "ya29.child-oauth-secret",
+    ];
+    const diagnostic = sanitizeChildProcessDiagnostics({
+        stdout: `Authorization: Bearer ${sentinels[0]} JWT ${sentinels[1]} api_key=${sentinels[5]} github_token=${sentinels[6]} ${sentinels[7]}`,
+        stderr: `-----BEGIN PRIVATE KEY-----${sentinels[2]}-----END PRIVATE KEY----- {"private_key":"${sentinels[3]}"} Cookie: ${sentinels[4]}`,
+    });
+    const rendered = JSON.stringify(diagnostic);
+    for (const sentinel of sentinels) {
+        assert.doesNotMatch(rendered, new RegExp(sentinel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    }
+    assert.match(rendered, /REDACTED/);
+});
+
+test("Firebase CLI failure handling opts into sanitized child diagnostics only", () => {
+    const source = readFileSync(join(import.meta.dirname, "..", "cloud-hosting.mjs"), "utf8");
+    assert.match(source, /capture:\s*true,[\s\S]*?sanitizeFailureOutput:\s*true/);
+    assert.equal((source.match(/sanitizeFailureOutput:\s*true/g) ?? []).length, 1);
+});
+
+test("sanitized child diagnostics retain fail-closed exit semantics", () => {
+    const secret = "child-process-bearer-secret";
+    assert.throws(
+        () => runChecked(
+            process.execPath,
+            ["--eval", `process.stdout.write("useful stdout"); process.stderr.write("Authorization: Bearer ${secret}"); process.exit(7);`],
+            { capture: true, sanitizeFailureOutput: true },
+        ),
+        (error) => {
+            assert.match(error.message, /failed with exit code 7/);
+            assert.match(error.message, /useful stdout/);
+            assert.doesNotMatch(error.message, new RegExp(secret));
+            return true;
+        },
+    );
 });
 
 test("evidence collision lookup accepts only the exact canonical NOT_FOUND result", () => {

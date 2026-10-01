@@ -67,6 +67,29 @@ test("controlled Run role is the exact existing-resource permission allowlist", 
     assert.equal(/roles\/run\.(?:admin|developer)/.test(source), false);
 });
 
+test("Run operation polling uses an exact project-level single-permission role", () => {
+    assert.match(source, /RUN_OPERATION_READER_ROLE_ID = "boundarymeshRunOperationReader"/);
+    assert.deepEqual(stringArray(source, "RUN_OPERATION_READER_PERMISSIONS"), [
+        "run.operations.get",
+    ]);
+    assert.equal(stringArray(source, "RUN_OPERATION_READER_PERMISSIONS").length, 1);
+    assert.match(source, /title: "BoundaryMesh Run Operation Reader"/);
+    assert.match(
+        source,
+        /"run-operation-reader-role"[\s\S]*?roleId: RUN_OPERATION_READER_ROLE_ID[\s\S]*?permissions: \[\.\.\.RUN_OPERATION_READER_PERMISSIONS\]/,
+    );
+    assert.equal((source.match(/role: runOperationReaderRole\.name/g) ?? []).length, 1);
+    assert.match(
+        source,
+        /"runtime-deploy-operation-reader"[\s\S]*?role: runOperationReaderRole\.name,[\s\S]*?member: runtimePrincipal/,
+    );
+    assert.equal(/roles\/run\.(?:admin|developer|viewer)/.test(source), false);
+    assert.equal(
+        /new gcp\.projects\.IAMMember\(\s*"[^"]+",\s*\{[^}]*role: controlledRunDeployRole\.name/.test(source),
+        false,
+    );
+});
+
 test("Run role, actAs, and Invoker grants are resource scoped", () => {
     assert.equal((source.match(/new gcp\.cloudrunv2\.ServiceIamMember/g) ?? []).length, 3);
     assert.equal((source.match(/new gcp\.cloudrunv2\.WorkerPoolIamMember/g) ?? []).length, 1);
@@ -79,7 +102,10 @@ test("Run role, actAs, and Invoker grants are resource scoped", () => {
         assert.ok(source.includes(`dependencies.${target}`));
     }
     assert.match(source, /"runtime-deploy-api-invoker"[\s\S]*?role: "roles\/run\.invoker"[\s\S]*?member: runtimePrincipal/);
-    assert.equal(/new gcp\.projects\.IAMMember\([\s\S]*?roles\/iam\.serviceAccountUser/.test(source), false);
+    assert.equal(
+        /new gcp\.projects\.IAMMember\(\s*"[^"]+",\s*\{[^}]*roles\/iam\.serviceAccountUser/.test(source),
+        false,
+    );
 });
 
 test("Artifact Registry access separates readers from the evidence writer", () => {
