@@ -145,7 +145,11 @@ export function assertHostingCommand(args, lock = loadFrozenRelease()) {
 function firebase(args, { cwd, lock = loadFrozenRelease() } = {}) {
     if (!existsSync(FIREBASE_BIN)) throw new Error("Pinned firebase-tools is not installed in scripts/deploy.");
     assertHostingCommand(args, lock);
-    const result = runChecked(process.execPath, [FIREBASE_BIN, ...args], { cwd, capture: true });
+    const result = runChecked(process.execPath, [FIREBASE_BIN, ...args], {
+        cwd,
+        capture: true,
+        sanitizeFailureOutput: true,
+    });
     try { return JSON.parse(result.stdout); } catch { /* Some CLI releases prefix progress output. */ }
     const lines = result.stdout.trim().split(/\r?\n/).filter(Boolean);
     for (let index = lines.length - 1; index >= 0; index -= 1) {

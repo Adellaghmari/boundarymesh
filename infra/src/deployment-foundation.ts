@@ -10,6 +10,7 @@ import {
 export const RUNTIME_DEPLOY_SERVICE_ACCOUNT_ID = "boundarymesh-deploy" as const;
 export const HOSTING_DEPLOY_SERVICE_ACCOUNT_ID = "boundarymesh-hosting-deploy" as const;
 export const CONTROLLED_RUN_DEPLOY_ROLE_ID = "boundarymeshControlledRunDeployer" as const;
+export const RUN_OPERATION_READER_ROLE_ID = "boundarymeshRunOperationReader" as const;
 export const HOSTING_QUOTA_CONSUMER_ROLE_ID = "boundarymeshHostingQuotaConsumer" as const;
 export const DEPLOYMENT_EVIDENCE_REPOSITORY_ID = "boundarymesh-deployments" as const;
 
@@ -27,6 +28,9 @@ export const CONTROLLED_RUN_DEPLOY_PERMISSIONS = [
     "run.workerpools.get",
     "run.workerpools.getIamPolicy",
     "run.workerpools.update",
+] as const;
+export const RUN_OPERATION_READER_PERMISSIONS = [
+    "run.operations.get",
 ] as const;
 
 export const FIREBASE_HOSTING_ROLE = "roles/firebasehosting.admin" as const;
@@ -129,6 +133,26 @@ export function defineDeploymentFoundation(
             title: "BoundaryMesh Controlled Run Deployer",
             description: "Update and verify only existing BoundaryMesh Cloud Run services and worker pool",
             permissions: [...CONTROLLED_RUN_DEPLOY_PERMISSIONS],
+        },
+    );
+    const runOperationReaderRole = new gcp.projects.IAMCustomRole(
+        "run-operation-reader-role",
+        {
+            project: foundation.gcpProjectId,
+            roleId: RUN_OPERATION_READER_ROLE_ID,
+            title: "BoundaryMesh Run Operation Reader",
+            description:
+                "Allows the isolated BoundaryMesh runtime deployment identity to poll Cloud Run " +
+                "long-running operations created by controlled deployments.",
+            permissions: [...RUN_OPERATION_READER_PERMISSIONS],
+        },
+    );
+    const runtimeOperationReader = new gcp.projects.IAMMember(
+        "runtime-deploy-operation-reader",
+        {
+            project: foundation.gcpProjectId,
+            role: runOperationReaderRole.name,
+            member: runtimePrincipal,
         },
     );
 
@@ -268,6 +292,8 @@ export function defineDeploymentFoundation(
         runtimeEnvironmentImpersonation,
         hostingEnvironmentImpersonation,
         controlledRunDeployRole,
+        runOperationReaderRole,
+        runtimeOperationReader,
         apiRuntimeDeployer,
         webRuntimeDeployer,
         workerRuntimeDeployer,
