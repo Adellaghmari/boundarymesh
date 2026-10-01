@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
     canonicalJson,
@@ -7,6 +7,7 @@ import {
     inspectFrontendArchive,
     loadFrozenRelease,
     materializeFrozenFirebaseConfig,
+    sha256Bytes,
     sha256File,
     verifyFrozenReleaseFile,
 } from "./contract.mjs";
@@ -16,7 +17,15 @@ const here = dirname(fileURLToPath(import.meta.url));
 const FIREBASE_BIN = join(here, "node_modules", "firebase-tools", "lib", "bin", "firebase.js");
 const QUOTA_PROJECT = loadFrozenRelease().project;
 const MAX_API_RESPONSE_BYTES = 5 * 1024 * 1024;
-const MAX_HOSTED_RESPONSE_BYTES = 20 * 1024 * 1024;
+const MAX_HOSTED_FILE_COUNT = 64;
+const MAX_HOSTED_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_HOSTED_TOTAL_BYTES = 20 * 1024 * 1024;
+const MAX_VERSION_FILE_PAGES = 4;
+const HOSTED_REQUEST_TIMEOUT_MS = 30_000;
+const FIREBASE_GENERATED_VERSION_PATHS = Object.freeze([
+    "/__/firebase/init.js",
+    "/__/firebase/init.json",
+]);
 const MAX_DIAGNOSTIC_MESSAGE_LENGTH = 2048;
 const MAX_DIAGNOSTIC_FIELD_LENGTH = 1024;
 const MAX_ERROR_INFO_ENTRIES = 8;
@@ -114,12 +123,12 @@ async function hostingResponse(path, { method = "GET", body } = {}) {
             headers: { Authorization: `Bearer ${accessToken()}`, "x-goog-user-project": QUOTA_PROJECT, ...(body !== undefined ? { "Content-Type": "application/json" } : {}) },
             body: body !== undefined ? JSON.stringify(body) : undefined,
             redirect: "error",
-            signal: AbortSignal.timeout(60_000),
+            signal: AbortSignal.timeout(HOSTED_REQUEST_TIMEOUT_MS),
         });
     } catch (networkError) {
         return { status: null, ok: false, payload: null, networkError };
     }
-    const declaredLength = Number(response.headers.get("content-length") ?? 0);
+    const declaredLength = Number(responseHeader(response, "content-length") ?? 0);
     if (declaredLength > MAX_API_RESPONSE_BYTES) throw new Error("Firebase Hosting API response exceeded the bounded size limit.");
     const bytes = Buffer.from(await response.arrayBuffer());
     if (bytes.length > MAX_API_RESPONSE_BYTES) throw new Error("Firebase Hosting API response exceeded the bounded size limit.");
@@ -267,34 +276,163 @@ export async function deployPreview(runId, {
     return readAuthoritativePreview(runId, { lock, request });
 }
 
-async function fetchResponse(url) {
-    const response = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(30_000) });
-    const declaredLength = Number(response.headers.get("content-length") ?? 0);
-    if (declaredLength > MAX_HOSTED_RESPONSE_BYTES) throw new Error("Hosted verification response exceeded the bounded size limit.");
-    const bytes = Buffer.from(await response.arrayBuffer());
-    if (bytes.length > MAX_HOSTED_RESPONSE_BYTES) throw new Error("Hosted verification response exceeded the bounded size limit.");
-    const body = bytes.toString("utf8");
-    return { status: response.status, headers: Object.fromEntries(response.headers), body };
+function responseHeader(response, name) {
+    return response.headers?.get?.(name) ?? response.headers?.[name.toLowerCase()] ?? response.headers?.[name] ?? null;
 }
 
-async function fetchChecked(url) {
-    const response = await fetchResponse(url);
-    if (response.status < 200 || response.status > 299) throw new Error(`Hosted verification failed with HTTP ${response.status}.`);
+async function fetchResponse(url, { fetchImpl = fetch, maximumBytes = MAX_HOSTED_FILE_BYTES, expectedOrigin } = {}) {
+    const requested = new URL(url);
+    if (requested.protocol !== "https:") throw new Error("Hosted verification requires HTTPS.");
+    if (expectedOrigin && requested.origin !== expectedOrigin) throw new Error("Hosted verification rejected a cross-host request.");
+    const response = await fetchImpl(requested, {
+        redirect: "manual",
+        headers: { "Accept-Encoding": "identity" },
+        signal: AbortSignal.timeout(HOSTED_REQUEST_TIMEOUT_MS),
+    });
+    const location = responseHeader(response, "location");
+    if (response.status >= 300 && response.status <= 399) {
+        let target = null;
+        try { target = location ? new URL(location, requested) : null; } catch { /* The redirect is rejected below. */ }
+        if (target && target.origin !== requested.origin) throw new Error("Hosted verification rejected a cross-host redirect.");
+        throw new Error("Hosted verification rejected an unexpected redirect.");
+    }
+    if (response.redirected === true || (response.url && new URL(response.url).origin !== requested.origin)) {
+        throw new Error("Hosted verification rejected a cross-host redirect.");
+    }
+    const declaredLength = Number(response.headers.get("content-length") ?? 0);
+    if (declaredLength > maximumBytes) throw new Error("Hosted verification response exceeded the per-file size limit.");
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (bytes.length > maximumBytes) throw new Error("Hosted verification response exceeded the per-file size limit.");
+    const body = bytes.toString("utf8");
+    return {
+        status: response.status,
+        headers: response.headers?.entries ? Object.fromEntries(response.headers) : response.headers ?? {},
+        body,
+        bytes,
+    };
+}
+
+async function fetchChecked(url, options = {}) {
+    const response = await fetchResponse(url, options);
+    if (response.status !== 200) throw new Error(`Hosted verification failed with HTTP ${response.status}.`);
     return response;
 }
 
-export async function verifyHostedVersion(baseUrl) {
-    const root = await fetchChecked(new URL("/", baseUrl));
-    const deep = await fetchChecked(new URL("/transactions/demo", baseUrl));
+function expectedFrozenFiles(publicDirectory) {
+    const files = [];
+    function visit(directory) {
+        for (const entry of readdirSync(directory, { withFileTypes: true })) {
+            const path = join(directory, entry.name);
+            if (entry.isDirectory()) visit(path);
+            else if (entry.isFile()) {
+                const bytes = readFileSync(path);
+                const hostedPath = `/${relative(publicDirectory, path).replaceAll("\\", "/")}`;
+                if (bytes.length > MAX_HOSTED_FILE_BYTES) throw new Error("Frozen frontend file exceeded the per-file verification limit.");
+                files.push({ path: hostedPath, bytes, sha256: sha256Bytes(bytes) });
+            } else {
+                throw new Error("Frozen frontend contains a link or special file.");
+            }
+        }
+    }
+    visit(publicDirectory);
+    files.sort((a, b) => a.path.localeCompare(b.path));
+    const totalBytes = files.reduce((sum, file) => sum + file.bytes.length, 0);
+    if (!files.length || files.length > MAX_HOSTED_FILE_COUNT) throw new Error("Frozen frontend file count exceeded the verification limit.");
+    if (totalBytes > MAX_HOSTED_TOTAL_BYTES) throw new Error("Frozen frontend exceeded the total verification size limit.");
+    if (new Set(files.map((file) => file.path)).size !== files.length) throw new Error("Frozen frontend contains duplicate hosted paths.");
+    return files;
+}
+
+export function normalizeFrozenHostingConfig(firebaseConfig) {
+    const hosting = firebaseConfig?.hosting;
+    if (!hosting || typeof hosting !== "object") throw new Error("Frozen Firebase config has no Hosting configuration.");
+    return {
+        headers: (hosting.headers ?? []).map((entry) => ({
+            glob: entry.source,
+            headers: Object.fromEntries((entry.headers ?? []).map((header) => [header.key, header.value])),
+        })),
+        rewrites: (hosting.rewrites ?? []).map((entry) => ({
+            glob: entry.source,
+            ...(entry.destination
+                ? { path: entry.destination }
+                : { run: { serviceId: entry.run?.serviceId, region: entry.run?.region } }),
+        })),
+    };
+}
+
+export function assertHostedVersionInventory({ version, files, expectedFiles }) {
+    if (version?.status !== "FINALIZED" || typeof version.finalizeTime !== "string" || !version.finalizeTime) {
+        throw new Error("Hosted verification requires the exact FINALIZED version.");
+    }
+    if (!Array.isArray(files) || !Array.isArray(expectedFiles)) throw new Error("Hosted version file inventory is missing.");
+    if (files.length > MAX_HOSTED_FILE_COUNT + FIREBASE_GENERATED_VERSION_PATHS.length) {
+        throw new Error("Firebase version file count exceeded the verification limit.");
+    }
+    const actualPaths = files.map((file) => file?.path);
+    if (new Set(actualPaths).size !== actualPaths.length) throw new Error("Firebase version file inventory contains duplicate paths.");
+    for (const file of files) {
+        if (file?.status !== "ACTIVE" || typeof file.hash !== "string" || !file.hash) {
+            throw new Error("Firebase version file inventory contains a non-ACTIVE or unhashed file.");
+        }
+    }
+    const expectedPaths = [
+        ...expectedFiles.map((file) => file.path),
+        ...FIREBASE_GENERATED_VERSION_PATHS,
+    ].sort();
+    if (canonicalJson([...actualPaths].sort()) !== canonicalJson(expectedPaths)) {
+        throw new Error("Firebase version file inventory differs from the frozen frontend.");
+    }
+    if (Number(version.fileCount) !== files.length) throw new Error("Firebase version fileCount disagrees with its authoritative inventory.");
+    return true;
+}
+
+async function readHostedVersionFiles(versionName, request) {
+    const files = [];
+    let pageToken = null;
+    for (let page = 0; page < MAX_VERSION_FILE_PAGES; page += 1) {
+        const suffix = pageToken ? `&pageToken=${encodeURIComponent(pageToken)}` : "";
+        const response = await request(`${versionName}/files?pageSize=100${suffix}`);
+        if (response?.files !== undefined && !Array.isArray(response.files)) throw new Error("Firebase version file inventory is malformed.");
+        files.push(...(response?.files ?? []));
+        if (files.length > MAX_HOSTED_FILE_COUNT + FIREBASE_GENERATED_VERSION_PATHS.length) {
+            throw new Error("Firebase version file count exceeded the verification limit.");
+        }
+        pageToken = response?.nextPageToken ?? null;
+        if (!pageToken) return files;
+    }
+    throw new Error("Firebase version file inventory exceeded the pagination limit.");
+}
+
+function assertExactPreviewUrl(baseUrl, expectedUrl) {
+    let actual;
+    let expected;
+    try {
+        actual = new URL(baseUrl);
+        expected = new URL(expectedUrl);
+    } catch {
+        throw new Error("Hosted verification received an invalid preview URL.");
+    }
+    if (actual.href !== expected.href || actual.protocol !== "https:" || !actual.hostname.endsWith(".web.app")) {
+        throw new Error("Hosted verification URL differs from the exact run-specific preview.");
+    }
+    return actual;
+}
+
+export async function verifyHostedServingBehavior(baseUrl, { fetchImpl = fetch } = {}) {
+    const origin = new URL(baseUrl).origin;
+    const root = await fetchChecked(new URL("/", baseUrl), { fetchImpl, expectedOrigin: origin });
+    const deep = await fetchChecked(new URL("/transactions/demo", baseUrl), { fetchImpl, expectedOrigin: origin });
     const cache = (response) => response.headers["cache-control"] ?? "";
     if (!cache(root).includes("no-cache") || !cache(deep).includes("no-cache")) throw new Error("Hosted HTML shell is not protected from stale caching.");
     const assetPaths = [...new Set([...root.body.matchAll(/(?:src|href)=["']([^"']+\.(?:js|css))["']/g)].map((match) => match[1]))];
     if (!assetPaths.length) throw new Error("Hosted root contains no hashed JavaScript/CSS assets.");
-    const assets = await Promise.all(assetPaths.map(async (path) => ({ path, response: await fetchChecked(new URL(path, baseUrl)) })));
+    if (assetPaths.length > MAX_HOSTED_FILE_COUNT) throw new Error("Hosted root referenced too many static assets.");
+    const assets = [];
+    for (const path of assetPaths) assets.push({ path, response: await fetchChecked(new URL(path, baseUrl), { fetchImpl, expectedOrigin: origin }) });
     for (const { response } of assets) {
         if (!cache(response).includes("max-age=31536000") || !cache(response).includes("immutable")) throw new Error("Hosted hashed asset does not have the frozen immutable cache policy.");
     }
-    const session = await fetchResponse(new URL("/session/me", baseUrl));
+    const session = await fetchResponse(new URL("/session/me", baseUrl), { fetchImpl, expectedOrigin: origin });
     let sessionCode;
     try { sessionCode = JSON.parse(session.body).error_code; } catch { /* handled by the assertion below */ }
     if (session.status !== 401 || !["AUTHENTICATION_REQUIRED", "SESSION_INVALID", "SESSION_EXPIRED"].includes(sessionCode)) throw new Error("Preview auth bootstrap rewrite did not fail closed with a structured unauthenticated response.");
@@ -302,7 +440,6 @@ export async function verifyHostedVersion(baseUrl) {
     for (const forbidden of ["localhost", "run.app/api", "/api/v1/dev/", "PRIVATE KEY", "service_account"]) {
         if (bundle.includes(forbidden)) throw new Error(`Hosted frontend leaks a forbidden production string: ${forbidden}`);
     }
-    if (!bundle.includes("boundarymesh-dev")) throw new Error("Hosted frontend does not contain the frozen public Firebase project configuration.");
     return {
         rootHealthy: true,
         deepLinkHealthy: true,
@@ -310,6 +447,48 @@ export async function verifyHostedVersion(baseUrl) {
         assetsHealthyAndImmutable: true,
         authBootstrapFailClosed: true,
         noPrivateCoreLeak: true,
+    };
+}
+
+export async function verifyHostedVersion(baseUrl, {
+    expectedUrl,
+    versionName,
+    publicDirectory,
+    firebaseConfigPath,
+    lock = loadFrozenRelease(),
+    request = hostingRequest,
+    fetchImpl = fetch,
+} = {}) {
+    const previewUrl = assertExactPreviewUrl(baseUrl, expectedUrl);
+    if (!new RegExp(`^sites/${lock.firebase.site}/versions/[A-Za-z0-9_-]+$`).test(versionName ?? "")) {
+        throw new Error("Hosted verification received the wrong Firebase version.");
+    }
+    const expectedFiles = expectedFrozenFiles(publicDirectory);
+    const expectedConfig = normalizeFrozenHostingConfig(JSON.parse(readFileSync(firebaseConfigPath, "utf8")));
+    const version = await request(versionName);
+    if (version?.name !== versionName) throw new Error("Hosted verification received the wrong Firebase version.");
+    if (canonicalJson(version.config) !== canonicalJson(expectedConfig)) {
+        throw new Error("Firebase Hosting serving config differs from the frozen configuration.");
+    }
+    const versionFiles = await readHostedVersionFiles(versionName, request);
+    assertHostedVersionInventory({ version, files: versionFiles, expectedFiles });
+    let verifiedBytes = 0;
+    for (const expectedFile of expectedFiles) {
+        const url = new URL(previewUrl);
+        url.pathname = expectedFile.path;
+        const response = await fetchChecked(url, { fetchImpl, expectedOrigin: previewUrl.origin });
+        verifiedBytes += response.bytes.length;
+        if (verifiedBytes > MAX_HOSTED_TOTAL_BYTES) throw new Error("Hosted verification exceeded the total size limit.");
+        if (response.bytes.length !== expectedFile.bytes.length || sha256Bytes(response.bytes) !== expectedFile.sha256 || !response.bytes.equals(expectedFile.bytes)) {
+            throw new Error(`Hosted file differs from the frozen frontend: ${expectedFile.path}`);
+        }
+    }
+    const behavior = await verifyHostedServingBehavior(previewUrl, { fetchImpl });
+    return {
+        ...behavior,
+        exactVersionInventory: true,
+        exactHostingConfig: true,
+        frozenArtifactByteExact: true,
     };
 }
 
@@ -330,7 +509,12 @@ export async function stageHosting({ manifestPath, archivePath, workDirectory, r
     }
     await assertPreviewChannelAbsent(runId, { lock });
     const preview = await deployPreview(runId, { workDirectory, lock });
-    const checks = await verifyHostedVersion(preview.url);
+    const checks = await verifyHostedVersion(preview.url, {
+        expectedUrl: preview.url,
+        versionName: preview.version,
+        publicDirectory,
+        firebaseConfigPath: join(workDirectory, "firebase.json"),
+    });
     const afterLive = await readHostingBaseline(lock);
     if (canonicalJson(before) !== canonicalJson(afterLive)) throw new Error("Stage unexpectedly changed the Firebase live release.");
     return { before, result: { ...preview, channel: channelId }, checks: { ...checks, liveUnchanged: true, exactSite: true } };
@@ -345,7 +529,7 @@ export async function promoteHosting({ stageEvidence, lock = loadFrozenRelease()
         await hostingRequest(`sites/${lock.firebase.site}/releases?versionName=${encodeURIComponent(version)}`, { method: "POST", body: {} });
         const after = await readHostingBaseline(lock);
         if (after.version !== version) throw new Error("Live Hosting release does not reference the exact staged version.");
-        const checks = await verifyHostedVersion(`https://${lock.firebase.site}.web.app`);
+        const checks = await verifyHostedServingBehavior(`https://${lock.firebase.site}.web.app`);
         return { before, result: after, checks: { ...checks, exactStagedVersion: true } };
     } catch {
         let observed = before;
@@ -365,7 +549,7 @@ export async function rollbackHosting({ promotionEvidence, lock = loadFrozenRele
     await hostingRequest(`sites/${lock.firebase.site}/releases?versionName=${encodeURIComponent(version)}`, { method: "POST", body: {} });
     const after = await readHostingBaseline(lock);
     if (after.version !== version) throw new Error("Hosting rollback did not restore the recorded version.");
-    return { before, result: after, checks: { exactRollbackVersion: true, ...(await verifyHostedVersion(`https://${lock.firebase.site}.web.app`)) } };
+    return { before, result: after, checks: { exactRollbackVersion: true, ...(await verifyHostedServingBehavior(`https://${lock.firebase.site}.web.app`)) } };
 }
 
 function option(name) {
