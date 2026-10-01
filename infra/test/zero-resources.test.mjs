@@ -119,9 +119,9 @@ test("existing private workloads remain constrained while 15J-B adds only a dedi
     assert.equal((text.match(/new gcp\.secretmanager\.SecretIamMember/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.cloudrunv2\.Service\(/g) ?? []).length, 2);
     assert.equal((text.match(/new gcp\.cloudrunv2\.WorkerPool\(/g) ?? []).length, 1);
-    assert.equal((text.match(/new gcp\.cloudrunv2\.ServiceIamMember/g) ?? []).length, 5);
+    assert.equal((text.match(/new gcp\.cloudrunv2\.ServiceIamMember/g) ?? []).length, 6);
     assert.equal((text.match(/new gcp\.cloudrunv2\.WorkerPoolIamMember/g) ?? []).length, 1);
-    assert.equal((text.match(/new gcp\.projects\.IAMCustomRole/g) ?? []).length, 5);
+    assert.equal((text.match(/new gcp\.projects\.IAMCustomRole/g) ?? []).length, 6);
     assert.equal((text.match(/new gcp\.storage\.BucketIAMMember/g) ?? []).length, 1);
     const edge = readFileSync(join(srcDir, "web-edge.ts"), "utf8");
     assert.match(edge, /name:\s*coreApi\.name,[\s\S]*?role:\s*"roles\/run\.invoker",\s*member:\s*principal/);
