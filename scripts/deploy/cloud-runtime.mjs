@@ -36,6 +36,7 @@ const OCI_INDEX_MEDIA_TYPES = new Set([
     "application/vnd.docker.distribution.manifest.list.v2+json",
 ]);
 const OCI_ACCEPT = [...OCI_INDEX_MEDIA_TYPES, ...OCI_MANIFEST_MEDIA_TYPES].join(", ");
+const HEALTH_ID_TOKEN_ENV = "BOUNDARYMESH_API_HEALTH_ID_TOKEN";
 const SAFE_ERROR_INFO_METADATA = new Set([
     "service",
     "permission",
@@ -418,13 +419,29 @@ export function assertRevisionImage(revision, expectedImage, contract) {
     }
 }
 
-async function health(url, { audience, path }) {
+export function requireHealthIdToken(environment = process.env) {
+    const token = environment[HEALTH_ID_TOKEN_ENV];
+    if (typeof token !== "string" || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)) {
+        throw new Error("API health ID token is missing or malformed.");
+    }
+    return token;
+}
+
+export async function health(url, { audience, path, token, fetchImpl = fetch }) {
     const headers = {};
     if (audience) {
-        const token = runChecked("gcloud", ["auth", "print-identity-token", `--audiences=${audience}`, "--quiet"], { capture: true }).stdout.trim();
-        headers.Authorization = `Bearer ${token}`;
+        const audienceUrl = new URL(audience);
+        if (audienceUrl.protocol !== "https:" || audienceUrl.pathname !== "/" ||
+            audienceUrl.search || audienceUrl.hash || audienceUrl.origin !== audience.replace(/\/$/, "")) {
+            throw new Error("API health token audience must be the base HTTPS Cloud Run service URL.");
+        }
+        headers.Authorization = `Bearer ${token ?? requireHealthIdToken()}`;
     }
-    const response = await fetch(new URL(path, url), { headers, redirect: "error", signal: AbortSignal.timeout(30_000) });
+    const response = await fetchImpl(new URL(path, url), {
+        headers,
+        redirect: "error",
+        signal: AbortSignal.timeout(30_000),
+    });
     if (!response.ok) throw new Error(`Candidate health check failed with HTTP ${response.status}.`);
     return { path, status: response.status };
 }
@@ -491,6 +508,7 @@ export function assertRuntimePreflightMatches(current, approved) {
 
 export async function preflightRuntime({ manifestPath, lock = loadFrozenRelease() } = {}) {
     if (!manifestPath) throw new Error("Runtime preflight requires the frozen release manifest.");
+    requireHealthIdToken();
     const manifest = verifyFrozenReleaseFile(manifestPath, lock);
     return {
         ...(await runtimePreflightSnapshot(await readAll(lock))),
