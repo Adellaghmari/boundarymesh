@@ -4,7 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {
+    createHostedVerificationBudget,
     normalizeFrozenHostingConfig,
+    readHostedResponse,
+    verifyHostedServingBehavior,
     verifyHostedVersion,
 } from "../cloud-hosting.mjs";
 
@@ -60,6 +63,7 @@ function harness({
     mutateVersion = (value) => value,
     mutateInventory = (value) => value,
     fetchOverride,
+    budget,
 } = {}) {
     const state = fixture();
     const request = async (path) => {
@@ -87,8 +91,54 @@ function harness({
         firebaseConfigPath: state.firebaseConfigPath,
         request,
         fetchImpl,
+        ...(budget ? { budget } : {}),
     });
-    return { ...state, verify };
+    return { ...state, fetchImpl, verify };
+}
+
+function controlledResponse(chunks, {
+    status = 200,
+    headers = {},
+    url = previewUrl,
+    throwAtRead,
+} = {}) {
+    const state = { reads: 0, cancelled: false };
+    const encoded = chunks.map((chunk) => typeof chunk === "symbol" ? chunk : Buffer.from(chunk));
+    const reader = {
+        async read() {
+            state.reads += 1;
+            if (throwAtRead === state.reads) throw new Error("synthetic stream failure");
+            const chunk = encoded[state.reads - 1];
+            return chunk === undefined ? { done: true } : { done: false, value: chunk };
+        },
+        async cancel() {
+            state.cancelled = true;
+        },
+    };
+    return {
+        state,
+        response: {
+            status,
+            redirected: false,
+            url,
+            headers: new Headers(headers),
+            body: { getReader: () => reader, cancel: () => reader.cancel() },
+        },
+    };
+}
+
+async function readControlled(controlled, {
+    maximumBytes = 1024,
+    budget = createHostedVerificationBudget({ maximumBytes: 4096 }),
+    timeoutMs = 1_000,
+} = {}) {
+    return readHostedResponse(new URL("/bounded", previewUrl), {
+        fetchImpl: async () => controlled.response,
+        expectedOrigin: new URL(previewUrl).origin,
+        maximumBytes,
+        budget,
+        timeoutMs,
+    });
 }
 
 test("exact frozen file set and split-chunk Firebase config pass byte-exact verification", async () => {
@@ -162,7 +212,7 @@ test("every non-200 frozen file response fails closed", async () => {
     }
 });
 
-test("decoded compressed transport bytes satisfy the raw content contract", async () => {
+test("unexpected content encoding is rejected instead of changing the raw byte contract", async () => {
     const state = harness({
         fetchOverride: (url, current) => url.pathname === "/assets/split.js"
             ? response(current.files.get("/assets/split.js"), {
@@ -171,7 +221,7 @@ test("decoded compressed transport bytes satisfy the raw content contract", asyn
             })
             : null,
     });
-    assert.equal((await state.verify()).frozenArtifactByteExact, true);
+    await assert.rejects(() => state.verify(), /BYTE_MISMATCH.*encoded response/);
 });
 
 test("non-FINALIZED versions and inactive files fail closed", async () => {
@@ -215,6 +265,257 @@ test("old single-bundle substring assumption is not authoritative", async () => 
 test("Hosting REST and served-byte requests share the exact 30-second timeout bound", () => {
     const source = readFileSync(join(import.meta.dirname, "..", "cloud-hosting.mjs"), "utf8");
     assert.match(source, /const HOSTED_REQUEST_TIMEOUT_MS = 30_000;/);
-    assert.equal((source.match(/AbortSignal\.timeout\(HOSTED_REQUEST_TIMEOUT_MS\)/g) ?? []).length, 2);
+    assert.equal((source.match(/AbortSignal\.timeout\(HOSTED_REQUEST_TIMEOUT_MS\)/g) ?? []).length, 1);
+    assert.match(source, /timeoutMs = HOSTED_REQUEST_TIMEOUT_MS/);
     assert.doesNotMatch(source, /AbortSignal\.timeout\(60_000\)/);
+});
+
+test("small chunked responses and exact-limit bodies pass streaming verification", async () => {
+    const small = controlledResponse(["ab", "cd"]);
+    const result = await readControlled(small, { maximumBytes: 4 });
+    assert.equal(result.body, "abcd");
+    assert.equal(small.state.reads, 3);
+    assert.equal(small.state.cancelled, false);
+});
+
+test("streaming cap stops before later chunks are consumed", async () => {
+    const oversized = controlledResponse(["ab", "cd", "must-not-be-read"]);
+    const budget = createHostedVerificationBudget({ maximumBytes: 100 });
+    await assert.rejects(
+        () => readControlled(oversized, { maximumBytes: 3, budget }),
+        (error) => error.code === "RESPONSE_TOO_LARGE",
+    );
+    assert.equal(oversized.state.reads, 2);
+    assert.equal(oversized.state.cancelled, true);
+    assert.equal(budget.usedBytes, 2);
+});
+
+test("Content-Length is only an early rejection optimization", async () => {
+    const declaredOversized = controlledResponse(["unread"], { headers: { "content-length": "9" } });
+    await assert.rejects(
+        () => readControlled(declaredOversized, { maximumBytes: 8 }),
+        (error) => error.code === "RESPONSE_TOO_LARGE",
+    );
+    assert.equal(declaredOversized.state.reads, 0);
+    assert.equal(declaredOversized.state.cancelled, true);
+
+    for (const headers of [{}, { "content-length": "1" }]) {
+        const streamedOversized = controlledResponse(["1234", "5"], { headers });
+        await assert.rejects(
+            () => readControlled(streamedOversized, { maximumBytes: 4 }),
+            (error) => error.code === "RESPONSE_TOO_LARGE",
+        );
+        assert.equal(streamedOversized.state.reads, 2);
+        assert.equal(streamedOversized.state.cancelled, true);
+    }
+});
+
+test("limit plus one fails while an exact-limit body succeeds", async () => {
+    assert.equal((await readControlled(controlledResponse(["1234"]), { maximumBytes: 4 })).body, "1234");
+    await assert.rejects(
+        () => readControlled(controlledResponse(["1234", "5"]), { maximumBytes: 4 }),
+        (error) => error.code === "RESPONSE_TOO_LARGE",
+    );
+});
+
+test("shared aggregate budget accepts cumulative valid responses under its limit", async () => {
+    const budget = createHostedVerificationBudget({ maximumBytes: 7 });
+    await readControlled(controlledResponse(["abc"]), { budget });
+    await readControlled(controlledResponse(["defg"]), { budget });
+    assert.equal(budget.usedBytes, 7);
+    assert.equal(budget.usedRequests, 2);
+});
+
+test("shared aggregate budget rejects before accepting the over-budget chunk", async () => {
+    const budget = createHostedVerificationBudget({ maximumBytes: 7 });
+    await readControlled(controlledResponse(["abcd"]), { budget });
+    const overBudget = controlledResponse(["efgh", "must-not-be-read"]);
+    await assert.rejects(
+        () => readControlled(overBudget, { budget }),
+        (error) => error.code === "TOTAL_BUDGET_EXCEEDED",
+    );
+    assert.equal(budget.usedBytes, 4);
+    assert.equal(overBudget.state.reads, 1);
+    assert.equal(overBudget.state.cancelled, true);
+});
+
+test("static verification and behavior probes share one aggregate budget", async () => {
+    const sample = fixture();
+    const staticBytes = [...sample.files.values()].reduce((sum, bytes) => sum + bytes.length, 0);
+    const rootBytes = sample.files.get("/index.html").length;
+    const budget = createHostedVerificationBudget({ maximumBytes: staticBytes + rootBytes - 1 });
+    const state = harness({ budget });
+    await assert.rejects(
+        () => state.verify(),
+        (error) => error.code === "TOTAL_BUDGET_EXCEEDED",
+    );
+    assert.equal(budget.usedBytes, staticBytes);
+});
+
+test("a budget consumed by behavior probes cannot reset before a later frozen-file read", async () => {
+    const state = harness();
+    const measuringBudget = createHostedVerificationBudget({ maximumBytes: 4096 });
+    await verifyHostedServingBehavior(previewUrl, { fetchImpl: state.fetchImpl, budget: measuringBudget });
+    const sharedBudget = createHostedVerificationBudget({ maximumBytes: measuringBudget.usedBytes + 1 });
+    await verifyHostedServingBehavior(previewUrl, { fetchImpl: state.fetchImpl, budget: sharedBudget });
+    const frozenRead = controlledResponse(["xx"]);
+    await assert.rejects(
+        () => readControlled(frozenRead, { budget: sharedBudget }),
+        (error) => error.code === "TOTAL_BUDGET_EXCEEDED",
+    );
+    assert.equal(sharedBudget.usedBytes, measuringBudget.usedBytes);
+    assert.equal(frozenRead.state.cancelled, true);
+});
+
+test("request count is shared and bounded without retries", async () => {
+    const budget = createHostedVerificationBudget({ maximumBytes: 100, maximumRequests: 1 });
+    let fetchCalls = 0;
+    const fetchImpl = async () => {
+        fetchCalls += 1;
+        return controlledResponse(["ok"]).response;
+    };
+    await readHostedResponse(new URL("/one", previewUrl), {
+        fetchImpl,
+        expectedOrigin: new URL(previewUrl).origin,
+        budget,
+    });
+    await assert.rejects(
+        () => readHostedResponse(new URL("/two", previewUrl), {
+            fetchImpl,
+            expectedOrigin: new URL(previewUrl).origin,
+            budget,
+        }),
+        (error) => error.code === "REQUEST_COUNT_EXCEEDED",
+    );
+    assert.equal(fetchCalls, 1);
+});
+
+test("timeout aborts the request and is not retried", async () => {
+    let fetchCalls = 0;
+    const fetchImpl = async (_url, { signal }) => {
+        fetchCalls += 1;
+        return new Promise((_resolve, reject) => {
+            signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true });
+        });
+    };
+    await assert.rejects(
+        () => readHostedResponse(new URL("/timeout", previewUrl), {
+            fetchImpl,
+            expectedOrigin: new URL(previewUrl).origin,
+            timeoutMs: 5,
+            budget: createHostedVerificationBudget({ maximumBytes: 100 }),
+        }),
+        (error) => error.code === "REQUEST_TIMEOUT",
+    );
+    assert.equal(fetchCalls, 1);
+});
+
+test("aborted or malformed stream reads fail closed without retry", async () => {
+    for (const controlled of [
+        controlledResponse(["unused"], { throwAtRead: 1 }),
+        controlledResponse([Symbol("invalid")]),
+    ]) {
+        let fetchCalls = 0;
+        await assert.rejects(
+            () => readHostedResponse(new URL("/broken", previewUrl), {
+                fetchImpl: async () => {
+                    fetchCalls += 1;
+                    return controlled.response;
+                },
+                expectedOrigin: new URL(previewUrl).origin,
+                budget: createHostedVerificationBudget({ maximumBytes: 100 }),
+            }),
+            (error) => error.code === "HOSTED_STREAM_READ_FAILED",
+        );
+        assert.equal(fetchCalls, 1);
+        assert.equal(controlled.state.cancelled, true);
+    }
+});
+
+test("same-host redirects are forbidden", async () => {
+    await assert.rejects(
+        () => harness({
+            fetchOverride: (url) => url.pathname === "/assets/app.js"
+                ? response(null, { status: 302, headers: { location: `${previewUrl}other` } })
+                : null,
+        }).verify(),
+        (error) => error.code === "REDIRECT_FORBIDDEN" && /rejected a redirect/.test(error.message),
+    );
+});
+
+test("preview requests without a shared budget fail closed", async () => {
+    await assert.rejects(
+        () => readHostedResponse(new URL("/no-budget", previewUrl), {
+            fetchImpl: async () => {
+                throw new Error("must not be called");
+            },
+            expectedOrigin: new URL(previewUrl).origin,
+        }),
+        /shared network budget/,
+    );
+});
+
+test("declared Content-Length cannot consume remaining aggregate budget before the body is read", async () => {
+    const budget = createHostedVerificationBudget({ maximumBytes: 7 });
+    await readControlled(controlledResponse(["abcd"]), { budget });
+    const blocked = controlledResponse(["efgh"], { headers: { "content-length": "4" } });
+    await assert.rejects(
+        () => readControlled(blocked, { budget }),
+        (error) => error.code === "TOTAL_BUDGET_EXCEEDED",
+    );
+    assert.equal(budget.usedBytes, 4);
+    assert.equal(blocked.state.reads, 0);
+    assert.equal(blocked.state.cancelled, true);
+});
+
+test("overall verification deadline fails before another network read", async () => {
+    const budget = createHostedVerificationBudget({ maximumBytes: 100, deadlineMs: 1 });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    let fetchCalls = 0;
+    await assert.rejects(
+        () => readHostedResponse(new URL("/late", previewUrl), {
+            fetchImpl: async () => {
+                fetchCalls += 1;
+                return controlledResponse(["ok"]).response;
+            },
+            expectedOrigin: new URL(previewUrl).origin,
+            budget,
+        }),
+        (error) => error.code === "REQUEST_TIMEOUT",
+    );
+    assert.equal(fetchCalls, 0);
+    assert.equal(budget.usedRequests, 0);
+});
+
+test("unreadable response bodies fail closed without retry", async () => {
+    let fetchCalls = 0;
+    await assert.rejects(
+        () => readHostedResponse(new URL("/unreadable", previewUrl), {
+            fetchImpl: async () => {
+                fetchCalls += 1;
+                return {
+                    status: 200,
+                    redirected: false,
+                    url: previewUrl,
+                    headers: new Headers(),
+                    body: {},
+                };
+            },
+            expectedOrigin: new URL(previewUrl).origin,
+            budget: createHostedVerificationBudget({ maximumBytes: 100 }),
+        }),
+        (error) => error.code === "HOSTED_STREAM_READ_FAILED",
+    );
+    assert.equal(fetchCalls, 1);
+});
+
+test("hosted verifier never buffers a full body before enforcing size limits", () => {
+    const source = readFileSync(join(import.meta.dirname, "..", "cloud-hosting.mjs"), "utf8");
+    assert.doesNotMatch(source, /arrayBuffer\s*\(/);
+    assert.match(source, /createHostedVerificationBudget/);
+    assert.match(source, /readBoundedResponseBody/);
+    assert.match(source, /HOSTED_VERIFICATION_DEADLINE_MS = 120_000/);
+    assert.match(source, /MAX_HTML_PROBE_BYTES = 256 \* 1024/);
+    assert.match(source, /MAX_ASSET_PROBE_BYTES = 1024 \* 1024/);
+    assert.match(source, /MAX_SESSION_PROBE_BYTES = 16 \* 1024/);
 });

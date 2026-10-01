@@ -17,15 +17,22 @@ const here = dirname(fileURLToPath(import.meta.url));
 const FIREBASE_BIN = join(here, "node_modules", "firebase-tools", "lib", "bin", "firebase.js");
 const QUOTA_PROJECT = loadFrozenRelease().project;
 const MAX_API_RESPONSE_BYTES = 5 * 1024 * 1024;
-const MAX_HOSTED_FILE_COUNT = 64;
+const MAX_HOSTED_FILE_COUNT = 16;
 const MAX_HOSTED_FILE_BYTES = 5 * 1024 * 1024;
-const MAX_HOSTED_TOTAL_BYTES = 20 * 1024 * 1024;
+const MAX_FROZEN_TOTAL_BYTES = 512 * 1024;
+const MAX_HOSTED_TOTAL_BYTES = 2 * 1024 * 1024; // Frozen static payload is ~170 KiB; probes add <100 KiB.
+const MAX_HOSTED_REQUEST_COUNT = (MAX_HOSTED_FILE_COUNT * 2) + 3;
+const MAX_HTML_PROBE_BYTES = 256 * 1024;
+const MAX_ASSET_PROBE_BYTES = 1024 * 1024;
+const MAX_SESSION_PROBE_BYTES = 16 * 1024;
 const MAX_VERSION_FILE_PAGES = 4;
 const HOSTED_REQUEST_TIMEOUT_MS = 30_000;
+const HOSTED_VERIFICATION_DEADLINE_MS = 120_000;
 const FIREBASE_GENERATED_VERSION_PATHS = Object.freeze([
     "/__/firebase/init.js",
     "/__/firebase/init.json",
 ]);
+// Firebase-generated init files are inventory-only. They are not frozen static bytes and are not fetched.
 const MAX_DIAGNOSTIC_MESSAGE_LENGTH = 2048;
 const MAX_DIAGNOSTIC_FIELD_LENGTH = 1024;
 const MAX_ERROR_INFO_ENTRIES = 8;
@@ -46,6 +53,54 @@ const FORBIDDEN_OPERATIONS = Object.freeze([
     "sites.create",
     "sites.delete",
 ]);
+
+function hostedVerificationError(code, message) {
+    const error = new Error(`${code}: ${message}`);
+    error.code = code;
+    return error;
+}
+
+export function createHostedVerificationBudget({
+    maximumBytes = MAX_HOSTED_TOTAL_BYTES,
+    maximumRequests = MAX_HOSTED_REQUEST_COUNT,
+    deadlineMs = HOSTED_VERIFICATION_DEADLINE_MS,
+} = {}) {
+    if (!Number.isSafeInteger(maximumBytes) || maximumBytes <= 0 || maximumBytes > MAX_HOSTED_TOTAL_BYTES) {
+        throw new Error("Hosted verification byte budget is invalid.");
+    }
+    if (!Number.isSafeInteger(maximumRequests) || maximumRequests <= 0 || maximumRequests > MAX_HOSTED_REQUEST_COUNT) {
+        throw new Error("Hosted verification request budget is invalid.");
+    }
+    if (!Number.isSafeInteger(deadlineMs) || deadlineMs <= 0 || deadlineMs > HOSTED_VERIFICATION_DEADLINE_MS) {
+        throw new Error("Hosted verification deadline is invalid.");
+    }
+    let usedBytes = 0;
+    let usedRequests = 0;
+    const deadlineAt = Date.now() + deadlineMs;
+    return Object.freeze({
+        get maximumBytes() { return maximumBytes; },
+        get maximumRequests() { return maximumRequests; },
+        get usedBytes() { return usedBytes; },
+        get usedRequests() { return usedRequests; },
+        remainingBytes() { return maximumBytes - usedBytes; },
+        beginRequest() {
+            if (Date.now() > deadlineAt) {
+                throw hostedVerificationError("REQUEST_TIMEOUT", "hosted verification exceeded its overall deadline.");
+            }
+            if (usedRequests + 1 > maximumRequests) {
+                throw hostedVerificationError("REQUEST_COUNT_EXCEEDED", "hosted verification request count exceeded its limit.");
+            }
+            usedRequests += 1;
+        },
+        chargeBytes(byteCount) {
+            if (!Number.isSafeInteger(byteCount) || byteCount < 0) throw new Error("Hosted verification byte charge is invalid.");
+            if (usedBytes + byteCount > maximumBytes) {
+                throw hostedVerificationError("TOTAL_BUDGET_EXCEEDED", "hosted verification exceeded its aggregate response-byte budget.");
+            }
+            usedBytes += byteCount;
+        },
+    });
+}
 
 function accessToken() {
     return runChecked("gcloud", ["auth", "print-access-token", "--quiet"], { capture: true }).stdout.trim();
@@ -115,6 +170,56 @@ export function firebaseHostingResponseValue(response) {
     throw error;
 }
 
+async function readBoundedResponseBody(response, {
+    maximumBytes,
+    remainingBytes,
+    chargeBytes = () => {},
+    controller,
+    tooLargeError,
+} = {}) {
+    const contentLength = responseHeader(response, "content-length");
+    if (typeof contentLength === "string" && /^[0-9]+$/.test(contentLength.trim())) {
+        const declaredLength = Number(contentLength);
+        if (Number.isSafeInteger(declaredLength) && declaredLength > maximumBytes) {
+            stopResponse(response, null, controller);
+            throw tooLargeError();
+        }
+        if (Number.isSafeInteger(declaredLength) && Number.isSafeInteger(remainingBytes) && declaredLength > remainingBytes) {
+            stopResponse(response, null, controller);
+            throw hostedVerificationError("TOTAL_BUDGET_EXCEEDED", "hosted verification exceeded its aggregate response-byte budget.");
+        }
+    }
+    const reader = response.body?.getReader?.();
+    if (!reader) {
+        if (response.body == null) return Buffer.alloc(0);
+        throw new Error("Response body is not a readable stream.");
+    }
+    const chunks = [];
+    let receivedBytes = 0;
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (!(value instanceof Uint8Array)) {
+            stopResponse(response, reader, controller);
+            throw new Error("Response stream returned a malformed chunk.");
+        }
+        const chunkBytes = value.byteLength;
+        if (receivedBytes + chunkBytes > maximumBytes) {
+            stopResponse(response, reader, controller);
+            throw tooLargeError();
+        }
+        try {
+            chargeBytes(chunkBytes);
+        } catch (error) {
+            stopResponse(response, reader, controller);
+            throw error;
+        }
+        receivedBytes += chunkBytes;
+        chunks.push(Buffer.from(value));
+    }
+    return Buffer.concat(chunks, receivedBytes);
+}
+
 async function hostingResponse(path, { method = "GET", body } = {}) {
     let response;
     try {
@@ -128,10 +233,10 @@ async function hostingResponse(path, { method = "GET", body } = {}) {
     } catch (networkError) {
         return { status: null, ok: false, payload: null, networkError };
     }
-    const declaredLength = Number(responseHeader(response, "content-length") ?? 0);
-    if (declaredLength > MAX_API_RESPONSE_BYTES) throw new Error("Firebase Hosting API response exceeded the bounded size limit.");
-    const bytes = Buffer.from(await response.arrayBuffer());
-    if (bytes.length > MAX_API_RESPONSE_BYTES) throw new Error("Firebase Hosting API response exceeded the bounded size limit.");
+    const bytes = await readBoundedResponseBody(response, {
+        maximumBytes: MAX_API_RESPONSE_BYTES,
+        tooLargeError: () => new Error("Firebase Hosting API response exceeded the bounded size limit."),
+    });
     let payload = null;
     if (bytes.length) {
         try { payload = JSON.parse(bytes.toString("utf8")); } catch { throw new Error("Firebase Hosting API returned malformed JSON."); }
@@ -280,42 +385,105 @@ function responseHeader(response, name) {
     return response.headers?.get?.(name) ?? response.headers?.[name.toLowerCase()] ?? response.headers?.[name] ?? null;
 }
 
-async function fetchResponse(url, { fetchImpl = fetch, maximumBytes = MAX_HOSTED_FILE_BYTES, expectedOrigin } = {}) {
+function stopResponse(response, reader, controller) {
+    controller?.abort();
+    const cancellation = reader?.cancel?.() ?? response?.body?.cancel?.();
+    if (cancellation?.catch) void cancellation.catch(() => {});
+}
+
+export async function readHostedResponse(url, {
+    fetchImpl = fetch,
+    maximumBytes = MAX_HOSTED_FILE_BYTES,
+    expectedOrigin,
+    expectedStatuses = [200],
+    budget,
+    timeoutMs = HOSTED_REQUEST_TIMEOUT_MS,
+} = {}) {
+    if (!budget || typeof budget.beginRequest !== "function" || typeof budget.chargeBytes !== "function" || typeof budget.remainingBytes !== "function") {
+        throw new Error("Hosted verification requires a shared network budget.");
+    }
+    if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 0 || maximumBytes > MAX_HOSTED_FILE_BYTES) {
+        throw new Error("Hosted verification per-response byte limit is invalid.");
+    }
+    if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > HOSTED_REQUEST_TIMEOUT_MS) {
+        throw new Error("Hosted verification request timeout is invalid.");
+    }
     const requested = new URL(url);
     if (requested.protocol !== "https:") throw new Error("Hosted verification requires HTTPS.");
     if (expectedOrigin && requested.origin !== expectedOrigin) throw new Error("Hosted verification rejected a cross-host request.");
-    const response = await fetchImpl(requested, {
-        redirect: "manual",
-        headers: { "Accept-Encoding": "identity" },
-        signal: AbortSignal.timeout(HOSTED_REQUEST_TIMEOUT_MS),
-    });
-    const location = responseHeader(response, "location");
-    if (response.status >= 300 && response.status <= 399) {
-        let target = null;
-        try { target = location ? new URL(location, requested) : null; } catch { /* The redirect is rejected below. */ }
-        if (target && target.origin !== requested.origin) throw new Error("Hosted verification rejected a cross-host redirect.");
-        throw new Error("Hosted verification rejected an unexpected redirect.");
+    const controller = new AbortController();
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+    }, timeoutMs);
+    let response;
+    try {
+        budget.beginRequest();
+        response = await fetchImpl(requested, {
+            redirect: "manual",
+            headers: { "Accept-Encoding": "identity" },
+            signal: controller.signal,
+        });
+        const location = responseHeader(response, "location");
+        if (response.status >= 300 && response.status <= 399) {
+            let target = null;
+            try { target = location ? new URL(location, requested) : null; } catch { /* Redirects are always rejected below. */ }
+            stopResponse(response, null, controller);
+            throw hostedVerificationError(
+                "REDIRECT_FORBIDDEN",
+                target && target.origin !== requested.origin
+                    ? "hosted verification rejected a cross-host redirect."
+                    : "hosted verification rejected a redirect.",
+            );
+        }
+        if (response.redirected === true || (response.url && new URL(response.url).origin !== requested.origin)) {
+            stopResponse(response, null, controller);
+            throw hostedVerificationError("REDIRECT_FORBIDDEN", "hosted verification rejected a cross-host redirect.");
+        }
+        if (!expectedStatuses.includes(response.status)) {
+            stopResponse(response, null, controller);
+            throw hostedVerificationError("HTTP_STATUS_INVALID", `hosted verification received HTTP ${response.status}.`);
+        }
+        const contentEncoding = responseHeader(response, "content-encoding");
+        if (contentEncoding && contentEncoding.trim().toLowerCase() !== "identity") {
+            stopResponse(response, null, controller);
+            throw hostedVerificationError("BYTE_MISMATCH", "hosted verification rejected an encoded response.");
+        }
+        const bytes = await readBoundedResponseBody(response, {
+            maximumBytes,
+            remainingBytes: budget.remainingBytes(),
+            chargeBytes: (byteCount) => budget.chargeBytes(byteCount),
+            controller,
+            tooLargeError: () => hostedVerificationError("RESPONSE_TOO_LARGE", "hosted response exceeded its per-response byte limit."),
+        });
+        return {
+            status: response.status,
+            headers: response.headers?.entries ? Object.fromEntries(response.headers) : response.headers ?? {},
+            body: bytes.toString("utf8"),
+            bytes,
+        };
+    } catch (error) {
+        if (error?.code && [
+            "RESPONSE_TOO_LARGE",
+            "TOTAL_BUDGET_EXCEEDED",
+            "REQUEST_COUNT_EXCEEDED",
+            "REQUEST_TIMEOUT",
+            "REDIRECT_FORBIDDEN",
+            "HTTP_STATUS_INVALID",
+            "BYTE_MISMATCH",
+        ].includes(error.code)) {
+            throw error;
+        }
+        if (timedOut) {
+            stopResponse(response, null, controller);
+            throw hostedVerificationError("REQUEST_TIMEOUT", "hosted verification request timed out.");
+        }
+        stopResponse(response, null, controller);
+        throw hostedVerificationError("HOSTED_STREAM_READ_FAILED", "hosted verification could not read the response stream.");
+    } finally {
+        clearTimeout(timeout);
     }
-    if (response.redirected === true || (response.url && new URL(response.url).origin !== requested.origin)) {
-        throw new Error("Hosted verification rejected a cross-host redirect.");
-    }
-    const declaredLength = Number(response.headers.get("content-length") ?? 0);
-    if (declaredLength > maximumBytes) throw new Error("Hosted verification response exceeded the per-file size limit.");
-    const bytes = Buffer.from(await response.arrayBuffer());
-    if (bytes.length > maximumBytes) throw new Error("Hosted verification response exceeded the per-file size limit.");
-    const body = bytes.toString("utf8");
-    return {
-        status: response.status,
-        headers: response.headers?.entries ? Object.fromEntries(response.headers) : response.headers ?? {},
-        body,
-        bytes,
-    };
-}
-
-async function fetchChecked(url, options = {}) {
-    const response = await fetchResponse(url, options);
-    if (response.status !== 200) throw new Error(`Hosted verification failed with HTTP ${response.status}.`);
-    return response;
 }
 
 function expectedFrozenFiles(publicDirectory) {
@@ -338,7 +506,7 @@ function expectedFrozenFiles(publicDirectory) {
     files.sort((a, b) => a.path.localeCompare(b.path));
     const totalBytes = files.reduce((sum, file) => sum + file.bytes.length, 0);
     if (!files.length || files.length > MAX_HOSTED_FILE_COUNT) throw new Error("Frozen frontend file count exceeded the verification limit.");
-    if (totalBytes > MAX_HOSTED_TOTAL_BYTES) throw new Error("Frozen frontend exceeded the total verification size limit.");
+    if (totalBytes > MAX_FROZEN_TOTAL_BYTES) throw new Error("Frozen frontend exceeded the total verification size limit.");
     if (new Set(files.map((file) => file.path)).size !== files.length) throw new Error("Frozen frontend contains duplicate hosted paths.");
     return files;
 }
@@ -418,21 +586,50 @@ function assertExactPreviewUrl(baseUrl, expectedUrl) {
     return actual;
 }
 
-export async function verifyHostedServingBehavior(baseUrl, { fetchImpl = fetch } = {}) {
+export async function verifyHostedServingBehavior(baseUrl, {
+    fetchImpl = fetch,
+    budget = createHostedVerificationBudget(),
+} = {}) {
     const origin = new URL(baseUrl).origin;
-    const root = await fetchChecked(new URL("/", baseUrl), { fetchImpl, expectedOrigin: origin });
-    const deep = await fetchChecked(new URL("/transactions/demo", baseUrl), { fetchImpl, expectedOrigin: origin });
+    const root = await readHostedResponse(new URL("/", baseUrl), {
+        fetchImpl,
+        expectedOrigin: origin,
+        maximumBytes: MAX_HTML_PROBE_BYTES,
+        budget,
+    });
+    const deep = await readHostedResponse(new URL("/transactions/demo", baseUrl), {
+        fetchImpl,
+        expectedOrigin: origin,
+        maximumBytes: MAX_HTML_PROBE_BYTES,
+        budget,
+    });
     const cache = (response) => response.headers["cache-control"] ?? "";
     if (!cache(root).includes("no-cache") || !cache(deep).includes("no-cache")) throw new Error("Hosted HTML shell is not protected from stale caching.");
     const assetPaths = [...new Set([...root.body.matchAll(/(?:src|href)=["']([^"']+\.(?:js|css))["']/g)].map((match) => match[1]))];
     if (!assetPaths.length) throw new Error("Hosted root contains no hashed JavaScript/CSS assets.");
     if (assetPaths.length > MAX_HOSTED_FILE_COUNT) throw new Error("Hosted root referenced too many static assets.");
     const assets = [];
-    for (const path of assetPaths) assets.push({ path, response: await fetchChecked(new URL(path, baseUrl), { fetchImpl, expectedOrigin: origin }) });
+    for (const path of assetPaths) {
+        assets.push({
+            path,
+            response: await readHostedResponse(new URL(path, baseUrl), {
+                fetchImpl,
+                expectedOrigin: origin,
+                maximumBytes: MAX_ASSET_PROBE_BYTES,
+                budget,
+            }),
+        });
+    }
     for (const { response } of assets) {
         if (!cache(response).includes("max-age=31536000") || !cache(response).includes("immutable")) throw new Error("Hosted hashed asset does not have the frozen immutable cache policy.");
     }
-    const session = await fetchResponse(new URL("/session/me", baseUrl), { fetchImpl, expectedOrigin: origin });
+    const session = await readHostedResponse(new URL("/session/me", baseUrl), {
+        fetchImpl,
+        expectedOrigin: origin,
+        expectedStatuses: [401],
+        maximumBytes: MAX_SESSION_PROBE_BYTES,
+        budget,
+    });
     let sessionCode;
     try { sessionCode = JSON.parse(session.body).error_code; } catch { /* handled by the assertion below */ }
     if (session.status !== 401 || !["AUTHENTICATION_REQUIRED", "SESSION_INVALID", "SESSION_EXPIRED"].includes(sessionCode)) throw new Error("Preview auth bootstrap rewrite did not fail closed with a structured unauthenticated response.");
@@ -458,6 +655,7 @@ export async function verifyHostedVersion(baseUrl, {
     lock = loadFrozenRelease(),
     request = hostingRequest,
     fetchImpl = fetch,
+    budget = createHostedVerificationBudget(),
 } = {}) {
     const previewUrl = assertExactPreviewUrl(baseUrl, expectedUrl);
     if (!new RegExp(`^sites/${lock.firebase.site}/versions/[A-Za-z0-9_-]+$`).test(versionName ?? "")) {
@@ -472,18 +670,20 @@ export async function verifyHostedVersion(baseUrl, {
     }
     const versionFiles = await readHostedVersionFiles(versionName, request);
     assertHostedVersionInventory({ version, files: versionFiles, expectedFiles });
-    let verifiedBytes = 0;
     for (const expectedFile of expectedFiles) {
         const url = new URL(previewUrl);
         url.pathname = expectedFile.path;
-        const response = await fetchChecked(url, { fetchImpl, expectedOrigin: previewUrl.origin });
-        verifiedBytes += response.bytes.length;
-        if (verifiedBytes > MAX_HOSTED_TOTAL_BYTES) throw new Error("Hosted verification exceeded the total size limit.");
+        const response = await readHostedResponse(url, {
+            fetchImpl,
+            expectedOrigin: previewUrl.origin,
+            maximumBytes: MAX_HOSTED_FILE_BYTES,
+            budget,
+        });
         if (response.bytes.length !== expectedFile.bytes.length || sha256Bytes(response.bytes) !== expectedFile.sha256 || !response.bytes.equals(expectedFile.bytes)) {
-            throw new Error(`Hosted file differs from the frozen frontend: ${expectedFile.path}`);
+            throw hostedVerificationError("BYTE_MISMATCH", `hosted file differs from the frozen frontend: ${expectedFile.path}`);
         }
     }
-    const behavior = await verifyHostedServingBehavior(previewUrl, { fetchImpl });
+    const behavior = await verifyHostedServingBehavior(previewUrl, { fetchImpl, budget });
     return {
         ...behavior,
         exactVersionInventory: true,
