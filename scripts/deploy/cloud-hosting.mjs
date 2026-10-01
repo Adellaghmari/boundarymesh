@@ -33,6 +33,12 @@ const FIREBASE_GENERATED_VERSION_PATHS = Object.freeze([
     "/__/firebase/init.json",
 ]);
 // Firebase-generated init files are inventory-only. They are not frozen static bytes and are not fetched.
+// Version.fileCount is output-only int64, calculated after FINALIZED. It is not a
+// same-instant sites.versions.files.list length and must not be equality-checked
+// against that list. Hosting FAQ extra metadata vs the local project is bounded
+// here to the two reserved init files plus a tiny unlisted slack; unknown paths fail closed.
+const MAX_UNLISTED_VERSION_METADATA_FILES = 8;
+const MAX_VERSION_FILE_COUNT = MAX_HOSTED_FILE_COUNT + FIREBASE_GENERATED_VERSION_PATHS.length + MAX_UNLISTED_VERSION_METADATA_FILES;
 const MAX_DIAGNOSTIC_MESSAGE_LENGTH = 2048;
 const MAX_DIAGNOSTIC_FIELD_LENGTH = 1024;
 const MAX_ERROR_INFO_ENTRIES = 8;
@@ -528,29 +534,69 @@ export function normalizeFrozenHostingConfig(firebaseConfig) {
     };
 }
 
+export function parseVersionFileCount(fileCount) {
+    if (fileCount === undefined || fileCount === null) {
+        return { available: false, value: null };
+    }
+    if (typeof fileCount === "number") {
+        if (!Number.isInteger(fileCount) || fileCount < 0 || fileCount > MAX_VERSION_FILE_COUNT) {
+            throw new Error("Firebase version fileCount is not a safe bounded integer.");
+        }
+        return { available: true, value: fileCount };
+    }
+    if (typeof fileCount !== "string" || !/^(0|[1-9][0-9]{0,3})$/.test(fileCount)) {
+        throw new Error("Firebase version fileCount is not a safe integer.");
+    }
+    const value = Number(fileCount);
+    if (!Number.isInteger(value) || value < 0 || value > MAX_VERSION_FILE_COUNT) {
+        throw new Error("Firebase version fileCount exceeded the verification limit.");
+    }
+    return { available: true, value };
+}
+
 export function assertHostedVersionInventory({ version, files, expectedFiles }) {
     if (version?.status !== "FINALIZED" || typeof version.finalizeTime !== "string" || !version.finalizeTime) {
         throw new Error("Hosted verification requires the exact FINALIZED version.");
     }
     if (!Array.isArray(files) || !Array.isArray(expectedFiles)) throw new Error("Hosted version file inventory is missing.");
-    if (files.length > MAX_HOSTED_FILE_COUNT + FIREBASE_GENERATED_VERSION_PATHS.length) {
+    const maxInspectableFiles = MAX_HOSTED_FILE_COUNT + FIREBASE_GENERATED_VERSION_PATHS.length;
+    if (files.length > maxInspectableFiles) {
         throw new Error("Firebase version file count exceeded the verification limit.");
     }
     const actualPaths = files.map((file) => file?.path);
+    if (actualPaths.some((path) => typeof path !== "string" || !path.startsWith("/") || path.includes("//") || path.includes("\\"))) {
+        throw new Error("Firebase version file inventory contains a malformed path.");
+    }
     if (new Set(actualPaths).size !== actualPaths.length) throw new Error("Firebase version file inventory contains duplicate paths.");
     for (const file of files) {
         if (file?.status !== "ACTIVE" || typeof file.hash !== "string" || !file.hash) {
             throw new Error("Firebase version file inventory contains a non-ACTIVE or unhashed file.");
         }
     }
-    const expectedPaths = [
-        ...expectedFiles.map((file) => file.path),
-        ...FIREBASE_GENERATED_VERSION_PATHS,
-    ].sort();
-    if (canonicalJson([...actualPaths].sort()) !== canonicalJson(expectedPaths)) {
-        throw new Error("Firebase version file inventory differs from the frozen frontend.");
+    const expectedFrozenPaths = expectedFiles.map((file) => file.path);
+    const firebaseOwned = [];
+    const deployOwned = [];
+    for (const path of actualPaths) {
+        if (FIREBASE_GENERATED_VERSION_PATHS.includes(path)) firebaseOwned.push(path);
+        else if (path === "/__" || path.startsWith("/__/")) {
+            throw new Error("Firebase version file inventory contains an unexpected reserved path.");
+        } else {
+            deployOwned.push(path);
+        }
     }
-    if (Number(version.fileCount) !== files.length) throw new Error("Firebase version fileCount disagrees with its authoritative inventory.");
+    if (canonicalJson([...deployOwned].sort()) !== canonicalJson([...expectedFrozenPaths].sort())) {
+        const missingFrozen = expectedFrozenPaths.some((path) => !deployOwned.includes(path));
+        throw new Error(missingFrozen
+            ? "Firebase version file inventory is missing a frozen frontend path."
+            : "Firebase version file inventory contains unexpected user-deployed content.");
+    }
+    if (canonicalJson([...firebaseOwned].sort()) !== canonicalJson([...FIREBASE_GENERATED_VERSION_PATHS].sort())) {
+        throw new Error("Firebase version file inventory is missing an expected Firebase-owned reserved path.");
+    }
+    const parsedFileCount = parseVersionFileCount(version.fileCount);
+    if (parsedFileCount.available && parsedFileCount.value > 0 && parsedFileCount.value < expectedFrozenPaths.length) {
+        throw new Error("Firebase version fileCount is below the frozen deploy-owned file count.");
+    }
     return true;
 }
 

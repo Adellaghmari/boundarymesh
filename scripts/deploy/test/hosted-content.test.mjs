@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {
+    assertHostedVersionInventory,
     createHostedVerificationBudget,
     normalizeFrozenHostingConfig,
+    parseVersionFileCount,
     readHostedResponse,
     verifyHostedServingBehavior,
     verifyHostedVersion,
@@ -62,14 +64,23 @@ function response(body, { status = 200, cache = "no-cache", headers = {} } = {})
 function harness({
     mutateVersion = (value) => value,
     mutateInventory = (value) => value,
+    inventoryPages,
     fetchOverride,
     budget,
 } = {}) {
     const state = fixture();
     const request = async (path) => {
         if (path === versionName) return mutateVersion(structuredClone(state.version));
-        if (path === `${versionName}/files?pageSize=100`) return { files: mutateInventory(structuredClone(state.inventory)) };
-        throw new Error(`Unexpected REST request: ${path}`);
+        if (!path.startsWith(`${versionName}/files?pageSize=100`)) throw new Error(`Unexpected REST request: ${path}`);
+        if (inventoryPages) {
+            const token = new URLSearchParams(path.slice(path.indexOf("?") + 1)).get("pageToken");
+            const page = token
+                ? inventoryPages.find((entry) => entry.token === token)
+                : inventoryPages[0];
+            if (!page) throw new Error(`Unexpected page token: ${token}`);
+            return { files: page.files, nextPageToken: page.nextPageToken };
+        }
+        return { files: mutateInventory(structuredClone(state.inventory)) };
     };
     const fetchImpl = async (input, options) => {
         const url = new URL(input);
@@ -151,14 +162,100 @@ test("exact frozen file set and split-chunk Firebase config pass byte-exact veri
 test("missing expected Firebase version file fails closed", async () => {
     await assert.rejects(
         () => harness({ mutateInventory: (files) => files.filter((file) => file.path !== "/assets/split.js") }).verify(),
-        /inventory differs/,
+        /missing a frozen frontend path/,
     );
 });
 
 test("extra unexpected Firebase version file fails closed", async () => {
     await assert.rejects(
         () => harness({ mutateInventory: (files) => [...files, { path: "/unexpected.txt", hash: "opaque", status: "ACTIVE" }] }).verify(),
-        /inventory differs/,
+        /unexpected user-deployed content/,
+    );
+});
+
+function inventoryArgs(overrides = {}) {
+    const state = fixture();
+    const version = { ...state.version };
+    if ("fileCount" in overrides) version.fileCount = overrides.fileCount;
+    return {
+        version,
+        files: overrides.files ?? state.inventory,
+        expectedFiles: overrides.expectedFiles ?? [...state.files.keys()].map((path) => ({ path })),
+    };
+}
+
+test("inspectable inventory is the files.list path set, not Version.fileCount equality", () => {
+    const args = inventoryArgs({ fileCount: "11" });
+    assert.equal(args.files.length, 5);
+    assert.equal(assertHostedVersionInventory(args), true);
+    assert.equal(assertHostedVersionInventory(inventoryArgs({ fileCount: undefined })), true);
+    assert.equal(assertHostedVersionInventory(inventoryArgs({ fileCount: "0" })), true);
+    assert.deepEqual(parseVersionFileCount("9"), { available: true, value: 9 });
+    assert.equal(parseVersionFileCount(undefined).available, false);
+});
+
+test("fileCount below the frozen deploy-owned count fails closed", () => {
+    assert.throws(
+        () => assertHostedVersionInventory(inventoryArgs({ fileCount: "2" })),
+        /fileCount is below the frozen deploy-owned file count/,
+    );
+});
+
+test("invalid and unbounded fileCount values fail closed", () => {
+    for (const fileCount of ["", "09", "-1", "1.5", "1e2", "NaN", 1.5, 27, "27", "10000", true, {}, []]) {
+        assert.throws(
+            () => assertHostedVersionInventory(inventoryArgs({ fileCount })),
+            /fileCount/,
+        );
+    }
+});
+
+test("unexpected Firebase-reserved paths fail unless explicitly allowed", () => {
+    const extraReserved = [...fixture().inventory, { path: "/__/firebase/unknown.json", hash: "opaque", status: "ACTIVE" }];
+    assert.throws(
+        () => assertHostedVersionInventory(inventoryArgs({ files: extraReserved })),
+        /unexpected reserved path/,
+    );
+    const missingReserved = fixture().inventory.filter((file) => file.path !== "/__/firebase/init.json");
+    assert.throws(
+        () => assertHostedVersionInventory(inventoryArgs({ files: missingReserved })),
+        /missing an expected Firebase-owned reserved path/,
+    );
+});
+
+test("duplicate normalized inventory paths fail closed", () => {
+    const files = [...fixture().inventory, { path: "/index.html", hash: "duplicate", status: "ACTIVE" }];
+    assert.throws(
+        () => assertHostedVersionInventory(inventoryArgs({ files })),
+        /duplicate paths/,
+    );
+});
+
+test("paginated files.list responses are fully consumed", async () => {
+    const state = fixture();
+    const [first, ...rest] = state.inventory;
+    const result = await harness({
+        inventoryPages: [
+            { files: [first], nextPageToken: "page-2" },
+            { token: "page-2", files: rest },
+        ],
+    }).verify();
+    assert.equal(result.exactVersionInventory, true);
+    assert.equal(result.frozenArtifactByteExact, true);
+});
+
+test("nextPageToken is required until absent and pagination is bounded", async () => {
+    await assert.rejects(
+        () => harness({
+            inventoryPages: [
+                { files: fixture().inventory.slice(0, 1), nextPageToken: "page-2" },
+                { token: "page-2", files: fixture().inventory.slice(1, 2), nextPageToken: "page-3" },
+                { token: "page-3", files: fixture().inventory.slice(2, 3), nextPageToken: "page-4" },
+                { token: "page-4", files: fixture().inventory.slice(3, 4), nextPageToken: "page-5" },
+                { token: "page-5", files: fixture().inventory.slice(4) },
+            ],
+        }).verify(),
+        /pagination limit/,
     );
 });
 
@@ -518,4 +615,8 @@ test("hosted verifier never buffers a full body before enforcing size limits", (
     assert.match(source, /MAX_HTML_PROBE_BYTES = 256 \* 1024/);
     assert.match(source, /MAX_ASSET_PROBE_BYTES = 1024 \* 1024/);
     assert.match(source, /MAX_SESSION_PROBE_BYTES = 16 \* 1024/);
+    assert.doesNotMatch(source, /Number\(version\.fileCount\) !== files\.length/);
+    assert.match(source, /parseVersionFileCount/);
+    assert.match(source, /MAX_VERSION_FILE_COUNT/);
+    assert.doesNotMatch(source, /\/__\/\*\*/);
 });
