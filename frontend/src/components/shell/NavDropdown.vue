@@ -143,7 +143,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.45rem 0.7rem;
+  padding: 0.5rem 0.85rem;
   border: 1px solid transparent;
   border-radius: $radius-nav;
   background: transparent;
@@ -151,6 +151,8 @@ onBeforeUnmount(() => {
   font: inherit;
   font-size: 0.8rem;
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
   transition:
     background 160ms ease,

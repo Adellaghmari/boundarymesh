@@ -4,9 +4,9 @@
 
 **Tagline:** Secure every system crossing.
 
-**Environment:** GCP project `boundarymesh-dev`, region `europe-west4` — portfolio/dev production, not enterprise production and not paid customer traffic.
+**Environment:** GCP project `boundarymesh-dev`, region `europe-west4`. This is a portfolio and development environment, not enterprise production and not paid customer traffic.
 
-**Overall:** live in the portfolio/dev GCP environment. The frozen published release is **staged, promoted, and live**. Promotion evidence is **immutable**. Rollback is **ready and not executed**. Reviewer documentation is frozen to this reality.
+**Overall:** the published release is staged, promoted, and live. Promotion evidence is immutable. Rollback is ready and has not been executed. The reviewer documents match that state.
 
 Current truth for reviewers is the root [README.md](README.md), this file, [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md), and [docs/README.md](docs/README.md). Files named `docs/PHASE_*.md` are historical gate records. You do not need phase numbering to understand the product.
 
@@ -83,7 +83,7 @@ Optional follow-ups are listed once in [docs/ROADMAP.md](docs/ROADMAP.md). They 
 
 ## LIVE MICROSOFT VERIFICATION (local, 2026-09-10)
 
-Human-controlled Operator browser completed `POST /api/v1/admin/microsoft/calendar/pull` twice in this process.
+An operator completed `POST /api/v1/admin/microsoft/calendar/pull` twice in this local process.
 
 Empty-calendar pull: Graph HTTP 200, `count=0` (provider verified only).
 

@@ -1,8 +1,8 @@
 # Documentation map
 
-Current project truth lives in a small set of reviewer-facing documents. Historical
-phase notes remain as audit records; they are not current status. You do not need
-Phase 15/16 numbering to understand the product.
+Current project truth lives in a small set of documents meant for a reviewer. Historical
+phase notes remain as audit records. They are not current status. You do not need
+Phase 15 or 16 numbering to understand the product.
 
 ## Current truth
 

@@ -4,7 +4,7 @@
 portfolio wording. BoundaryMesh is portfolio engineering in `boundarymesh-dev`, not professional
 employment or enterprise production ownership.
 
-Statuses below use three reviewer-facing classes:
+Statuses below use three classes:
 
 - **SAFE NOW** — true without extra caveats beyond “portfolio/dev GCP project”
 - **SAFE WITH QUALIFIER** — true only with the stated limit

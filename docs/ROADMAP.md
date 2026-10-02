@@ -17,14 +17,14 @@ Major implemented milestones, without reprinting every internal gate:
 | Shared IaC state | GCS DIY backend + dedicated KMS secrets provider; Compute Engine API disabled |
 | Keyless CI preview | WIF verification + Pulumi preview isolation |
 | Immutable publication | Four-subject release bound to source `a876a7bfa5fa86f88e8387efb557773281daa6e6`; unsigned SBOM/provenance |
-| Controlled CD | Human-gated stage and promote of that frozen release; digest-pinned; split runtime/Hosting identities |
-| Promotion evidence | Immutable Generic evidence; break-glass recovery live-verified after the original promotion succeeded |
-| Rollback path | Implemented, tested, identities live-readable; **not live-executed** |
+| Controlled CD | A person starts stage and promote for that frozen release. Images stay pinned to a digest. Runtime and Hosting use separate identities |
+| Promotion evidence | Immutable Generic evidence. Break glass recovery was verified after the original promotion succeeded |
+| Rollback path | Implemented and tested. Identities are readable in the live project. Rollback has not been executed there |
 
 ## Current
 
-Reviewer-facing documentation and CV claim boundaries are frozen to verified reality.
-No further product features are required for current portfolio/CV use.
+The documentation a reviewer reads, and the CV claim boundaries, match the verified project.
+No further product features are required before this can be used on a CV.
 
 Optional follow-ups below are not blockers.
 

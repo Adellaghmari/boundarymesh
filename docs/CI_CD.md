@@ -92,7 +92,7 @@ operation. Stage evidence and promotion evidence are separate immutable Generic 
 Rollback is implemented and tested. Rollback identities remain live-readable. **Rollback has
 not been live-executed.** A human must dispatch it with the exact stage and promotion run IDs.
 
-## Break-glass recovery (not the happy path)
+## Break glass recovery (not the normal path)
 
 `recover-promotion-evidence.yml` exists because an otherwise successful promotion can fail while
 recording immutable evidence. It does **not** promote, roll back, or change runtime/Hosting.
