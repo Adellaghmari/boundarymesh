@@ -15,52 +15,51 @@ the engine has decided.
 | Compute | Cloud Run Service + Worker Pool | API request-based/scale-to-zero; worker is a continuous pull process |
 | Ingress vs delivery | Sync enforcement, async delivery | Downstream instability must not pin the public boundary |
 | Data | Firestore Native | Access-pattern first; not Postgres (A) or DynamoDB (B) |
-| Async | Pub/Sub + DLQ | Integration-oriented delivery bus, not a release event bus |
+| Async | Pub/Sub (+ unused DLQ topic) | Integration-oriented delivery bus. Dead-letter forwarding is not configured |
 | Secrets | Secret Manager | References only in Firestore |
 | Signatures | Cloud KMS ECDSA P-256 | Private key never leaves KMS |
 | IaC | Pulumi TypeScript + GCS state | Distinct from Terraform (B) |
 | CI identity | GitHub → GCP WIF | No JSON keys |
 | Hosted operator identity | Firebase Google Auth + Web BFF session | Real authorization, no browser workload credentials |
 | Microsoft connector admin identity | Microsoft Entra OIDC (local BFF) | Delegated Graph authorization remains a distinct local integration |
-| Graph | Outlook Calendar, one deep connector | Contract harness TESTED; live Graph blocked without tenant |
+| Graph | Outlook Calendar, one deep connector | Contract harness TESTED; one personal-account event LIVE VERIFIED LOCALLY; production Entra disabled; notifications not implemented |
 | Product shell | Custom Vue/SCSS premium header | Core / Labs / Operations / Evidence / Status; no UI framework |
 | AI | None | Deterministic policy is the product |
 
 ## High-level production flow
 
 ```text
-TRUSTED CALLER / AUTHENTICATED WEB BFF
+FIREBASE HOSTING  (SPA + session/API rewrites)
         │
         ▼
-IAM-PRIVATE BOUNDARY API  —  boundarymesh-api  (:8080)
+PUBLIC WEB BFF  —  boundarymesh-web
+        │  Firebase Google session / CSRF / route allowlist
+        ▼
+IAM-PRIVATE BOUNDARY API  —  boundarymesh-api
         │  identity / authorization / authenticity / freshness / replay
         │  contract / data egress
         │  credential resolvability (metadata) / connector safety
         │  Boundary Enforcement Engine
         │
         ├─ REJECT      →  evidence only  (no DeliveryInstruction)
-        ├─ QUARANTINE  →  local quarantine item  (no Camel)
+        ├─ QUARANTINE  →  quarantine item  (no Camel)
         └─ ALLOW / ALLOW_WITH_TRANSFORMATION
                 │
                 ▼
         DeliveryInstruction  (approved payload only)
                 │
-                ▼  local HTTP ingest by default; prod profile uses transactional outbox + Pub/Sub
+                ▼  prod: transactional outbox + Pub/Sub
 CLOUD RUN WORKER POOL  —  boundarymesh-worker  (no HTTP server or URL)
         │  just-in-time Secret Manager credential resolve
-        │  consent already decided on the API
         │  Camel CBR + translator
         │  Resilience4j around outbound HTTP
-        │  configured HTTPS CoveCRM / Lumenway / Rivertide endpoints
         │  DELIVERED | DUPLICATE_SUPPRESSED | QUARANTINED
 ```
 
-The `prod` Spring profile composes the Firestore, Pub/Sub, Cloud KMS, and Secret Manager adapters
-from `backend/gcp`; local/test profiles remain self-contained. The private API Service, no-endpoint
-Worker Pool, and authenticated Web BFF run under three dedicated keyless service accounts. Phase 15J
-live-verified one hosted transaction through the complete internal cloud path. The intentionally empty
-Rivertide endpoint produced durable terminal quarantine before ACK without resolving a connector secret
-or calling an external provider. Dead-letter forwarding remains unconfigured.
+Hosted connectors remain **intentionally unconfigured**. The live Worker path verified durable
+quarantine and ACK without calling an external provider or reading a connector secret.
+Dead-letter forwarding remains unconfigured. Production Entra/OIDC is disabled. There is no
+OpenTelemetry or Cloud Trace component in this topology.
 
 ## Why this is not an API gateway
 
@@ -120,12 +119,12 @@ Rules:
 
 See [NETWORK_BOUNDARIES.md](NETWORK_BOUNDARIES.md). Short form:
 
-1. Microsoft 365 / partner internet → public HTTPS on `boundary-api`
-2. `boundary-api` → Firestore / KMS (Google backplane, IAM)
-3. `boundary-api` → Pub/Sub (IAM)
-4. Pub/Sub → `delivery-worker` (pull, SA)
-5. `boundarymesh-worker` → Secret Manager / Firestore
-6. `delivery-worker` → external destinations (Graph, synthetic sinks)
+1. Browser → Firebase Hosting → public Web BFF (application session)
+2. Web BFF → IAM-private `boundarymesh-api` (service ID token)
+3. `boundarymesh-api` → Firestore / KMS / Pub/Sub (workload SA)
+4. Pub/Sub → `boundarymesh-worker` (pull)
+5. Worker → Secret Manager / Firestore (named secrets only)
+6. Worker → external destinations **only when configured** (currently not)
 
 Each hop has a different identity. Secret access is scoped to the named secrets each workload
 actually resolves.
@@ -168,7 +167,7 @@ Three distinct cases, never mixed:
 1. `@Order(1)` admin/session: `/api/v1/admin/**`, `/oauth2/**`, `/login/**`, `/logout` — CSRF on, cookie session.
 2. `@Order(2)` resource server: `/api/**`, `/v3/**` — bearer JWT/HMAC, CSRF off (stateless).
 
-Delegated Graph permission **`Calendars.Read`** is the flagship calendar connector. Application `Calendars.Read` is not claimed. Graph change notifications remain **PLANNED** until a reachable HTTPS endpoint exists.
+Delegated Graph permission **`Calendars.Read`** is the flagship calendar connector. Application `Calendars.Read` is not claimed. Graph change notifications are **not implemented**.
 
 ## Contracts as runtime
 
@@ -210,12 +209,13 @@ Spring Cloud Gateway is **NOT APPROPRIATE**: it would turn the product into “a
 backend/          Java modules (Phase 1)
 frontend/         Vue app (Phase 2)
 contracts/        schemas (Phase 5)
-infra/            Pulumi TypeScript; 59 managed resources on shared GCS/KMS state
+infra/            Pulumi TypeScript; **83** managed resources; CD-owned traffic fenced
 backend/gcp       Production Google Cloud adapters used by the live API and Worker
-.github/workflows Phase 16C verification/preview and Phase 16D publication live; Phase 16E-16F CD/freeze planned
-docs/             this folder
+.github/workflows Keyless verify, preview, publish, deploy, and break-glass evidence recovery
+docs/             current truth in README.md of this folder; PHASE_* files are historical
 ```
 
-## Implementation freeze for Phase 0
+## Phase 0 implementation freeze (historical)
 
-No production application code. No GCP. No Entra app registration. No Graph secrets. No service-account JSON keys.
+At the Phase 0 lock there was no production application code, no GCP, and no Entra registration.
+That freeze is closed. Current live topology is documented above.

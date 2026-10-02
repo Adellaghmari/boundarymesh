@@ -1,6 +1,8 @@
 # Security model
 
-BoundaryMesh is an **application-security and integration-security** product. Supply-chain container signing is not the center (that is Project B).
+BoundaryMesh is an **application-security and integration-security** product. Supply-chain container signing is not the center (that is Project B). Current hosted controls and gaps: [APPLICATION_SECURITY.md](APPLICATION_SECURITY.md). Current claims: [CV_CLAIMS_MATRIX.md](../CV_CLAIMS_MATRIX.md).
+
+Hosted operator identity is Firebase Google + Web BFF `__session`, not production Entra. Cloud Run serves HTTPS. The sections below retain the local Phase 3–4 model where labeled.
 
 ## Phase 3–4 local enforcement layers
 
@@ -13,7 +15,7 @@ BoundaryMesh is an **application-security and integration-security** product. Su
 
 **CORS:** local origins only (`http://127.0.0.1:5173`, `http://localhost:5173`, `http://127.0.0.1:4173`). Credentials allowed for the session cookie via the Vite proxy. No `*`. Disallowed origins are rejected (HTTP 403) and do not receive `Access-Control-Allow-Origin`.
 
-**TLS:** local HTTP is accepted. Cloud Run HTTPS is later. No fake local certificates.
+**TLS:** local HTTP is accepted for development. Hosted Cloud Run and Firebase Hosting use HTTPS. No fake local certificates.
 
 **Public (local):** health, ready, OpenAPI docs, local JWKS/issuer, token mint (local/test), webhook lab helper, QuayForge webhook ingest (HMAC, not anonymous-arbitrary), GET audit chains, GET attestations, GET/POST attestation verify, GET boundary graph, local tamper-demo GETs.
 
@@ -112,8 +114,8 @@ and unsigned in-toto/SLSA evidence for frontend. No signing key exists and no si
 made.
 
 Publication and deployment are separate trust boundaries. The publication identity cannot update
-Cloud Run, Firebase Hosting, IAM/WIF, Pulumi state, or application data. Phase 16E must consume the
-frozen release manifest and its digests; it must not rebuild or retag the release.
+Cloud Run, Firebase Hosting, IAM/WIF, Pulumi state, or application data. Controlled CD consumed
+the frozen release manifest and its parent digests without rebuilding or retagging.
 
 Audit evidence observed two `GenerateAccessToken` events for the publisher identity. Artifact
 Registry Data Access events were not observable in the queried stream, so the documentation does not

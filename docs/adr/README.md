@@ -2,6 +2,10 @@
 
 Status: **Accepted** at Phase 0 unless noted. Date: 2026-09-09.
 
+These ADRs are design decisions. They are not live inventory. Current topology and claims:
+[README.md](README.md), [../PROJECT_STATUS.md](../PROJECT_STATUS.md),
+[../CV_CLAIMS_MATRIX.md](../CV_CLAIMS_MATRIX.md).
+
 | ID | Title |
 | --- | --- |
 | [0001](0001-java-and-spring.md) | Java 25, Spring Boot 4.1, Spring Security 7.1 |

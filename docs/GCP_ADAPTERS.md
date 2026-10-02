@@ -125,7 +125,7 @@ workload access is still unverified. Local providers remain the default.
 | Worker pull subscription `boundarymesh-delivery-worker` | **LIVE / PROVISIONED IN GCP** |
 | DLQ topic `boundarymesh-delivery-dlq` | **LIVE / PROVISIONED IN GCP** |
 | DLQ inspect subscription `boundarymesh-delivery-dlq-inspect` | **LIVE / PROVISIONED IN GCP** |
-| Dead-letter forwarding | **PLANNED / NOT CONFIGURED** (no `deadLetterPolicy`, no IAM) |
+| Dead-letter forwarding | **NOT CONFIGURED** (no `deadLetterPolicy`, no IAM). Optional follow-up, not a CV blocker. |
 | Live publisher / consumer data path | **LIVE VERIFIED LOCALLY** (not Cloud Run workload-live) |
 | Live persist → publish → consume → dedupe | **LIVE VERIFIED** |
 | Live verification residue | **CLEANED** |

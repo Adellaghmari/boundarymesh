@@ -1,36 +1,31 @@
 # Observability
 
-OpenTelemetry + Spring Boot Actuator + Micrometer → Cloud Logging, Monitoring, Trace.
+Current state is **platform logs + health endpoints + local Micrometer counters**.
+There is **no** OpenTelemetry dependency, **no** OTLP exporter, **no** Cloud Trace pipeline,
+and **no** BoundaryMesh-managed alert policies.
 
-## Trace context
+## What exists now
 
-Propagate `correlation_id` (W3C `traceparent` when present). Span attributes (safe):
+- Cloud Run request and application logs (platform-automatic)
+- Spring Boot default logging
+- Health: API `/api/v1/health` and `/api/v1/ready` (IAM-private); Web `/actuator/health`
+- Local Micrometer counters on delivery/quarantine paths and Resilience4j tagged meters
+- GCP console metrics for Cloud Run and Pub/Sub (platform-automatic; not BM dashboards)
 
-`transaction_id`, `integration_id`, `connector_id`, `boundary_outcome`, `contract_version`, `reason_code`
+`/metrics` is not a public product surface.
 
-Never: raw JWT, Authorization, cookies, secret values, HMAC, OAuth client credentials, PEM, `clientState`, emails, PAN.
+## What does not exist
 
-## Metrics (names stable)
+- OpenTelemetry Java agent or Spring OTel starter
+- Configured Cloud Trace export
+- Production alert policies verified in this project
+- BoundaryMesh-managed Pub/Sub or DLQ alerts
+- A `projectIdentity` self-dogfood document
 
-- `boundarymesh.transactions.allowed`
-- `boundarymesh.transactions.transformed`
-- `boundarymesh.transactions.rejected`
-- `boundarymesh.transactions.quarantined`
-- `boundarymesh.replay.attempts`
-- `boundarymesh.contract.drift`
-- `boundarymesh.delivery.attempts`
-- `boundarymesh.delivery.success`
-- `boundarymesh.delivery.failure`
-- `boundarymesh.quarantine.open`
-- `boundarymesh.reprocess.total`
-- Resilience4j tagged circuit-breaker and retry meters (local Micrometer only)
+## Future / optional
 
-Cardinality: outcome and connector_id allowed; **no** subject ids as labels.
+OpenTelemetry, tracing, and alerting may be added later. They are not implemented and are not
+required for current CV readiness. See [ROADMAP.md](ROADMAP.md).
 
-## Logs
-
-JSON structured. Production INFO. Actuator `/health` `/info` (git SHA) public; `/metrics` **not** public (Cloud Monitoring scrape via sidecar-less: Cloud Run + OTel exporter). Expose Prometheus only internally if at all — **lock: OTLP exporter, no public /metrics**.
-
-## Self-dogfood (later)
-
-`projectIdentity` document: git SHA, Cloud Run revision, Pulumi stack name, last CI run URL, last AppSec summary. Labeled **LIVE PROJECT DATA**.
+Safe log/trace attributes, **if tracing is ever added**, must still exclude secrets, tokens,
+cookies, HMAC material, emails, and PAN. Until then, do not claim trace context propagation.

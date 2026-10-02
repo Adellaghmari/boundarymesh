@@ -1,5 +1,9 @@
 # Phase 15J final freeze — hosted production verification
 
+> **Historical freeze record.** Architecture here is still the hosted path. Pulumi counts,
+> Hosting release numbers, and “WIF planned” statements are as of Phase 15J. Current inventory:
+> [PROJECT_STATUS.md](../PROJECT_STATUS.md).
+
 Status: **LIVE VERIFIED / PASS.** Phase 15J-C3A and Phase 15J-C3B both passed. This
 document is the authoritative Phase 15J freeze record and supersedes pending-language in the
 individual historical gate records.

@@ -1,100 +1,36 @@
 # BoundaryMesh infrastructure
 
-Pulumi + TypeScript workspace for Google Cloud resources.
+Pulumi + TypeScript workspace for Google Cloud resources in `boundarymesh-dev` / `europe-west4`.
 
-## Phase 15I-A purpose
+Authentication for local preview uses workstation **Application Default Credentials**. Do not set
+`GOOGLE_APPLICATION_CREDENTIALS`. Do not commit ADC files, tokens, or service-account JSON.
 
-Phase 15I-A defined the production composition, two keyless workload identities, least-privilege
-IAM, an IAM-private Cloud Run API Service, and a no-endpoint Cloud Run Worker Pool. Phase 15I-B1
-applied only the two identities and ten approved IAM members. The post-apply preview proposes only
-the three Cloud Run resources, with 30 resources unchanged and zero updates/replacements/deletes.
-
-Authentication uses workstation **Application Default Credentials**. Do not set `GOOGLE_APPLICATION_CREDENTIALS`. Do not commit ADC files, tokens, or service-account JSON.
+Current reviewer truth: [docs/PULUMI.md](../docs/PULUMI.md), [docs/CI_CD.md](../docs/CI_CD.md),
+[PROJECT_STATUS.md](../PROJECT_STATUS.md).
 
 ## Current state
 
 | Item | Status |
 | --- | --- |
-| Pulumi TypeScript repository foundation | IMPLEMENTED + LOCALLY VALIDATED |
-| GCP project | CREATED + BILLING LINKED (`boundarymesh-dev`) |
-| Artifact Registry Pulumi definition | IMPLEMENTED + APPLIED |
-| Artifact Registry API | LIVE / ENABLED IN GCP |
-| Artifact Registry repository | LIVE / PROVISIONED IN GCP |
-| API image | CORRECTED 15I-C2 IMAGE PUSHED + DIGEST VERIFIED + DEPLOYED |
-| Worker image | PHASE 15I-C1 BUILT + SMOKE-TESTED + PUSHED + DIGEST VERIFIED + DEPLOYED |
-| Artifact Registry round-trip | LIVE VERIFIED |
-| Production composition | LIVE VERIFIED |
-| Cloud Run API Service | LIVE / PRIVATE / READY |
-| Cloud Run Worker Pool | LIVE / READY / NO PUBLIC URL |
-| Cloud Run Web BFF | LIVE / READY / PUBLIC TRANSPORT + MANDATORY APPLICATION AUTH |
-| Secret Manager Pulumi definition | IMPLEMENTED + APPLIED |
-| Secret Manager API | LIVE / ENABLED IN GCP |
-| Secret containers | LIVE / PROVISIONED IN GCP |
-| Secret versions | FOUR TOTAL / EXACTLY ONE ENABLED SYNTHETIC VERSION PER CONTAINER |
-| Workload identities | THREE KEYLESS SERVICE ACCOUNTS / LIVE / PROVISIONED / ZERO USER-MANAGED KEYS |
-| Workload IAM | LIVE / LEAST PRIVILEGE / BFF CORE INVOKER IS SERVICE-SCOPED |
-| Secret Manager workload access | LIVE / RESOURCE-SCOPED AUTHORIZATION ONLY |
-| Firestore persistence adapters | IMPLEMENTED + EMULATOR TESTED + WORKLOAD LIVE VERIFIED |
-| Firestore Pulumi definition | IMPLEMENTED + APPLIED |
-| Firestore API in GCP | LIVE / ENABLED IN GCP |
-| Firestore database in GCP | LIVE / PROVISIONED IN GCP |
-| Live Java SDK data path | WORKLOAD LIVE VERIFIED / DISPOSABLE RESIDUE CLEANED / EVIDENCE PRESERVED |
-| Transactional outbox + Pub/Sub adapters | IMPLEMENTED + EMULATOR TESTED + WORKLOAD LIVE VERIFIED |
-| Pub/Sub Pulumi | IMPLEMENTED + APPLIED |
-| Pub/Sub API in GCP | LIVE / ENABLED IN GCP |
-| Pub/Sub topics + pull subscriptions | LIVE / PROVISIONED IN GCP |
-| Dead-letter forwarding | PLANNED / NOT CONFIGURED |
-| Live Pub/Sub data path | WORKLOAD LIVE VERIFIED / ONE PUBLISH + ONE ACK / NO OBSERVED REDELIVERY |
-| Cloud KMS signer adapter | IMPLEMENTED + UNIT TESTED |
-| Cloud KMS Pulumi | IMPLEMENTED + APPLIED |
-| Cloud KMS API / key ring / crypto key in GCP | LIVE / PROVISIONED |
-| Live Cloud KMS signing | WORKLOAD LIVE VERIFIED / ES256 VERSION 1 VALID |
-| Workload KMS IAM | API-ONLY, CRYPTO-KEY-SCOPED / LIVE / APPLIED |
-| Phase 15I-A preview | 15 CREATE / 18 UNCHANGED / 0 UPDATE / 0 REPLACE / 0 DELETE |
-| Phase 15I-B1 targeted apply | 12 CREATED / NO OTHER OPERATIONS |
-| Phase 15I-B1 final preview | 3 CREATE / 30 UNCHANGED / 0 UPDATE / 0 REPLACE / 0 DELETE |
-| Phase 15I-B2 Secret Manager adapter proof | LIVE VERIFIED LOCALLY / PAYLOADS NOT PULUMI-MANAGED |
-| Phase 15I-C2 final preview | 33 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
-| Phase 15J final preview | 39 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
-| Firebase Hosting | LIVE / 3 RELEASES / OUTSIDE PULUMI OWNERSHIP |
-| Pulumi shared backend | LIVE / GCS DIY / VERSIONED / PUBLIC ACCESS PREVENTED |
-| Pulumi secrets provider | LIVE / DEDICATED GCP KMS KEY |
-| GitHub WIF provider | LIVE / ACTIVE / EXACTLY THREE MANUAL MAIN-ONLY CONTEXTS |
-| WIF verification identity | LIVE VERIFIED / KEYLESS / NO PROJECT OR DEPLOYMENT ROLES |
-| CI preview identity | LIVE VERIFIED / KEYLESS / STATE READ + STATE-KEY DECRYPT ONLY |
-| Phase 16C.4 final preview | 54 UNCHANGED / 0 CREATE / 0 UPDATE / 0 REPLACE / 0 DELETE |
-| Phase 16D publication foundation | LIVE VERIFIED / KEYLESS PUBLISHER / REPOSITORY-SCOPED WRITERS / IMMUTABLE TAGS |
-| Phase 16D immutable release | PUBLISHED / IMMUTABLE / LIVE VERIFIED / NOT DEPLOYED |
-| Current Pulumi state | 59 MANAGED RESOURCES / ZERO DRIFT |
+| Stack | `dev` |
+| Pulumi CLI | `3.262.0` |
+| Backend | `gs://bm-pulumi-state-eu4-21cad20b325f` |
+| Secrets provider | GCP KMS `boundarymesh-pulumi/state-secrets` |
+| Managed resources | **83 / zero drift** |
+| Canonical preview | `pulumi preview --stack dev --diff --non-interactive --suppress-permalink` → 83 unchanged / 0 operations / exit 0 |
+| Compute Engine API | **DISABLED** (benign Pulumi regions warning) |
+| WIF | ACTIVE / **7 exact** main-only contexts |
+| Cloud Run API / Web / Worker | LIVE; traffic and images owned by CD, fenced from Pulumi |
+| Firebase Hosting | LIVE / outside Pulumi |
+| Dead-letter forwarding | NOT CONFIGURED |
+| Phase 16D release | PUBLISHED then **promoted** by CD (not by Pulumi) |
 
-Target region: **`europe-west4`**.  
-Stack: **`dev`**.  
-GCP project: **`boundarymesh-dev`**.  
-Repository ID: **`boundarymesh`** (DOCKER). API, Worker, and Web BFF run immutable digest references. Phase 15D and intermediate Phase 15J tags remain historical and untouched.
+Pulumi `ignoreChanges` on image, revision, traffic, and Worker `instanceSplits`. Live promoted
+revisions therefore do not appear as Pulumi drift.
 
-## Current deployed image digests (Phase 15J freeze)
+## Frozen published OCI parents (CD input)
 
-Current immutable Artifact Registry deployment references:
-
-```text
-europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api@sha256:df4ca576227b1311194af1b3c821962a228bc7222d144eb4b4fbfb41590e072d
-
-europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker@sha256:a031fd689c80faef122b2eb7a35c35c6cb04035f333c493e5d7decea1d08b76a
-
-europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:90570617750bd39613482fd75d8434f1a47299ae8d35908ae0c81717374ee30a
-```
-
-The API, Worker Pool, and Web BFF are deployed on these immutable references. Phase 15J live
-verified the authenticated hosted browser path and exactly one governed transaction through the
-internal cloud pipeline. External connector delivery remains intentionally disabled.
-
-## Published Phase 16D release (not deployed)
-
-Publication run `36492495801` produced one immutable release bound to source SHA
-`a876a7bfa5fa86f88e8387efb557773281daa6e6`. Its release manifest SHA-256 is
-`ecdbaf88710ff73fd694c5c4e13c0a8ce300fdacf2a3761064b7511bd627300d`.
-
-The published OCI digests are:
+Source SHA `a876a7bfa5fa86f88e8387efb557773281daa6e6`. Runtime may resolve linux/amd64 children.
 
 ```text
 boundarymesh-api@sha256:bcfd9b01a3189228f583fa3f5d1ed8797f73d214af85bea4d84caeedfa0db8d7
@@ -102,32 +38,23 @@ boundarymesh-worker@sha256:7b1841487a2d1b3751e8bc63ee5323965e76ebeae9ae581c95b67
 boundarymesh-web-edge@sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04
 ```
 
-The Generic packages are `boundarymesh-frontend/a876a7bfa5fa86f88e8387efb557773281daa6e6`
-and `boundarymesh-release/a876a7bfa5fa86f88e8387efb557773281daa6e6`. Publication did not
-change the deployed Phase 15J images above. Phase 16E must consume the published manifest and exact
-digests without rebuilding, retagging, or republishing. See
-[`docs/PHASE_16D_FINAL.md`](../docs/PHASE_16D_FINAL.md).
+See [docs/PHASE_16D_FINAL.md](../docs/PHASE_16D_FINAL.md) for the publication freeze. That document
+is historical for “not deployed”; current Hosting/API/Worker run the promoted 16D release.
 
-Current backend: `gs://bm-pulumi-state-eu4-21cad20b325f`. Stack secrets use
-`gcpkms://projects/boundarymesh-dev/locations/europe-west4/keyRings/boundarymesh-pulumi/cryptoKeys/state-secrets`.
-The historical `file://~` backend and passphrase-backed state were superseded by the controlled
-Phase 16C migration. The independently protected pre-migration backup remains rollback evidence;
-it is not the active backend.
+## Historical image tags
 
-## Gated next steps (not provisioned)
+Phase 15D / 15I / 15J digest tags remain in Artifact Registry as historical images. They are not
+the current promoted identities.
 
-- Pub/Sub dead-letter forwarding
-- Phase 16E controlled CD
-- Phase 16F live CI/CD verification and freeze
-- Application-security automation after the CI/CD foundation
-- Final credential-hygiene rotation and audit in its later gated phase
+## Optional / not provisioned by this workspace
+
+Listed in [docs/ROADMAP.md](../docs/ROADMAP.md). Not CV blockers: DLQ forwarding, AppSec CI,
+tracing/alerts, historical cleanup.
 
 ## Local commands
 
-The active stack uses the GCP KMS secrets provider and does not need the historical passphrase.
-The previously exposed passphrase remains accepted-risk historical credential material until the
-final security-hygiene audit confirms retirement and recovery-boundary handling. Never commit,
-print, or place either credential class in shell history.
+The active stack uses the GCP KMS secrets provider. Never commit or print the historical
+passphrase or uncommitted Firebase signing material.
 
 ```powershell
 cd infra
@@ -136,7 +63,8 @@ npm run typecheck
 npm run build
 npm test
 pulumi login gs://bm-pulumi-state-eu4-21cad20b325f
-pulumi preview
+pulumi preview --stack dev --diff --non-interactive --suppress-permalink
 ```
 
-Do not mutate secrets, IAM, Hosting, or Cloud Run without a later explicit gate.
+Do not `pulumi up`, refresh, or mutate IAM/WIF/Hosting/Cloud Run unless a later explicit gate
+allows it.

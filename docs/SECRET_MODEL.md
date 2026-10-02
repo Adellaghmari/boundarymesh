@@ -2,12 +2,10 @@
 
 Flagship capability #5.
 
-**Current:** local credential references remain the default runtime path. Phase 15E provisioned
-four Secret Manager containers in `boundarymesh-dev`. Phase 15I-A composes the production adapters,
-and Phase 15I-B1 applied resource-scoped access for the two keyless workload identities. Phase
-15I-B2 added exactly one enabled, synthetic high-entropy version per container and live-verified
-the production Java adapters through workstation ADC. Cloud Run workloads are deployed and Ready,
-but their Secret Manager access is not yet runtime-verified.
+**Current:** local credential references remain the default non-prod path. Production adapters
+resolve Secret Manager. Four containers exist with one enabled synthetic version each. Hosted
+Worker IAM can read the three connector secrets; the live 15J path stopped before that read.
+HMAC `hmac-quayforge` is authorized for the API.
 
 Application persistence stores **references**, never values.
 

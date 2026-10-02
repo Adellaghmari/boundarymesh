@@ -1,6 +1,8 @@
 # Stack lock
 
-Phase 0 version lock as of **2026-09-09**. No runtime is provisioned. Patch versions may move forward within the locked major/minor lines during later phases if a security fix requires it. Major upgrades require a new ADR.
+Phase 0 version lock as of **2026-09-09**, with later resolved pins in the tables. A runtime **is**
+now provisioned in `boundarymesh-dev`; this file remains the language/runtime lock, not live
+inventory. Current live state: [PROJECT_STATUS.md](../PROJECT_STATUS.md).
 
 ## Language and runtime
 
@@ -29,7 +31,7 @@ Java 21 remains an emergency fallback only if a transitive library later proves 
 | JSON Canonicalization | Constrained RFC 8785 writer in `application` (`Rfc8785Canonicalizer`) | No extra JCS library. Titanium JCS is Jackson 2; Boot 4 is Jackson 3. Integers only; floats rejected. |
 | Microsoft Graph | `microsoft-graph` **6.67.0** | Official Graph Java SDK used in `MicrosoftGraphCalendarAdapter`. |
 | Azure Identity | not added | Delegated token comes from Spring OAuth2 client session, not azure-identity. |
-| OpenTelemetry | Spring Boot 4 official OTel starter | Traces and metrics to Cloud Trace / Monitoring. |
+| OpenTelemetry | **not in repo** | Optional future. Do not claim traces to Cloud Trace. |
 | springdoc | OpenAPI 3.1 compatible starter for Boot 4 | Generated + authored OpenAPI stay in sync. |
 
 **Rejected as hosting/runtime:** Spring Cloud Azure Entra starter as the primary security stack (Azure-centric in a GCP product). Entra is an **identity provider**, configured through Spring Security OAuth2.
@@ -66,11 +68,11 @@ No Next.js. No Nuxt as a hosting framework (Vite SPA is enough). No Tailwind-as-
 | Signing | Cloud KMS `EC_SIGN_P256_SHA256` |
 | Frontend host | Firebase Hosting |
 | Images | Artifact Registry |
-| Observability | Cloud Logging, Monitoring, Trace |
+| Observability | Cloud Logging (platform). No configured Cloud Trace/OTel. |
 | IaC | Pulumi 3.x + TypeScript + `@pulumi/gcp` |
 | State | GCS DIY backend with object versioning (no Pulumi Cloud subscription required) |
 
-## Test and AppSec (planned)
+## Test and AppSec (implemented locally; scanners optional)
 
 | Tool | Role |
 | --- | --- |
@@ -107,7 +109,7 @@ backend/
   worker/            # Spring Boot — Delivery Worker
   web/               # Spring Boot — authenticated Web BFF
 frontend/            # Vue 3 SPA
-infra/               # Pulumi TypeScript; shared GCS/KMS state and 59 managed resources
+infra/               # Pulumi TypeScript; shared GCS/KMS state and 83 managed resources
 contracts/           # OpenAPI, AsyncAPI, JSON Schema (source of truth)
 ```
 

@@ -1,6 +1,8 @@
 # Cost model
 
-**Phase 0 provisions zero GCP resources.** These are estimates for a low-usage portfolio after Phase 16–18.
+Portfolio cost envelope. Resources **are** provisioned in `boundarymesh-dev`. The Worker Pool
+uses manual scaling of one instance (persistent idle cost). API/Web min instances are 0.
+These tables remain estimates, not a bill.
 
 Region `europe-west4`. Billing: pay-per-use, scale-to-zero. No GKE, no VMs, no Cloud SQL, no NAT, no global HTTPS load balancer in the default design (Firebase Hosting + Cloud Run URLs).
 

@@ -1,5 +1,10 @@
 # Phase 16D final evidence
 
+> **Historical freeze record (Phase 16D.6).** This document describes immutable publication **before**
+> controlled CD. The freeze statements “no deployment” and “59 managed” / “exactly three” WIF
+> contexts were true then. The same release was later staged and promoted. Current truth:
+> [PROJECT_STATUS.md](../PROJECT_STATUS.md).
+
 Status: **CLOSED / PASS / LIVE VERIFIED / SOURCE-FROZEN** after the Phase 16D.6 documentation freeze.
 
 ## Scope and chronology
