@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import TruthBanner from '@/components/TruthBanner.vue'
@@ -34,12 +35,11 @@ async function runHarness(): Promise<void> {
     <article class="card stack" data-testid="m365-connector">
       <div class="cluster">
         <h2>Microsoft 365 Calendar</h2>
-        <span class="truth-banner">{{ connector?.banner ?? 'CONTRACT HARNESS' }}</span>
+        <span class="truth-banner">{{ $show(connector?.banner ?? 'CONTRACT HARNESS') }}</span>
       </div>
       <p>
-        Outlook Calendar is read through Microsoft Graph, normalized to
-        <code>m365-calendar/v1</code>, then evaluated by the Data Boundary Firewall
-        (<code>m365-calendar-egress/v1</code>). Delegated permission:
+        Outlook Calendar is read through Microsoft Graph, normalized to the calendar contract,
+        then evaluated by the Data Boundary Firewall under the calendar egress policy. Delegated permission:
         <strong>Calendars.Read</strong>. This page reads GET connector status and does
         not call Graph. <code>LIVE_VERIFIED</code> is returned only by the Operator
         calendar pull after Microsoft Graph HTTP 2xx. A personal Microsoft account is
@@ -49,20 +49,20 @@ async function runHarness(): Promise<void> {
       <dl class="meta">
         <div>
           <dt>Mode</dt>
-          <dd data-testid="m365-mode">{{ connector?.mode ?? 'CONTRACT_HARNESS' }}</dd>
+          <dd data-testid="m365-mode">{{ $show(connector?.mode ?? 'CONTRACT_HARNESS') }}</dd>
         </div>
         <div>
           <dt>Permission</dt>
-          <dd>{{ connector?.permissionKind }} {{ connector?.permission }}</dd>
+          <dd>{{ $show(connector?.permissionKind) }} {{ $show(connector?.permission) }}</dd>
         </div>
         <div>
           <dt>Live Graph</dt>
-          <dd>{{ connector?.live ? 'yes' : 'no' }}</dd>
+          <dd>{{ $show(connector?.live ? 'yes' : 'no') }}</dd>
         </div>
       </dl>
-      <p v-if="errorMessage" class="muted" role="alert">{{ errorMessage }}</p>
+      <p v-if="errorMessage" class="muted" role="alert">{{ $show(errorMessage) }}</p>
       <button type="button" class="action" :disabled="loading" @click="runHarness">
-        Run contract-harness crossing
+        Run contract harness crossing
       </button>
       <p v-if="lastHarness" data-testid="m365-harness">
         Harness outcome recorded. Subjects and attendees are not displayed.
@@ -71,11 +71,11 @@ async function runHarness(): Promise<void> {
 
     <article v-for="system in VELORA_SYSTEMS" :key="system.id" class="card stack">
       <div class="cluster">
-        <h2>{{ system.name }}</h2>
-        <span class="truth-banner">{{ system.connectorStatus }}</span>
+        <h2>{{ $show(system.name) }}</h2>
+        <span class="truth-banner">{{ $show(system.connectorStatus) }}</span>
       </div>
-      <p><strong>Role.</strong> {{ system.role }}</p>
-      <p>{{ system.character }}</p>
+      <p><strong>Role.</strong> {{ $show(system.role) }}</p>
+      <p>{{ $show(system.character) }}</p>
     </article>
   </div>
 </template>

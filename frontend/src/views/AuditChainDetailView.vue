@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import TruthBanner from '@/components/TruthBanner.vue'
@@ -32,15 +33,15 @@ async function tamperDemo(): Promise<void> {
   <div class="stack">
     <header class="stack">
       <div class="cluster">
-        <h1>Audit chain {{ integrationId }}</h1>
+        <h1>Audit chain {{ $show(integrationId) }}</h1>
         <TruthBanner />
       </div>
       <p>
-        Latest 100 entries. VERIFY CHAIN recalculates SHA-256 hashes in Java. SYNTHETIC DEMO tamper
+        Latest 100 entries. VERIFY CHAIN recalculates SHA256 hashes in Java. SYNTHETIC DEMO tamper
         uses an isolated copy and does not mutate this chain.
       </p>
     </header>
-    <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
     <div class="cluster">
       <button type="button" class="action" :disabled="loading" @click="verify">Verify chain</button>
       <button type="button" class="action" :disabled="loading" @click="tamperDemo">
@@ -48,15 +49,15 @@ async function tamperDemo(): Promise<void> {
       </button>
     </div>
     <p v-if="chainVerify" data-testid="audit-verify">
-      Java verification: <strong>{{ chainVerify.status }}</strong> — {{ chainVerify.explanation }}
+      Java verification: <strong>{{ $show(chainVerify.status) }}</strong>. {{ $show(chainVerify.explanation) }}
     </p>
     <section v-if="auditTamper" class="card stack" data-testid="audit-tamper">
       <h2>Synthetic demo</h2>
-      <p>{{ auditTamper.banner }}</p>
-      <p>Original copy {{ auditTamper.original.status }}</p>
-      <p>Tampered copy {{ auditTamper.tampered.status }}</p>
+      <p>{{ $show(auditTamper.banner) }}</p>
+      <p>Original copy {{ $show(auditTamper.original.status) }}</p>
+      <p>Tampered copy {{ $show(auditTamper.tampered.status) }}</p>
     </section>
-    <p v-if="chain" class="muted">{{ chain.banner }} · continuity {{ chain.continuity }}</p>
+    <p v-if="chain" class="muted">{{ $show(chain.banner) }} · continuity {{ $show(chain.continuity) }}</p>
     <table v-if="chain" class="entries">
       <caption class="visually-hidden">Audit entries</caption>
       <thead>
@@ -71,16 +72,16 @@ async function tamperDemo(): Promise<void> {
       </thead>
       <tbody>
         <tr v-for="entry in chain.entries" :key="entry.sequence">
-          <td>{{ entry.sequence }}</td>
-          <td>{{ entry.occurredAt }}</td>
-          <td>{{ entry.eventType }}</td>
+          <td>{{ $show(entry.sequence) }}</td>
+          <td>{{ $show(entry.occurredAt) }}</td>
+          <td>{{ $show(entry.eventType) }}</td>
           <td>
             <span v-for="(value, key) in entry.attributes" :key="key" class="attr">
-              {{ key }}={{ value }}
+              {{ $show(key) }}={{ $show(value) }}
             </span>
           </td>
-          <td><code>{{ entry.previousHashShort }}</code></td>
-          <td><code>{{ entry.currentHashShort }}</code></td>
+          <td><code>{{ $show(entry.previousHashShort) }}</code></td>
+          <td><code>{{ $show(entry.currentHashShort) }}</code></td>
         </tr>
       </tbody>
     </table>

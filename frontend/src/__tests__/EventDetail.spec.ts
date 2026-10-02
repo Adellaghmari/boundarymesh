@@ -25,7 +25,7 @@ describe('boundary event detail route', () => {
   it('renders session evaluation details', async () => {
     const wrapper = await mountAt(`/boundary-events/${sessionEvent.transactionId}`)
     await flushPromises()
-    expect(wrapper.text()).toContain(sessionEvent.transactionId)
+    expect(wrapper.text()).toContain('Recorded crossing')
     expect(wrapper.text()).toContain('ALLOW')
     expect(wrapper.text()).toContain('Helix 365')
     expect(wrapper.text()).toContain('CoveCRM')

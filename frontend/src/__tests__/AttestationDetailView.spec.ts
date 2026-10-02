@@ -24,7 +24,7 @@ describe('AttestationDetailView', () => {
     expect(wrapper.text()).toContain('QUAYFORGE')
     expect(wrapper.text()).toContain('COVECRM')
     expect(wrapper.get('[data-testid="attestation-status"]').text()).toContain('SIGNED')
-    expect(wrapper.text()).toContain('local-jca-p256')
+    expect(wrapper.text()).toContain('Local signing key')
     expect(wrapper.text()).not.toContain('TEST-SECRET')
     await wrapper.get('button.action').trigger('click')
     await flushPromises()

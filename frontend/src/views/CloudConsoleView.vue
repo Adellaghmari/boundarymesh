@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { onMounted, onUnmounted, ref } from 'vue'
 import { BoundaryMeshApiError } from '@/api/errors'
 import {
@@ -187,8 +188,8 @@ onUnmounted(() => {
         <h1>See a system crossing governed end to end.</h1>
         <p>Submit one synthetic QuayForge order for Rivertide. BoundaryMesh evaluates it, signs evidence, publishes a delivery instruction, and reports the worker's actual terminal state. No external connector is configured.</p>
       </div>
-      <p v-if="message" class="card fail" role="alert">{{ message }}</p>
-      <section v-if="authState !== 'authenticated'" class="card stack" aria-label="Operator sign-in">
+      <p v-if="message" class="card fail" role="alert">{{ $show(message) }}</p>
+      <section v-if="authState !== 'authenticated'" class="card stack" aria-label="Operator sign in">
         <h2>Operator access</h2>
         <p v-if="authState === 'loading'">Checking your session…</p>
         <p v-else-if="authState === 'unauthorized'">Your account is authenticated but not on the operator allowlist.</p>
@@ -196,37 +197,37 @@ onUnmounted(() => {
         <p v-else-if="authState === 'unavailable'">The secure web edge is unavailable.</p>
         <p v-else>Sign in with your approved Google account to operate the private BoundaryMesh API.</p>
         <button v-if="authState !== 'loading'" type="button" :disabled="busy || !firebaseConfigured()" @click="signIn">Sign in</button>
-        <p v-if="!firebaseConfigured()" class="muted">Firebase web sign-in is not configured for this build.</p>
+        <p v-if="!firebaseConfigured()" class="muted">Firebase web sign in is not configured for this build.</p>
         <button v-if="authState === 'unavailable'" type="button" @click="restoreSession">Retry connection</button>
       </section>
       <template v-else>
-        <p class="muted">Signed in as {{ operatorEmail || 'authorized operator' }}. The private API is called by the web edge, never by browser-held service credentials.</p>
+        <p class="muted">Signed in as {{ $show(operatorEmail || 'authorized operator') }}. The private API is called by the web edge, never by service credentials held in the browser.</p>
         <section class="card stack" aria-label="Synthetic transaction">
           <h2>Submit a governed transaction</h2>
           <p>Integration: QuayForge orders · Contract: v1 · Destination: Rivertide. The example contains generated synthetic identifiers only.</p>
-          <button type="button" :disabled="busy || waiting" @click="submit">{{ busy ? 'Submitting…' : 'Submit synthetic transaction' }}</button>
+          <button type="button" :disabled="busy || waiting" @click="submit">{{ $show(busy ? 'Submitting…' : 'Submit synthetic transaction') }}</button>
         </section>
         <section v-if="submission" class="card stack" aria-label="Transaction result">
           <h2>Boundary decision</h2>
-          <p><strong>{{ submission.outcome }}</strong> · {{ submission.submission_status }}</p>
-          <p>Transaction {{ submission.transaction_id }}</p>
+          <p><strong>{{ $show(submission.outcome) }}</strong> · {{ $show(submission.submission_status) }}</p>
+          <p>Transaction {{ $show(submission.transaction_id) }}</p>
           <p v-if="submission.queued">Queued for asynchronous delivery. Acceptance is not external delivery success.</p>
           <p v-else>No delivery was queued for this decision.</p>
-          <p v-if="submission.instruction_id">Instruction {{ submission.instruction_id }}</p>
+          <p v-if="submission.instruction_id">Instruction {{ $show(submission.instruction_id) }}</p>
         </section>
         <section v-if="attestation || attestationCheck || auditCheck" class="card stack" aria-label="Cryptographic evidence">
           <h2>Evidence</h2>
-          <p v-if="attestation">Attestation {{ attestation.status }} · {{ attestation.algorithm }} · key version {{ attestation.key_version }}</p>
-          <p v-if="attestationCheck">Signature verification: {{ attestationCheck.status }}</p>
-          <p v-if="auditCheck">Audit-chain verification: {{ auditCheck.status }} · {{ auditCheck.entries_checked ?? '—' }} entries checked</p>
+          <p v-if="attestation">Attestation {{ $show(attestation.status) }} · {{ $show(attestation.algorithm) }} · key version {{ $show(attestation.key_version) }}</p>
+          <p v-if="attestationCheck">Signature verification: {{ $show(attestationCheck.status) }}</p>
+          <p v-if="auditCheck">Audit chain verification: {{ $show(auditCheck.status) }} · {{ $show(auditCheck.entries_checked ?? '—') }} entries checked</p>
         </section>
         <section v-if="submission?.queued" class="card stack" aria-label="Delivery state" aria-live="polite">
           <h2>Worker delivery</h2>
           <p v-if="waiting">Awaiting the worker's durable result…</p>
           <p v-else-if="timedOut">No terminal result appeared within 30 seconds. The instruction remains unresolved in this view; refresh later.</p>
           <template v-if="delivery">
-            <p><strong>{{ delivery.state }}</strong> · {{ delivery.provider_category }}</p>
-            <p>Provider called: {{ delivery.provider_called ? 'YES' : 'NO' }} · Attempts: {{ delivery.attempt_count }}</p>
+            <p><strong>{{ $show(delivery.state) }}</strong> · {{ $show(delivery.provider_category) }}</p>
+            <p>Provider called: {{ $show(delivery.provider_called ? 'YES' : 'NO') }} · Attempts: {{ $show(delivery.attempt_count) }}</p>
             <p v-if="delivery.state === 'QUARANTINED'">BoundaryMesh retained terminal custody. External delivery did not succeed.</p>
           </template>
         </section>

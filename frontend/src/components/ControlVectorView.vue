@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { CONTROL_CATALOG } from '@/domain/labels'
 import type { ControlResult } from '@/domain/types'
 import ControlStatusBadge from '@/components/ControlStatusBadge.vue'
@@ -16,11 +17,11 @@ function resultFor(kind: string): ControlResult | undefined {
   <ol class="vector" aria-label="Control vector">
     <li v-for="entry in CONTROL_CATALOG" :key="entry.kind" class="vector__item">
       <div class="vector__head">
-        <h3>{{ entry.label }}</h3>
+        <h3>{{ $show(entry.label) }}</h3>
         <ControlStatusBadge v-if="resultFor(entry.kind)" :status="resultFor(entry.kind)!.status" />
         <span v-else class="muted">No result</span>
       </div>
-      <p class="muted">{{ resultFor(entry.kind)?.safeExplanation ?? entry.summary }}</p>
+      <p class="muted">{{ $show(resultFor(entry.kind)?.safeExplanation ?? entry.summary) }}</p>
     </li>
   </ol>
 </template>

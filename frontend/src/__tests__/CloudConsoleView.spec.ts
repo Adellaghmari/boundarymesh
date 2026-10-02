@@ -97,10 +97,11 @@ describe('hosted production console', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('ACCEPTED_FOR_ASYNCHRONOUS_DELIVERY')
     expect(wrapper.text()).toContain('Signature verification: VALID')
-    expect(wrapper.text()).toContain('Audit-chain verification: VALID')
+    expect(wrapper.text()).toContain('Audit chain verification: VALID')
     expect(wrapper.text()).toContain('QUARANTINED')
     expect(wrapper.text()).toContain('Provider called: NO')
     expect(wrapper.text()).toContain('External delivery did not succeed')
+    expect(wrapper.text()).not.toMatch(/[-—–]/)
   })
 
   it('marks an expired session instead of reporting a generic network failure', async () => {

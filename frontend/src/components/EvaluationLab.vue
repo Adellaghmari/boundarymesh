@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { storeToRefs } from 'pinia'
 import DecisionResult from '@/components/DecisionResult.vue'
 import TruthBanner from '@/components/TruthBanner.vue'
@@ -35,20 +36,20 @@ function selectScenario(id: ScenarioId): void {
           @change="selectScenario(scenario.id)"
         />
         <span>
-          <strong>{{ scenario.label }}</strong>
-          <span class="muted">{{ scenario.summary }}</span>
+          <strong>{{ $show(scenario.label) }}</strong>
+          <span class="muted">{{ $show(scenario.summary) }}</span>
         </span>
       </label>
     </fieldset>
 
     <div class="cluster">
       <button type="button" class="action" :disabled="evaluating" @click="store.evaluateSelected()">
-        {{ evaluating ? 'Evaluating crossing…' : 'Evaluate crossing' }}
+        {{ $show(evaluating ? 'Evaluating crossing…' : 'Evaluate crossing') }}
       </button>
     </div>
 
     <p v-if="errorMessage" class="lab__error" role="alert">
-      {{ errorMessage }}
+      {{ $show(errorMessage) }}
       <button v-if="retryable" type="button" class="linkish" @click="store.evaluateSelected()">
         Retry
       </button>

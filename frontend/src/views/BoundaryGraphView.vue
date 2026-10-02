@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -7,14 +8,19 @@ import type { BoundaryGraphEdge, BoundaryGraphNode } from '@/domain/types'
 import { CONTROL_CATALOG } from '@/domain/labels'
 import { useEvidenceStore } from '@/stores/evidence'
 
+const NODE_W = 188
+const NODE_H = 44
+const VIEW_W = 880
+const VIEW_H = 308
+
 const LAYOUT: Record<string, { x: number; y: number }> = {
-  QUAYFORGE: { x: 90, y: 50 },
-  M365: { x: 90, y: 140 },
-  HELIX365: { x: 90, y: 230 },
-  BOUNDARYMESH: { x: 360, y: 150 },
-  COVECRM: { x: 640, y: 50 },
-  LUMENWAY: { x: 640, y: 150 },
-  RIVERTIDE: { x: 640, y: 250 },
+  QUAYFORGE: { x: 48, y: 36 },
+  M365: { x: 48, y: 132 },
+  HELIX365: { x: 48, y: 228 },
+  BOUNDARYMESH: { x: 346, y: 132 },
+  COVECRM: { x: 644, y: 36 },
+  LUMENWAY: { x: 644, y: 132 },
+  RIVERTIDE: { x: 644, y: 228 },
 }
 
 const store = useEvidenceStore()
@@ -46,7 +52,7 @@ const selectedEdge = computed(() =>
 )
 
 function point(id: string): { x: number; y: number } {
-  return LAYOUT[id] ?? { x: 360, y: 150 }
+  return LAYOUT[id] ?? { x: 346, y: 132 }
 }
 
 function statusClass(status: string): string {
@@ -91,15 +97,15 @@ async function runDemo(scenario: string): Promise<void> {
         <TruthBanner />
       </div>
       <p>
-        Security boundaries between external systems. This is not a service blast-radius graph and
+        Security boundaries between external systems. This is not a service blast radius graph and
         not a static architecture poster. Nodes and edges come from the local Java graph API.
       </p>
     </header>
-    <p v-if="graph" class="muted">{{ graph.banner }}</p>
-    <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
+    <p v-if="graph" class="muted">{{ $show(graph.banner) }}</p>
+    <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
 
     <section class="card stack">
-      <h2>One-minute crossing</h2>
+      <h2>One minute crossing</h2>
       <div class="cluster">
         <button type="button" class="action" :disabled="loading" @click="runDemo('transformed-delivery')">
           QuayForge → Lumenway delivery
@@ -112,8 +118,8 @@ async function runDemo(scenario: string): Promise<void> {
         </button>
       </div>
       <p v-if="lastDelivery">
-        Last crossing {{ lastDelivery.decision.outcome }} · delivery
-        {{ lastDelivery.delivery?.kind }} · attestation {{ lastDelivery.evidence?.attestationStatus }}
+        Last crossing {{ $show(lastDelivery.decision.outcome) }} · delivery
+        {{ $show(lastDelivery.delivery?.kind) }} · attestation {{ $show(lastDelivery.evidence?.attestationStatus) }}
       </p>
     </section>
 
@@ -128,20 +134,20 @@ async function runDemo(scenario: string): Promise<void> {
     <svg
       v-if="graph"
       class="graph"
-      viewBox="0 0 760 320"
+      :viewBox="`0 0 ${VIEW_W} ${VIEW_H}`"
       role="img"
       aria-label="Integration boundary graph"
     >
       <title>Integration boundary graph</title>
       <g v-for="edge in visibleEdges" :key="edge.id">
         <path
-          :d="`M ${point(edge.source).x + 70} ${point(edge.source).y + 22} L ${point('BOUNDARYMESH').x} ${point('BOUNDARYMESH').y + 22}`"
+          :d="`M ${point(edge.source).x + NODE_W / 2} ${point(edge.source).y + NODE_H / 2} L ${point('BOUNDARYMESH').x} ${point('BOUNDARYMESH').y + NODE_H / 2}`"
           class="edge"
           :class="[statusClass(edge.status), { 'is-selected': selectedEdgeId === edge.id }]"
           @click="selectEdge(edge)"
         />
         <path
-          :d="`M ${point('BOUNDARYMESH').x + 70} ${point('BOUNDARYMESH').y + 22} L ${point(edge.destination).x} ${point(edge.destination).y + 22}`"
+          :d="`M ${point('BOUNDARYMESH').x + NODE_W / 2} ${point('BOUNDARYMESH').y + NODE_H / 2} L ${point(edge.destination).x} ${point(edge.destination).y + NODE_H / 2}`"
           class="edge"
           :class="[statusClass(edge.status), { 'is-selected': selectedEdgeId === edge.id }]"
           @click="selectEdge(edge)"
@@ -155,46 +161,46 @@ async function runDemo(scenario: string): Promise<void> {
         :transform="`translate(${point(node.id).x}, ${point(node.id).y})`"
         @click="selectNode(node)"
       >
-        <rect width="140" height="44" rx="4" />
-        <text x="70" y="27" text-anchor="middle">{{ node.label }}</text>
+        <rect :width="NODE_W" :height="NODE_H" rx="4" />
+        <text :x="NODE_W / 2" :y="28" text-anchor="middle">{{ $show(node.label) }}</text>
       </g>
     </svg>
 
     <section v-if="selectedNodeId" class="card stack">
       <h2>System</h2>
-      <p>{{ selectedNodeId }}</p>
+      <p>{{ $show(selectedNodeId) }}</p>
     </section>
 
     <section v-if="selectedEdge" class="card stack" data-testid="edge-detail">
-      <h2>{{ selectedEdge.source }} → BoundaryMesh → {{ selectedEdge.destination }}</h2>
+      <h2>{{ $show(selectedEdge.source) }} → BoundaryMesh → {{ $show(selectedEdge.destination) }}</h2>
       <dl class="meta">
-        <div><dt>Identity</dt><dd>{{ selectedEdge.identityMechanism }}</dd></div>
-        <div><dt>Contract</dt><dd>{{ selectedEdge.contractReference }}</dd></div>
-        <div><dt>Data policy</dt><dd>{{ selectedEdge.egressPolicy }}</dd></div>
-        <div><dt>Credential</dt><dd>{{ selectedEdge.credentialReference }}</dd></div>
-        <div><dt>Consent</dt><dd>{{ selectedEdge.consentState }}</dd></div>
-        <div><dt>Connector</dt><dd>{{ selectedEdge.connectorRoute }}</dd></div>
+        <div><dt>Identity</dt><dd>{{ $show(selectedEdge.identityMechanism) }}</dd></div>
+        <div><dt>Contract</dt><dd>{{ $show(selectedEdge.contractReference) }}</dd></div>
+        <div><dt>Data policy</dt><dd>{{ $show(selectedEdge.egressPolicy) }}</dd></div>
+        <div><dt>Credential</dt><dd>{{ $show(selectedEdge.credentialReference) }}</dd></div>
+        <div><dt>Consent</dt><dd>{{ $show(selectedEdge.consentState) }}</dd></div>
+        <div><dt>Connector</dt><dd>{{ $show(selectedEdge.connectorRoute) }}</dd></div>
         <div>
           <dt>Observed</dt>
           <dd data-testid="edge-status">
-            {{ selectedEdge.status }} · configured {{ selectedEdge.configured ? 'yes' : 'no' }} ·
-            observed {{ selectedEdge.observed ? 'yes' : 'no' }}
+            {{ $show(selectedEdge.status) }} · configured {{ $show(selectedEdge.configured ? 'yes' : 'no') }} ·
+            observed {{ $show(selectedEdge.observed ? 'yes' : 'no') }}
           </dd>
         </div>
-        <div><dt>Recent outcome</dt><dd>{{ selectedEdge.recentOutcome ?? 'none' }}</dd></div>
-        <div><dt>Delivery</dt><dd>{{ selectedEdge.recentDelivery ?? 'none' }}</dd></div>
-        <div><dt>Quarantine count</dt><dd>{{ selectedEdge.quarantineCount }}</dd></div>
+        <div><dt>Recent outcome</dt><dd>{{ $show(selectedEdge.recentOutcome ?? 'none') }}</dd></div>
+        <div><dt>Delivery</dt><dd>{{ $show(selectedEdge.recentDelivery ?? 'none') }}</dd></div>
+        <div><dt>Quarantine count</dt><dd>{{ $show(selectedEdge.quarantineCount) }}</dd></div>
         <div>
           <dt>Audit chain</dt>
           <dd>
-            <RouterLink :to="`/audit/${selectedEdge.auditChainId}`">{{ selectedEdge.auditChainId }}</RouterLink>
+            <RouterLink :to="`/audit/${selectedEdge.auditChainId}`">{{ $show(selectedEdge.auditChainId) }}</RouterLink>
           </dd>
         </div>
         <div>
           <dt>Attestation</dt>
           <dd>
             <RouterLink v-if="selectedEdge.attestationId" :to="`/attestations/${selectedEdge.attestationId}`">
-              {{ selectedEdge.attestationId }}
+              {{ $show(selectedEdge.attestationId) }}
             </RouterLink>
             <span v-else>none</span>
           </dd>
@@ -203,16 +209,16 @@ async function runDemo(scenario: string): Promise<void> {
       <h3>Enforcement stages</h3>
       <ol class="stages" aria-label="Enforcement stages">
         <li v-for="control in CONTROL_CATALOG" :key="control.kind">
-          <strong>{{ control.label }}</strong>
-          <span>{{ attestation?.controlResults[control.kind] ?? 'from last crossing metadata' }}</span>
+          <strong>{{ $show(control.label) }}</strong>
+          <span>{{ $show(attestation?.controlResults[control.kind] ?? 'from last crossing metadata') }}</span>
         </li>
         <li>
           <strong>Boundary Outcome</strong>
-          <span>{{ selectedEdge.recentOutcome ?? selectedEdge.status }}</span>
+          <span>{{ $show(selectedEdge.recentOutcome ?? selectedEdge.status) }}</span>
         </li>
         <li>
           <strong>Delivery Result</strong>
-          <span>{{ selectedEdge.recentDelivery ?? 'NO_RECENT_ACTIVITY' }}</span>
+          <span>{{ $show(selectedEdge.recentDelivery ?? 'NO_RECENT_ACTIVITY') }}</span>
         </li>
       </ol>
     </section>
@@ -245,7 +251,9 @@ async function runDemo(scenario: string): Promise<void> {
 }
 
 .graph {
-  width: 100%;
+  display: block;
+  width: min(100%, 56rem);
+  margin-inline: auto;
   background: $color-surface;
   border: 1px solid $color-border;
   border-radius: $radius-md;

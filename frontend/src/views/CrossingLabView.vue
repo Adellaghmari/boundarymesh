@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import CrossingPipeline from '@/components/CrossingPipeline.vue'
@@ -40,17 +41,17 @@ async function run(): Promise<void> {
         <label v-for="scenario in CROSSING_LAB_SCENARIOS" :key="scenario.id" class="lab__option">
           <input v-model="selected" type="radio" name="crossing-scenario" :value="scenario.id" />
           <span>
-            <strong>{{ scenario.label }}</strong>
-            <span class="muted">{{ scenario.summary }}</span>
+            <strong>{{ $show(scenario.label) }}</strong>
+            <span class="muted">{{ $show(scenario.summary) }}</span>
           </span>
         </label>
       </fieldset>
       <button type="button" class="action" :disabled="evaluating" @click="run">
-        {{ evaluating ? 'Inspecting crossing…' : 'Inspect crossing' }}
+        {{ $show(evaluating ? 'Inspecting crossing…' : 'Inspect crossing') }}
       </button>
     </section>
 
-    <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
 
     <template v-if="lastCrossingEvent && !errorMessage">
       <section class="card verdict">
@@ -59,10 +60,10 @@ async function run(): Promise<void> {
           <OutcomeBadge :outcome="lastCrossingEvent.outcome" />
         </div>
         <p v-if="lastCrossingEvent.classification">
-          Contract {{ lastCrossingEvent.contract?.version ?? '' }}
-          {{ lastCrossingEvent.classification }}.
+          Contract {{ $show(lastCrossingEvent.contract?.version ?? '') }}
+          {{ $show(lastCrossingEvent.classification) }}.
           Data boundary
-          {{ lastCrossingEvent.egress?.transformationCount ?? 0 }} field action(s).
+          {{ $show(lastCrossingEvent.egress?.transformationCount ?? 0) }} field action(s).
         </p>
       </section>
       <CrossingPipeline

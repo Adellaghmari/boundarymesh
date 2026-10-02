@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -22,14 +23,14 @@ onMounted(async () => {
       </div>
       <p>
         Recoverable operational holds. Invalid JWT, invalid HMAC, and malicious replay are REJECT
-        and never become quarantine items. This browser view currently reads local in-memory state.
+        and never become quarantine items. This browser view currently reads local memory for this session.
         The cloud worker has recorded durable quarantine in Firestore, but browser readback is not
         connected yet.
       </p>
     </header>
 
-    <p v-if="quarantineList" class="muted">{{ quarantineList.banner }}</p>
-    <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
+    <p v-if="quarantineList" class="muted">{{ $show(quarantineList.banner) }}</p>
+    <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
 
     <section class="card stack">
       <div class="cluster">
@@ -55,11 +56,11 @@ onMounted(async () => {
         </thead>
         <tbody>
           <tr v-for="item in quarantineList.items" :key="item.id">
-            <td>{{ item.reason }}</td>
-            <td>{{ item.status }}</td>
-            <td>{{ item.destination }}</td>
-            <td>{{ item.attempts }} / {{ item.maxAttempts }}</td>
-            <td>{{ item.eligible ? 'yes' : 'no' }}</td>
+            <td>{{ $show(item.reason) }}</td>
+            <td>{{ $show(item.status) }}</td>
+            <td>{{ $show(item.destination) }}</td>
+            <td>{{ $show(item.attempts) }} / {{ $show(item.maxAttempts) }}</td>
+            <td>{{ $show(item.eligible ? 'yes' : 'no') }}</td>
             <td>
               <RouterLink :to="`/quarantine/${item.id}`">Inspect</RouterLink>
             </td>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -29,44 +30,44 @@ async function reprocess(): Promise<void> {
         <TruthBanner label="LOCAL / SYNTHETIC SESSION DATA" />
       </div>
       <p>
-        Public recruiter view is read-only. Reprocess mints a local admin JWT with
+        The public recruiter view is view only. Reprocess mints a local admin JWT with
         <code>boundary.admin</code> on the Java issuer. The token is not embedded in Vue.
       </p>
       <RouterLink to="/quarantine">Back to quarantine</RouterLink>
     </header>
 
-    <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
 
     <section v-if="selectedQuarantine" class="card stack" aria-label="Quarantine metadata">
-      <h2>{{ selectedQuarantine.reason }}</h2>
+      <h2>{{ $show(selectedQuarantine.reason) }}</h2>
       <dl class="meta">
         <div>
           <dt>Status</dt>
-          <dd>{{ selectedQuarantine.status }}</dd>
+          <dd>{{ $show(selectedQuarantine.status) }}</dd>
         </div>
         <div>
           <dt>Destination</dt>
-          <dd>{{ selectedQuarantine.destination }}</dd>
+          <dd>{{ $show(selectedQuarantine.destination) }}</dd>
         </div>
         <div>
           <dt>Transaction</dt>
-          <dd>{{ selectedQuarantine.transactionId }}</dd>
+          <dd>{{ $show(selectedQuarantine.transactionId) }}</dd>
         </div>
         <div>
           <dt>Attempts</dt>
-          <dd>{{ selectedQuarantine.attempts }} / {{ selectedQuarantine.maxAttempts }}</dd>
+          <dd>{{ $show(selectedQuarantine.attempts) }} / {{ $show(selectedQuarantine.maxAttempts) }}</dd>
         </div>
         <div>
           <dt>Recovery eligible</dt>
-          <dd>{{ selectedQuarantine.eligible ? 'yes' : 'no' }}</dd>
+          <dd>{{ $show(selectedQuarantine.eligible ? 'yes' : 'no') }}</dd>
         </div>
         <div>
           <dt>Credential reference</dt>
-          <dd>{{ selectedQuarantine.credentialReference ?? 'none' }}</dd>
+          <dd>{{ $show(selectedQuarantine.credentialReference ?? 'none') }}</dd>
         </div>
         <div>
           <dt>Connector state</dt>
-          <dd>{{ selectedQuarantine.connectorState ?? 'n/a' }}</dd>
+          <dd>{{ $show(selectedQuarantine.connectorState ?? 'n/a') }}</dd>
         </div>
       </dl>
       <button
@@ -76,7 +77,7 @@ async function reprocess(): Promise<void> {
         :disabled="evaluating"
         @click="reprocess"
       >
-        {{ evaluating ? 'Reprocessing…' : 'Reprocess as operator' }}
+        {{ $show(evaluating ? 'Reprocessing…' : 'Reprocess as operator') }}
       </button>
       <p v-else class="muted">This item is not eligible for another recovery cycle.</p>
     </section>
@@ -84,10 +85,10 @@ async function reprocess(): Promise<void> {
     <section v-if="lastReprocess && !errorMessage" class="card stack" aria-label="Recovery result">
       <h2>Recovery result</h2>
       <p>
-        Delivery {{ lastReprocess.delivery?.kind }} · quarantine
-        {{ lastReprocess.quarantine?.status ?? 'resolved or replaced' }}
+        Delivery {{ $show(lastReprocess.delivery?.kind) }} · quarantine
+        {{ $show(lastReprocess.quarantine?.status ?? 'resolved or replaced') }}
       </p>
-      <p>{{ lastReprocess.delivery?.explanation }}</p>
+      <p>{{ $show(lastReprocess.delivery?.explanation) }}</p>
     </section>
   </div>
 </template>

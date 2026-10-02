@@ -24,7 +24,7 @@ describe('DeliveryLabView', () => {
     expect(wrapper.text()).toContain('ALLOW WITH TRANSFORMATION')
     expect(wrapper.text()).toContain('DELIVERED')
     expect(wrapper.text()).toContain('sink.lumenway.fulfillment')
-    expect(wrapper.text()).toContain('lumenway-api:v1')
+    expect(wrapper.text()).toContain('Lumenway credential v1')
     expect(wrapper.text()).toContain('[REDACTED]')
     expect(wrapper.text()).toContain('Circuit CLOSED')
     expect(wrapper.text()).not.toContain('TEST-SECRET-')

@@ -47,7 +47,7 @@ export const CONTROL_CATALOG: readonly ControlCatalogEntry[] = [
   {
     kind: 'EGRESS',
     label: 'Egress',
-    summary: 'Whether destination-specific data rules allow the fields to leave.',
+    summary: 'Whether the rules for this destination allow the fields to leave.',
   },
   {
     kind: 'CREDENTIAL_RESOLVABILITY',

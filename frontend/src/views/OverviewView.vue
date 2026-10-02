@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import BackendStatusCard from '@/components/BackendStatusCard.vue'
 import EvaluationLab from '@/components/EvaluationLab.vue'
 import OutcomeBadge from '@/components/OutcomeBadge.vue'
@@ -12,20 +13,21 @@ import { OUTCOME_COPY } from '@/domain/labels'
   <div class="stack">
     <section class="hero card">
       <div class="cluster">
-        <p class="eyebrow">Cross-system security enforcement console</p>
+        <p class="eyebrow">Cross system security enforcement console</p>
         <TruthBanner />
       </div>
       <h1>BoundaryMesh</h1>
       <p class="lede">Secure every system crossing.</p>
       <p class="question">Can this transaction cross this security boundary?</p>
       <p>
-        BoundaryMesh sits in front of system-to-system integrations. It is not an assistant, not a
+        BoundaryMesh sits in front of integrations between systems. It is not an assistant, not a
         release board, and not a generic API client. A transaction is authenticated, authorized,
-        verified, contract-checked, and data-governed before a delivery instruction can reach Apache
-        Camel. Credential and consent checks sit in front of the connector.         Microsoft Entra OIDC and
-        Microsoft Graph Calendar are implemented locally as a harness, with live tenant verification
-        only when configured. The hosted operator console is a separate Firebase Hosting + BFF
-        path; this page talks to the local API. A valid identity is not an automatic crossing.
+        verified, checked against its contract, and governed before a delivery instruction can reach
+        Apache Camel. Credential and consent checks sit in front of the connector. Microsoft Entra
+        OIDC and Microsoft Graph Calendar are implemented locally as a harness, with live tenant
+        verification only when configured. The hosted operator console is a separate Firebase
+        Hosting and BFF path. This page talks to the local API. A valid identity is not an automatic
+        crossing.
       </p>
     </section>
 
@@ -35,7 +37,7 @@ import { OUTCOME_COPY } from '@/domain/labels'
       <h2>Deterministic pipeline</h2>
       <p class="muted">
         Every crossing is evaluated in this order. Credential and consent checks, Camel delivery,
-        quarantine recovery, tamper-evident audit, and cryptographic attestations are implemented
+        quarantine recovery, tamper evident audit, and cryptographic attestations are implemented
         locally. Hosted Firestore and Cloud KMS are verified on the deployed path.
       </p>
       <PipelineSteps />
@@ -46,7 +48,7 @@ import { OUTCOME_COPY } from '@/domain/labels'
       <ul class="outcomes">
         <li v-for="outcome in BOUNDARY_OUTCOMES" :key="outcome">
           <OutcomeBadge :outcome="outcome" />
-          <p>{{ OUTCOME_COPY[outcome].meaning }}</p>
+          <p>{{ $show(OUTCOME_COPY[outcome].meaning) }}</p>
         </li>
       </ul>
     </section>

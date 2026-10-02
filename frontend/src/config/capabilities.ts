@@ -9,7 +9,7 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     id: 'java-backend',
     label: 'Java backend',
     status: 'LIVE VERIFIED',
-    notes: 'Java 25 / Spring Boot 4.1.1 private Cloud Run API. Production transaction ingress verified.',
+    notes: 'Java 25 and Spring Boot 4.1.1 on a private Cloud Run API. Production transaction ingress is verified.',
   },
   {
     id: 'enforcement-engine',
@@ -22,7 +22,7 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     label: 'Vue frontend',
     status: 'LIVE VERIFIED',
     notes:
-      'Hosted operator SPA on Firebase Hosting (sign-in required). This local page is the lab console, not that hosted bundle.',
+      'Hosted operator SPA on Firebase Hosting. Sign in is required. This local page is the lab console, not that hosted bundle.',
   },
   {
     id: 'identity-federation',
@@ -48,7 +48,7 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     id: 'data-firewall',
     label: 'Data Boundary Firewall',
     status: 'TESTED',
-    notes: 'Destination-specific ALLOW/REDACT/DENY with real outbound transformation.',
+    notes: 'Each destination uses ALLOW, REDACT, or DENY, and the outbound payload is actually transformed.',
   },
   {
     id: 'credential-vault',
@@ -66,9 +66,9 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
   },
   {
     id: 'audit-chain',
-    label: 'Tamper-Evident Audit Chain',
+    label: 'Tamper evident audit chain',
     status: 'LIVE VERIFIED',
-    notes: 'The deployed transaction produced a valid Firestore-backed SHA-256 audit chain; this local read view is the lab console.',
+    notes: 'The deployed transaction produced a valid SHA256 audit chain stored in Firestore. This local page is the lab console.',
   },
   {
     id: 'exchange-attestation',
@@ -80,20 +80,20 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     id: 'boundary-graph',
     label: 'Integration Boundary Graph',
     status: 'TESTED',
-    notes: 'Vue SVG from the Java graph API. Configured plus observed crossings. Not a blast-radius graph.',
+    notes: 'Vue SVG from the Java graph API. Configured crossings plus observed crossings. Not a blast radius graph.',
   },
   {
     id: 'apache-camel',
     label: 'Apache Camel',
     status: 'TESTED',
-    notes: 'Worker-only Camel 4.22.0 routes. The public API artifact does not depend on Camel.',
+    notes: 'Camel 4.22.0 routes run only in the worker. The public API artifact does not depend on Camel.',
   },
   {
     id: 'm365-graph',
     label: 'M365 / Graph',
     status: 'TESTED',
     notes:
-      'Outlook Calendar connector through Graph SDK + contract harness. One personal-account event verified locally. Graph subscriptions are not implemented.',
+      'Outlook Calendar connector through the Graph SDK and the contract harness. One personal account event was verified locally. Graph subscriptions are not implemented.',
   },
   {
     id: 'gcp',

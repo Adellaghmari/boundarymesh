@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRuntimeStore } from '@/stores/runtime'
@@ -35,39 +36,39 @@ onMounted(() => {
       <div v-if="loading && !health" class="status-card__placeholder">
         Checking local health and readiness…
       </div>
-      <p v-else-if="errorMessage" class="status-card__error" role="alert">{{ errorMessage }}</p>
+      <p v-else-if="errorMessage" class="status-card__error" role="alert">{{ $show(errorMessage) }}</p>
       <dl v-else class="status-card__grid">
         <div>
           <dt>Backend</dt>
-          <dd>{{ backendReachable ? 'Reachable' : 'Unknown' }}</dd>
+          <dd>{{ $show(backendReachable ? 'Reachable' : 'Unknown') }}</dd>
         </div>
         <div>
           <dt>Health</dt>
-          <dd>{{ health?.status ?? '—' }}</dd>
+          <dd>{{ $show(health?.status ?? '—') }}</dd>
         </div>
         <div>
           <dt>Readiness</dt>
-          <dd>{{ backendReady ? ready?.status : (ready?.status ?? '—') }}</dd>
+          <dd>{{ $show(backendReady ? ready?.status : (ready?.status ?? '—')) }}</dd>
         </div>
         <div>
           <dt>API connectivity</dt>
-          <dd>{{ backendReachable && backendReady ? 'Connected' : 'Not connected' }}</dd>
+          <dd>{{ $show(backendReachable && backendReady ? 'Connected' : 'Not connected') }}</dd>
         </div>
         <div>
           <dt>Service</dt>
-          <dd>{{ health?.service ?? '—' }}</dd>
+          <dd>{{ $show(health?.service ?? '—') }}</dd>
         </div>
         <div>
           <dt>Truth</dt>
-          <dd>{{ health?.truth ?? '—' }}</dd>
+          <dd>{{ $show(health?.truth ?? '—') }}</dd>
         </div>
       </dl>
-      <p v-if="lastCheckedAt" class="muted">Last checked {{ lastCheckedAt }}</p>
+      <p v-if="lastCheckedAt" class="muted">Last checked {{ $show(lastCheckedAt) }}</p>
     </div>
 
     <div class="cluster">
       <button type="button" class="action" :disabled="loading" @click="store.refreshStatus()">
-        {{ loading ? 'Checking…' : retryable ? 'Retry' : 'Refresh status' }}
+        {{ $show(loading ? 'Checking…' : retryable ? 'Retry' : 'Refresh status') }}
       </button>
     </div>
   </section>

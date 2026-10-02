@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { CONTROL_STATUS_COPY } from '@/domain/labels'
 import type { ControlStatus } from '@/domain/types'
 
@@ -8,7 +9,7 @@ defineProps<{
 </script>
 
 <template>
-  <span class="status" :data-status="status">{{ CONTROL_STATUS_COPY[status] }}</span>
+  <span class="status" :data-status="status">{{ $show(CONTROL_STATUS_COPY[status]) }}</span>
 </template>
 
 <style scoped lang="scss">

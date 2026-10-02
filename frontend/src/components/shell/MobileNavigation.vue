@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { X } from '@lucide/vue'
@@ -67,7 +68,7 @@ onBeforeUnmount(() => {
       </div>
       <nav class="drawer__groups" aria-label="Mobile">
         <section v-for="group in MOBILE_GROUPS" :key="group.id">
-          <h3>{{ group.label }}</h3>
+          <h3>{{ $show(group.label) }}</h3>
           <RouterLink
             v-for="item in group.items"
             :key="item.name"
@@ -77,7 +78,7 @@ onBeforeUnmount(() => {
             @click="emit('close')"
           >
             <component :is="navIcon(item.name)" :size="16" aria-hidden="true" />
-            {{ item.label }}
+            {{ $show(item.label) }}
           </RouterLink>
         </section>
         <section class="drawer__identity">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import type { EgressView } from '@/domain/types'
 
 defineProps<{
@@ -10,7 +11,7 @@ defineProps<{
   <section v-if="egress" class="table-wrap" aria-labelledby="egress-heading">
     <h3 id="egress-heading">Data boundary actions</h3>
     <p class="muted">
-      Policy {{ egress.policyId }} {{ egress.policyVersion }} → {{ egress.destination }}. Evidence is
+      Policy {{ $show(egress.policyId) }} {{ $show(egress.policyVersion) }} → {{ $show(egress.destination) }}. Evidence is
       field paths, not values.
     </p>
     <table>
@@ -25,9 +26,9 @@ defineProps<{
       </thead>
       <tbody>
         <tr v-for="field in egress.fields" :key="`${field.path}-${field.ruleId}`" :data-action="field.action">
-          <td><code>{{ field.path }}</code></td>
-          <td>{{ field.action }}</td>
-          <td>{{ field.ruleId }}</td>
+          <td><code>{{ $show(field.path) }}</code></td>
+          <td>{{ $show(field.action) }}</td>
+          <td>{{ $show(field.ruleId) }}</td>
           <td>
             <span v-if="field.action === 'ALLOW'">copied</span>
             <span v-else-if="field.action === 'REDACT'">[REDACTED]</span>

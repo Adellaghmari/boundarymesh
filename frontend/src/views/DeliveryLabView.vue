@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -52,7 +53,7 @@ const decisionEvent = computed(() => {
       </div>
       <p>
         SYNTHETIC DEMO. After the Boundary Enforcement Engine allows a crossing, a delivery
-        instruction may enter the local Camel worker. REJECT and pre-delivery QUARANTINE never reach
+        instruction may enter the local Camel worker. REJECT and quarantine before delivery never reach
         a connector. The deployed cloud path uses Pub/Sub and a Worker Pool, but this screen still
         exercises the local lab rather than that production path.
       </p>
@@ -65,20 +66,20 @@ const decisionEvent = computed(() => {
         <label v-for="scenario in DELIVERY_LAB_SCENARIOS" :key="scenario.id" class="lab__option">
           <input v-model="selected" type="radio" name="delivery-scenario" :value="scenario.id" />
           <span>
-            <strong>{{ scenario.label }}</strong>
-            <span class="muted">{{ scenario.summary }}</span>
+            <strong>{{ $show(scenario.label) }}</strong>
+            <span class="muted">{{ $show(scenario.summary) }}</span>
           </span>
         </label>
       </fieldset>
       <button type="button" class="action" :disabled="evaluating" @click="run">
-        {{ evaluating ? 'Delivering…' : 'Run delivery' }}
+        {{ $show(evaluating ? 'Delivering…' : 'Run delivery') }}
       </button>
     </section>
 
-    <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
 
     <template v-if="lastDelivery && !errorMessage">
-      <p class="muted">{{ lastDelivery.banner }}</p>
+      <p class="muted">{{ $show(lastDelivery.banner) }}</p>
       <section class="card verdict">
         <div class="cluster">
           <h2>Boundary decision</h2>
@@ -86,49 +87,47 @@ const decisionEvent = computed(() => {
         </div>
         <p>
           Delivery result
-          <strong data-testid="delivery-kind">{{ lastDelivery.delivery?.kind ?? 'NOT_ATTEMPTED' }}</strong>
+          <strong data-testid="delivery-kind">{{ $show(lastDelivery.delivery?.kind ?? 'NOT_ATTEMPTED') }}</strong>
         </p>
       </section>
 
       <ol class="stages" aria-label="Delivery stages">
         <li v-for="stage in lastDelivery.stages" :key="stage">
-          <strong>{{ stage }}</strong>
+          <strong>{{ $show(stage) }}</strong>
           <p v-if="stage === 'Boundary Decision'">
-            {{ lastDelivery.decision.outcome }}
+            {{ $show(lastDelivery.decision.outcome) }}
           </p>
           <p v-else-if="stage === 'Delivery Instruction'">
             <template v-if="lastDelivery.instruction">
-              {{ lastDelivery.instruction.destination }} ·
-              {{ lastDelivery.instruction.contractReference }}
+              {{ $show(lastDelivery.instruction.destination) }} ·
+              {{ $show(lastDelivery.instruction.contractReference) }}
             </template>
-            <template v-else>None. REJECT or pre-delivery QUARANTINE never produces an instruction.</template>
+            <template v-else>None. REJECT or quarantine before delivery never produces an instruction.</template>
           </p>
           <p v-else-if="stage === 'Credential / Consent'">
-            Credential {{ lastDelivery.credential.reference ?? 'none' }} /
-            {{ lastDelivery.credential.status }}. Consent {{ lastDelivery.consent.status }}.
+            Credential {{ $show(lastDelivery.credential.reference ?? 'none') }} /
+            {{ $show(lastDelivery.credential.status) }}. Consent {{ $show(lastDelivery.consent.status) }}.
           </p>
           <p v-else-if="stage === 'Camel Route'">
-            {{
-              lastDelivery.delivery?.kind === 'NOT_ATTEMPTED' || !lastDelivery.delivery?.routeId
+            {{ $show(lastDelivery.delivery?.kind === 'NOT_ATTEMPTED' || !lastDelivery.delivery?.routeId
                 ? 'not routed'
-                : lastDelivery.delivery.routeId
-            }}
+                : lastDelivery.delivery.routeId) }}
           </p>
           <p v-else-if="stage === 'Connector'">
-            {{ lastDelivery.delivery?.connectorId ?? 'none' }} · provider called
-            {{ lastDelivery.delivery?.providerCalled ? 'yes' : 'no' }}
+            {{ $show(lastDelivery.delivery?.connectorId ?? 'none') }} · provider called
+            {{ $show(lastDelivery.delivery?.providerCalled ? 'yes' : 'no') }}
           </p>
           <p v-else-if="stage === 'Resilience'">
-            Circuit {{ lastDelivery.delivery?.circuitState ?? 'n/a' }} · attempts
-            {{ lastDelivery.delivery?.attemptCount ?? 0 }} · HTTP
-            {{ lastDelivery.delivery?.httpStatus ?? 'none' }}
+            Circuit {{ $show(lastDelivery.delivery?.circuitState ?? 'n/a') }} · attempts
+            {{ $show(lastDelivery.delivery?.attemptCount ?? 0) }} · HTTP
+            {{ $show(lastDelivery.delivery?.httpStatus ?? 'none') }}
           </p>
           <p v-else-if="stage === 'Audit / Attestation'">
-            Chain {{ lastDelivery.evidence?.auditChainId ?? 'none' }} · attestation
-            {{ lastDelivery.evidence?.attestationStatus ?? 'none' }}
+            Chain {{ $show(lastDelivery.evidence?.auditChainId ?? 'none') }} · attestation
+            {{ $show(lastDelivery.evidence?.attestationStatus ?? 'none') }}
           </p>
           <p v-else>
-            {{ lastDelivery.delivery?.kind }} — {{ lastDelivery.delivery?.explanation }}
+            {{ $show(lastDelivery.delivery?.kind) }}. {{ $show(lastDelivery.delivery?.explanation) }}
           </p>
         </li>
       </ol>
@@ -138,14 +137,14 @@ const decisionEvent = computed(() => {
         <p class="muted">
           Camel receives the transformed body. The original email must not appear after redaction.
         </p>
-        <pre>{{ lastDelivery.instruction.payloadJson }}</pre>
+        <pre>{{ $show(lastDelivery.instruction.payloadJson) }}</pre>
       </section>
 
       <section v-if="lastDelivery.quarantine" class="card stack">
         <h2>Quarantine</h2>
         <p>
-          {{ lastDelivery.quarantine.reason }} · {{ lastDelivery.quarantine.status }} ·
-          eligible {{ lastDelivery.quarantine.eligible ? 'yes' : 'no' }}
+          {{ $show(lastDelivery.quarantine.reason) }} · {{ $show(lastDelivery.quarantine.status) }} ·
+          eligible {{ $show(lastDelivery.quarantine.eligible ? 'yes' : 'no') }}
         </p>
         <RouterLink :to="`/quarantine/${lastDelivery.quarantine.id}`">Open quarantine item</RouterLink>
       </section>
@@ -153,8 +152,8 @@ const decisionEvent = computed(() => {
       <section v-if="lastDelivery.evidence" class="card stack">
         <h2>Audit and attestation</h2>
         <p>
-          {{ lastDelivery.evidence.attestationStatus }} on chain
-          {{ lastDelivery.evidence.auditChainId }}
+          {{ $show(lastDelivery.evidence.attestationStatus) }} on chain
+          {{ $show(lastDelivery.evidence.auditChainId) }}
         </p>
         <p>
           <RouterLink :to="`/audit/${lastDelivery.evidence.auditChainId}`">Open audit chain</RouterLink>

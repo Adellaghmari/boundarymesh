@@ -116,7 +116,7 @@ export const EVALUATION_SCENARIOS: readonly EvaluationScenario[] = [
     destinationSystem: 'COVECRM',
     integrationId: 'helix-calendar-crm',
     controls: allPass({
-      EGRESS: control('PASS', 'Two destination-denied fields require deterministic redaction.', [
+      EGRESS: control('PASS', 'Two fields denied for this destination require deterministic redaction.', [
         'EGRESS_TRANSFORMATION_REQUIRED',
       ]),
     }),

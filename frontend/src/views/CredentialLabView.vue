@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import DecisionResult from '@/components/DecisionResult.vue'
@@ -38,7 +39,7 @@ async function rotate(): Promise<void> {
       </p>
     </header>
 
-    <p v-if="catalog" class="muted">{{ catalog.banner }}</p>
+    <p v-if="catalog" class="muted">{{ $show(catalog.banner) }}</p>
 
     <section class="card stack" aria-labelledby="credential-catalog-heading">
       <div class="cluster">
@@ -60,11 +61,11 @@ async function rotate(): Promise<void> {
         </thead>
         <tbody>
           <tr v-for="row in catalog.credentials" :key="`${row.id}:${row.version}`">
-            <td>{{ row.id }}</td>
-            <td>{{ row.version }}</td>
-            <td>{{ row.status }}</td>
-            <td>{{ row.destination }}</td>
-            <td>{{ row.rotatedAt }}</td>
+            <td>{{ $show(row.id) }}</td>
+            <td>{{ $show(row.version) }}</td>
+            <td>{{ $show(row.status) }}</td>
+            <td>{{ $show(row.destination) }}</td>
+            <td>{{ $show(row.rotatedAt) }}</td>
           </tr>
         </tbody>
       </table>
@@ -86,12 +87,12 @@ async function rotate(): Promise<void> {
         </thead>
         <tbody>
           <tr v-for="row in catalog.consents" :key="row.id">
-            <td>{{ row.id }}</td>
-            <td>{{ row.destination }}</td>
-            <td>{{ row.operation }}</td>
-            <td>{{ row.status }}</td>
-            <td>{{ row.kind }}</td>
-            <td>{{ row.permissions.join(', ') }}</td>
+            <td>{{ $show(row.id) }}</td>
+            <td>{{ $show(row.destination) }}</td>
+            <td>{{ $show(row.operation) }}</td>
+            <td>{{ $show(row.status) }}</td>
+            <td>{{ $show(row.kind) }}</td>
+            <td>{{ $show(row.permissions.join(', ')) }}</td>
           </tr>
         </tbody>
       </table>
@@ -104,17 +105,17 @@ async function rotate(): Promise<void> {
         <label v-for="scenario in CREDENTIAL_LAB_SCENARIOS" :key="scenario.id" class="lab__option">
           <input v-model="selected" type="radio" name="credential-scenario" :value="scenario.id" />
           <span>
-            <strong>{{ scenario.label }}</strong>
-            <span class="muted">{{ scenario.summary }}</span>
+            <strong>{{ $show(scenario.label) }}</strong>
+            <span class="muted">{{ $show(scenario.summary) }}</span>
           </span>
         </label>
       </fieldset>
       <button type="button" class="action" data-action="evaluate" :disabled="evaluating" @click="run">
-        {{ evaluating ? 'Evaluating…' : 'Evaluate credential boundary' }}
+        {{ $show(evaluating ? 'Evaluating…' : 'Evaluate credential boundary') }}
       </button>
     </section>
 
-    <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
     <DecisionResult v-if="lastCredentialEvent && !errorMessage" :event="lastCredentialEvent" compact />
   </div>
 </template>

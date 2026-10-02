@@ -11,9 +11,9 @@ import TruthBanner from '@/components/TruthBanner.vue'
         <TruthBanner label="LOCAL LAB / HOSTED TOPOLOGY" />
       </div>
       <p>
-        This console is the local control lab. The hosted operator path is Firebase Hosting →
-        Web BFF → IAM-private API → Firestore/outbox → Pub/Sub → Worker Pool. External connectors
-        and production Entra remain disabled.
+        This console is the local control lab. The hosted operator path is Firebase Hosting, then
+        the Web BFF, then the private API, then Firestore and the outbox, then Pub/Sub, then the
+        Worker Pool. External connectors and production Entra remain disabled.
       </p>
     </header>
 
@@ -31,11 +31,11 @@ import TruthBanner from '@/components/TruthBanner.vue'
           <li>Local credential/consent boundary</li>
           <li>Separate Camel delivery worker with Resilience4j</li>
           <li>Local quarantine and admin reprocess</li>
-          <li>Tamper-evident SHA-256 audit chain</li>
-          <li>Local ECDSA P-256 exchange attestations</li>
+          <li>Tamper evident SHA256 audit chain</li>
+          <li>Local ECDSA P256 exchange attestations</li>
           <li>Microsoft Entra OIDC session architecture + Graph Calendar harness</li>
           <li>Private Cloud Run API and Worker Pool with dedicated service identities</li>
-          <li>Firebase Hosting and authenticated Web BFF to the IAM-private API</li>
+          <li>Firebase Hosting and authenticated Web BFF to the private API</li>
           <li>Live Firestore, Pub/Sub, and Cloud KMS transaction path</li>
         </ul>
       </article>
@@ -54,8 +54,8 @@ import TruthBanner from '@/components/TruthBanner.vue'
     <section class="card stack">
       <h2>Current pipeline structure</h2>
       <p class="muted">
-        Static Phase 2 pipeline. The Integration Boundary Graph is a separate live-state view at
-        /boundary-graph. Project B blast-radius graphs are not used here.
+        Static Phase 2 pipeline. The Integration Boundary Graph is a separate live view on the
+        boundary graph page. Project B blast radius graphs are not used here.
       </p>
       <PipelineSteps />
     </section>

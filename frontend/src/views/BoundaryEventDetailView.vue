@@ -27,7 +27,7 @@ const event = computed(() => store.eventById(transactionId.value))
     <section v-else class="card stack">
       <h2>Not in this session</h2>
       <p>
-        Transaction <code>{{ transactionId }}</code> is not in the current browser session. Phase 2
+        This crossing is not in the current browser session. Phase 2
         has no persistent event store, so a refresh or a new tab cannot recover earlier evaluations.
       </p>
       <p>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { OUTCOME_COPY } from '@/domain/labels'
 import type { BoundaryOutcome } from '@/domain/types'
 
@@ -9,8 +10,8 @@ defineProps<{
 
 <template>
   <span class="outcome" :data-outcome="outcome">
-    <span class="outcome__label">{{ OUTCOME_COPY[outcome].label }}</span>
-    <span class="visually-hidden"> — {{ OUTCOME_COPY[outcome].meaning }}</span>
+    <span class="outcome__label">{{ $show(OUTCOME_COPY[outcome].label) }}</span>
+    <span class="visually-hidden">. {{ $show(OUTCOME_COPY[outcome].meaning) }}</span>
   </span>
 </template>
 

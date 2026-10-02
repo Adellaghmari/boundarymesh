@@ -56,7 +56,7 @@ export const EGRESS_LAB_DESTINATIONS = [
 
 export const EGRESS_LAB_SCENARIOS = [
   { id: 'allow', label: 'All permitted fields', summary: 'Only explicitly allowed fields are present.' },
-  { id: 'email-only', label: 'Email contrast', summary: 'Same email field, destination-specific action.' },
+  { id: 'email-only', label: 'Email contrast', summary: 'Same email field. The action depends on the destination.' },
   { id: 'redact', label: 'Multiple redactions', summary: 'Email and name require transformation.' },
   { id: 'deny', label: 'Forbidden critical field', summary: 'internal_risk_score is present. REJECT.' },
   { id: 'nested', label: 'Nested field rule', summary: 'JSON Pointer /customer/email.' },
@@ -83,7 +83,7 @@ export const CROSSING_LAB_SCENARIOS = [
   {
     id: 'composed-reject-egress',
     label: 'Forbidden outbound field',
-    summary: 'Contract-valid payload. Critical egress deny. REJECT.',
+    summary: 'The payload passes the contract. A critical egress rule denies it. REJECT.',
   },
 ] as const
 
