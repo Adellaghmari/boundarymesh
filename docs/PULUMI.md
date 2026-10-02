@@ -2,95 +2,52 @@
 
 Primary IaC: **Pulumi + TypeScript**. Terraform is forbidden for Project C.
 
-## Current state (Phase 16D live verified)
+## Current state
 
 - Project/stack: `boundarymesh/dev`
 - Pulumi CLI baseline: `3.262.0`
-- Backend: GCS DIY backend `gs://bm-pulumi-state-eu4-21cad20b325f`
+- Backend: GCS DIY `gs://bm-pulumi-state-eu4-21cad20b325f`
 - Secrets provider: `gcpkms://projects/boundarymesh-dev/locations/europe-west4/keyRings/boundarymesh-pulumi/cryptoKeys/state-secrets`
-- State: **59 managed resources**
-- Final accepted preview: **59 unchanged / zero operations / exit 0**
+- Managed resources: **83**
+- Canonical preview: **83 unchanged / 0 operations / exit 0** (no refresh)
+- Compute Engine API: intentionally **DISABLED**. The regions-lookup warning is a known benign limitation. It does not block deployability or authorize enabling Compute.
 
-The state bucket uses uniform bucket-level access, public-access prevention, versioning, protected
-Pulumi ownership, and bounded noncurrent-version retention. The state KMS key is separate from the
-attestation-signing key. Compute Engine API remains intentionally **DISABLED**; Pulumi's resulting
-regions lookup warning is accepted and non-fatal.
+Pulumi owns infrastructure identity, IAM, APIs, data services, and the *existence* of Cloud Run
+services and the Worker Pool. **Pulumi does not own live traffic.** Controlled CD updates these
+fenced fields, which Pulumi `ignoreChanges`:
 
-The historical developer-machine `file://~` backend and passphrase-backed checkpoint were migrated
-under a controlled source-freeze and recovery procedure. They are not the active backend or secrets
-provider. The previously exposed passphrase remains an accepted historical security-hygiene item;
-this migration does not erase that history.
+| Resource | Fenced paths |
+| --- | --- |
+| API / Web Cloud Run services | `template.containers[0].image`, `template.revision`, `traffics` |
+| Worker Pool | `template.containers[0].image`, `template.revision`, `instanceSplits` |
 
-The Phase 15 sections below are historical provisioning records. Their resource counts and gate
-statements describe those phases, not the current 59-resource stack.
+That is why a promoted revision such as `boundarymesh-api-c-36941014905` can be live while a
+canonical Pulumi preview still reports zero drift. Firebase Hosting releases are also outside
+Pulumi. Secret Manager **payloads** are outside Pulumi; containers and IAM are inside.
 
-## Phase 15H-B (applied)
+The historical `file://~` backend and passphrase-backed checkpoint were migrated. They are not
+the active backend. The previously exposed passphrase remains a historical hygiene follow-up;
+current stack secrets use KMS.
 
-Pulumi **manages** Cloud KMS attestation signing resources. Applied in Phase 15H-B.
+Sections below that name Phase 15 resource counts are **historical provisioning records**.
 
-- `gcp.projects.Service` `kms-api` → `cloudkms.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
-- `gcp.kms.KeyRing` `attestation-key-ring` → `boundarymesh-attestation` in `europe-west4` — **LIVE / PROVISIONED IN GCP**
-- `gcp.kms.CryptoKey` `attestation-signing-key` → `exchange-attestation`, purpose `ASYMMETRIC_SIGN`, algorithm `EC_SIGN_P256_SHA256`, protection `SOFTWARE` — **LIVE / PROVISIONED IN GCP**
+## Preview / update / rollback
 
-Phase 15I-B1 provisioned the keyless API and worker service accounts. Only the API has CryptoKey-scoped signer and public-key-viewer IAM; the worker has no KMS role. No imported key material or scheduled version cycling exists. Version `1` is ENABLED. Cloud KMS signing was **LIVE VERIFIED LOCALLY (15H-C)** and later **WORKLOAD LIVE VERIFIED (15J)**.
+- **LIVE:** `.github/workflows/infra-preview.yml` is manual, main-only, environment
+  `boundarymesh-ci-preview`, preview-only.
+- **LIVE:** controlled CD in `.github/workflows/deploy-release.yml` mutates the fenced Cloud Run
+  and Hosting fields, not Pulumi state.
+- **NOT IMPLEMENTED:** pull-request Pulumi automation; saved-plan apply in GitHub Actions.
+- Rollback of application traffic is a CD operation, not `pulumi destroy`. See [CI_CD.md](CI_CD.md).
 
-`phase15HScope = "KMS_PREVIEW"` is a historical implementation-scope marker introduced in 15H-A, like the earlier Firestore/Pub/Sub scope constants. It is not a measurement of live infrastructure state. The literal and stack output are intentionally unchanged; a source comment clarifies its meaning. Provisioning truth comes from the 15H-B apply checkpoint and read-only GCP metadata. Phase 15H-C runs previews only, never `pulumi up`, including for informational output changes.
+## Resources Pulumi manages
 
-## Phase 15G-B (applied)
+Two Cloud Run Services, one Cloud Run Worker Pool, three keyless workload SAs, deploy and hosting
+deploy SAs, Pub/Sub topic/subscription/DLQ inspect, Firestore Native database, attestation KMS,
+state KMS, Secret Manager ids, Artifact Registry (images, releases, deployment evidence), shared
+state bucket, WIF pool/provider, CI/publication identities, custom roles, and scoped IAM members.
 
-Pulumi **manages** Pub/Sub delivery topology. Applied in Phase 15G-B.
-
-- `gcp.projects.Service` `pubsub-api` → `pubsub.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
-- `gcp.pubsub.Topic` `delivery-topic` → `boundarymesh-deliveries` — **LIVE / PROVISIONED IN GCP**
-- `gcp.pubsub.Subscription` `delivery-worker-subscription` → pull `boundarymesh-delivery-worker` (ack 60s, retry 10s–600s, no push) — **LIVE / PROVISIONED IN GCP**
-- `gcp.pubsub.Topic` `delivery-dlq-topic` → `boundarymesh-delivery-dlq` — **LIVE / PROVISIONED IN GCP**
-- `gcp.pubsub.Subscription` `delivery-dlq-inspect-subscription` → `boundarymesh-delivery-dlq-inspect` — **LIVE / PROVISIONED IN GCP**
-
-No `deadLetterPolicy`. No IAM. Dead-letter forwarding is **PLANNED / NOT CONFIGURED**. Live persist → publish → consume was **LIVE VERIFIED** in Phase 15G-C against these resources. Residue **CLEANED**.
-
-Existing Artifact Registry, Secret Manager, and Firestore resources stay unchanged.
-
-## Phase 15F
-
-Pulumi **manages** one named Firestore Native database and the Firestore API.
-
-- `gcp.projects.Service` `firestore-api` → `firestore.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
-- `gcp.firestore.Database` `boundarymesh-database` → database ID `boundarymesh`, `europe-west4`, `FIRESTORE_NATIVE`, `STANDARD`, App Engine `DISABLED`, concurrency `PESSIMISTIC`, delete protection **ENABLED** — **LIVE / PROVISIONED IN GCP**
-
-No indexes, PITR, backup schedules, or TTL policies. Phase 15F-C live-verified the Java SDK path and cleaned run-scoped documents. Residue is **zero**. Artifact Registry and Secret Manager remain **LIVE / UNCHANGED**. Cloud Run workload persistence is **not** live.
-
-## Phase 15E
-
-Pulumi **manages** Secret Manager containers in addition to Artifact Registry:
-
-- `gcp.projects.Service` `secret-manager-api` → `secretmanager.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
-- `gcp.secretmanager.Secret` containers `hmac-quayforge`, `covecrm-api`, `lumenway-api`, `rivertide-api` — **LIVE / PROVISIONED IN GCP**, user-managed replication in `europe-west4`; each has one enabled synthetic version created outside Pulumi in 15I-B2
-
-No version resources. No IAM. No secret payloads. Adapter is not workload-live.
-
-## Phase 15D
-
-Pulumi **manages** Artifact Registry:
-
-- `gcp.projects.Service` `artifact-registry-api` → `artifactregistry.googleapis.com` (`disableOnDestroy: false`) — **LIVE / ENABLED IN GCP**
-- `gcp.artifactregistry.Repository` `boundarymesh-images` → repo id `boundarymesh`, format `DOCKER`, location `europe-west4` — **LIVE / PROVISIONED IN GCP**
-
-API and worker images are **PUSHED + REMOTE DIGEST VERIFIED** (see `infra/README.md`). Image publication is not a workload deployment.
-
-Phase 15I-C1 added fresh images built from the current Firestore/Pub/Sub/KMS/Secret Manager
-production composition. Phase 15I-C2 deployed the private API Service and no-endpoint Worker Pool
-on remote-verified immutable digests. The Phase 15D images remain historical; workload functional
-verification remains Phase 15I-D.
-
-## Phase 15B
-
-`infra/` is a compilable Pulumi TypeScript project with verified **non-secret** `dev` configuration:
-
-- `gcp:project` = `boundarymesh-dev`
-- `gcp:region` = `europe-west4`
-- `boundarymesh:environment` = `dev`
-
-At this historical gate Pulumi used the local `file://~` backend. Phase 15B zero-resource `pulumi preview` was **TESTED**, and Phase 15D's first controlled `pulumi up` applied Artifact Registry only. Phase 16C later migrated the active stack to the GCS/KMS model documented above.
+No GKE. No VPC. No SQL. Compute API stays disabled.
 
 ## Layout
 
@@ -102,43 +59,19 @@ infra/
   src/shared-state.ts
   src/wif.ts
   src/ci-preview.ts
+  src/deployment-foundation.ts
   test/
 ```
 
-Current stack: `dev`. A production stack remains future work and is not implied by the live dev environment.
+A separate commercial production stack is not implied by the live `dev` environment.
 
-## State ownership
+## Historical provisioning notes
 
-The active GCS DIY backend is `gs://bm-pulumi-state-eu4-21cad20b325f`. Pulumi owns the protected
-bucket, its dedicated KMS key ring/key, and all 59 managed resources in one `dev` stack. Firebase
-Hosting releases remain intentionally outside Pulumi ownership. Secret Manager payloads also remain
-outside Pulumi state; Pulumi manages the containers and IAM boundaries only.
+Phase 15D–15J and 16C–16D applied Artifact Registry, Secret Manager containers, Firestore, Pub/Sub,
+KMS, workloads, WIF, and publication resources in gated steps. Those gates recorded then-current
+counts (for example 39, 54, or 59 unchanged). Current count is **83**. Dead-letter forwarding was
+not configured then and is still not configured.
 
-The bucket is the shared state and lock authority for local and hosted previews. The CI preview
-identity is limited to listing/getting its objects and decrypting with the dedicated state key. It
-cannot write/delete state or encrypt with KMS.
-
-## Secrets in Pulumi
-
-Stack config secrets for project numbers only if needed. Connector and HMAC **values** go to
-Secret Manager through a controlled interactive administrator procedure, never `pulumi config`,
-source, chat, logs, or placeholder SecretVersions.
-
-## Preview / update / rollback
-
-- **LIVE:** `.github/workflows/infra-preview.yml` runs only by `workflow_dispatch` from protected `main` in environment `boundarymesh-ci-preview`.
-- **LIVE:** `boundarymesh-ci-preview` authenticates keylessly and can read/decrypt only the shared stack state. Run `36337930890` returned 54 unchanged / zero operations.
-- **LIVE:** the Phase 16D publisher foundation adds a dedicated keyless publisher, exact third WIF context, immutable Docker tags, a Generic release repository, and repository-scoped writers. Run `36492495801` published and independently verified one immutable release.
-- **NOT IMPLEMENTED:** pull-request automation and infrastructure/application deployment.
-- **PLANNED:** Phase 16E controlled CD with explicit approval, then Phase 16F live verification and freeze.
-- Rollback remains a reviewed operation using versioned state and known-good immutable workload digests. CI preview has no rollback or mutation permission.
-
-## Resources Pulumi manages
-
-Two Cloud Run Services, one Cloud Run Worker Pool, three keyless workload SAs, Pub/Sub
-topic/subscription/DLQ, Firestore Native database, attestation KMS key ring/key, Secret Manager
-**ids**, Artifact Registry, shared-state bucket and KMS resources, WIF pool/provider, two keyless CI
-identities, a keyless publication identity, the Generic release repository, and scoped IAM
-members/roles. Firebase Hosting releases are live but outside Pulumi.
-
-No GKE. No VPC. No SQL.
+- KMS attestation key: `exchange-attestation`, `EC_SIGN_P256_SHA256`, SOFTWARE, version 1 ENABLED
+- Firestore database `boundarymesh`, delete protection enabled
+- Pub/Sub: `boundarymesh-deliveries` + `boundarymesh-delivery-dlq`; no `deadLetterPolicy`

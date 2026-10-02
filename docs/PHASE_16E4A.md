@@ -1,6 +1,10 @@
 # Phase 16E.4a — controlled deployment workflow source
 
-Status: **IMPLEMENTED / TESTED / OPEN PR REQUIRED / NOT MERGED / NOT EXECUTED.**
+> **Historical implementation record.** Status lines such as “NOT MERGED / NOT EXECUTED” describe
+> this source gate only. `deploy-release.yml` later merged and executed stage/promote. Current
+> truth: [CI_CD.md](CI_CD.md) and [PROJECT_STATUS.md](../PROJECT_STATUS.md).
+
+Status: **IMPLEMENTED / TESTED / OPEN PR REQUIRED / NOT MERGED / NOT EXECUTED** *(this gate only)*.
 
 The dormant `.github/workflows/deploy-release.yml` consumes only the immutable Phase 16D release
 from source `a876a7bfa5fa86f88e8387efb557773281daa6e6`, publication run `36492495801`, and release-manifest

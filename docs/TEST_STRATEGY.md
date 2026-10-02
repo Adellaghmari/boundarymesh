@@ -120,15 +120,15 @@ Playwright starts the local **worker + API** and the Vite app. It covers Deliver
 - Downloaded frontend SBOM is normalized CycloneDX 1.5
 - Downloaded frontend provenance binds the archive hash as an unsigned in-toto/SLSA subject
 - Downloaded release manifest validates against `contracts/release-manifest/v1.schema.json`
-- Post-publication Pulumi preview: 59 unchanged / zero operations / exit 0
+- Post-publication Pulumi preview at the 16D freeze: 59 unchanged / zero operations / exit 0 (historical; current stack is 83 unchanged)
 
 These are separate focused gates; their counts must not be summed into a fabricated global total.
 Publication verification does not prove deployment.
 
-## AppSec in CI (planned after Phase 16 foundation)
+## AppSec in CI (optional / not required for current CV readiness)
 
-Semgrep, Gitleaks, OWASP Dependency-Check, Dependabot, and a gated ZAP baseline remain planned.
-They are not part of the live-verified Phase 16C preview workflow.
+Semgrep, Gitleaks, OWASP Dependency-Check, Dependabot, and a gated ZAP baseline are not implemented.
+They are not part of the live GitHub workflows.
 
 ## Coverage intent
 

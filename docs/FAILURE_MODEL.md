@@ -41,7 +41,7 @@ Legend: **FC** fail closed, **FO** fail open (documented), **Q** quarantine, **R
 | --- | --- | --- |
 | Outbound HTTP | Resilience4j | **3 total attempts**. Only retryable categories. |
 | Camel | routing / DLC | **0** redeliveries |
-| Pub/Sub | PLANNED | Must not silently multiply the Resilience4j budget |
+| Pub/Sub | pull retry 10s–600s; no `deadLetterPolicy` | Must not silently multiply the Resilience4j budget |
 
 `maxAttempts = 3` = first attempt + 2 retries. Tests assert exact counts with millisecond waits.
 

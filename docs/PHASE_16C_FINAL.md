@@ -1,5 +1,9 @@
 # Phase 16C final evidence
 
+> **Historical freeze record (Phase 16C.5).** Resource counts and WIF context counts in this file
+> are true as of that freeze (54 managed, two contexts). Current truth:
+> [PROJECT_STATUS.md](../PROJECT_STATUS.md).
+
 Status: **CLOSED / PASS / LIVE VERIFIED** after the Phase 16C.5 documentation freeze.
 
 ## Shared Pulumi state

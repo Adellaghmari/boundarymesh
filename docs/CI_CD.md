@@ -1,198 +1,116 @@
 # GitHub Actions and GCP Workload Identity Federation
 
-This document separates the **live-verified Phase 16C preview foundation**, the **live-verified Phase
-16D publication boundary**, and deployment capabilities reserved for Phase 16E. BoundaryMesh uses no
-long-lived GCP service-account JSON key for CI or publication.
+BoundaryMesh uses no long-lived GCP service-account JSON key for CI, publication, or deployment.
+GitHub repository and environment secrets for GCP credentials are unused. Operator workstation
+ADC is a separate human path and is not “keyless CI/CD.”
+
+Application tests (Maven, Vitest, Playwright) run locally. There is no pull-request application CI
+workflow. That is a qualifier, not a claim of fully automated CI/CD.
 
 ## Live federation boundary
 
-GitHub Actions requests an OIDC token. GCP Security Token Service accepts it only through Workload
-Identity Pool `boundarymesh-github` and provider `github-actions`, then service-account IAM decides
-whether that admitted principal may impersonate one specific account.
+GitHub Actions requests an OIDC token. GCP STS accepts it only through pool `boundarymesh-github`
+and provider `github-actions`. Service-account IAM then decides whether that principal may
+impersonate **one** account.
 
-The provider requires these immutable claims for all admitted contexts:
+Immutable claims for every admitted context:
 
 - repository ID `1385415640`
 - repository owner ID `179922674`
 - private repository visibility
 - ref `refs/heads/main`
 
-The live provider admits exactly these five context branches:
+The live provider admits **exactly seven** contexts (all `workflow_dispatch`):
 
-1. Environment `boundarymesh-dev`, workflow
-   `Adellaghmari/boundarymesh/.github/workflows/wif-verify.yml@refs/heads/main`, event
-   `workflow_dispatch`.
-2. Environment `boundarymesh-ci-preview`, workflow
-   `Adellaghmari/boundarymesh/.github/workflows/infra-preview.yml@refs/heads/main`, event
-   `workflow_dispatch`.
-3. Environment `boundarymesh-artifact-publish`, workflow
-   `Adellaghmari/boundarymesh/.github/workflows/artifact-publish.yml@refs/heads/main`, event
-   `workflow_dispatch`.
-4. Environment `boundarymesh-deploy`, workflow
-   `Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main`, event
-   `workflow_dispatch`.
-5. Environment `boundarymesh-hosting-deploy`, workflow
-   `Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main`, event
-   `workflow_dispatch`.
+| # | Environment | Workflow |
+| --- | --- | --- |
+| 1 | `boundarymesh-dev` | `wif-verify.yml` |
+| 2 | `boundarymesh-ci-preview` | `infra-preview.yml` |
+| 3 | `boundarymesh-artifact-publish` | `artifact-publish.yml` |
+| 4 | `boundarymesh-deploy` | `deploy-release.yml` |
+| 5 | `boundarymesh-hosting-deploy` | `deploy-release.yml` |
+| 6 | `boundarymesh-deploy` | `recover-promotion-evidence.yml` |
+| 7 | `boundarymesh-hosting-deploy` | `recover-promotion-evidence.yml` |
 
-Repository name is mapped for context but immutable numeric repository and owner IDs form the
-anti-rename/anti-name-reuse boundary. No pull-request or push event is privileged by this provider.
+No pull-request or push event is privileged by this provider.
 
-## Live identities and authorization
+## Identities
 
-### Verification identity
+All listed accounts have **zero user-managed keys** and no `roles/iam.serviceAccountTokenCreator`
+on the CI/CD or workload identities. A Firebase-managed identity in the project holds Token
+Creator; that is outside the keyless CI/CD claim. See [APPLICATION_SECURITY.md](APPLICATION_SECURITY.md).
 
-`boundarymesh-wif-verify@boundarymesh-dev.iam.gserviceaccount.com` is impersonable only by the
-`attribute.environment/boundarymesh-dev` principal set after the provider admits the exact
-verification context. It has:
+| Account | May do | May not do |
+| --- | --- | --- |
+| `boundarymesh-wif-verify` | Prove federation | Anything else |
+| `boundarymesh-ci-preview` | Read Pulumi state objects; decrypt `state-secrets` | Write state, apply, deploy, publish |
+| `boundarymesh-artifact-publish` | Write Docker `boundarymesh` and Generic `boundarymesh-releases` | Deploy, IAM, Pulumi, Hosting |
+| `boundarymesh-deploy` | Update existing Cloud Run API/Web/Worker; write deployment evidence | Hosting mutate, IAM/WIF, rebuild images |
+| `boundarymesh-hosting-deploy` | Bounded Hosting preview/promote/restore; read Web service | Cloud Run mutate, IAM/WIF |
 
-- zero user-managed keys
-- no direct project role
-- no deployment or application-data role
-- no `roles/iam.serviceAccountTokenCreator`
+Workload identities `boundarymesh-api`, `boundarymesh-worker`, and `boundarymesh-web` are also
+keyless. The deploy account has `serviceAccountUser` on those three so Cloud Run revisions can
+run as them. That is not Token Creator.
 
-It proves keyless federation only.
+## Happy path
 
-### Infrastructure-preview identity
+Human dispatch only. No automatic promote, no automatic rollback, no application rebuild.
 
-`boundarymesh-ci-preview@boundarymesh-dev.iam.gserviceaccount.com` is impersonable only by the
-`attribute.environment/boundarymesh-ci-preview` principal set after the provider admits the exact
-preview context. Its complete resource authorization is:
+```text
+publish (once per source SHA)
+    → stage  (zero-allocation Cloud Run candidates + Hosting preview)
+    → promote (shift API/Web traffic and Worker instanceSplits to 100%; Hosting live version)
+    → [optional later] rollback
+```
 
-- custom role `projects/boundarymesh-dev/roles/boundarymeshCiStateReader` on bucket
-  `bm-pulumi-state-eu4-21cad20b325f`, containing exactly `storage.objects.get` and
-  `storage.objects.list`
-- `roles/cloudkms.cryptoKeyDecrypter` on only
-  `projects/boundarymesh-dev/locations/europe-west4/keyRings/boundarymesh-pulumi/cryptoKeys/state-secrets`
-
-It has zero user-managed keys, no direct project role, no state write/delete, no KMS encrypt, no
-project reader, no deployment permission, no application-data access, and no Token Creator role.
-
-### Artifact-publication identity
-
-`boundarymesh-artifact-publish@boundarymesh-dev.iam.gserviceaccount.com` is impersonable only by
-the `attribute.environment/boundarymesh-artifact-publish` principal set after the provider admits
-the exact publication context. It has zero user-managed keys, zero direct project roles, and only:
-
-- `roles/artifactregistry.writer` on Docker repository `boundarymesh`; and
-- `roles/artifactregistry.writer` on Generic repository `boundarymesh-releases`.
-
-It has no deployment, runtime, application-data, Pulumi-state, state-KMS, Token Creator, or Service
-Account User role.
-
-### Runtime-deployment identity
-
-`boundarymesh-deploy@boundarymesh-dev.iam.gserviceaccount.com` is impersonable only by the
-`attribute.environment/boundarymesh-deploy` principal set after the provider admits the exact
-deployment workflow context. It is keyless and holds only the resource-scoped permissions required
-to inspect immutable release evidence, stage and shift the three existing Cloud Run workloads, and
-write immutable deployment evidence. It cannot deploy Firebase Hosting or change IAM/WIF.
-
-### Hosting-deployment identity
-
-`boundarymesh-hosting-deploy@boundarymesh-dev.iam.gserviceaccount.com` is impersonable only by the
-`attribute.environment/boundarymesh-hosting-deploy` principal set after the provider admits the exact
-deployment workflow context. It is keyless and holds only the resource-scoped permissions required
-to inspect the frozen frontend release, create a bounded Hosting preview, and promote or restore an
-exact Hosting version. It cannot update Cloud Run or change IAM/WIF.
-
-The five service accounts have separate environment-scoped `roles/iam.workloadIdentityUser`
-bindings. Their workflows and environments cannot be interchanged under the provider condition.
-
-## Live workflows
+Publication, stage, and promote are separate protected workflows or operations. Promotion
+consumes the frozen Phase 16D manifest and parent OCI digests. Cloud Run may show a resolved
+linux/amd64 child digest at runtime; identity continuity compares parent and resolved images
+without treating that as drift.
 
 ### `wif-verify.yml`
 
-- manual `workflow_dispatch` only
-- protected `main` and environment `boundarymesh-dev`
-- `contents: read` and `id-token: write`
-- pinned Google authentication action
-- positive federation proof plus bounded negative test modes
-- no checkout, Pulumi, deployment, resource mutation, or token output
+Manual federation proof and bounded negative modes. No Pulumi, no deploy.
 
 ### `infra-preview.yml`
 
-- manual `workflow_dispatch` only
-- protected `main` and environment `boundarymesh-ci-preview`
-- `contents: read` and `id-token: write`
-- commit-pinned checkout/auth/setup actions and Pulumi CLI `3.262.0`
-- logs into `gs://bm-pulumi-state-eu4-21cad20b325f`
-- runs only `pulumi preview --stack dev --diff --non-interactive --suppress-permalink`
-- no refresh, update/apply, state write, deployment, publication, or Secret Manager/application-secret read
+Manual `pulumi preview --stack dev --diff --non-interactive --suppress-permalink`. No refresh,
+no apply. Saved-plan apply is **not** a live CI capability; infrastructure apply remains a
+reviewed, non-default operation outside these workflows.
 
 ### `artifact-publish.yml`
 
-- manual `workflow_dispatch` only from protected `main`
-- environment `boundarymesh-artifact-publish`, restricted to `main`, with zero secrets and variables
-- `contents: read` and `id-token: write`
-- all six actions pinned to full commit SHAs
-- exact-commit OCI publication with BuildKit SBOM/provenance
-- deterministic frontend archive, CycloneDX SBOM, and unsigned in-toto/SLSA provenance
-- canonical release manifest and external SHA-256 sidecars
-- collision checks before the first remote write
-- no Pulumi operation, deployment, IAM/WIF mutation, Firebase deployment, or application-data access
+One immutable four-subject release per source SHA. Collision-fail. Unsigned SBOM/provenance.
+Does not deploy.
 
-## Live verification evidence
+### `deploy-release.yml`
 
-Positive preview run `36337930890` used commit
-`f19498bd06d484e3295d98de63cdd2211ada2999`, authenticated as the preview service account, and
-returned **54 unchanged / zero operations**.
+One dispatch selects `stage`, `promote`, or `rollback`. Runtime jobs use `boundarymesh-deploy`.
+Hosting jobs use `boundarymesh-hosting-deploy`. Evidence is written only after a complete
+operation. Stage evidence and promotion evidence are separate immutable Generic versions.
 
-Negative tests proved:
+Rollback is implemented and tested. Rollback identities remain live-readable. **Rollback has
+not been live-executed.** A human must dispatch it with the exact stage and promotion run IDs.
 
-- preview context cannot impersonate the verification service account
-- verification context cannot impersonate the preview service account
-- `infra-preview.yml` in `boundarymesh-dev` is rejected by provider condition
-- `wif-verify.yml` in `boundarymesh-ci-preview` is rejected by provider condition
-- `wif-verify.yml` without an environment is rejected before IAM Credentials
+## Break-glass recovery (not the happy path)
 
-Audit review found no unexpected administrative activity. The verification and preview accounts
-remain keyless and without project-level or Token Creator roles. Compute Engine API remains
-intentionally disabled.
+`recover-promotion-evidence.yml` exists because an otherwise successful promotion can fail while
+recording immutable evidence. It does **not** promote, roll back, or change runtime/Hosting.
 
-## Immutable publication evidence
+- Preconditions: original stage succeeded; original promotion succeeded; production still matches
+  that promotion; the promotion-evidence version is absent.
+- Dual principal: Hosting read under `boundarymesh-hosting-deploy`, then evidence publish under
+  `boundarymesh-deploy`.
+- The recovered document binds the **original promotion run**, not the recovery run.
+- Publish is once; collisions fail closed.
+- It remains available because Hosting inventory is not readable under the runtime deploy
+  identity, and a missing evidence version would otherwise be unrecoverable without mutation.
 
-Publication run `36492495801` succeeded from source SHA
-`a876a7bfa5fa86f88e8387efb557773281daa6e6`. Independent read-back verified all three OCI digests,
-attached OCI evidence, the four-file frontend Generic package, the two-file release package, both
-published sidecars, and the actual downloaded manifest against its schema. The manifest SHA-256 is
-`ecdbaf88710ff73fd694c5c4e13c0a8ce300fdacf2a3761064b7511bd627300d`.
+Do not describe recovery as part of every promotion.
 
-Exactly four SBOM and provenance subjects exist: API, Worker, Web Edge, and frontend. Frontend
-provenance is unsigned; BoundaryMesh makes no software-signing claim. Docker tags are immutable and
-Generic versions use the exact source SHA. Audit evidence verified two access-token events for the
-publisher identity; Artifact Registry Data Access events were not observable in the queried stream.
-See [PHASE_16D_FINAL.md](PHASE_16D_FINAL.md).
+## What CI/CD is not
 
-Historical run `36490169553` failed closed on a frontend checksum-sidecar working-directory defect
-before any remote write. It left no artifact residue and was repaired through protected PR #15.
-
-## Remaining capabilities
-
-Phase 16C did **not** implement general pull-request CI or deployment. Phase 16D implemented
-publication, and Phase 16E has established the split-authority deployment foundation. Publication
-remains separate from deployment, and the controlled deployment workflow source remains dormant
-until protected merge and a later explicitly approved human dispatch.
-
-- **Phase 16E — controlled CD:** the split runtime/Hosting identities and environments are live; the
-  current source gate adds explicit stage/promote/rollback operations, immutable manifest/digest
-  inputs, post-operation verification, and retained rollback evidence. It consumes the frozen Phase
-  16D release without rebuilding or republishing it.
-- **Phase 16F — live verification and CI/CD freeze:** positive and negative deployment-boundary
-  evidence, traceability, zero-key reconfirmation, and documentation freeze.
-- Application-security automation such as Semgrep, Gitleaks, Dependency-Check, Dependabot, and ZAP
-  remains planned and is not part of the live preview workflow.
-
-## Dormant controlled deployment source
-
-Phase 16E.4a implements the controlled deployment workflow and supporting validators on a feature
-branch. Until protected merge, `.github/workflows/deploy-release.yml` is not registered on the
-default branch and has zero runs. The source consumes only the frozen Phase 16D release, separates
-runtime and Hosting WIF identities by job and GitHub environment, stages zero-allocation Cloud Run
-candidates plus a bounded Hosting preview, and requires later human dispatches for promotion and
-rollback. It writes immutable, hash-bound deployment evidence only after a complete operation.
-There is no application build, republish, automatic promotion, or automatic rollback path. See
-[PHASE_16E4A.md](PHASE_16E4A.md).
-
-Final security hygiene, including historical credential-contamination review, remains unresolved
-until a later explicit gate.
+- Fully automated CI/CD
+- Pull-request Maven/Vitest gates
+- Signed attestations / Cosign
+- Automatic rollback on failure

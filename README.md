@@ -20,10 +20,10 @@ An untrusted system transaction arrives. BoundaryMesh authenticates identity, au
 2. **Webhook & Subscription Defense** — HMAC and provider-specific Graph notification security
 3. **Contract Drift Firewall** — versioned OpenAPI / AsyncAPI / JSON Schema as runtime enforcement
 4. **Data Boundary Firewall** — destination-specific allow / redact / deny, no AI PII guessing
-5. **Credential & Consent Vault** — local reference/version/consent model now; Secret Manager later
-6. **Quarantine & Recovery Orchestrator** — local workflow now; Firestore adapter **LIVE VERIFIED LOCALLY**, not Cloud Run workload-live
+5. **Credential & Consent Vault** — local reference/version/consent model; Secret Manager containers live; hosted connector secret read not exercised
+6. **Quarantine & Recovery Orchestrator** — local workflow plus Firestore-backed terminal quarantine **LIVE VERIFIED** on the hosted Worker path
 
-Also implemented locally: **Tamper-Evident Audit Chain**, **Cryptographic Exchange Attestation** (local JCA default; Cloud KMS signing LIVE VERIFIED LOCALLY), **Integration Boundary Graph**.
+Also implemented: **Tamper-Evident Audit Chain**, **Cryptographic Exchange Attestation** (local JCA; Cloud KMS signing LIVE VERIFIED on the hosted path), **Integration Boundary Graph**.
 
 ## Stack (locked)
 
@@ -45,9 +45,9 @@ Do not describe BoundaryMesh as professional security employment, paid Microsoft
 
 Do not modify **Project A** (AI Operations Copilot) or **Project B** (CloudOps Release Intelligence). Both are frozen.
 
-## What exists now (Phases 0–14)
+## What the local labs prove
 
-Local Java 25 / Spring Boot 4.1.1 / Spring Security resource server, a separate Camel delivery worker, and a Vue 3 recruiter console with a premium product header.
+Local Java 25 / Spring Boot 4.1.1 / Spring Security resource server, a separate Camel delivery worker, and a Vue 3 recruiter console with a premium product header. This is the developer loop. Hosted production is separate; see **Current status**.
 
 Phase 3 proves **local** JWT/JWKS identity federation.  
 Phase 4 proves **QuayForge** HMAC webhook defense (not Graph subscriptions).  
@@ -68,7 +68,7 @@ Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** Co
 
 A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
 
-Firebase Hosting serves the cloud SPA with a revalidating HTML shell and immutable hashed assets. Hosted Firebase Google authentication, the HttpOnly `__session` BFF session, operator authorization, CSRF, and keyless browser → BFF → IAM-private-core access are **LIVE VERIFIED**. Phase 15J completed exactly one synthetic browser-origin transaction through Firestore, Cloud KMS signing, attestation, audit, outbox, Pub/Sub, Worker Pool consumption, idempotency, terminal quarantine, durable persistence, and ACK. Phase 16C then live verified shared GCS/KMS Pulumi state and keyless, least-privilege GitHub WIF preview. Phase 16D published and independently read-back verified one immutable four-subject release for source `a876a7bfa5fa86f88e8387efb557773281daa6e6`; publication did not deploy it. External connector delivery remains intentionally disabled: no endpoint was configured, `provider_called=false`, and no connector secret was read. Graph change notifications and production Entra/OIDC remain planned. Dead-letter forwarding is not configured. See the [Phase 15J final evidence](docs/PHASE_15J_FINAL.md), [Phase 16C final evidence](docs/PHASE_16C_FINAL.md), and [Phase 16D final evidence](docs/PHASE_16D_FINAL.md).
+The hosted path is Firebase Hosting → Web BFF → IAM-private API → Firestore/KMS/outbox → Pub/Sub → Worker Pool. One synthetic browser-origin transaction was live-verified through that internal path. External connector delivery remains intentionally disabled. Graph change notifications and production Entra/OIDC remain disabled. Dead-letter forwarding is not configured. Evidence records: [Phase 15J](docs/PHASE_15J_FINAL.md), [16C](docs/PHASE_16C_FINAL.md), [16D](docs/PHASE_16D_FINAL.md) (historical publication freeze; the release was later promoted).
 
 ## Navigation
 
@@ -76,7 +76,7 @@ Desktop: Core (Overview, Boundary Events, Connections, Architecture, Boundary Gr
 
 Labs, Operations, and Evidence are grouped so the header stays a product shell instead of a crowded admin menu.
 
-## How to run (Phases 3–14)
+## How to run locally
 
 Requires **JDK 25** and **Node 22**. No secrets. `VITE_*` values are public browser configuration.
 
@@ -128,24 +128,25 @@ Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the V
 
 ## Current status
 
-**PROJECT C — PHASE 16D CLOSED / PASS / LIVE VERIFIED / SOURCE-FROZEN; NOT YET FULLY SECURITY-FROZEN.** Phase 15J
-live verified the hosted Firebase SPA, authenticated Web BFF, private API, Worker, and exactly one
-governed synthetic transaction. Phase 16C established shared GCS/KMS Pulumi state and keyless,
-least-privilege GitHub WIF preview. Phase 16D live verified the publication foundation and workflow,
-then published immutable API, Worker, Web Edge, and frontend artifacts with four-subject SBOM and
-provenance evidence. That release remains bound to source SHA
-`a876a7bfa5fa86f88e8387efb557773281daa6e6`; it has **not** been deployed. Controlled CD and final
-CI/CD verification remain Phase 16E and Phase 16F. External connector delivery and production
-Entra/OIDC remain disabled or unverified. The previously exposed historical Pulumi passphrase and
-locally exposed, uncommitted Firebase password-hash signing material remain final security-hygiene
-follow-ups.
+BoundaryMesh is **live** in the portfolio/dev GCP project `boundarymesh-dev` (`europe-west4`). This is not enterprise production and not paid customer traffic.
 
-See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md).
+**Topology:** Firebase Hosting → authenticated Web BFF → IAM-private API → Firestore / KMS / outbox → Pub/Sub → Cloud Run Worker Pool.
+
+**Infrastructure:** Pulumi `dev` stack, **83 managed / zero drift**, GCS DIY state + KMS secrets. Compute Engine API is **disabled**. GitHub Actions deploys through Workload Identity Federation (**7 exact** main-only contexts). CI/CD and workload service accounts have **zero user-managed keys**.
+
+**Delivery:** the frozen 16D release is **promoted**. Promotion evidence is **immutable**. Rollback is **implemented and not live-executed**. Evidence recovery is **break-glass**, not the happy path. SBOM/provenance are **published and unsigned**.
+
+**Not live:** external connectors, production Entra/OIDC, Graph notifications, DLQ forwarding, OpenTelemetry, AppSec CI scanners.
+
+Deeper truth: [PROJECT_STATUS.md](PROJECT_STATUS.md), [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/CI_CD.md](docs/CI_CD.md), [docs/README.md](docs/README.md).
 
 ## Documentation
 
+Start with [docs/README.md](docs/README.md). `docs/PHASE_*.md` files are historical gate records.
+
 | Document | Purpose |
 | --- | --- |
+| [docs/README.md](docs/README.md) | Current vs historical documentation map |
 | [docs/PRODUCT.md](docs/PRODUCT.md) | Product definition, thesis, synthetic org, recruiter story |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, service boundaries, coherence |
 | [docs/BOUNDARY_ENFORCEMENT_ENGINE.md](docs/BOUNDARY_ENFORCEMENT_ENGINE.md) | Deterministic enforcement |
@@ -166,7 +167,7 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_M
 | [docs/API_CONTRACTS.md](docs/API_CONTRACTS.md) | Public and protected APIs |
 | [docs/COST_MODEL.md](docs/COST_MODEL.md) | Portfolio cost before any provision |
 | [docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md) | Test pyramid |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Phases 1–19 |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Completed / current 16F / optional follow-ups |
 | [docs/QUARANTINE.md](docs/QUARANTINE.md) | Recovery orchestrator |
 | [docs/BOUNDARY_GRAPH.md](docs/BOUNDARY_GRAPH.md) | Visual system |
 | [docs/NETWORK_BOUNDARIES.md](docs/NETWORK_BOUNDARIES.md) | Trust hops |
@@ -174,8 +175,8 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_M
 | [docs/GCP_ADAPTERS.md](docs/GCP_ADAPTERS.md) | GCP module boundary and port map |
 | [docs/PHASE_15J_FINAL.md](docs/PHASE_15J_FINAL.md) | Final hosted production verification and cleanup freeze |
 | [docs/PHASE_16C_FINAL.md](docs/PHASE_16C_FINAL.md) | Shared-state and keyless CI-preview live evidence |
-| [docs/PHASE_16D_FINAL.md](docs/PHASE_16D_FINAL.md) | Immutable publication identities, security boundary, and Phase 16E handoff |
-| [docs/CI_CD.md](docs/CI_CD.md) | Live WIF, preview, publication, and planned controlled-CD boundaries |
+| [docs/PHASE_16D_FINAL.md](docs/PHASE_16D_FINAL.md) | Historical publication freeze (release later promoted) |
+| [docs/CI_CD.md](docs/CI_CD.md) | WIF, publication, stage, promote, rollback, break-glass recovery |
 | [docs/PHASE0_GATE.md](docs/PHASE0_GATE.md) | Final YES/NO gate |
 | [docs/PHASE1.md](docs/PHASE1.md) | Phase 1 implementation record |
 | [docs/PHASE2.md](docs/PHASE2.md) | Phase 2 Vue console record |
@@ -187,6 +188,8 @@ See [PROJECT_STATUS.md](PROJECT_STATUS.md) and [CV_CLAIMS_MATRIX.md](CV_CLAIMS_M
 | [docs/PHASE9.md](docs/PHASE9.md) | Credential and consent boundary |
 | [docs/PHASE10.md](docs/PHASE10.md) | Quarantine and recovery |
 | [docs/PHASE4.md](docs/PHASE4.md) | Phase 4 QuayForge webhook defense |
+| [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md) | Implemented controls and explicit gaps |
+| [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) | Logs and health; no OpenTelemetry claim |
 | [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Records |
 
 ## Phase 0 gate

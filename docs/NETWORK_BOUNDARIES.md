@@ -24,7 +24,7 @@ Cloud Run Worker Pool  boundarymesh-worker  (no endpoint, pull)
         ├─ named connector secrets + Firestore
         │
         ▼
-Apache Camel connector  →  Graph / CoveCRM / Rivertide / Lumenway (TLS egress)
+Apache Camel connector  →  Graph / CoveCRM / Rivertide / Lumenway (TLS egress, **hosted destinations unconfigured**)
 ```
 
 | Boundary | Identity | Authorization | Credentials | Exposure | Data | Failure |
