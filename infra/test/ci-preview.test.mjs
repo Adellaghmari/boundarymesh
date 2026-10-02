@@ -47,6 +47,11 @@ const privilegedContexts = [
         workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main",
         event_name: "workflow_dispatch",
     },
+    {
+        environment: "boundarymesh-deploy",
+        workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/recover-promotion-evidence.yml@refs/heads/main",
+        event_name: "workflow_dispatch",
+    },
 ];
 
 function providerAllows(assertion) {
@@ -127,7 +132,7 @@ test("CI federation authorization is service-account and environment scoped", ()
     assert.equal(/new gcp\.projects\.IAM(?:Member|Binding|Policy)/.test(source), false);
 });
 
-test("provider source expresses four immutable claims and exactly five privileged contexts", () => {
+test("provider source expresses four immutable claims and exactly six privileged contexts", () => {
     for (const expected of [
         "1385415640",
         "179922674",
@@ -142,6 +147,7 @@ test("provider source expresses four immutable claims and exactly five privilege
         "boundarymesh-deploy",
         "boundarymesh-hosting-deploy",
         "Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main",
+        "Adellaghmari/boundarymesh/.github/workflows/recover-promotion-evidence.yml@refs/heads/main",
         "workflow_dispatch",
     ]) {
         assert.ok(wif.includes(expected), `provider condition must include ${expected}`);
@@ -152,15 +158,18 @@ test("provider source expresses four immutable claims and exactly five privilege
     assert.match(wif, /GITHUB_OIDC_ARTIFACT_PUBLISH_CONTEXT_CONDITIONS = \[/);
     assert.match(wif, /GITHUB_OIDC_RUNTIME_DEPLOY_CONTEXT_CONDITIONS = \[/);
     assert.match(wif, /GITHUB_OIDC_HOSTING_DEPLOY_CONTEXT_CONDITIONS = \[/);
+    assert.match(wif, /GITHUB_OIDC_EVIDENCE_RECOVERY_CONTEXT_CONDITIONS = \[/);
     assert.match(
         wif,
         /`\(\(\$\{GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS\.join\(" && "\)\}\) \|\| `/,
     );
-    assert.equal((wif.match(/\|\|/g) ?? []).length, 4);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 5);
+    assert.equal(privilegedContexts.length, 6);
+    assert.equal(/\.github\/workflows\/\*/.test(wif), false);
     assert.equal((wif.match(/^\s*"(?:google|attribute)\.[^"]+":\s*"assertion\.[^"]+",$/gm) ?? []).length, 9);
 });
 
-test("provider semantics allow only the five exact privileged contexts", () => {
+test("provider semantics allow only the six exact privileged contexts", () => {
     for (const context of privilegedContexts) {
         assert.equal(providerAllows({ ...commonClaims, ...context }), true);
     }
@@ -171,6 +180,7 @@ test("provider semantics reject immutable-claim, context, workflow, ref, and eve
     const ciPreview = { ...commonClaims, ...privilegedContexts[1] };
     const runtimeDeploy = { ...commonClaims, ...privilegedContexts[3] };
     const hostingDeploy = { ...commonClaims, ...privilegedContexts[4] };
+    const evidenceRecovery = { ...commonClaims, ...privilegedContexts[5] };
     const rejected = [
         { ...verification, repository_id: "9999999999" },
         { ...verification, repository_owner_id: "999999999" },
@@ -194,6 +204,15 @@ test("provider semantics reject immutable-claim, context, workflow, ref, and eve
         { ...verification, event_name: "schedule" },
         { ...verification, event_name: "workflow_call" },
         { ...verification, event_name: "repository_dispatch" },
+        { ...evidenceRecovery, ref: "refs/heads/codex/phase16e6-p4a-recovery-wif-workflow" },
+        {
+            ...evidenceRecovery,
+            workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/other.yml@refs/heads/main",
+        },
+        { ...evidenceRecovery, event_name: "pull_request" },
+        { ...evidenceRecovery, repository_id: "9999999999" },
+        { ...evidenceRecovery, repository_owner_id: "999999999" },
+        { ...evidenceRecovery, environment: "boundarymesh-hosting-deploy" },
     ];
 
     for (const assertion of rejected) {

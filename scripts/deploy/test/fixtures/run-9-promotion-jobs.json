@@ -1,0 +1,17 @@
+{
+  "total_count": 12,
+  "jobs": [
+    { "name": "validate-release", "conclusion": "success", "status": "completed" },
+    { "name": "load-stage-evidence", "conclusion": "success", "status": "completed" },
+    { "name": "promotion-hosting-preflight", "conclusion": "success", "status": "completed" },
+    { "name": "promote-runtime", "conclusion": "success", "status": "completed" },
+    { "name": "promote-hosting", "conclusion": "success", "status": "completed" },
+    { "name": "record-promote-evidence", "conclusion": "failure", "status": "completed" },
+    { "name": "rollback-hosting", "conclusion": "skipped", "status": "completed" },
+    { "name": "rollback-runtime", "conclusion": "skipped", "status": "completed" },
+    { "name": "record-rollback-evidence", "conclusion": "skipped", "status": "completed" },
+    { "name": "stage-runtime", "conclusion": "skipped", "status": "completed" },
+    { "name": "stage-hosting", "conclusion": "skipped", "status": "completed" },
+    { "name": "record-stage-evidence", "conclusion": "skipped", "status": "completed" }
+  ]
+}

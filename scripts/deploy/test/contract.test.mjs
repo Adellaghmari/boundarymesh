@@ -18,6 +18,7 @@ import {
     runtimeInvariant,
     sha256Bytes,
     validateDispatchInputs,
+    validateRecoveryDispatchInputs,
     validateDeploymentEvidence,
     verifyEvidenceFiles,
     verifyFrozenReleaseBytes,
@@ -165,6 +166,12 @@ test("dispatch inputs are exact and never select release identity", () => {
     assert.throws(() => validateDispatchInputs({ operation: "promote" }), /stage_run_id/);
     assert.throws(() => validateDispatchInputs({ operation: "rollback", stageRunId: "123", promotionRunId: "latest" }), /explicit numeric/);
     assert.throws(() => validateDispatchInputs({ operation: "deploy" }), /exactly/);
+    assert.deepEqual(validateRecoveryDispatchInputs({ stageRunId: "36941014905", promotionRunId: "36945783284" }), {
+        stageRunId: "36941014905",
+        promotionRunId: "36945783284",
+    });
+    assert.throws(() => validateRecoveryDispatchInputs({ stageRunId: "latest", promotionRunId: "36945783284" }), /explicit numeric/);
+    assert.throws(() => validateRecoveryDispatchInputs({ stageRunId: "36941014905", promotionRunId: "36941014905" }), /distinct/);
 });
 
 test("runtime invariant comparison rejects unexpected configuration drift", () => {

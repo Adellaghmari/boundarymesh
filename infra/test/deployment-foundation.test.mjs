@@ -37,9 +37,11 @@ test("runtime and Hosting WIF contexts are exact and isolated", () => {
         "GITHUB_RUNTIME_DEPLOY_ENVIRONMENT = \"boundarymesh-deploy\"",
         "GITHUB_HOSTING_DEPLOY_ENVIRONMENT = \"boundarymesh-hosting-deploy\"",
         "Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main",
+        "Adellaghmari/boundarymesh/.github/workflows/recover-promotion-evidence.yml@refs/heads/main",
         "workflow_dispatch",
     ]) assert.ok(wif.includes(expected), `missing WIF invariant: ${expected}`);
-    assert.equal((wif.match(/\|\|/g) ?? []).length, 4);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 5);
+    assert.equal(/\.github\/workflows\/\*/.test(wif), false);
     assert.match(source, /attribute\.environment\/\$\{GITHUB_RUNTIME_DEPLOY_ENVIRONMENT\}/);
     assert.match(source, /attribute\.environment\/\$\{GITHUB_HOSTING_DEPLOY_ENVIRONMENT\}/);
     assert.match(source, /serviceAccountId: runtimeDeployServiceAccount\.name/);

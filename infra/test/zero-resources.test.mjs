@@ -177,12 +177,14 @@ test("GitHub WIF foundation defines a tightly scoped provider and keyless verifi
         'GITHUB_RUNTIME_DEPLOY_ENVIRONMENT = "boundarymesh-deploy"',
         'GITHUB_HOSTING_DEPLOY_ENVIRONMENT = "boundarymesh-hosting-deploy"',
         "Adellaghmari/boundarymesh/.github/workflows/deploy-release.yml@refs/heads/main",
+        "Adellaghmari/boundarymesh/.github/workflows/recover-promotion-evidence.yml@refs/heads/main",
         'GITHUB_WORKFLOW_DISPATCH_EVENT = "workflow_dispatch"',
     ]) {
         assert.ok(wif.includes(requiredCondition), `condition must include ${requiredCondition}`);
     }
     assert.equal(/job_workflow_ref/.test(wif), false);
-    assert.equal((wif.match(/\|\|/g) ?? []).length, 4);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 5);
+    assert.equal(/\.github\/workflows\/\*/.test(wif), false);
     assert.match(wif, /\]\.join\(" && "\)/);
 
     assert.equal((wif.match(/new gcp\.serviceaccount\.Account/g) ?? []).length, 1);

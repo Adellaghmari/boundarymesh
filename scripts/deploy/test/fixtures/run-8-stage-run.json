@@ -1,0 +1,17 @@
+{
+  "id": 36941014905,
+  "run_attempt": 1,
+  "path": ".github/workflows/deploy-release.yml",
+  "event": "workflow_dispatch",
+  "head_sha": "2326b488d722222de0966321f165215c30dcebe9",
+  "head_branch": "main",
+  "created_at": "2026-10-01T23:29:00Z",
+  "updated_at": "2026-10-01T23:32:59Z",
+  "status": "completed",
+  "conclusion": "success",
+  "inputs": {
+    "operation": "stage",
+    "stage_run_id": "",
+    "promotion_run_id": ""
+  }
+}

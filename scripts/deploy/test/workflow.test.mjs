@@ -237,8 +237,37 @@ test("evidence-only recovery is isolated from the deployment mutation workflow",
     assert.doesNotMatch(recover, /cloud-runtime\.mjs|cloud-hosting\.mjs/);
     assert.doesNotMatch(recover, /promoteRuntime|promoteHosting|rollbackRuntime|rollbackHosting/);
     assert.doesNotMatch(recover, /pulumi|gcloud iam|hosting:channel:deploy|releases\?versionName=/);
-    assert.match(recover, /recover command/);
+    assert.match(recover, /recover only/);
     assert.match(JSON.stringify(workflow.jobs["record-promote-evidence"]), /observe-promotion/);
+});
+
+test("dedicated recovery workflow is dispatch-only, evidence-only, and mutation-isolated", () => {
+    const recoveryPath = join(root, ".github", "workflows", "recover-promotion-evidence.yml");
+    const recoveryText = readFileSync(recoveryPath, "utf8");
+    const recovery = parse(recoveryText);
+    assert.deepEqual(Object.keys(recovery.on), ["workflow_dispatch"]);
+    assert.equal(recovery.on.workflow_dispatch.inputs.operation, undefined);
+    assert.deepEqual(Object.keys(recovery.on.workflow_dispatch.inputs).sort(), ["promotion_run_id", "stage_run_id"]);
+    assert.equal(recovery.concurrency.group, "boundarymesh-promotion-evidence-recovery");
+    assert.notEqual(recovery.concurrency.group, "boundarymesh-production-deployment");
+    assert.deepEqual(recovery.permissions, { contents: "read", "id-token": "write", actions: "read" });
+    assert.equal(recovery.permissions.contents !== "write", true);
+    assert.equal(recovery.jobs["recover-promotion-evidence"].environment, "boundarymesh-deploy");
+    assert.match(recovery.jobs["recover-promotion-evidence"].if, /github\.ref == 'refs\/heads\/main'/);
+    assert.equal(recovery.env.RUNTIME_DEPLOY_SA, "boundarymesh-deploy@boundarymesh-dev.iam.gserviceaccount.com");
+    assert.match(recoveryText, /google-github-actions\/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093/);
+    assert.doesNotMatch(recoveryText, /credentials_json|service_account_key|private_key/);
+    assert.doesNotMatch(recoveryText, /cloud-runtime\.mjs\s+promote|cloud-hosting\.mjs\s+promote/);
+    assert.doesNotMatch(recoveryText, /rollbackRuntime|rollbackHosting|cloud-runtime\.mjs\s+rollback|cloud-hosting\.mjs\s+rollback/);
+    assert.doesNotMatch(recoveryText, /pulumi\s+up|gcloud\s+run\s+services\s+update|gcloud\s+run\s+worker-pools\s+update/);
+    assert.doesNotMatch(recoveryText, /hosting:channel:deploy|releases\?versionName=|firebase\s+deploy|gh\s+workflow\s+(run|rerun)/);
+    assert.match(recoveryText, /cloud-runtime\.mjs snapshot/);
+    assert.match(recoveryText, /cloud-hosting\.mjs snapshot/);
+    assert.match(recoveryText, /recover-promotion-evidence\.mjs recover[\s\S]*--publish/);
+    assert.doesNotMatch(recoveryText, /print-identity-token|print-access-token|echo\s+.*(?:TOKEN|PASSWORD|SECRET)/i);
+    const uses = [...recoveryText.matchAll(/uses:\s*([^\s@]+)@([^\s]+)/g)];
+    assert.ok(uses.length > 0);
+    for (const [, action, pin] of uses) assert.match(pin, /^[0-9a-f]{40}$/, `${action} is not commit pinned`);
 });
 
 test("workflow has no automatic rollback, latest-release selection, or credential output", () => {

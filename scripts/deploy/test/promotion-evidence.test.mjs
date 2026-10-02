@@ -12,7 +12,11 @@ import {
     buildRecoveredPromotionEvidence,
     observePromotion,
 } from "../evidence.mjs";
-import { recoverPromotionEvidence } from "../recover-promotion-evidence.mjs";
+import {
+    buildVerifiedRecoveryProof,
+    recoverPromotionEvidence,
+    verifyRecoveredPromotionEvidence,
+} from "../recover-promotion-evidence.mjs";
 
 const fixtures = join(import.meta.dirname, "fixtures");
 const lock = loadFrozenRelease();
@@ -20,6 +24,15 @@ const stageEvidence = JSON.parse(readFileSync(join(fixtures, "run-8-stage-eviden
 const promoteRuntime = JSON.parse(readFileSync(join(fixtures, "run-9-promote-runtime.json"), "utf8"));
 const promoteHosting = JSON.parse(readFileSync(join(fixtures, "run-9-promote-hosting.json"), "utf8"));
 const runtimeSnapshot = JSON.parse(readFileSync(join(fixtures, "run-9-runtime-snapshot.json"), "utf8"));
+const promotionRun = JSON.parse(readFileSync(join(fixtures, "run-9-promotion-run.json"), "utf8"));
+const promotionJobs = JSON.parse(readFileSync(join(fixtures, "run-9-promotion-jobs.json"), "utf8"));
+const stageRun = JSON.parse(readFileSync(join(fixtures, "run-8-stage-run.json"), "utf8"));
+const health = {
+    apiHealth: { status: "UP" },
+    webHealth: { status: "UP" },
+    firebaseStatus: 200,
+    workerReady: true,
+};
 const serviceAccounts = {
     api: "boundarymesh-api@boundarymesh-dev.iam.gserviceaccount.com",
     web: "boundarymesh-web@boundarymesh-dev.iam.gserviceaccount.com",
@@ -252,4 +265,61 @@ test("evidence-only recovery refuses unsafe preconditions and collisions before 
         { project: lock.project, location: lock.region, repository: lock.deploymentEvidence.repository, packageName: lock.deploymentEvidence.package, version: evidenceVersion("promote", "36945783284") },
         { project: lock.project, location: lock.region, repository: lock.deploymentEvidence.repository, packageName: lock.deploymentEvidence.package, version: evidenceVersion("promote", "36945783284") },
     ), /already exists/);
+});
+
+function verifiedProof(overrides = {}) {
+    return buildVerifiedRecoveryProof({
+        run: promotionRun,
+        jobs: promotionJobs,
+        stageRun,
+        stageEvidence,
+        runtimeSnapshot,
+        hostingSnapshot: promoteHosting.result,
+        runtimeServiceAccounts: serviceAccounts,
+        health,
+        productionMatchesPromotedTargets: true,
+        rollbackTargetsExist: true,
+        promotionEvidenceExists: false,
+        requiredStageRunId: "36941014905",
+        requiredPromotionRunId: "36945783284",
+        ...overrides,
+    });
+}
+
+test("recovery proof reconstruction binds original runs and refuses every unsafe precondition before publication", () => {
+    const proof = verifiedProof();
+    assert.equal(proof.runId, "36945783284");
+    assert.equal(proof.stageRunId, "36941014905");
+    assert.equal(proof.jobs["record-promote-evidence"], "failure");
+    assert.equal(proof.rollbackExecuted, false);
+    const recovered = recoverPromotionEvidence({
+        stageEvidence,
+        runtimeSnapshot,
+        hostingSnapshot: promoteHosting.result,
+        proof,
+        outputDir: mkdtempSync(join(tmpdir(), "bm-recover-proof-")),
+        publish: false,
+    });
+    assert.doesNotThrow(() => verifyRecoveredPromotionEvidence(recovered.evidence, {
+        stageRunId: "36941014905",
+        promotionRunId: "36945783284",
+    }));
+    const failures = [
+        [{ run: { ...promotionRun, id: 1 } }, /promotion run/],
+        [{ stageRun: { ...stageRun, id: 1 } }, /stage run/],
+        [{ run: { ...promotionRun, run_attempt: 2 } }, /attempt 1/],
+        [{ jobs: { jobs: promotionJobs.jobs.map((job) => job.name === "promote-runtime" ? { ...job, conclusion: "failure" } : job) } }, /promote-runtime/],
+        [{ jobs: { jobs: promotionJobs.jobs.map((job) => job.name === "promote-hosting" ? { ...job, conclusion: "failure" } : job) } }, /promote-hosting/],
+        [{ jobs: { jobs: promotionJobs.jobs.map((job) => job.name === "record-promote-evidence" ? { ...job, conclusion: "success" } : job) } }, /record-promote-evidence/],
+        [{ jobs: { jobs: promotionJobs.jobs.map((job) => job.name === "rollback-runtime" ? { ...job, conclusion: "success" } : job) } }, /rollback/],
+        [{ productionMatchesPromotedTargets: false }, /production does not match/],
+        [{ promotionEvidenceExists: true }, /already exists/],
+        [{ rollbackTargetsExist: false }, /rollback targets/],
+        [{ runtimeSnapshot: { ...runtimeSnapshot, state: { ...runtimeSnapshot.state, api: { ...runtimeSnapshot.state.api, revision: "boundarymesh-api-00004-9hw" } } } }, /revision|production/],
+        [{ stageEvidence: { ...stageEvidence, release: { ...stageEvidence.release, sourceSha: "0".repeat(40) } } }, /frozen release identity|source/],
+        [{ health: { ...health, firebaseStatus: 503 } }, /Firebase/],
+    ];
+    for (const [overrides, pattern] of failures) {
+        assert.throws(() => verifiedProof(overrides), pattern);
+    }
 });
