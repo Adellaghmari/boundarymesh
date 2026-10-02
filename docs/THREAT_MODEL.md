@@ -82,7 +82,7 @@ Each important threat maps to **preventive**, **detective**, and **recovery** co
 | Secret in logs/UI | encoder deny-list, references only | Gitleaks, log queries for `eyJ` JWT prefix | Rotate all possibly leaked |
 | PII in audit | field paths + hashes only | Code review, tests | Delete documents, rotate |
 | Over-permissioned Graph | `Calendars.Read` only | Posture page lists grants | Admin remove permission |
-| Public demo data scrape | synthetic only, rate limit | |
+| Synthetic lab data scrape | synthetic only | | |
 
 ## Denial of service
 

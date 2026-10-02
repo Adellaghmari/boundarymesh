@@ -1,8 +1,8 @@
 import type { CapabilityClaim } from '@/domain/types'
 
 /**
- * Manual frontend summary of reviewed project evidence through Phase 15I.
- * Not fetched from Git. Do not invent progress.
+ * Manual frontend summary of reviewed project evidence.
+ * Aligns with PROJECT_STATUS.md / CV_CLAIMS_MATRIX.md. Not a live cloud feed.
  */
 export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
   {
@@ -20,22 +20,23 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
   {
     id: 'vue-frontend',
     label: 'Vue frontend',
-    status: 'TESTED',
-    notes: 'Vue 3 recruiter console against the local backend. No public deploy.',
+    status: 'LIVE VERIFIED',
+    notes:
+      'Hosted operator SPA on Firebase Hosting (sign-in required). This local page is the lab console, not that hosted bundle.',
   },
   {
     id: 'identity-federation',
     label: 'Identity Federation Gateway',
     status: 'TESTED',
     notes:
-      'Local JWT/JWKS resource server plus Entra OIDC BFF architecture. Live tenant login is not claimed until configured.',
+      'Local JWT/JWKS plus Entra OIDC BFF (local). Hosted operators use Firebase Google + BFF session. Production Entra is disabled.',
   },
   {
     id: 'webhook-defense',
     label: 'Webhook & Subscription Defense',
     status: 'TESTED',
     notes:
-      'QuayForge HMAC, freshness, replay, and idempotency. Microsoft Graph subscriptions remain PLANNED.',
+      'QuayForge HMAC, freshness, replay, and idempotency. Microsoft Graph subscriptions are not implemented.',
   },
   {
     id: 'contract-firewall',
@@ -54,25 +55,26 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     label: 'Credential & Consent Vault',
     status: 'TESTED',
     notes:
-      'Local reference/version/consent model. Secret Manager containers and adapters are live; D1 did not exercise a deployed workload secret read.',
+      'Local reference/version/consent model. Secret Manager containers are live; hosted connector secret read is not exercised.',
   },
   {
     id: 'quarantine-orchestrator',
     label: 'Quarantine & Recovery',
-    status: 'TESTED',
-    notes: 'Local reprocess is tested. The deployed worker durably recorded terminal quarantine and ACKed; browser recovery is not live.',
+    status: 'LIVE VERIFIED',
+    notes:
+      'Hosted Worker recorded terminal quarantine and ACK. Local admin reprocess is tested. Not a public demo workflow.',
   },
   {
     id: 'audit-chain',
     label: 'Tamper-Evident Audit Chain',
     status: 'LIVE VERIFIED',
-    notes: 'The deployed transaction produced a valid Firestore-backed SHA-256 audit chain; this browser read view remains local.',
+    notes: 'The deployed transaction produced a valid Firestore-backed SHA-256 audit chain; this local read view is the lab console.',
   },
   {
     id: 'exchange-attestation',
     label: 'Cryptographic Exchange Attestation',
     status: 'LIVE VERIFIED',
-    notes: 'The deployed API signed a valid ES256 attestation with Cloud KMS; this browser read view remains local.',
+    notes: 'The deployed API signed a valid ES256 attestation with Cloud KMS; this local read view is the lab console.',
   },
   {
     id: 'boundary-graph',
@@ -91,12 +93,13 @@ export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
     label: 'M365 / Graph',
     status: 'TESTED',
     notes:
-      'Outlook Calendar connector through Graph SDK + contract harness. Live tenant not claimed. Graph subscriptions remain PLANNED.',
+      'Outlook Calendar connector through Graph SDK + contract harness. One personal-account event verified locally. Graph subscriptions are not implemented.',
   },
   {
     id: 'gcp',
     label: 'GCP',
     status: 'LIVE VERIFIED',
-    notes: 'Private Cloud Run API, Worker Pool, Firestore, Pub/Sub, KMS, and keyless workload IAM are live. Firebase Hosting is not deployed.',
+    notes:
+      'Private Cloud Run API, public Web BFF, Worker Pool, Firestore, Pub/Sub, KMS, Firebase Hosting, and keyless workload IAM are live.',
   },
 ]

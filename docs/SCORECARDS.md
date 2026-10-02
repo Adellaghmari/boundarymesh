@@ -1,5 +1,7 @@
 # Architecture scorecard (Phase 0)
 
+**Historical Phase 0 planning artifact.** Scores below are the original lock, not a live audit. Current claims: [../CV_CLAIMS_MATRIX.md](../CV_CLAIMS_MATRIX.md).
+
 Desired: no major category below 8 without an explicit justified tradeoff.
 
 | Category | Score | Notes |
@@ -16,7 +18,7 @@ Desired: no major category below 8 without an explicit justified tradeoff.
 | Cloud architecture | **9** | Two services, pull worker, outbox |
 | Backend engineering | **9** | |
 | Frontend differentiation | **9** | Vue SVG Integration Boundary Graph from live Java state |
-| Application security | **9** | Semgrep/ZAP/HMAC/JWT — not Trivy-as-story |
+| Application security | **9** | HMAC/JWT/egress/CSRF — SAST/DAST scanners were a later optional item, not implemented |
 | IAM depth | **9** | Entra + WIF + SA split + app roles |
 | Cryptography depth | **9** | Local JCA ECDSA P-256 + constrained RFC 8785 + SHA-256 chain; Cloud KMS signing **LIVE VERIFIED LOCALLY** |
 | Testing depth | **9** | Pyramid specified including Camel and replay |

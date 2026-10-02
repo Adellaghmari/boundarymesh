@@ -3,8 +3,8 @@
 Status: **Accepted** at Phase 0 unless noted. Date: 2026-09-09.
 
 These ADRs are design decisions. They are not live inventory. Current topology and claims:
-[README.md](README.md), [../PROJECT_STATUS.md](../PROJECT_STATUS.md),
-[../CV_CLAIMS_MATRIX.md](../CV_CLAIMS_MATRIX.md).
+[../README.md](../README.md), [../../PROJECT_STATUS.md](../../PROJECT_STATUS.md),
+[../../CV_CLAIMS_MATRIX.md](../../CV_CLAIMS_MATRIX.md).
 
 | ID | Title |
 | --- | --- |

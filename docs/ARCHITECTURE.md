@@ -28,6 +28,30 @@ the engine has decided.
 
 ## High-level production flow
 
+```mermaid
+flowchart TD
+  user[User / browser]
+  hosting[Firebase Hosting]
+  bff[Public Web BFF]
+  api[IAM-private API]
+  fs[(Firestore / outbox)]
+  kms[Cloud KMS]
+  sm[Secret Manager]
+  ps[Pub/Sub]
+  worker[Cloud Run Worker Pool]
+  ext[External provider boundary]
+
+  user -->|Firebase Auth / session cookie| hosting
+  hosting --> bff
+  bff -->|IAM identity token| api
+  api --> fs
+  api --> kms
+  fs --> ps
+  ps --> worker
+  worker --> sm
+  worker -.->|intentionally unconfigured| ext
+```
+
 ```text
 FIREBASE HOSTING  (SPA + session/API rewrites)
         │
@@ -206,11 +230,10 @@ Spring Cloud Gateway is **NOT APPROPRIATE**: it would turn the product into “a
 ## Repository layout
 
 ```text
-backend/          Java modules (Phase 1)
-frontend/         Vue app (Phase 2)
-contracts/        schemas (Phase 5)
+backend/          Java modules (API, Web BFF, worker, domain, GCP adapters)
+frontend/         Vue app (local labs + hosted operator bundle)
+contracts/        OpenAPI / AsyncAPI / JSON Schema
 infra/            Pulumi TypeScript; **83** managed resources; CD-owned traffic fenced
-backend/gcp       Production Google Cloud adapters used by the live API and Worker
 .github/workflows Keyless verify, preview, publish, deploy, and break-glass evidence recovery
 docs/             current truth in README.md of this folder; PHASE_* files are historical
 ```

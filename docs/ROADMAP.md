@@ -21,14 +21,12 @@ Major implemented milestones, without reprinting every internal gate:
 | Promotion evidence | Immutable Generic evidence; break-glass recovery live-verified after the original promotion succeeded |
 | Rollback path | Implemented, tested, identities live-readable; **not live-executed** |
 
-## Current finalization
+## Current
 
-| Gate | Purpose | Cloud mutation |
-| --- | --- | --- |
-| **16F-2** | Documentation and CV-claims freeze | none |
-| **16F-3** | Reviewer / recruiter presentation freeze | none |
+Reviewer-facing documentation and CV claim boundaries are frozen to verified reality.
+No further product features are required for current portfolio/CV use.
 
-These gates do not add features. They make the repository truthful and reviewable.
+Optional follow-ups below are not blockers.
 
 ## Optional / future
 

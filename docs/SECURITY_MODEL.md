@@ -27,7 +27,7 @@ Hosted operator identity is Firebase Google + Web BFF `__session`, not productio
 2. **Separate AuthN from AuthZ.** A valid token can still be rejected.
 3. **Least privilege** per workload identity and per Graph permission.
 4. **No secret values** in Firestore, Git, frontend, logs, audit, or attestations.
-5. **Public demo is read-only** except the labeled harness POSTs. Admin mutations require an Entra session + CSRF when Entra is configured. Live Entra remains unverified without tenant credentials.
+5. **Hosted UI is not a public recruiter demo.** Operator mutations require a Firebase session (hosted) or Entra session + CSRF (local Microsoft admin when configured). Local labs are a trusted-developer path. Production Entra remains disabled.
 6. **Provider-specific webhook rules stay provider-specific.**
 7. **Deterministic policy only.** No AI classification of PII or risk.
 
@@ -35,7 +35,7 @@ Hosted operator identity is Firebase Google + Web BFF `__session`, not productio
 
 | Surface | Identity | Capabilities |
 | --- | --- | --- |
-| Public recruiter APIs | anonymous + rate limit | GET demo data, GET transaction evidence, POST attestation verify (public key path) |
+| Hosted operator SPA | Firebase Google + BFF `__session` | Operator console; not anonymous public demo |
 | Graph notification URL | none (Microsoft calls) | validation handshake + notification ingest; authenticity via Graph rules, not Entra user login |
 | Partner webhook URL | HMAC headers | ingest only |
 | Machine JWT URL | Local JWT/JWKS now; Entra client-credentials PLANNED | ingest only |
@@ -81,7 +81,7 @@ Method security: `@PreAuthorize("hasAuthority('ROLE_SECURITY_ADMIN')")` on rotat
 | Secret | client secret, HMAC key, private key | Secret Manager / KMS only |
 | Restricted | attendee email, settlement account refs | hashed or redacted in audit; transformed payload only in delivery instruction with minimization |
 | Operational | reason codes, integration IDs, outcomes | Firestore, logs, metrics |
-| Public demo | synthetic names, SYNTHETIC DEMO flag | Firestore + UI |
+| Synthetic demo data | Velora names, SYNTHETIC DEMO flag | Local labs and labeled fixtures |
 
 Do not persist raw before/after payloads when Restricted fields are present. Persist **field names, actions, and SHA-256 of canonical transformed body**.
 

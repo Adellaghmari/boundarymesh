@@ -28,7 +28,7 @@ onMounted(() => {
     </div>
     <p class="muted">
       This checks the API configured for this browser session. In local development it is the Java
-      process on this machine; hosted browser access to the live private API is not deployed yet.
+      process on this machine. The hosted operator console is a separate Firebase Hosting + BFF path.
     </p>
 
     <div class="status-card__body" aria-live="polite">

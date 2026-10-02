@@ -1,0 +1,52 @@
+# Local development
+
+Requires **JDK 25** (Eclipse Temurin) and **Node 22**. Do not put secrets in Git or in `VITE_*` variables — those are public browser configuration.
+
+Microsoft Entra and live Graph are optional. Copy [`.env.example`](../.env.example) only if you are configuring local Entra; leave the values blank to keep recruiter/lab mode and the Graph contract harness.
+
+## Backend
+
+From `backend/`:
+
+```powershell
+.\mvnw.cmd verify
+.\mvnw.cmd -pl worker -am spring-boot:run
+.\mvnw.cmd -pl api -am spring-boot:run
+```
+
+`scripts/start-backend.ps1` starts the worker (`http://127.0.0.1:8081`) then the API (`http://127.0.0.1:8080`).
+
+Default `mvnw verify` does not need Docker, ADC, or Google network access. Opt-in `-Pgcp-emulator` / `-Pgcp-live` groups are documented in [TEST_STRATEGY.md](TEST_STRATEGY.md).
+
+## Frontend
+
+From `frontend/`:
+
+```powershell
+npm install
+npm run typecheck
+npm run test
+npm run dev
+```
+
+`npm run lint` may report pre-existing oxlint findings in tests. Playwright (`npm run test:e2e`) starts the local Java backend and Vite.
+
+The local Vite app is the **lab console**. It is not the hosted operator SPA. Hosted Firebase Hosting uses a separate cloud bundle and requires operator sign-in.
+
+## Full stack helper
+
+```powershell
+.\scripts\dev-local.ps1
+```
+
+| Process | URL |
+| --- | --- |
+| Frontend | http://localhost:5173 |
+| API | http://localhost:8080 |
+| Worker | http://localhost:8081 |
+| Health | `GET /api/v1/health` |
+| Ready | `GET /api/v1/ready` |
+
+Labs mint or sign tokens on the Java side. Do not paste tokens or HMAC secrets into the UI.
+
+Production profile does not expose `/api/v1/dev/**`. Local labs are a trusted-developer path, not the hosted operator console.

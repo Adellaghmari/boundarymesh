@@ -20,3 +20,5 @@ Usable demo + real authorization boundaries. Login is not a banner; 401/403 test
 ## Consequences
 
 Ingest endpoints are “public” to producers but authenticated by JWT/HMAC/Graph, not by recruiter cookies. Rate-limit verify and ingest.
+
+**Current hosted reality:** the Firebase SPA is an operator console (Google sign-in). Anonymous public recruiter APIs are **not** the live Hosting path. Local labs remain the walkthrough. See [../../PROJECT_STATUS.md](../../PROJECT_STATUS.md).

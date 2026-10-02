@@ -9,12 +9,12 @@ import { CAPABILITY_STATUS_COPY } from '@/domain/labels'
     <header class="stack">
       <div class="cluster">
         <h1>Project status</h1>
-        <TruthBanner label="PHASE 15I VERIFIED SNAPSHOT" />
+        <TruthBanner label="REVIEWED EVIDENCE SUMMARY" />
       </div>
       <p>
         These labels summarize reviewed project evidence; they are not a live cloud status feed.
-        The private API and Worker Pool are verified, while Firebase Hosting and browser-to-cloud
-        connectivity are not deployed.
+        This local page is the lab console. The hosted operator SPA on Firebase Hosting is a
+        separate bundle and requires sign-in.
       </p>
     </header>
 

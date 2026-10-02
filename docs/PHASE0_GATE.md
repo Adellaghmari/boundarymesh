@@ -1,5 +1,7 @@
 # Phase 0 final gate
 
+**Historical architecture lock.** Not current live status. Current truth: [../README.md](../README.md), [../PROJECT_STATUS.md](../PROJECT_STATUS.md).
+
 ## Unique product audit
 
 | Question | Answer |
