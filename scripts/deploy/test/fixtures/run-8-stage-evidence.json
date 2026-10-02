@@ -1,0 +1,218 @@
+{
+  "checks": {
+    "frozenReleaseVerified": true,
+    "noApplicationBuild": true,
+    "noAutomaticRollback": true,
+    "operationSucceeded": true,
+    "splitAuthorityPreserved": true
+  },
+  "environments": {
+    "hosting": "boundarymesh-hosting-deploy",
+    "runtime": "boundarymesh-deploy"
+  },
+  "hosting": {
+    "before": {
+      "release": "sites/boundarymesh-dev/channels/live/releases/1790076373374000",
+      "releaseTime": "2026-09-22T11:26:13.374Z",
+      "site": "boundarymesh-dev",
+      "version": "sites/boundarymesh-dev/versions/1bce16129fb1a0d4"
+    },
+    "checks": {
+      "assetsHealthyAndImmutable": true,
+      "authBootstrapFailClosed": true,
+      "deepLinkHealthy": true,
+      "exactHostingConfig": true,
+      "exactSite": true,
+      "exactVersionInventory": true,
+      "frozenArtifactByteExact": true,
+      "htmlNoCache": true,
+      "liveUnchanged": true,
+      "noPrivateCoreLeak": true,
+      "rootHealthy": true
+    },
+    "operation": "stage",
+    "result": {
+      "channel": "bm-36941014905",
+      "release": "sites/boundarymesh-dev/channels/bm-36941014905/releases/1790897470611000",
+      "url": "https://boundarymesh-dev--bm-36941014905-3wcsyz0o.web.app",
+      "version": "sites/boundarymesh-dev/versions/c9def09b61688b16"
+    }
+  },
+  "operation": "stage",
+  "references": {
+    "promotionRunId": null,
+    "stageRunId": null
+  },
+  "release": {
+    "manifestSha256": "ecdbaf88710ff73fd694c5c4e13c0a8ce300fdacf2a3761064b7511bd627300d",
+    "publicationRunId": "36492495801",
+    "sourceSha": "a876a7bfa5fa86f88e8387efb557773281daa6e6"
+  },
+  "rollback": {
+    "apiRevision": "boundarymesh-api-00004-9hw",
+    "firebaseVersion": "sites/boundarymesh-dev/versions/1bce16129fb1a0d4",
+    "webRevision": "boundarymesh-web-00004-k48",
+    "workerRevision": "boundarymesh-worker-00002-v6j"
+  },
+  "runtime": {
+    "before": {
+      "api": {
+        "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api@sha256:560986f62d3e8cf1dc51f68fc5c94c0eedb66f479b3363804f9de2b2d2d5d191",
+        "revision": "boundarymesh-api-00004-9hw",
+        "traffic": [
+          {
+            "percent": 100,
+            "revision": "boundarymesh-api-00004-9hw",
+            "tag": null,
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION"
+          }
+        ]
+      },
+      "web": {
+        "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:50402bda46523a4b59b97e5babb3f9c5e76df70749d07df6b4c70fb96c3647a4",
+        "revision": "boundarymesh-web-00004-k48",
+        "traffic": [
+          {
+            "percent": 100,
+            "revision": "boundarymesh-web-00004-k48",
+            "tag": null,
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION"
+          }
+        ]
+      },
+      "worker": {
+        "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker@sha256:c4f445ae2859bc3a070935645b21a3eb2dbfee7e844dcf662811446a1503b8b4",
+        "revision": "boundarymesh-worker-00002-v6j",
+        "split": [
+          {
+            "percent": 100,
+            "revision": "boundarymesh-worker-00002-v6j",
+            "tag": null,
+            "type": "INSTANCE_SPLIT_ALLOCATION_TYPE_REVISION"
+          }
+        ]
+      }
+    },
+    "checks": {
+      "apiReady": true,
+      "iamUnchanged": true,
+      "productionUnchanged": true,
+      "webReady": true,
+      "workerReady": true
+    },
+    "operation": "stage",
+    "result": {
+      "candidates": {
+        "api": {
+          "health": {
+            "path": "/api/v1/health",
+            "status": 200
+          },
+          "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api@sha256:bcfd9b01a3189228f583fa3f5d1ed8797f73d214af85bea4d84caeedfa0db8d7",
+          "imageResolution": {
+            "parentDigest": "sha256:bcfd9b01a3189228f583fa3f5d1ed8797f73d214af85bea4d84caeedfa0db8d7",
+            "parentMediaType": "application/vnd.oci.image.index.v1+json",
+            "platform": {
+              "architecture": "amd64",
+              "os": "linux"
+            },
+            "relationship": "oci-index-child",
+            "runtimeDigest": "sha256:41e70a6fc2acd7716b91de754f28e4ac4f1a9b1cb05467a44d1f7986f2c2eff9",
+            "runtimeMediaType": "application/vnd.oci.image.manifest.v1+json"
+          },
+          "revision": "boundarymesh-api-c-36941014905",
+          "traffic": [
+            {
+              "percent": 100,
+              "revision": "boundarymesh-api-00004-9hw",
+              "tag": null,
+              "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION"
+            },
+            {
+              "percent": 0,
+              "revision": "boundarymesh-api-c-36941014905",
+              "tag": "candidate-36941014905",
+              "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION"
+            }
+          ]
+        },
+        "web": {
+          "health": {
+            "path": "/actuator/health",
+            "status": 200
+          },
+          "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04",
+          "imageResolution": {
+            "parentDigest": "sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04",
+            "parentMediaType": "application/vnd.oci.image.index.v1+json",
+            "platform": {
+              "architecture": "amd64",
+              "os": "linux"
+            },
+            "relationship": "oci-index-child",
+            "runtimeDigest": "sha256:3c6c39778e5df4445ad9e71db5e0ff188dfd751094b5fb8cdc520bfdbd050109",
+            "runtimeMediaType": "application/vnd.oci.image.manifest.v1+json"
+          },
+          "revision": "boundarymesh-web-c-36941014905",
+          "traffic": [
+            {
+              "percent": 100,
+              "revision": "boundarymesh-web-00004-k48",
+              "tag": null,
+              "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION"
+            },
+            {
+              "percent": 0,
+              "revision": "boundarymesh-web-c-36941014905",
+              "tag": "candidate-36941014905",
+              "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION"
+            }
+          ]
+        },
+        "worker": {
+          "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker@sha256:7b1841487a2d1b3751e8bc63ee5323965e76ebeae9ae581c95b672f50154bb2d",
+          "imageResolution": {
+            "parentDigest": "sha256:7b1841487a2d1b3751e8bc63ee5323965e76ebeae9ae581c95b672f50154bb2d",
+            "parentMediaType": "application/vnd.oci.image.index.v1+json",
+            "platform": {
+              "architecture": "amd64",
+              "os": "linux"
+            },
+            "relationship": "oci-index-child",
+            "runtimeDigest": "sha256:32e4c4aebc758f01053d3488e35e80d0294ce59e13031fb2a55c71dbaac426ed",
+            "runtimeMediaType": "application/vnd.oci.image.manifest.v1+json"
+          },
+          "ready": true,
+          "revision": "boundarymesh-worker-c-36941014905",
+          "split": [
+            {
+              "percent": 100,
+              "revision": "boundarymesh-worker-00002-v6j",
+              "tag": null,
+              "type": "INSTANCE_SPLIT_ALLOCATION_TYPE_REVISION"
+            },
+            {
+              "percent": 0,
+              "revision": "boundarymesh-worker-c-36941014905",
+              "tag": null,
+              "type": "INSTANCE_SPLIT_ALLOCATION_TYPE_REVISION"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "schemaVersion": "boundarymesh.deployment/v1",
+  "status": "STAGED",
+  "timestamps": {
+    "completedAt": "2026-10-01T23:32:57.279Z",
+    "startedAt": "2026-10-01T23:29:00Z"
+  },
+  "workflow": {
+    "path": ".github/workflows/deploy-release.yml",
+    "ref": "refs/heads/main",
+    "runAttempt": "1",
+    "runId": "36941014905",
+    "sha": "2326b488d722222de0966321f165215c30dcebe9"
+  }
+}
