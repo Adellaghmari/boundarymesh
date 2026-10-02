@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import TruthBanner from '@/components/TruthBanner.vue'
 import { CAPABILITY_CLAIMS } from '@/config/capabilities'
 import { CAPABILITY_STATUS_COPY } from '@/domain/labels'
@@ -14,7 +15,7 @@ import { CAPABILITY_STATUS_COPY } from '@/domain/labels'
       <p>
         These labels summarize reviewed project evidence; they are not a live cloud status feed.
         This local page is the lab console. The hosted operator SPA on Firebase Hosting is a
-        separate bundle and requires sign-in.
+        separate bundle and requires sign in.
       </p>
     </header>
 
@@ -31,13 +32,13 @@ import { CAPABILITY_STATUS_COPY } from '@/domain/labels'
       </thead>
       <tbody>
         <tr v-for="claim in CAPABILITY_CLAIMS" :key="claim.id">
-          <th scope="row">{{ claim.label }}</th>
+          <th scope="row">{{ $show(claim.label) }}</th>
           <td>
             <span class="claim-status" :data-status="claim.status">
-              {{ CAPABILITY_STATUS_COPY[claim.status] }}
+              {{ $show(CAPABILITY_STATUS_COPY[claim.status]) }}
             </span>
           </td>
-          <td>{{ claim.notes }}</td>
+          <td>{{ $show(claim.notes) }}</td>
         </tr>
       </tbody>
     </table>

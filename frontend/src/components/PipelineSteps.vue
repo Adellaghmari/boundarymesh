@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 const steps = [
   'Authenticate',
   'Authorize',
@@ -17,8 +18,8 @@ const steps = [
 <template>
   <ol class="pipeline" aria-label="Deterministic enforcement pipeline">
     <li v-for="(step, index) in steps" :key="step">
-      <span class="pipeline__index">{{ index + 1 }}</span>
-      <span>{{ step }}</span>
+      <span class="pipeline__index">{{ $show(index + 1) }}</span>
+      <span>{{ $show(step) }}</span>
     </li>
   </ol>
 </template>

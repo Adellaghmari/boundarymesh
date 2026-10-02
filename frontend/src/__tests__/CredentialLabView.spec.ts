@@ -22,7 +22,7 @@ describe('CredentialLabView', () => {
   it('renders credential references and versions without secret values', async () => {
     const wrapper = await mountLab()
     expect(wrapper.text()).toContain('LOCAL SECURITY MODEL / SYNTHETIC DEMO')
-    expect(wrapper.text()).toContain('covecrm-api')
+    expect(wrapper.text()).toContain('CoveCRM credential')
     expect(wrapper.text()).toContain('ACTIVE')
     expect(wrapper.text()).toContain('RETIRED')
     expect(wrapper.text()).toContain('activity.write')

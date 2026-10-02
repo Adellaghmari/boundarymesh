@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import DecisionResult from '@/components/DecisionResult.vue'
@@ -35,13 +36,13 @@ async function run(): Promise<void> {
         <label v-for="scenario in IDENTITY_LAB_SCENARIOS" :key="scenario.id" class="lab__option">
           <input v-model="selected" type="radio" name="identity-scenario" :value="scenario.id" />
           <span>
-            <strong>{{ scenario.label }}</strong>
-            <span class="muted">{{ scenario.summary }}</span>
+            <strong>{{ $show(scenario.label) }}</strong>
+            <span class="muted">{{ $show(scenario.summary) }}</span>
           </span>
         </label>
       </fieldset>
       <button type="button" class="action" :disabled="evaluating" @click="run">
-        {{ evaluating ? 'Evaluating identity…' : 'Evaluate identity' }}
+        {{ $show(evaluating ? 'Evaluating identity…' : 'Evaluate identity') }}
       </button>
     </section>
 
@@ -54,7 +55,7 @@ async function run(): Promise<void> {
       <h2 id="authn-fail-heading">Authentication</h2>
       <p class="status">FAIL</p>
       <p>Authentication could not be established.</p>
-      <p class="muted">HTTP {{ identityFailure.status ?? 401 }}. No domain crossing was evaluated.</p>
+      <p class="muted">HTTP {{ $show(identityFailure.status ?? 401) }}. No domain crossing was evaluated.</p>
     </section>
 
     <section
@@ -65,11 +66,11 @@ async function run(): Promise<void> {
     >
       <h2 id="authz-http-fail-heading">Authorization</h2>
       <p class="status">FAIL</p>
-      <p>{{ identityFailure.message }}</p>
-      <p class="muted">HTTP {{ identityFailure.status ?? 403 }}.</p>
+      <p>{{ $show(identityFailure.message) }}</p>
+      <p class="muted">HTTP {{ $show(identityFailure.status ?? 403) }}.</p>
     </section>
 
-    <p v-else-if="identityFailure" class="card fail" role="alert">{{ identityFailure.message }}</p>
+    <p v-else-if="identityFailure" class="card fail" role="alert">{{ $show(identityFailure.message) }}</p>
 
     <DecisionResult
       v-if="lastIdentityEvent && !identityFailure"

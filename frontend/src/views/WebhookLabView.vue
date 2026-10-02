@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import DecisionResult from '@/components/DecisionResult.vue'
@@ -35,17 +36,17 @@ async function run(): Promise<void> {
         <label v-for="scenario in WEBHOOK_LAB_SCENARIOS" :key="scenario.id" class="lab__option">
           <input v-model="selected" type="radio" name="webhook-scenario" :value="scenario.id" />
           <span>
-            <strong>{{ scenario.label }}</strong>
-            <span class="muted">{{ scenario.summary }}</span>
+            <strong>{{ $show(scenario.label) }}</strong>
+            <span class="muted">{{ $show(scenario.summary) }}</span>
           </span>
         </label>
       </fieldset>
       <button type="button" class="action" :disabled="evaluating" @click="run">
-        {{ evaluating ? 'Evaluating webhook…' : 'Evaluate webhook' }}
+        {{ $show(evaluating ? 'Evaluating webhook…' : 'Evaluate webhook') }}
       </button>
     </section>
 
-    <p v-if="webhookFailure" class="card fail" role="alert">{{ webhookFailure.message }}</p>
+    <p v-if="webhookFailure" class="card fail" role="alert">{{ $show(webhookFailure.message) }}</p>
 
     <DecisionResult
       v-if="lastWebhookEvent && !webhookFailure"

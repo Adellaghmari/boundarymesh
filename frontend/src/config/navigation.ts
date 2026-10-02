@@ -60,7 +60,7 @@ export const OPERATIONS_NAV: readonly NavDestination[] = [
 ]
 
 export const EVIDENCE_NAV: readonly NavDestination[] = [
-  { name: ROUTE_NAMES.audit, to: '/audit', label: 'Audit', description: 'Tamper-evident chain' },
+  { name: ROUTE_NAMES.audit, to: '/audit', label: 'Audit', description: 'Tamper evident chain' },
   {
     name: ROUTE_NAMES.attestations,
     to: '/attestations',

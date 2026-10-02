@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import DecisionResult from '@/components/DecisionResult.vue'
@@ -26,20 +27,21 @@ async function run(): Promise<void> {
         <TruthBanner />
       </div>
       <p>
-        SYNTHETIC DEMO. Destination-specific egress policy. This is not AI PII classification and not
-        GDPR automation. A contract-valid payload can still be redacted or rejected.
+        SYNTHETIC DEMO. Egress policy is specific to each destination. This is not AI PII
+        classification and not GDPR automation. A payload that passes the contract can still be
+        redacted or rejected.
       </p>
     </header>
 
     <section class="card lab" aria-labelledby="egress-lab-heading">
-      <h2 id="egress-lab-heading">Destination-specific egress</h2>
+      <h2 id="egress-lab-heading">Egress for each destination</h2>
       <fieldset>
         <legend>Destination</legend>
         <label v-for="item in EGRESS_LAB_DESTINATIONS" :key="item.id" class="lab__option">
           <input v-model="destination" type="radio" name="egress-destination" :value="item.id" />
           <span>
-            <strong>{{ item.label }}</strong>
-            <span class="muted">{{ item.summary }}</span>
+            <strong>{{ $show(item.label) }}</strong>
+            <span class="muted">{{ $show(item.summary) }}</span>
           </span>
         </label>
       </fieldset>
@@ -48,22 +50,22 @@ async function run(): Promise<void> {
         <label v-for="scenario in EGRESS_LAB_SCENARIOS" :key="scenario.id" class="lab__option">
           <input v-model="selected" type="radio" name="egress-scenario" :value="scenario.id" />
           <span>
-            <strong>{{ scenario.label }}</strong>
-            <span class="muted">{{ scenario.summary }}</span>
+            <strong>{{ $show(scenario.label) }}</strong>
+            <span class="muted">{{ $show(scenario.summary) }}</span>
           </span>
         </label>
       </fieldset>
       <button type="button" class="action" :disabled="evaluating" @click="run">
-        {{ evaluating ? 'Evaluating egress…' : 'Evaluate data boundary' }}
+        {{ $show(evaluating ? 'Evaluating egress…' : 'Evaluate data boundary') }}
       </button>
     </section>
 
-    <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
 
     <template v-if="lastEgressEvent && !errorMessage">
       <p class="card note">
         Contract status:
-        <strong>{{ lastEgressEvent.appliedControls.CONTRACT ?? 'n/a' }}</strong>
+        <strong>{{ $show(lastEgressEvent.appliedControls.CONTRACT ?? 'n/a') }}</strong>
         does not automatically mean data egress is allowed.
       </p>
       <EgressFieldTable :egress="lastEgressEvent.egress" />

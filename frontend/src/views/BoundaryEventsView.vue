@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { RouterLink } from 'vue-router'
 import OutcomeBadge from '@/components/OutcomeBadge.vue'
 import TruthBanner from '@/components/TruthBanner.vue'
@@ -52,14 +53,14 @@ const { newestFirst } = storeToRefs(store)
                 params: { transactionId: event.transactionId },
               }"
             >
-              {{ event.transactionId }}
+              {{ $show(event.transactionId) }}
             </RouterLink>
           </td>
-          <td>{{ crossingLabel(event.sourceSystem, event.destinationSystem).split(' → ')[0] }}</td>
-          <td>{{ crossingLabel(event.sourceSystem, event.destinationSystem).split(' → ')[1] }}</td>
+          <td>{{ $show(crossingLabel(event.sourceSystem, event.destinationSystem).split(' → ')[0]) }}</td>
+          <td>{{ $show(crossingLabel(event.sourceSystem, event.destinationSystem).split(' → ')[1]) }}</td>
           <td><OutcomeBadge :outcome="event.outcome" /></td>
-          <td>{{ event.decidedAt }}</td>
-          <td>{{ event.reasonCodes[0]?.code ?? '—' }}</td>
+          <td>{{ $show(event.decidedAt) }}</td>
+          <td>{{ $show(event.reasonCodes[0]?.code ?? '—') }}</td>
         </tr>
       </tbody>
     </table>

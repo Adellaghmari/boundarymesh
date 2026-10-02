@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import ControlStatusBadge from '@/components/ControlStatusBadge.vue'
 import type { AuthorizationView, IdentityView } from '@/domain/types'
 
@@ -15,19 +16,19 @@ defineProps<{
         <h3 id="authn-heading">Authentication</h3>
         <ControlStatusBadge :status="identity.status" />
       </div>
-      <p>{{ identity.explanation ?? 'Identity control from the Java engine.' }}</p>
-      <p v-if="identity.issuer" class="muted">Issuer {{ identity.issuer }}</p>
-      <p v-if="identity.principal" class="muted">Principal {{ identity.principal }}</p>
+      <p>{{ $show(identity.explanation ?? 'Identity control from the Java engine.') }}</p>
+      <p v-if="identity.issuer" class="muted">Issuer {{ $show(identity.issuer) }}</p>
+      <p v-if="identity.principal" class="muted">Principal {{ $show(identity.principal) }}</p>
     </section>
     <section v-if="authorization" class="card-lite" aria-labelledby="authz-heading">
       <div class="cluster">
         <h3 id="authz-heading">Authorization</h3>
         <ControlStatusBadge :status="authorization.status" />
       </div>
-      <p>{{ authorization.explanation ?? 'Authorization control from the Java engine.' }}</p>
+      <p>{{ $show(authorization.explanation ?? 'Authorization control from the Java engine.') }}</p>
       <p class="muted">
         Granted scopes:
-        {{ authorization.grantedScopes.length > 0 ? authorization.grantedScopes.join(', ') : 'none' }}
+        {{ $show(authorization.grantedScopes.length > 0 ? authorization.grantedScopes.join(', ') : 'none') }}
       </p>
     </section>
   </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 defineProps<{
   source?: string
   transformed?: string | null
@@ -15,11 +16,11 @@ defineProps<{
     <div class="compare__grid">
       <article>
         <h4>Source</h4>
-        <pre>{{ source ?? '—' }}</pre>
+        <pre>{{ $show(source ?? 'None') }}</pre>
       </article>
       <article>
         <h4>Destination result</h4>
-        <pre>{{ transformed || 'No outbound payload. Crossing did not transform for delivery.' }}</pre>
+        <pre>{{ $show(transformed || 'No outbound payload. Crossing did not transform for delivery.') }}</pre>
       </article>
     </div>
   </section>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import ControlStatusBadge from '@/components/ControlStatusBadge.vue'
 import { CONTROL_CATALOG } from '@/domain/labels'
 import type { ControlKind, ControlStatus, TraceStepView } from '@/domain/types'
@@ -46,13 +47,13 @@ function labelFor(kind: ControlKind): string {
 <template>
   <ol class="rail" aria-label="Boundary crossing inspection">
     <li v-for="(kind, index) in STAGES" :key="kind" :data-status="statusFor(kind)">
-      <span class="rail__index">{{ String(index + 1).padStart(2, '0') }}</span>
+      <span class="rail__index">{{ $show(String(index + 1).padStart(2, '0')) }}</span>
       <div class="rail__body">
         <div class="cluster">
-          <strong>{{ labelFor(kind) }}</strong>
+          <strong>{{ $show(labelFor(kind)) }}</strong>
           <ControlStatusBadge :status="statusFor(kind)" />
         </div>
-        <p>{{ noteFor(kind) }}</p>
+        <p>{{ $show(noteFor(kind)) }}</p>
       </div>
     </li>
   </ol>

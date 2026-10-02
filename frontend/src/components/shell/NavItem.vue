@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import type { Component } from 'vue'
 import { RouterLink } from 'vue-router'
 
@@ -19,7 +20,7 @@ defineProps<{
     :aria-current="current ? 'page' : undefined"
   >
     <component :is="icon" :size="stacked ? 16 : 15" aria-hidden="true" />
-    <span>{{ label }}</span>
+    <span>{{ $show(label) }}</span>
   </RouterLink>
 </template>
 

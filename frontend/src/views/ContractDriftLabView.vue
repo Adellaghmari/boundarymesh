@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import ContractEvidence from '@/components/ContractEvidence.vue'
@@ -36,17 +37,17 @@ async function run(): Promise<void> {
         <label v-for="scenario in CONTRACT_LAB_SCENARIOS" :key="scenario.id" class="lab__option">
           <input v-model="selected" type="radio" name="contract-scenario" :value="scenario.id" />
           <span>
-            <strong>{{ scenario.label }}</strong>
-            <span class="muted">{{ scenario.summary }}</span>
+            <strong>{{ $show(scenario.label) }}</strong>
+            <span class="muted">{{ $show(scenario.summary) }}</span>
           </span>
         </label>
       </fieldset>
       <button type="button" class="action" :disabled="evaluating" @click="run">
-        {{ evaluating ? 'Evaluating contract…' : 'Evaluate contract' }}
+        {{ $show(evaluating ? 'Evaluating contract…' : 'Evaluate contract') }}
       </button>
     </section>
 
-    <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
 
     <template v-if="lastContractEvent && !errorMessage">
       <ContractEvidence :contract="lastContractEvent.contract" />

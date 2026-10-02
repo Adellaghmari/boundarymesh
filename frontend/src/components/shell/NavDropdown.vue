@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { Component } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
@@ -110,7 +111,7 @@ onBeforeUnmount(() => {
       @click="toggle"
     >
       <component :is="icon" :size="15" aria-hidden="true" />
-      <span>{{ label }}</span>
+      <span>{{ $show(label) }}</span>
       <ChevronDown :size="14" aria-hidden="true" />
     </button>
     <div v-if="open" :id="menuId" class="dropdown__menu" role="menu">
@@ -124,8 +125,8 @@ onBeforeUnmount(() => {
       >
         <component :is="icons[item.name]" :size="16" aria-hidden="true" />
         <span>
-          <span class="dropdown__title">{{ item.label }}</span>
-          <span v-if="item.description" class="dropdown__hint">{{ item.description }}</span>
+          <span class="dropdown__title">{{ $show(item.label) }}</span>
+          <span v-if="item.description" class="dropdown__hint">{{ $show(item.description) }}</span>
         </span>
       </RouterLink>
     </div>

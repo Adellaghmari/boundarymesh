@@ -19,7 +19,7 @@ export function firebaseConfigured(): boolean {
 let auth: ReturnType<typeof initializeAuth> | undefined
 
 function firebaseAuth() {
-  if (!firebaseConfigured()) throw new Error('Firebase sign-in is not configured for this deployment.')
+  if (!firebaseConfigured()) throw new Error('Firebase sign in is not configured for this deployment.')
   if (!auth) {
     const app = initializeApp({
       apiKey: frontendEnv.firebaseApiKey,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { computed } from 'vue'
 import ControlStatusBadge from '@/components/ControlStatusBadge.vue'
 import type { ControlKind, ControlResult } from '@/domain/types'
@@ -24,21 +25,21 @@ const replay = computed(() => result('REPLAY'))
         <h3 id="authenticity-heading">Authenticity</h3>
         <ControlStatusBadge :status="authenticity.status" />
       </div>
-      <p>{{ authenticity.safeExplanation }}</p>
+      <p>{{ $show(authenticity.safeExplanation) }}</p>
     </section>
     <section v-if="freshness" class="card-lite" aria-labelledby="freshness-heading">
       <div class="cluster">
         <h3 id="freshness-heading">Freshness</h3>
         <ControlStatusBadge :status="freshness.status" />
       </div>
-      <p>{{ freshness.safeExplanation }}</p>
+      <p>{{ $show(freshness.safeExplanation) }}</p>
     </section>
     <section v-if="replay" class="card-lite" aria-labelledby="replay-heading">
       <div class="cluster">
         <h3 id="replay-heading">Replay Defense</h3>
         <ControlStatusBadge :status="replay.status" />
       </div>
-      <p>{{ replay.safeExplanation }}</p>
+      <p>{{ $show(replay.safeExplanation) }}</p>
       <p v-if="duplicateDelivery" class="muted">
         Legitimate duplicate delivery. Replay attack: no. Side effect: not repeated.
       </p>

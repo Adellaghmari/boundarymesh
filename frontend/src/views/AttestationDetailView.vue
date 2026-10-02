@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -36,9 +37,9 @@ async function tamperDemo(): Promise<void> {
         <h1>Exchange Attestation</h1>
         <TruthBanner />
       </div>
-      <p v-if="attestation" class="claim">{{ attestation.claim }}</p>
+      <p v-if="attestation" class="claim">{{ $show(attestation.claim) }}</p>
     </header>
-    <p v-if="errorMessage" class="card fail" role="alert">{{ errorMessage }}</p>
+    <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
     <div class="cluster">
       <button type="button" class="action" :disabled="loading" @click="verify">Verify signature</button>
       <button type="button" class="action" :disabled="loading" @click="tamperDemo">
@@ -46,73 +47,73 @@ async function tamperDemo(): Promise<void> {
       </button>
     </div>
     <p v-if="attestationVerify" data-testid="attestation-verify">
-      Java verification: <strong>{{ attestationVerify.status }}</strong> —
-      {{ attestationVerify.explanation }}
+      Java verification: <strong>{{ $show(attestationVerify.status) }}</strong>.
+      {{ $show(attestationVerify.explanation) }}
     </p>
     <section v-if="attestationTamper" class="card stack" data-testid="attestation-tamper">
       <h2>Synthetic demo</h2>
-      <p>{{ attestationTamper.banner }}</p>
-      <p>Original copy {{ attestationTamper.original?.status ?? 'NONE' }}</p>
-      <p>Tampered copy {{ attestationTamper.tampered?.status ?? 'NONE' }}</p>
+      <p>{{ $show(attestationTamper.banner) }}</p>
+      <p>Original copy {{ $show(attestationTamper.original?.status ?? 'NONE') }}</p>
+      <p>Tampered copy {{ $show(attestationTamper.tampered?.status ?? 'NONE') }}</p>
     </section>
     <dl v-if="attestation" class="meta">
       <div>
         <dt>Transaction</dt>
-        <dd>{{ attestation.transactionId }}</dd>
+        <dd>{{ $show(attestation.transactionId) }}</dd>
       </div>
       <div>
         <dt>Crossing</dt>
-        <dd>{{ attestation.source }} → {{ attestation.destination }}</dd>
+        <dd>{{ $show(attestation.source) }} → {{ $show(attestation.destination) }}</dd>
       </div>
       <div>
         <dt>Boundary outcome</dt>
-        <dd>{{ attestation.boundaryOutcome }}</dd>
+        <dd>{{ $show(attestation.boundaryOutcome) }}</dd>
       </div>
       <div>
         <dt>Contract</dt>
-        <dd>{{ attestation.contractId }} {{ attestation.contractVersion }}</dd>
+        <dd>{{ $show(attestation.contractId) }} {{ $show(attestation.contractVersion) }}</dd>
       </div>
       <div>
-        <dt>Data-boundary policy</dt>
-        <dd>{{ attestation.egressPolicyId }} · {{ attestation.transformationCount }} transformations</dd>
+        <dt>Data boundary policy</dt>
+        <dd>{{ $show(attestation.egressPolicyId) }} · {{ $show(attestation.transformationCount) }} transformations</dd>
       </div>
       <div>
         <dt>Credential</dt>
-        <dd>{{ attestation.credentialReference }}</dd>
+        <dd>{{ $show(attestation.credentialReference) }}</dd>
       </div>
       <div>
         <dt>Consent</dt>
-        <dd>{{ attestation.consentResult }}</dd>
+        <dd>{{ $show(attestation.consentResult) }}</dd>
       </div>
       <div>
         <dt>Connector route</dt>
-        <dd>{{ attestation.connectorRoute }}</dd>
+        <dd>{{ $show(attestation.connectorRoute) }}</dd>
       </div>
       <div>
         <dt>Delivery</dt>
-        <dd>{{ attestation.deliveryResult }}</dd>
+        <dd>{{ $show(attestation.deliveryResult) }}</dd>
       </div>
       <div>
         <dt>Audit reference</dt>
         <dd>
           <RouterLink :to="`/audit/${attestation.auditChainId}`">
-            {{ attestation.auditChainId }} @ {{ attestation.auditSequence }}
+            {{ $show(attestation.auditChainId) }} @ {{ $show(attestation.auditSequence) }}
           </RouterLink>
-          ({{ attestation.auditHeadShort }})
+          ({{ $show(attestation.auditHeadShort) }})
         </dd>
       </div>
       <div>
         <dt>Canonicalized / signed</dt>
         <dd>
-          RFC 8785 bytes · {{ attestation.algorithm }} · key {{ attestation.keyId }} version
-          {{ attestation.keyVersion }}
+          RFC 8785 bytes · {{ $show(attestation.algorithm) }} · key {{ $show(attestation.keyId) }} version
+          {{ $show(attestation.keyVersion) }}
         </dd>
       </div>
       <div>
         <dt>Signature status</dt>
         <dd data-testid="attestation-status">
-          {{ attestation.status }}
-          {{ attestation.signaturePresent ? '(signature present)' : '(unsigned)' }}
+          {{ $show(attestation.status) }}
+          {{ $show(attestation.signaturePresent ? '(signature present)' : '(unsigned)') }}
         </dd>
       </div>
     </dl>

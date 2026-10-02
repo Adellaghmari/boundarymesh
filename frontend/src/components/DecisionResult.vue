@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { RouterLink } from 'vue-router'
 import AuthnAuthzPanel from '@/components/AuthnAuthzPanel.vue'
 import ContractEvidence from '@/components/ContractEvidence.vue'
@@ -25,7 +26,7 @@ defineProps<{
       <OutcomeBadge :outcome="event.outcome" />
       <TruthBanner />
     </div>
-    <p>{{ OUTCOME_COPY[event.outcome].meaning }}</p>
+    <p>{{ $show(OUTCOME_COPY[event.outcome].meaning) }}</p>
     <p class="muted">
       This is a deterministic Java engine decision, not a score and not a probabilistic judgment.
     </p>
@@ -49,28 +50,28 @@ defineProps<{
     />
     <ContractEvidence v-if="!compact" :contract="event.contract" />
     <EgressFieldTable v-if="!compact" :egress="event.egress" />
-    <p v-if="event.ingressKind" class="muted">Ingress {{ event.ingressKind }}</p>
+    <p v-if="event.ingressKind" class="muted">Ingress {{ $show(event.ingressKind) }}</p>
 
     <dl class="result__meta">
       <div>
         <dt>Transaction ID</dt>
-        <dd>{{ event.transactionId }}</dd>
+        <dd>{{ $show(event.transactionId) }}</dd>
       </div>
       <div>
         <dt>Crossing</dt>
-        <dd>{{ crossingLabel(event.sourceSystem, event.destinationSystem) }}</dd>
+        <dd>{{ $show(crossingLabel(event.sourceSystem, event.destinationSystem)) }}</dd>
       </div>
       <div>
         <dt>Policy version</dt>
-        <dd>{{ event.policyVersion }}</dd>
+        <dd>{{ $show(event.policyVersion) }}</dd>
       </div>
       <div>
         <dt>Decision time</dt>
-        <dd>{{ event.decidedAt }}</dd>
+        <dd>{{ $show(event.decidedAt) }}</dd>
       </div>
       <div>
         <dt>Scenario</dt>
-        <dd>{{ event.scenarioLabel }}</dd>
+        <dd>{{ $show(event.scenarioLabel) }}</dd>
       </div>
     </dl>
 
@@ -78,8 +79,8 @@ defineProps<{
       <h3>Reason codes</h3>
       <ul v-if="event.reasonCodes.length > 0">
         <li v-for="reason in event.reasonCodes" :key="reason.code">
-          <strong>{{ reason.code }}</strong>
-          <span v-if="reason.description"> — {{ reason.description }}</span>
+          <strong>{{ $show(reason.code) }}</strong>
+          <span v-if="reason.description">. {{ $show(reason.description) }}</span>
         </li>
       </ul>
       <p v-else class="muted">No reason codes. All required controls passed.</p>

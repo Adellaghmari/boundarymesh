@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { LogIn, LogOut, UserRound } from '@lucide/vue'
 import { useMicrosoftStore } from '@/stores/microsoft'
@@ -61,8 +62,8 @@ onBeforeUnmount(() => {
       </button>
       <div v-if="open" class="auth__menu" role="menu">
         <p>Microsoft connected</p>
-        <p class="muted">{{ store.session.roleLabel }}</p>
-        <p class="muted">{{ store.session.graphModeLabel }}</p>
+        <p class="muted">{{ $show(store.session.roleLabel) }}</p>
+        <p class="muted">{{ $show(store.session.graphModeLabel) }}</p>
         <a role="menuitem" :href="store.session.logoutUrl">
           <LogOut :size="14" aria-hidden="true" />
           Sign out

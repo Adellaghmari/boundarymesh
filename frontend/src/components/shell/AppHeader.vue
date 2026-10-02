@@ -200,6 +200,20 @@ const mobileOpen = ref(false)
 @media (min-width: $bp-lg) {
   .header__desktop {
     display: flex;
+    position: relative;
+    z-index: 3;
+    gap: 0.4rem;
+  }
+
+  .header__primary,
+  .header__secondary {
+    gap: 0.2rem;
+  }
+
+  .header__desktop :deep(.nav-item),
+  .header__desktop :deep(.dropdown__button) {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
   }
 
   .header__rule {
@@ -217,12 +231,18 @@ const mobileOpen = ref(false)
   }
 
   .header__desktop {
-    gap: 0.9rem;
+    gap: 0.85rem;
   }
 
   .header__primary,
   .header__secondary {
-    gap: 0.55rem;
+    gap: 0.45rem;
+  }
+
+  .header__desktop :deep(.nav-item),
+  .header__desktop :deep(.dropdown__button) {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.8rem;
   }
 }
 </style>

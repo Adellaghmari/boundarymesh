@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { show as $show } from '@/domain/displayCopy'
 import type { ContractView } from '@/domain/types'
 
 defineProps<{
@@ -12,30 +13,30 @@ defineProps<{
     <dl>
       <div>
         <dt>Contract ID</dt>
-        <dd>{{ contract.id ?? 'unresolved' }}</dd>
+        <dd>{{ $show(contract.id ?? 'unresolved') }}</dd>
       </div>
       <div>
         <dt>Version</dt>
-        <dd>{{ contract.version ?? 'unknown' }}</dd>
+        <dd>{{ $show(contract.version ?? 'unknown') }}</dd>
       </div>
       <div>
         <dt>Classification</dt>
-        <dd>{{ contract.classification ?? 'NONE' }}</dd>
+        <dd>{{ $show(contract.classification ?? 'NONE') }}</dd>
       </div>
     </dl>
     <p v-if="contract.truncatedCount > 0" class="muted">
-      Violation list truncated. Additional count: {{ contract.truncatedCount }}
+      Violation list truncated. Additional count: {{ $show(contract.truncatedCount) }}
     </p>
     <ul v-if="contract.violations.length > 0">
       <li v-for="(item, index) in contract.violations" :key="`${item.path}-${index}`">
-        <code>{{ item.path }}</code>
-        <span>{{ item.keyword }}</span>
+        <code>{{ $show(item.path) }}</code>
+        <span>{{ $show(item.keyword) }}</span>
         <span v-if="item.expected || item.actual" class="muted">
-          expected {{ item.expected || 'n/a' }} / actual {{ item.actual || 'n/a' }}
+          expected {{ $show(item.expected || 'n/a') }} / actual {{ $show(item.actual || 'n/a') }}
         </span>
       </li>
     </ul>
-    <p v-else class="muted">No schema violations. Paths only — no payload values.</p>
+    <p v-else class="muted">No schema violations. Paths only. No payload values.</p>
   </section>
 </template>
 
