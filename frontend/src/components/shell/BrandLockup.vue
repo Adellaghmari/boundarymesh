@@ -35,7 +35,6 @@ import { RouterLink } from 'vue-router'
   display: flex;
   align-items: center;
   gap: $space-3;
-  min-width: 12.5rem;
   color: $color-header-ink;
   text-decoration: none;
   position: relative;

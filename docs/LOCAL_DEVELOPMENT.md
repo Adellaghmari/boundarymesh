@@ -1,6 +1,6 @@
 # Local development
 
-Requires **JDK 25** (Eclipse Temurin) and **Node 22**. Do not put secrets in Git or in `VITE_*` variables — those are public browser configuration.
+Requires JDK 25 (Eclipse Temurin) and Node 22. Do not put secrets in Git or in `VITE_*` variables. Those values are public browser configuration.
 
 Microsoft Entra and live Graph are optional. Copy [`.env.example`](../.env.example) only if you are configuring local Entra; leave the values blank to keep recruiter/lab mode and the Graph contract harness.
 

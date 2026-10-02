@@ -30,20 +30,21 @@ defineProps<{
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.45rem 0.7rem;
+  padding: 0.5rem 0.85rem;
   border-radius: $radius-nav;
   color: $color-nav-muted;
   text-decoration: none;
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.01em;
+  line-height: 1;
+  white-space: nowrap;
   border: 1px solid transparent;
   background: transparent;
   transition:
     background 160ms ease,
     color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+    box-shadow 160ms ease;
   @include reduced-motion;
 }
 
@@ -52,15 +53,6 @@ defineProps<{
   gap: 0.35rem;
   padding: 0.45rem 0.65rem;
   min-width: 0;
-}
-
-@media (min-width: $bp-xl) {
-  .nav-item.is-stacked {
-    flex-direction: column;
-    gap: 0.2rem;
-    padding: 0.55rem 0.85rem 0.5rem;
-    min-width: 5.4rem;
-  }
 }
 
 .nav-item:hover {
@@ -77,6 +69,5 @@ defineProps<{
   background: linear-gradient(180deg, #1bb3a9 0%, #0e8f88 100%);
   border-color: $color-nav-active-border;
   box-shadow: $shadow-nav-active;
-  transform: translateY(-1px);
 }
 </style>

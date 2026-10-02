@@ -1,12 +1,12 @@
 # Application security
 
-Project B covers OCI supply-chain tooling (Trivy/Syft/Cosign). BoundaryMesh’s differentiator is
-**API, identity, integration, and deployment-boundary security**. This is not a claim of
-comprehensive AppSec maturity.
+Project B covers container supply chain tooling (Trivy, Syft, Cosign). BoundaryMesh is about
+API, identity, integration, and deployment boundaries. That is not a claim of complete
+application security maturity.
 
 Current claims: [CV_CLAIMS_MATRIX.md](../CV_CLAIMS_MATRIX.md).
 
-## Implemented (evidence-backed)
+## Implemented
 
 - IAM-private core API; public edge is the Web BFF plus Firebase Hosting
 - Firebase Google sign-in, HttpOnly `__session`, operator allowlist, CSRF, route allowlisting

@@ -39,7 +39,6 @@ const mobileOpen = ref(false)
             :label="item.label"
             :icon="navIcon(item.name)"
             :current="isActive(item.name)"
-            stacked
           />
         </div>
         <span class="header__rule" aria-hidden="true" />
@@ -113,26 +112,34 @@ const mobileOpen = ref(false)
 
 .header__inner {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
-  gap: $space-4;
+  z-index: 1;
+  display: flex;
   align-items: center;
-  padding: 1.05rem 1.35rem 1.15rem;
-  min-height: 6.25rem;
+  gap: $space-5;
+  padding: 0.75rem 1.5rem;
+  min-height: 4.75rem;
 }
 
 .header__brand {
   display: flex;
-  align-items: center;
-  gap: $space-3;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  z-index: 2;
+}
+
+.header__brand :deep(.badge) {
+  margin-left: 2.9rem;
 }
 
 .header__desktop {
   display: none;
-  flex-direction: column;
-  align-items: flex-end;
+  flex: 1 1 0;
+  flex-direction: row;
+  align-items: center;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.85rem;
   min-width: 0;
 }
 
@@ -140,21 +147,27 @@ const mobileOpen = ref(false)
 .header__secondary {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 0.15rem;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
 }
 
 .header__rule {
   display: none;
+  width: 1px;
+  height: 1.45rem;
+  background: rgb(255 255 255 / 18%);
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .header__utilities {
   display: flex;
   align-items: center;
-  justify-self: end;
+  justify-content: flex-end;
   gap: $space-3;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  z-index: 2;
 }
 
 .header__menu {
@@ -174,7 +187,7 @@ const mobileOpen = ref(false)
 
 @media (max-width: $bp-lg) {
   .header__inner {
-    grid-template-columns: minmax(0, 1fr) auto;
+    justify-content: space-between;
     min-height: 4.35rem;
     padding: 0.7rem 1rem;
   }
@@ -189,6 +202,10 @@ const mobileOpen = ref(false)
     display: flex;
   }
 
+  .header__rule {
+    display: block;
+  }
+
   .header__menu {
     display: none;
   }
@@ -199,8 +216,13 @@ const mobileOpen = ref(false)
     padding-inline: 1.75rem;
   }
 
-  .header__primary {
-    gap: 0.25rem;
+  .header__desktop {
+    gap: 0.9rem;
+  }
+
+  .header__primary,
+  .header__secondary {
+    gap: 0.55rem;
   }
 }
 </style>

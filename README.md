@@ -2,17 +2,17 @@
 
 **Secure every system crossing.**
 
-A successful HTTP request does not prove that one system should be allowed to exchange data or actions with another. BoundaryMesh is a **cross-system security enforcement layer**: it sits in front of an integration and answers one question — **can this transaction cross this security boundary?**
+A successful HTTP request does not prove that one system should be allowed to exchange data or actions with another. BoundaryMesh sits in front of that exchange and asks one question: can this transaction cross this security boundary?
 
-A *system crossing* is an untrusted payload leaving one trust domain and entering another (for example a signed partner webhook becoming a settlement instruction). BoundaryMesh authenticates identity, authorizes the action, checks authenticity, freshness and replay, validates the integration contract, governs which fields may leave, then enforces a deterministic outcome: `ALLOW`, `ALLOW_WITH_TRANSFORMATION`, `QUARANTINE`, or `REJECT`. Allowed work becomes a delivery instruction. Evidence of what was enforced is recorded.
+A system crossing is an untrusted payload leaving one trust domain and entering another. One example is a signed partner webhook that becomes a settlement instruction. BoundaryMesh checks identity, authorization, authenticity, freshness, and replay. It validates the integration contract and decides which fields may leave. The outcome is one of `ALLOW`, `ALLOW_WITH_TRANSFORMATION`, `QUARANTINE`, or `REJECT`. Allowed work becomes a delivery instruction, and the system records what it enforced.
 
-It is **not** an API dashboard, an iPaaS clone, an AI copilot, or a release-intelligence product. It is portfolio engineering in a GCP `dev` project — not enterprise production and not paid customer traffic.
+This is not an API dashboard, an iPaaS product, an AI copilot, or a release board. It is a portfolio project in the GCP project `boundarymesh-dev`. It is not enterprise production, and it does not carry paid customer traffic.
 
 ## What I built
 
-A full-stack enforcement product with a Vue console, a Java/Spring API, and a Camel worker, deployed to Google Cloud with Pulumi and keyless GitHub Actions.
+A Vue console, a Java and Spring API, and an Apache Camel worker, deployed on Google Cloud with Pulumi and keyless GitHub Actions.
 
-The hosted path is Firebase Hosting → authenticated Web BFF → IAM-private API → Firestore / outbox → Pub/Sub → Cloud Run Worker Pool, with Cloud KMS signing exchange attestations. External connectors and production Microsoft Entra remain intentionally disabled. Local labs prove the engine, HMAC webhooks, contract/egress firewalled crossings, and a bounded Graph calendar pull.
+The hosted path is Firebase Hosting, then an authenticated web BFF, then a private API, then Firestore and a transactional outbox, then Pub/Sub, then a Cloud Run worker pool. Cloud KMS signs exchange attestations. External connectors and production Microsoft Entra stay off on purpose. Local labs exercise the engine, HMAC webhooks, contract and egress checks, and one bounded Microsoft Graph calendar pull.
 
 ## Architecture
 
@@ -40,33 +40,33 @@ flowchart TD
   worker -.->|intentionally unconfigured| ext
 ```
 
-Deeper design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Live / verified status
+## What is live
 
 | Item | State |
 | --- | --- |
-| Portfolio/dev GCP environment | **LIVE** (`boundarymesh-dev`, `europe-west4`) |
-| API / Web BFF / Worker | Promoted staged release, 100% traffic |
-| Firebase Hosting | Live SPA; operator sign-in required |
-| Pulumi | 83 managed / zero drift |
-| Delivery | Promotion evidence verified and immutable |
-| Rollback | Implemented, targets preserved; **not live-executed** |
-| Compute Engine API | Disabled intentionally |
+| Portfolio GCP environment | Live (`boundarymesh-dev`, `europe-west4`) |
+| API, web BFF, and worker | Promoted release, 100% traffic |
+| Firebase Hosting | Live. Operator sign-in is required |
+| Pulumi | 83 managed resources, zero drift |
+| Promotion evidence | Verified and immutable |
+| Rollback | Implemented, with preserved targets. Not executed against the live environment |
+| Compute Engine API | Disabled on purpose |
 
-This is not a public recruiter demo and not a public production SaaS. The hosted UI is an operator console. Walk through the product locally (below). Current inventory: [PROJECT_STATUS.md](PROJECT_STATUS.md).
+This is not a public recruiter demo and not a public SaaS product. The hosted UI is an operator console. The walkthrough is local. Inventory with revision names: [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ## Engineering highlights
 
-- Vue 3 console and Java 25 / Spring Boot API with a separate Camel worker
-- Firebase Hosting → Web BFF → IAM-private Cloud Run API
-- Firestore transactional outbox → Pub/Sub → Cloud Run Worker Pool
-- Pulumi-managed GCP (83 resources); CD owns image, revision, and traffic
-- Keyless GitHub Actions via Workload Identity Federation (7 exact contexts; no user-managed keys on CI/CD or workload accounts)
-- Immutable, digest-pinned artifacts with published **unsigned** SBOM and provenance
-- Cloud KMS–backed exchange attestations (enforcement proof, not artifact signing)
-- Human-gated stage / promote; fail-closed break-glass evidence recovery
-- Rollback workflows and preserved targets — **not exercised against live traffic**
+- Vue 3 console, Java 25 and Spring Boot API, separate Camel worker
+- Firebase Hosting to a web BFF to a private Cloud Run API
+- Firestore outbox to Pub/Sub to a Cloud Run worker pool
+- Pulumi owns the infrastructure (83 resources). Continuous delivery owns the image, revision, and traffic
+- GitHub Actions reaches GCP through Workload Identity Federation. Seven exact contexts. CI, deploy, and workload service accounts have no user-managed keys
+- Release artifacts are immutable and pinned to a digest. SBOM and provenance are published and unsigned
+- Cloud KMS signs exchange attestations. That is enforcement proof, not artifact signing
+- A person starts stage and promote. A separate break glass workflow can restore missing promotion evidence. It cannot promote again
+- Rollback exists and its targets are preserved. It has not been run against live traffic
 
 ## Tech stack
 
@@ -74,28 +74,28 @@ This is not a public recruiter demo and not a public production SaaS. The hosted
 | --- | --- |
 | Frontend | Vue 3, TypeScript, Pinia, Vue Router, Vite, SCSS |
 | Backend | Java 25, Spring Boot 4.1, Spring Security, Apache Camel 4.22, Resilience4j |
-| Cloud | Cloud Run (API + BFF + Worker Pool), Firebase Hosting, Artifact Registry |
-| Data & messaging | Firestore, Pub/Sub, Secret Manager, Cloud KMS |
-| Infrastructure / delivery | Pulumi TypeScript, GitHub Actions, Workload Identity Federation |
-| Security | Firebase Auth + BFF session, HMAC, JWT/JWKS, IAM-private API |
-| Testing | JUnit, Spring Security tests, Camel/WireMock, Vitest, Playwright |
+| Cloud | Cloud Run (API, BFF, and worker pool), Firebase Hosting, Artifact Registry |
+| Data and messaging | Firestore, Pub/Sub, Secret Manager, Cloud KMS |
+| Infrastructure and delivery | Pulumi TypeScript, GitHub Actions, Workload Identity Federation |
+| Security | Firebase Auth and a BFF session, HMAC, JWT and JWKS, private API |
+| Testing | JUnit, Spring Security tests, Camel and WireMock, Vitest, Playwright |
 
-Pins: [docs/STACK.md](docs/STACK.md). OpenTelemetry, Cosign, ZAP, and Dependabot are **not** in this repository.
+Version pins: [docs/STACK.md](docs/STACK.md). OpenTelemetry, Cosign, ZAP, and Dependabot are not in this repository.
 
-## How the system works
+## How a crossing moves
 
-1. An untrusted transaction arrives (local lab, HMAC webhook, or hosted synthetic operator path).
-2. The API runs identity, authorization, authenticity, freshness, replay, contract, and egress controls.
-3. `REJECT` stops with evidence only. `QUARANTINE` holds work for an operator. `ALLOW` / `ALLOW_WITH_TRANSFORMATION` emit a `DeliveryInstruction`.
-4. Production persists the instruction in a Firestore outbox and publishes to Pub/Sub.
-5. The worker consumes the event, may resolve a named secret, and runs Camel **after** the policy decision.
-6. Terminal outcomes write a SHA-256 audit chain and a KMS-signed exchange attestation.
+1. An untrusted transaction arrives through a local lab, an HMAC webhook, or the hosted synthetic operator path.
+2. The API checks identity, authorization, authenticity, freshness, replay, contract, and egress.
+3. `REJECT` stops and keeps evidence only. `QUARANTINE` holds the work for an operator. `ALLOW` and `ALLOW_WITH_TRANSFORMATION` emit a `DeliveryInstruction`.
+4. The hosted API writes that instruction to a Firestore outbox and publishes it to Pub/Sub.
+5. The worker consumes the event, may resolve one named secret, and runs Camel only after the policy decision.
+6. A finished crossing writes a SHA-256 audit chain and an exchange attestation signed by Cloud KMS.
 
-Hosted verification used one synthetic browser-origin transaction through that internal path. **No live third-party connector fan-out.** Graph change notifications are not implemented.
+The hosted check was one synthetic browser transaction through that internal path. There is no live fan out to third party connectors. Graph change notifications are not implemented.
 
-## Security and delivery model
+## Security and delivery
 
-GitHub Actions authenticates to GCP through Workload Identity Federation. CI, deploy, and workload service accounts have **no user-managed keys**. The core API is IAM-private behind the Web BFF. Deployments consume immutable digest-pinned release artifacts.
+GitHub Actions authenticates to GCP with Workload Identity Federation. The CI, deploy, and workload service accounts have no user-managed keys. The core API is private behind the web BFF. A deployment consumes a release artifact that is already pinned to a digest. It does not rebuild the image.
 
 ```mermaid
 flowchart LR
@@ -105,72 +105,72 @@ flowchart LR
   stage[Stage]
   promo[Promote]
   evid[Immutable evidence]
-  rec[Break-glass evidence recovery]
+  rec[Break glass evidence recovery]
 
   src --> verify --> arts --> stage --> promo --> evid
   evid -.-> rec
 ```
 
-Promotion evidence is fail-closed. A separate keyless workflow can recover **missing evidence only** after a successful promotion — it cannot promote, roll back, or redeploy. Details: [docs/CI_CD.md](docs/CI_CD.md), [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md).
+Promotion evidence is written only when the promotion completed. If that record is missing, a separate keyless workflow can publish it. That workflow cannot promote, roll back, or redeploy. Detail: [docs/CI_CD.md](docs/CI_CD.md) and [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md).
 
 ## Testing
 
-Suites are separate; do not add them into one marketing total.
+The suites below were not run as one combined total. Do not add the counts together.
 
 | Suite | Evidence |
 | --- | --- |
-| Backend (Maven / JUnit) | 387 tests in the default verify |
+| Backend (Maven and JUnit) | 387 tests in the default verify |
 | Frontend (Vitest) | 63 tests |
-| Infrastructure (Pulumi unit) | 47 tests |
+| Infrastructure | 47 tests |
 | Deploy scripts | 115 tests |
-| Playwright | 15 tests present (local Java + Vite; not re-run in the documentation freeze) |
+| Playwright | 15 tests in the repo. They were not re-run for the documentation freeze |
 
-Types covered: domain decisions, Spring Security slices, Camel routes and Resilience4j, contract/egress fixtures, Vue view-models. Opt-in GCP emulator/live groups are not part of default `mvnw verify`.
+Coverage includes domain decisions, Spring Security slices, Camel routes, Resilience4j, contract and egress fixtures, and Vue view models. The default `mvnw verify` does not include the opt-in GCP emulator or live groups.
 
-Known polish: oxlint findings in test mocks; frontend transitive npm audit issues on the Firebase/@grpc path; infra transitive audit findings. Deploy audit is clean. **No claim of zero vulnerabilities.** See [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md).
+Known findings, not hidden: oxlint notes in test mocks, frontend transitive npm audit findings on the Firebase and `@grpc` path, and three transitive findings in infra. The deploy script audit is clean. This repository does not claim zero vulnerabilities. See [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md).
 
 ## Repository guide
 
 | Path | What it is |
 | --- | --- |
-| [`backend/`](backend/) | Java modules: domain, API, Web BFF, worker, GCP adapters |
-| [`frontend/`](frontend/) | Vue 3 console (local labs) and hosted operator SPA |
+| [`backend/`](backend/) | Java modules: domain, API, web BFF, worker, GCP adapters |
+| [`frontend/`](frontend/) | Vue 3 console for local labs, and the hosted operator app |
 | [`infra/`](infra/) | Pulumi TypeScript for `boundarymesh-dev` |
-| [`contracts/`](contracts/) | OpenAPI, AsyncAPI, JSON Schema, release/evidence schemas |
-| [`scripts/deploy/`](scripts/deploy/) | Publication, stage, promote, rollback, evidence recovery |
-| [`docs/`](docs/) | Current architecture/security/CI docs; `PHASE_*` files are history |
+| [`contracts/`](contracts/) | OpenAPI, AsyncAPI, JSON Schema, and release evidence schemas |
+| [`scripts/deploy/`](scripts/deploy/) | Publish, stage, promote, rollback, and evidence recovery |
+| [`docs/`](docs/) | Current architecture, security, and delivery docs. `PHASE_*` files are history |
 
-## Trusted docs
+## Where to read next
 
-Start here, not in phase notes:
+Start here. Phase notes are audit history, not the product introduction.
 
-- [PROJECT_STATUS.md](PROJECT_STATUS.md) — what is live
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — topology
-- [docs/CI_CD.md](docs/CI_CD.md) — WIF, stage, promote, recovery
-- [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md) — controls and gaps
-- [docs/PULUMI.md](docs/PULUMI.md) — IaC and fenced CD fields
-- [docs/README.md](docs/README.md) — documentation map
-- [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md) — what is safe to say on a CV
-- [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) — how to run locally
+- [PROJECT_STATUS.md](PROJECT_STATUS.md) for what is live
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for topology
+- [docs/CI_CD.md](docs/CI_CD.md) for WIF, stage, promote, and recovery
+- [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md) for controls and gaps
+- [docs/PULUMI.md](docs/PULUMI.md) for infrastructure and the fields delivery owns
+- [docs/README.md](docs/README.md) for the documentation map
+- [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md) for what is safe to say on a CV
+- [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) for how to run it locally
 
-## Scope and honest limitations
+## What this project does not claim
 
-Safe to infer from this repo: full-stack implementation, cloud engineering, API design, an internal event-driven path, IaC, CI/CD, security boundaries, and production-style deployment discipline.
+The repository supports full stack work, cloud engineering, API design, one internal event path, infrastructure as code, delivery automation, and real security boundaries.
 
-**Not claimed**
+It does not support these claims:
 
-- Public recruiter demo or paid production
-- Live rollback success
-- Signed software supply chain / Cosign
+- A public recruiter demo, or paid production
+- A live rollback that has already succeeded
+- A signed software supply chain, or Cosign
 - OpenTelemetry, Cloud Trace, or production alerts
-- Enterprise Graph notifications or hosted Entra
-- Fully automated application CI on pull requests
-- Complete AppSec scanning (no SAST/DAST in CI)
-- “All human access is keyless” (workstation ADC exists)
-- Zero-trust / fully hardened / complete observability
+- Enterprise Graph notifications, or hosted Entra
+- Application CI that runs on every pull request
+- A complete application security scanning pipeline
+- "All human access is keyless." Workstation credentials exist
+- Zero trust, a fully hardened platform, or complete observability
 
-Optional follow-ups (not CV blockers): [docs/ROADMAP.md](docs/ROADMAP.md).
+Later ideas that are not required for a CV: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Local development
 
-Requires **JDK 25** and **Node 22**. No secrets in Git. Commands: [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md).
+You need JDK 25 and Node 22. Do not commit secrets. Commands: [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md).

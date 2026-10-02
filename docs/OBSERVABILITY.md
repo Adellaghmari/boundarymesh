@@ -1,16 +1,16 @@
 # Observability
 
-Current state is **platform logs + health endpoints + local Micrometer counters**.
-There is **no** OpenTelemetry dependency, **no** OTLP exporter, **no** Cloud Trace pipeline,
-and **no** BoundaryMesh-managed alert policies.
+Current state is platform logs, health endpoints, and local Micrometer counters.
+There is no OpenTelemetry dependency, no OTLP exporter, no Cloud Trace pipeline,
+and no alert policy owned by BoundaryMesh.
 
 ## What exists now
 
-- Cloud Run request and application logs (platform-automatic)
+- Cloud Run request and application logs (written by the platform)
 - Spring Boot default logging
-- Health: API `/api/v1/health` and `/api/v1/ready` (IAM-private); Web `/actuator/health`
-- Local Micrometer counters on delivery/quarantine paths and Resilience4j tagged meters
-- GCP console metrics for Cloud Run and Pub/Sub (platform-automatic; not BM dashboards)
+- Health: API `/api/v1/health` and `/api/v1/ready` (private); Web `/actuator/health`
+- Local Micrometer counters on delivery and quarantine paths, plus Resilience4j meters
+- GCP console metrics for Cloud Run and Pub/Sub (platform metrics, not BoundaryMesh dashboards)
 
 `/metrics` is not a public product surface.
 
