@@ -80,13 +80,20 @@ export const GITHUB_OIDC_EVIDENCE_RECOVERY_CONTEXT_CONDITIONS = [
     `assertion.event_name == '${GITHUB_WORKFLOW_DISPATCH_EVENT}'`,
 ] as const;
 
+export const GITHUB_OIDC_HOSTING_EVIDENCE_RECOVERY_CONTEXT_CONDITIONS = [
+    `assertion.environment == '${GITHUB_HOSTING_DEPLOY_ENVIRONMENT}'`,
+    `assertion.workflow_ref == '${GITHUB_RECOVERY_WORKFLOW_REF}'`,
+    `assertion.event_name == '${GITHUB_WORKFLOW_DISPATCH_EVENT}'`,
+] as const;
+
 const privilegedContextsCondition =
     `((${GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS.join(" && ")}) || ` +
     `(${GITHUB_OIDC_CI_PREVIEW_CONTEXT_CONDITIONS.join(" && ")}) || ` +
     `(${GITHUB_OIDC_ARTIFACT_PUBLISH_CONTEXT_CONDITIONS.join(" && ")}) || ` +
     `(${GITHUB_OIDC_RUNTIME_DEPLOY_CONTEXT_CONDITIONS.join(" && ")}) || ` +
     `(${GITHUB_OIDC_HOSTING_DEPLOY_CONTEXT_CONDITIONS.join(" && ")}) || ` +
-    `(${GITHUB_OIDC_EVIDENCE_RECOVERY_CONTEXT_CONDITIONS.join(" && ")}))`;
+    `(${GITHUB_OIDC_EVIDENCE_RECOVERY_CONTEXT_CONDITIONS.join(" && ")}) || ` +
+    `(${GITHUB_OIDC_HOSTING_EVIDENCE_RECOVERY_CONTEXT_CONDITIONS.join(" && ")}))`;
 
 export const GITHUB_OIDC_ATTRIBUTE_CONDITION = [
     ...GITHUB_OIDC_COMMON_CONDITIONS,

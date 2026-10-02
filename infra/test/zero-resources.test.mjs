@@ -183,7 +183,7 @@ test("GitHub WIF foundation defines a tightly scoped provider and keyless verifi
         assert.ok(wif.includes(requiredCondition), `condition must include ${requiredCondition}`);
     }
     assert.equal(/job_workflow_ref/.test(wif), false);
-    assert.equal((wif.match(/\|\|/g) ?? []).length, 5);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 6);
     assert.equal(/\.github\/workflows\/\*/.test(wif), false);
     assert.match(wif, /\]\.join\(" && "\)/);
 

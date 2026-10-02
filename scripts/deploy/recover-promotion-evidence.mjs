@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { assertEvidenceVersionAbsent, publishEvidence } from "./artifacts.mjs";
@@ -7,6 +7,7 @@ import {
     evidenceVersion,
     loadFrozenRelease,
     RUN_ID,
+    sha256Bytes,
     validateDeploymentEvidence,
     validateRecoveryDispatchInputs,
     verifyEvidenceFiles,
@@ -33,6 +34,101 @@ function flagBoolean(name) {
     if (raw === "true") return true;
     if (raw === "false") return false;
     throw new Error(`${name} must be exactly true or false.`);
+}
+
+export const HOSTING_HANDOFF_SCHEMA = "boundarymesh.recovery-hosting-handoff/v1";
+export const HOSTING_RECOVERY_PRINCIPAL = "boundarymesh-hosting-deploy@boundarymesh-dev.iam.gserviceaccount.com";
+export const HOSTING_HANDOFF_WORKFLOW_PATH = ".github/workflows/recover-promotion-evidence.yml";
+export const MAX_HOSTING_HANDOFF_BYTES = 16 * 1024;
+export const FAILED_RECOVERY_RUN_1 = "37003377107";
+
+export function isRecoveryRun1HostingQuotaDenial(error) {
+    const diagnostic = error?.diagnostic ?? error;
+    const quotaMessage = diagnostic?.error?.message ?? diagnostic?.message ?? "";
+    const reasons = Array.isArray(diagnostic?.errorInfo) ? diagnostic.errorInfo : [];
+    return error?.name === "FirebaseHostingRequestError"
+        && Number(diagnostic?.httpStatus) === 403
+        && /serviceusage\.services\.use/.test(quotaMessage)
+        && reasons.some((entry) => (
+            entry?.reason === "USER_PROJECT_DENIED"
+            && entry?.metadata?.service === "firebasehosting.googleapis.com"
+            && entry?.metadata?.consumer === "projects/boundarymesh-dev"
+        ));
+}
+
+export function buildHostingRecoveryHandoff({ snapshot, firebaseStatus, recoveryRunId }) {
+    if (!RUN_ID.test(String(recoveryRunId))) throw new Error("Hosting recovery handoff requires this recovery run ID.");
+    if (String(recoveryRunId) === FAILED_RECOVERY_RUN_1) {
+        throw new Error("Failed recovery run 37003377107 cannot seal a Hosting handoff.");
+    }
+    if (Number(firebaseStatus) !== 200) throw new Error("Hosting recovery handoff requires Firebase HTTP 200.");
+    if (!snapshot?.site || !snapshot?.version || !snapshot?.release) {
+        throw new Error("Hosting recovery handoff is missing the live snapshot identity.");
+    }
+    return {
+        schemaVersion: HOSTING_HANDOFF_SCHEMA,
+        recoveryRunId: String(recoveryRunId),
+        workflowPath: HOSTING_HANDOFF_WORKFLOW_PATH,
+        principal: HOSTING_RECOVERY_PRINCIPAL,
+        snapshot: {
+            site: snapshot.site,
+            release: snapshot.release,
+            version: snapshot.version,
+            releaseTime: snapshot.releaseTime,
+        },
+        health: { firebaseStatus: 200 },
+    };
+}
+
+export function sealHostingRecoveryHandoff(handoff) {
+    const canonical = canonicalJson(handoff);
+    const bytes = Buffer.from(canonical, "utf8");
+    if (bytes.length > MAX_HOSTING_HANDOFF_BYTES) throw new Error("Hosting recovery handoff exceeded the bounded job-output size.");
+    return {
+        canonical,
+        sha256: sha256Bytes(bytes),
+        byteLength: bytes.length,
+        payloadB64: bytes.toString("base64"),
+    };
+}
+
+export function verifyHostingRecoveryHandoff({
+    payloadB64,
+    sha256,
+    byteLength,
+    recoveryRunId,
+    stageEvidence,
+    lock = loadFrozenRelease(),
+}) {
+    if (!/^[1-9][0-9]*$/.test(String(byteLength))) throw new Error("Hosting recovery handoff byte length is malformed.");
+    const expectedLength = Number(byteLength);
+    if (!Number.isSafeInteger(expectedLength) || expectedLength > MAX_HOSTING_HANDOFF_BYTES) {
+        throw new Error("Hosting recovery handoff byte length is not bounded.");
+    }
+    const compact = String(payloadB64 ?? "").replace(/\s+/g, "");
+    if (!/^[A-Za-z0-9+/]+=*$/.test(compact)) throw new Error("Hosting recovery handoff payload is not Base64.");
+    const bytes = Buffer.from(compact, "base64");
+    if (bytes.length !== expectedLength) throw new Error("Hosting recovery handoff was truncated or padded.");
+    if (sha256Bytes(bytes) !== String(sha256)) throw new Error("Hosting recovery handoff SHA-256 does not match the canonical bytes.");
+    const text = bytes.toString("utf8");
+    let parsed;
+    try { parsed = JSON.parse(text); } catch { throw new Error("Hosting recovery handoff is not JSON."); }
+    if (canonicalJson(parsed) !== text) throw new Error("Hosting recovery handoff is not canonical.");
+    if (parsed.schemaVersion !== HOSTING_HANDOFF_SCHEMA) throw new Error("Hosting recovery handoff schema is not v1.");
+    if (parsed.workflowPath !== HOSTING_HANDOFF_WORKFLOW_PATH) throw new Error("Hosting recovery handoff is not from the recovery workflow.");
+    if (parsed.principal !== HOSTING_RECOVERY_PRINCIPAL) throw new Error("Hosting recovery handoff was not sealed by the Hosting deploy identity.");
+    if (String(parsed.recoveryRunId) !== String(recoveryRunId)) throw new Error("Hosting recovery handoff does not belong to this recovery run.");
+    if (String(parsed.recoveryRunId) === FAILED_RECOVERY_RUN_1) {
+        throw new Error("Failed recovery run 37003377107 cannot supply a Hosting handoff.");
+    }
+    if (Number(parsed.health?.firebaseStatus) !== 200) throw new Error("Hosting recovery handoff did not prove Firebase HTTP 200.");
+    validateDeploymentEvidence(stageEvidence, { operation: "stage", lock });
+    assertPromotedHostingObservation({ hostingResult: parsed.snapshot, stageEvidence });
+    const liveReleasePrefix = `sites/${parsed.snapshot.site}/channels/live/releases/`;
+    if (!String(parsed.snapshot.release).startsWith(liveReleasePrefix)) {
+        throw new Error("Hosting recovery handoff live release is not the Firebase live channel.");
+    }
+    return parsed;
 }
 
 export function jobConclusions(jobsPayload) {
@@ -201,6 +297,7 @@ export function verifyRecoveredPromotionEvidence(evidence, { stageRunId, promoti
     if (evidence.operation !== "promote") throw new Error("Recovered promotion evidence operation is not promote.");
     if (evidence.status !== "PROMOTED") throw new Error("Recovered promotion evidence status is not PROMOTED.");
     if (String(evidence.workflow.runId) !== String(promotionRunId)) throw new Error("Recovered promotion evidence substituted a different workflow run identity.");
+    if (String(evidence.workflow.runId) === FAILED_RECOVERY_RUN_1) throw new Error("Recovered promotion evidence must not use failed recovery run 37003377107.");
     if (String(evidence.references.stageRunId) !== String(stageRunId)) throw new Error("Recovered promotion evidence stage run is not the original stage run.");
     if (evidence.runtime?.checks?.recoveredAfterSuccessfulPromotion !== true) {
         throw new Error("Recovered promotion evidence is missing recoveredAfterSuccessfulPromotion.");
@@ -225,6 +322,9 @@ export function recoverPromotionEvidence({
     assertPromotionRecoveryPreconditions(proof);
     if (String(proof.runId) !== String(proof.originalPromotionRunId ?? proof.runId)) {
         throw new Error("Promotion recovery must bind the original promotion run as evidence identity.");
+    }
+    if (String(proof.runId) === FAILED_RECOVERY_RUN_1) {
+        throw new Error("Promotion recovery must not bind failed recovery run 37003377107 as evidence identity.");
     }
     const evidence = buildRecoveredPromotionEvidence({
         stageEvidence,
@@ -270,6 +370,33 @@ function main() {
             stageRunId: option("--stage-run-id") ?? "",
             promotionRunId: option("--promotion-run-id") ?? "",
         }))}\n`);
+        return;
+    }
+    if (command === "seal-hosting-handoff") {
+        const snapshot = readJson(resolve(option("--snapshot")));
+        const handoff = buildHostingRecoveryHandoff({
+            snapshot,
+            firebaseStatus: option("--firebase-status"),
+            recoveryRunId: option("--recovery-run-id") ?? "",
+        });
+        const sealed = sealHostingRecoveryHandoff(handoff);
+        const githubOutput = option("--github-output");
+        if (githubOutput) {
+            appendFileSync(githubOutput, `payload_b64=${sealed.payloadB64}\nsha256=${sealed.sha256}\nbyte_length=${sealed.byteLength}\n`);
+        }
+        process.stdout.write(`${JSON.stringify({ sha256: sealed.sha256, byteLength: sealed.byteLength })}\n`);
+        return;
+    }
+    if (command === "verify-hosting-handoff") {
+        const parsed = verifyHostingRecoveryHandoff({
+            payloadB64: option("--payload-b64") ?? "",
+            sha256: option("--sha256") ?? "",
+            byteLength: option("--byte-length") ?? "",
+            recoveryRunId: option("--recovery-run-id") ?? "",
+            stageEvidence: readJson(resolve(option("--stage-evidence"))),
+        });
+        writeFileSync(resolve(option("--output")), canonicalJson(parsed.snapshot), { flag: "wx" });
+        process.stdout.write("hosting recovery handoff verified\n");
         return;
     }
     if (command === "prepare") {

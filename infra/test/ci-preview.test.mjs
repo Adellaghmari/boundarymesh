@@ -52,6 +52,11 @@ const privilegedContexts = [
         workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/recover-promotion-evidence.yml@refs/heads/main",
         event_name: "workflow_dispatch",
     },
+    {
+        environment: "boundarymesh-hosting-deploy",
+        workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/recover-promotion-evidence.yml@refs/heads/main",
+        event_name: "workflow_dispatch",
+    },
 ];
 
 function providerAllows(assertion) {
@@ -132,7 +137,7 @@ test("CI federation authorization is service-account and environment scoped", ()
     assert.equal(/new gcp\.projects\.IAM(?:Member|Binding|Policy)/.test(source), false);
 });
 
-test("provider source expresses four immutable claims and exactly six privileged contexts", () => {
+test("provider source expresses four immutable claims and exactly seven privileged contexts", () => {
     for (const expected of [
         "1385415640",
         "179922674",
@@ -159,17 +164,18 @@ test("provider source expresses four immutable claims and exactly six privileged
     assert.match(wif, /GITHUB_OIDC_RUNTIME_DEPLOY_CONTEXT_CONDITIONS = \[/);
     assert.match(wif, /GITHUB_OIDC_HOSTING_DEPLOY_CONTEXT_CONDITIONS = \[/);
     assert.match(wif, /GITHUB_OIDC_EVIDENCE_RECOVERY_CONTEXT_CONDITIONS = \[/);
+    assert.match(wif, /GITHUB_OIDC_HOSTING_EVIDENCE_RECOVERY_CONTEXT_CONDITIONS = \[/);
     assert.match(
         wif,
         /`\(\(\$\{GITHUB_OIDC_VERIFICATION_CONTEXT_CONDITIONS\.join\(" && "\)\}\) \|\| `/,
     );
-    assert.equal((wif.match(/\|\|/g) ?? []).length, 5);
-    assert.equal(privilegedContexts.length, 6);
+    assert.equal((wif.match(/\|\|/g) ?? []).length, 6);
+    assert.equal(privilegedContexts.length, 7);
     assert.equal(/\.github\/workflows\/\*/.test(wif), false);
     assert.equal((wif.match(/^\s*"(?:google|attribute)\.[^"]+":\s*"assertion\.[^"]+",$/gm) ?? []).length, 9);
 });
 
-test("provider semantics allow only the six exact privileged contexts", () => {
+test("provider semantics allow only the seven exact privileged contexts", () => {
     for (const context of privilegedContexts) {
         assert.equal(providerAllows({ ...commonClaims, ...context }), true);
     }
@@ -181,6 +187,7 @@ test("provider semantics reject immutable-claim, context, workflow, ref, and eve
     const runtimeDeploy = { ...commonClaims, ...privilegedContexts[3] };
     const hostingDeploy = { ...commonClaims, ...privilegedContexts[4] };
     const evidenceRecovery = { ...commonClaims, ...privilegedContexts[5] };
+    const hostingEvidenceRecovery = { ...commonClaims, ...privilegedContexts[6] };
     const rejected = [
         { ...verification, repository_id: "9999999999" },
         { ...verification, repository_owner_id: "999999999" },
@@ -212,7 +219,18 @@ test("provider semantics reject immutable-claim, context, workflow, ref, and eve
         { ...evidenceRecovery, event_name: "pull_request" },
         { ...evidenceRecovery, repository_id: "9999999999" },
         { ...evidenceRecovery, repository_owner_id: "999999999" },
-        { ...evidenceRecovery, environment: "boundarymesh-hosting-deploy" },
+        { ...evidenceRecovery, environment: "boundarymesh-ci-preview" },
+        { ...hostingEvidenceRecovery, environment: "boundarymesh-dev" },
+        { ...hostingEvidenceRecovery, environment: "boundarymesh-deploy-other" },
+        {
+            ...hostingEvidenceRecovery,
+            workflow_ref: "Adellaghmari/boundarymesh/.github/workflows/other.yml@refs/heads/main",
+        },
+        { ...hostingEvidenceRecovery, event_name: "pull_request" },
+        { ...hostingEvidenceRecovery, ref: "refs/heads/feature" },
+        { ...hostingEvidenceRecovery, repository_id: "9999999999" },
+        { ...hostingEvidenceRecovery, repository_owner_id: "999999999" },
+        { ...hostingEvidenceRecovery, repository_visibility: "public" },
     ];
 
     for (const assertion of rejected) {
