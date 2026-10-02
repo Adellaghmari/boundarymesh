@@ -280,6 +280,10 @@ test("dedicated recovery workflow is dispatch-only, evidence-only, and mutation-
     assert.match(recoveryText, /cloud-runtime\.mjs snapshot/);
     assert.match(recoveryText, /seal-hosting-handoff/);
     assert.match(recoveryText, /verify-hosting-handoff/);
+    assert.match(recoveryText, /assert-worker-rollback/);
+    assert.doesNotMatch(recoveryText, /--worker-pool=boundarymesh-worker/);
+    assert.doesNotMatch(recoveryText, /gcloud run worker-pools revisions describe/);
+    assert.doesNotMatch(recoveryText, /gcloud run revisions describe "\$WORKER_ROLLBACK"/);
     assert.match(recoveryText, /recover-promotion-evidence\.mjs recover[\s\S]*--publish/);
     assert.doesNotMatch(recoveryText, /print-identity-token|print-access-token|echo\s+.*(?:TOKEN|PASSWORD|SECRET)/i);
     assert.doesNotMatch(recoveryText, /actions\/(?:upload|download)-artifact/);
