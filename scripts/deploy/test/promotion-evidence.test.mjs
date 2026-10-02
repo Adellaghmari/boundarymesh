@@ -13,14 +13,19 @@ import {
     observePromotion,
 } from "../evidence.mjs";
 import {
+    assertWorkerRollbackRevisionExists,
     buildHostingRecoveryHandoff,
     buildVerifiedRecoveryProof,
     FAILED_RECOVERY_RUN_1,
+    FAILED_RECOVERY_RUN_2,
     isRecoveryRun1HostingQuotaDenial,
+    isRecoveryRun2InvalidWorkerRevisionRead,
     recoverPromotionEvidence,
     sealHostingRecoveryHandoff,
     verifyHostingRecoveryHandoff,
     verifyRecoveredPromotionEvidence,
+    workerPoolRevisionResourceName,
+    WORKER_POOL_ID,
 } from "../recover-promotion-evidence.mjs";
 
 const fixtures = join(import.meta.dirname, "fixtures");
@@ -453,4 +458,115 @@ test("dual-principal Hosting handoff is hashed, run-scoped, and fail-closed", ()
         },
     };
     assert.throws(() => verifiedProof({ runtimeSnapshot: driftedRuntime }), /revision|production/);
+});
+
+const workerRollbackName = "projects/boundarymesh-dev/locations/europe-west4/workerPools/boundarymesh-worker/revisions/boundarymesh-worker-00002-v6j";
+
+function workerExistsGetter(name) {
+    assert.equal(name, workerRollbackName);
+    return { status: 200, payload: { name } };
+}
+
+test("recovery run #2 fails closed before evidence publication on invalid Worker Pool revision describe", async () => {
+    const recoverSource = readFileSync(join(import.meta.dirname, "..", "recover-promotion-evidence.mjs"), "utf8");
+    const recoveryText = readFileSync(join(import.meta.dirname, "..", "..", "..", ".github", "workflows", "recover-promotion-evidence.yml"), "utf8");
+    assert.equal(isRecoveryRun2InvalidWorkerRevisionRead({
+        describeStderr: "ERROR: (gcloud.run.worker-pools.revisions.describe) unrecognized arguments: --worker-pool=boundarymesh-worker",
+        fallbackStderr: "ERROR: (gcloud.run.revisions.describe) Cannot find revision [boundarymesh-worker-00002-v6j]",
+    }), true);
+    assert.match(recoverSource, /assertWorkerRollbackRevisionExists/);
+    assert.match(recoveryText, /assert-worker-rollback/);
+    assert.doesNotMatch(recoveryText, /--worker-pool=boundarymesh-worker/);
+    assert.doesNotMatch(recoveryText, /gcloud run worker-pools revisions describe/);
+    assert.doesNotMatch(recoveryText, /gcloud run revisions describe "\$WORKER_ROLLBACK"/);
+    let published = false;
+    assert.throws(() => {
+        const describeStderr = "ERROR: (gcloud.run.worker-pools.revisions.describe) unrecognized arguments: --worker-pool=boundarymesh-worker";
+        const fallbackStderr = "ERROR: (gcloud.run.revisions.describe) Cannot find revision [boundarymesh-worker-00002-v6j]";
+        if (isRecoveryRun2InvalidWorkerRevisionRead({ describeStderr, fallbackStderr })) {
+            throw new Error(fallbackStderr);
+        }
+        recoverPromotionEvidence({
+            stageEvidence,
+            runtimeSnapshot,
+            hostingSnapshot: promoteHosting.result,
+            proof: validProof(),
+            outputDir: mkdtempSync(join(tmpdir(), "bm-recover-run2-")),
+            publish: true,
+            publisher: () => { published = true; },
+        });
+    }, /Cannot find revision \[boundarymesh-worker-00002-v6j\]/);
+    assert.equal(published, false);
+    const proved = await assertWorkerRollbackRevisionExists({
+        stageEvidence,
+        getter: workerExistsGetter,
+    });
+    assert.equal(proved.revision, "boundarymesh-worker-00002-v6j");
+    assert.equal(proved.resourceName, workerRollbackName);
+    assert.equal(proved.workerPool, WORKER_POOL_ID);
+    assert.equal(FAILED_RECOVERY_RUN_2, "37007690227");
+});
+
+test("Worker rollback existence proof rejects wrong identities and malformed reads", async () => {
+    assert.equal(workerPoolRevisionResourceName({
+        project: "boundarymesh-dev",
+        region: "europe-west4",
+        workerPool: "boundarymesh-worker",
+        revision: "boundarymesh-worker-00002-v6j",
+    }), workerRollbackName);
+    assert.throws(() => workerPoolRevisionResourceName({
+        project: "other-project",
+        region: "europe-west4",
+        workerPool: "boundarymesh-worker",
+        revision: "boundarymesh-worker-00002-v6j",
+    }), /project/);
+    assert.throws(() => workerPoolRevisionResourceName({
+        project: "boundarymesh-dev",
+        region: "us-central1",
+        workerPool: "boundarymesh-worker",
+        revision: "boundarymesh-worker-00002-v6j",
+    }), /region/);
+    assert.throws(() => workerPoolRevisionResourceName({
+        project: "boundarymesh-dev",
+        region: "europe-west4",
+        workerPool: "other-pool",
+        revision: "other-pool-00001-abc",
+    }), /worker pool/);
+    assert.throws(() => workerPoolRevisionResourceName({
+        project: "boundarymesh-dev",
+        region: "europe-west4",
+        workerPool: "boundarymesh-worker",
+        revision: "boundarymesh-api-00004-9hw",
+    }), /Worker Pool revision/);
+    await assert.rejects(() => assertWorkerRollbackRevisionExists({
+        stageEvidence: { ...stageEvidence, rollback: { ...stageEvidence.rollback, workerRevision: "missing-worker-revision" } },
+        getter: () => ({ status: 200, payload: { name: workerRollbackName } }),
+    }), /Worker Pool revision|malformed/);
+    await assert.rejects(() => assertWorkerRollbackRevisionExists({
+        stageEvidence,
+        getter: () => ({ status: 404, payload: { error: { status: "NOT_FOUND" } } }),
+    }), /does not exist/);
+    await assert.rejects(() => assertWorkerRollbackRevisionExists({
+        stageEvidence: { ...stageEvidence, rollback: { ...stageEvidence.rollback, workerRevision: "boundarymesh-api-00004-9hw" } },
+        getter: () => ({ status: 200, payload: { name: workerRollbackName } }),
+    }), /service revision|Worker Pool revision/);
+    await assert.rejects(() => assertWorkerRollbackRevisionExists({
+        stageEvidence,
+        getter: () => ({
+            status: 200,
+            payload: { name: "projects/boundarymesh-dev/locations/europe-west4/workerPools/other-pool/revisions/boundarymesh-worker-00002-v6j" },
+        }),
+    }), /exact requested Worker Pool revision/);
+    await assert.rejects(() => assertWorkerRollbackRevisionExists({
+        stageEvidence,
+        getter: () => ({ status: 403, payload: { error: { status: "PERMISSION_DENIED" } } }),
+    }), /permission denied/);
+    await assert.rejects(() => assertWorkerRollbackRevisionExists({
+        stageEvidence,
+        getter: () => ({ status: 200, payload: "revision" }),
+    }), /malformed/);
+    await assert.rejects(() => assertWorkerRollbackRevisionExists({
+        stageEvidence: { ...stageEvidence, rollback: { ...stageEvidence.rollback, workerRevision: "boundarymesh-worker-c-36941014905" } },
+        getter: workerExistsGetter,
+    }), /current staged candidate/);
 });

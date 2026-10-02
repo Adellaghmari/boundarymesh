@@ -13,6 +13,7 @@ import {
     verifyEvidenceFiles,
     writeDeploymentEvidence,
 } from "./contract.mjs";
+import { runChecked } from "./process.mjs";
 import {
     assertPromotedHostingObservation,
     assertPromotedRuntimeObservation,
@@ -41,6 +42,90 @@ export const HOSTING_RECOVERY_PRINCIPAL = "boundarymesh-hosting-deploy@boundarym
 export const HOSTING_HANDOFF_WORKFLOW_PATH = ".github/workflows/recover-promotion-evidence.yml";
 export const MAX_HOSTING_HANDOFF_BYTES = 16 * 1024;
 export const FAILED_RECOVERY_RUN_1 = "37003377107";
+export const FAILED_RECOVERY_RUN_2 = "37007690227";
+export const WORKER_POOL_ID = "boundarymesh-worker";
+export const WORKER_POOL_REVISION_API_ROOT = "https://run.googleapis.com/v2";
+const WORKER_REVISION_ID = /^[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
+
+export function isRecoveryRun2InvalidWorkerRevisionRead({ describeStderr = "", fallbackStderr = "" } = {}) {
+    return /unrecognized arguments:\s*--worker-pool=boundarymesh-worker/.test(String(describeStderr))
+        && /Cannot find revision \[boundarymesh-worker-00002-v6j\]/.test(String(fallbackStderr));
+}
+
+export function workerPoolRevisionResourceName({ project, region, workerPool, revision }) {
+    if (project !== "boundarymesh-dev") throw new Error("Worker rollback read is bound to project boundarymesh-dev.");
+    if (region !== "europe-west4") throw new Error("Worker rollback read is bound to region europe-west4.");
+    if (workerPool !== WORKER_POOL_ID) throw new Error("Worker rollback read is bound to worker pool boundarymesh-worker.");
+    if (!WORKER_REVISION_ID.test(String(revision))) throw new Error("Worker rollback revision identity is malformed.");
+    if (!String(revision).startsWith(`${WORKER_POOL_ID}-`)) {
+        throw new Error("Worker rollback revision is not a boundarymesh-worker Worker Pool revision.");
+    }
+    return `projects/${project}/locations/${region}/workerPools/${workerPool}/revisions/${revision}`;
+}
+
+export async function readWorkerPoolRevision(resourceName, { getter } = {}) {
+    if (!/^projects\/boundarymesh-dev\/locations\/europe-west4\/workerPools\/boundarymesh-worker\/revisions\/[a-z0-9-]+$/.test(resourceName)) {
+        throw new Error("Worker rollback read refused an unbound Worker Pool revision resource name.");
+    }
+    if (getter) return getter(resourceName);
+    const token = runChecked("gcloud", ["auth", "print-access-token", "--quiet"], { capture: true }).stdout.trim();
+    let response;
+    try {
+        response = await fetch(`${WORKER_POOL_REVISION_API_ROOT}/${resourceName}`, {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+            redirect: "error",
+            signal: AbortSignal.timeout(30_000),
+        });
+    } catch (networkError) {
+        return { status: null, payload: null, networkError };
+    }
+    const text = await response.text();
+    let payload = null;
+    if (text) {
+        try { payload = JSON.parse(text); } catch { throw new Error("Worker rollback revision response is not JSON."); }
+    }
+    return { status: response.status, payload };
+}
+
+export async function assertWorkerRollbackRevisionExists({
+    stageEvidence,
+    lock = loadFrozenRelease(),
+    getter,
+}) {
+    validateDeploymentEvidence(stageEvidence, { operation: "stage", lock });
+    const revision = stageEvidence.rollback?.workerRevision;
+    const candidate = stageEvidence.runtime?.result?.candidates?.worker?.revision;
+    if (typeof revision !== "string" || !revision) {
+        throw new Error("Stage evidence is missing rollback.workerRevision.");
+    }
+    if (revision === candidate) {
+        throw new Error("Worker rollback revision is the current staged candidate, not the original rollback target.");
+    }
+    if (revision === stageEvidence.rollback?.apiRevision || revision === stageEvidence.rollback?.webRevision) {
+        throw new Error("Worker rollback revision is a Cloud Run service revision, not a Worker Pool revision.");
+    }
+    const resourceName = workerPoolRevisionResourceName({
+        project: lock.project,
+        region: lock.region,
+        workerPool: WORKER_POOL_ID,
+        revision,
+    });
+    const result = await readWorkerPoolRevision(resourceName, { getter });
+    if (result?.networkError) throw new Error("Worker rollback revision read failed without a Cloud Run response.");
+    const status = Number(result?.status);
+    if (status === 401 || status === 403) throw new Error("Worker rollback revision read was permission denied.");
+    if (status === 404) throw new Error(`Worker rollback revision does not exist: ${revision}`);
+    if (status !== 200) throw new Error(`Worker rollback revision read failed with HTTP ${status}.`);
+    const payload = result.payload;
+    if (!payload || typeof payload !== "object" || Array.isArray(payload) || typeof payload.name !== "string") {
+        throw new Error("Worker rollback revision response is malformed.");
+    }
+    if (payload.name !== resourceName) {
+        throw new Error("Worker rollback revision response is not the exact requested Worker Pool revision.");
+    }
+    return { resourceName, revision, workerPool: WORKER_POOL_ID };
+}
 
 export function isRecoveryRun1HostingQuotaDenial(error) {
     const diagnostic = error?.diagnostic ?? error;
@@ -362,9 +447,16 @@ function refuseMutationFlags() {
     }
 }
 
-function main() {
+async function main() {
     refuseMutationFlags();
     const command = process.argv[2];
+    if (command === "assert-worker-rollback") {
+        const proved = await assertWorkerRollbackRevisionExists({
+            stageEvidence: readJson(resolve(option("--stage-evidence"))),
+        });
+        process.stdout.write(`${JSON.stringify(proved)}\n`);
+        return;
+    }
     if (command === "validate-inputs") {
         process.stdout.write(`${JSON.stringify(validateRecoveryDispatchInputs({
             stageRunId: option("--stage-run-id") ?? "",
@@ -450,4 +542,4 @@ function main() {
     process.stdout.write(`${JSON.stringify({ version: result.version, published: Boolean(result.published) })}\n`);
 }
 
-if (resolve(process.argv[1] ?? "") === resolve(fileURLToPath(import.meta.url))) main();
+if (resolve(process.argv[1] ?? "") === resolve(fileURLToPath(import.meta.url))) await main();

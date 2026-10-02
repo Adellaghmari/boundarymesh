@@ -170,12 +170,10 @@ jobs:
           STAGE_EVIDENCE="$WORK/stage-evidence/deployment-evidence.json"
           API_ROLLBACK="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; process.stdout.write(JSON.parse(readFileSync(process.argv[1], "utf8")).rollback.apiRevision);' "$STAGE_EVIDENCE")"
           WEB_ROLLBACK="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; process.stdout.write(JSON.parse(readFileSync(process.argv[1], "utf8")).rollback.webRevision);' "$STAGE_EVIDENCE")"
-          WORKER_ROLLBACK="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; process.stdout.write(JSON.parse(readFileSync(process.argv[1], "utf8")).rollback.workerRevision);' "$STAGE_EVIDENCE")"
           gcloud run revisions describe "$API_ROLLBACK" --project "$GCP_PROJECT" --region "$GCP_REGION" --format='value(metadata.name)'
           gcloud run revisions describe "$WEB_ROLLBACK" --project "$GCP_PROJECT" --region "$GCP_REGION" --format='value(metadata.name)'
-          if ! gcloud run worker-pools revisions describe "$WORKER_ROLLBACK" --worker-pool=boundarymesh-worker --project "$GCP_PROJECT" --region "$GCP_REGION" --format='value(name)'; then
-            gcloud run revisions describe "$WORKER_ROLLBACK" --project "$GCP_PROJECT" --region "$GCP_REGION" --format='value(metadata.name)'
-          fi
+          node scripts/deploy/recover-promotion-evidence.mjs assert-worker-rollback \
+            --stage-evidence "$STAGE_EVIDENCE"
           node scripts/deploy/recover-promotion-evidence.mjs prepare \
             --stage-run-id "$STAGE_RUN_ID" \
             --promotion-run-id "$PROMOTION_RUN_ID" \
