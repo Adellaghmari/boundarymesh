@@ -76,6 +76,16 @@ export function validateDispatchInputs({ operation, stageRunId = "", promotionRu
     return { operation, stageRunId: stageRunId || null, promotionRunId: promotionRunId || null };
 }
 
+export function validateRecoveryDispatchInputs({ stageRunId = "", promotionRunId = "" }) {
+    if (!RUN_ID.test(String(stageRunId)) || !RUN_ID.test(String(promotionRunId))) {
+        throw new Error("Evidence recovery requires explicit numeric stage_run_id and promotion_run_id values.");
+    }
+    if (String(stageRunId) === String(promotionRunId)) {
+        throw new Error("Evidence recovery stage_run_id and promotion_run_id must be distinct runs.");
+    }
+    return { stageRunId: String(stageRunId), promotionRunId: String(promotionRunId) };
+}
+
 export function verifyFrozenReleaseBytes(bytes, lock = loadFrozenRelease()) {
     exact(sha256Bytes(bytes), lock.releaseManifestSha256, "release manifest SHA-256");
     const manifest = JSON.parse(Buffer.from(bytes).toString("utf8"));
@@ -303,6 +313,8 @@ async function main() {
     const command = process.argv[2];
     if (command === "validate-inputs") {
         process.stdout.write(`${JSON.stringify(validateDispatchInputs({ operation: option("--operation"), stageRunId: option("--stage-run-id") ?? "", promotionRunId: option("--promotion-run-id") ?? "" }))}\n`);
+    } else if (command === "validate-recovery-inputs") {
+        process.stdout.write(`${JSON.stringify(validateRecoveryDispatchInputs({ stageRunId: option("--stage-run-id") ?? "", promotionRunId: option("--promotion-run-id") ?? "" }))}\n`);
     } else if (command === "verify-release") {
         const manifest = verifyFrozenReleaseFile(option("--manifest"));
         process.stdout.write(`${JSON.stringify({ valid: true, images: frozenImageReferences(manifest) })}\n`);

@@ -639,7 +639,15 @@ async function main() {
         result = await rollbackRuntime({ promotionEvidence: JSON.parse(readFileSync(option("--evidence"), "utf8")) });
     } else if (command === "snapshot") {
         const all = await readAll();
-        result = { state: await productionRuntimeState(all), checks: { iam: true, serviceAccounts: true } };
+        result = {
+            state: await productionRuntimeState(all),
+            serviceAccounts: {
+                api: all.api.template.serviceAccount,
+                web: all.web.template.serviceAccount,
+                worker: all.worker.template.serviceAccount,
+            },
+            checks: { iam: true, serviceAccounts: true },
+        };
     } else {
         throw new Error(`Unknown runtime deployment command: ${command}`);
     }

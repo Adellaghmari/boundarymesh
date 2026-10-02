@@ -1,0 +1,153 @@
+name: Recover immutable promotion evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage_run_id:
+        description: Exact original successful stage run ID
+        required: true
+        type: string
+      promotion_run_id:
+        description: Exact original successful promotion run ID whose evidence recording failed
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+
+concurrency:
+  group: boundarymesh-promotion-evidence-recovery
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "22"
+  GCP_PROJECT: boundarymesh-dev
+  GCP_REGION: europe-west4
+  WIF_PROVIDER: projects/891977254468/locations/global/workloadIdentityPools/boundarymesh-github/providers/github-actions
+  RUNTIME_DEPLOY_SA: boundarymesh-deploy@boundarymesh-dev.iam.gserviceaccount.com
+  API_SERVICE_URL: https://boundarymesh-api-jjt6nkfsna-ez.a.run.app
+  FIREBASE_SITE: boundarymesh-dev
+
+jobs:
+  recover-promotion-evidence:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: boundarymesh-deploy
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: scripts/deploy/package-lock.json
+      - name: Install pinned deployment tooling
+        run: npm ci --prefix scripts/deploy --ignore-scripts
+      - name: Validate bounded recovery inputs
+        run: >-
+          node scripts/deploy/recover-promotion-evidence.mjs validate-inputs
+          --stage-run-id '${{ inputs.stage_run_id }}'
+          --promotion-run-id '${{ inputs.promotion_run_id }}'
+      - id: runtime-health-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.RUNTIME_DEPLOY_SA }}
+          token_format: id_token
+          id_token_audience: ${{ env.API_SERVICE_URL }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+      - name: Reconstruct original runs, live production, health, and collision-absent proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BOUNDARYMESH_API_HEALTH_ID_TOKEN: ${{ steps.runtime-health-auth.outputs.id_token }}
+          STAGE_RUN_ID: ${{ inputs.stage_run_id }}
+          PROMOTION_RUN_ID: ${{ inputs.promotion_run_id }}
+        run: |
+          set -euo pipefail
+          WORK="$RUNNER_TEMP/recovery"
+          mkdir -p "$WORK"
+          gh api "repos/${{ github.repository }}/actions/runs/${STAGE_RUN_ID}" > "$WORK/stage-run.json"
+          gh api "repos/${{ github.repository }}/actions/runs/${PROMOTION_RUN_ID}" > "$WORK/promotion-run.json"
+          gh api "repos/${{ github.repository }}/actions/runs/${PROMOTION_RUN_ID}/jobs?per_page=100" > "$WORK/promotion-jobs.json"
+          node scripts/deploy/artifacts.mjs download-evidence --operation stage --run-id "$STAGE_RUN_ID" --destination "$WORK/stage-evidence"
+          node scripts/deploy/cloud-runtime.mjs snapshot --output "$WORK/runtime-snapshot.json"
+          node scripts/deploy/cloud-hosting.mjs snapshot --output "$WORK/hosting-snapshot.json"
+          gcloud run services describe boundarymesh-api --project "$GCP_PROJECT" --region "$GCP_REGION" --format=json > "$WORK/api-service.json"
+          gcloud run services describe boundarymesh-web --project "$GCP_PROJECT" --region "$GCP_REGION" --format=json > "$WORK/web-service.json"
+          gcloud run worker-pools describe boundarymesh-worker --project "$GCP_PROJECT" --region "$GCP_REGION" --format=json > "$WORK/worker-pool.json"
+          WEB_URL="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; process.stdout.write(JSON.parse(readFileSync(process.argv[1], "utf8")).uri ?? JSON.parse(readFileSync(process.argv[1], "utf8")).status?.url ?? "");' "$WORK/web-service.json")"
+          curl -fsS -H "Authorization: Bearer ${BOUNDARYMESH_API_HEALTH_ID_TOKEN}" "${API_SERVICE_URL}/api/v1/health" > "$WORK/api-health.json"
+          curl -fsS "${WEB_URL}/actuator/health" > "$WORK/web-health.json"
+          FIREBASE_STATUS="$(curl -fsS -o /dev/null -w '%{http_code}' "https://${FIREBASE_SITE}.web.app/")"
+          export FIREBASE_STATUS
+          node --input-type=module -e '
+            import { readFileSync, writeFileSync } from "node:fs";
+            const ready = (resource) => {
+              const conditions = resource.status?.conditions ?? resource.conditions ?? [];
+              const match = conditions.find((entry) => entry.type === "Ready" || entry.type === "CONDITION_READY");
+              return match?.status === "True" || match?.state === "CONDITION_SUCCEEDED";
+            };
+            const apiService = JSON.parse(readFileSync(process.argv[1], "utf8"));
+            const webService = JSON.parse(readFileSync(process.argv[2], "utf8"));
+            const worker = JSON.parse(readFileSync(process.argv[3], "utf8"));
+            if (!ready(apiService) || !ready(webService) || !ready(worker)) {
+              throw new Error("Recovery refused: production Ready conditions are not True.");
+            }
+            const apiHealth = JSON.parse(readFileSync(process.argv[4], "utf8"));
+            const webHealth = JSON.parse(readFileSync(process.argv[5], "utf8"));
+            writeFileSync(process.argv[6], JSON.stringify({
+              apiHealth: { status: apiHealth.status ?? 200 },
+              webHealth: { status: webHealth.status },
+              firebaseStatus: Number(process.env.FIREBASE_STATUS),
+              workerReady: true
+            }));
+          ' "$WORK/api-service.json" "$WORK/web-service.json" "$WORK/worker-pool.json" "$WORK/api-health.json" "$WORK/web-health.json" "$WORK/health.json"
+          STAGE_EVIDENCE="$WORK/stage-evidence/deployment-evidence.json"
+          API_ROLLBACK="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; process.stdout.write(JSON.parse(readFileSync(process.argv[1], "utf8")).rollback.apiRevision);' "$STAGE_EVIDENCE")"
+          WEB_ROLLBACK="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; process.stdout.write(JSON.parse(readFileSync(process.argv[1], "utf8")).rollback.webRevision);' "$STAGE_EVIDENCE")"
+          WORKER_ROLLBACK="$(node --input-type=module -e 'import { readFileSync } from "node:fs"; process.stdout.write(JSON.parse(readFileSync(process.argv[1], "utf8")).rollback.workerRevision);' "$STAGE_EVIDENCE")"
+          gcloud run revisions describe "$API_ROLLBACK" --project "$GCP_PROJECT" --region "$GCP_REGION" --format='value(metadata.name)'
+          gcloud run revisions describe "$WEB_ROLLBACK" --project "$GCP_PROJECT" --region "$GCP_REGION" --format='value(metadata.name)'
+          if ! gcloud run worker-pools revisions describe "$WORKER_ROLLBACK" --worker-pool=boundarymesh-worker --project "$GCP_PROJECT" --region "$GCP_REGION" --format='value(name)'; then
+            gcloud run revisions describe "$WORKER_ROLLBACK" --project "$GCP_PROJECT" --region "$GCP_REGION" --format='value(metadata.name)'
+          fi
+          node scripts/deploy/recover-promotion-evidence.mjs prepare \
+            --stage-run-id "$STAGE_RUN_ID" \
+            --promotion-run-id "$PROMOTION_RUN_ID" \
+            --stage-run "$WORK/stage-run.json" \
+            --promotion-run "$WORK/promotion-run.json" \
+            --promotion-jobs "$WORK/promotion-jobs.json" \
+            --stage-evidence "$STAGE_EVIDENCE" \
+            --runtime-snapshot "$WORK/runtime-snapshot.json" \
+            --hosting-snapshot "$WORK/hosting-snapshot.json" \
+            --health "$WORK/health.json" \
+            --rollback-targets-exist true \
+            --promotion-evidence-exists false \
+            --require-absent \
+            --output-dir "$WORK/prepared"
+      - name: Publish the single immutable recovered promotion-evidence version
+        run: >-
+          node scripts/deploy/recover-promotion-evidence.mjs recover
+          --stage-evidence "$RUNNER_TEMP/recovery/stage-evidence/deployment-evidence.json"
+          --runtime-snapshot "$RUNNER_TEMP/recovery/runtime-snapshot.json"
+          --hosting-snapshot "$RUNNER_TEMP/recovery/hosting-snapshot.json"
+          --proof "$RUNNER_TEMP/recovery/prepared/proof.json"
+          --output-dir "$RUNNER_TEMP/recovery/evidence"
+          --publish
+      - name: Verify recovered promotion evidence identity
+        run: |
+          node scripts/deploy/artifacts.mjs download-evidence \
+            --operation promote \
+            --run-id '${{ inputs.promotion_run_id }}' \
+            --destination "$RUNNER_TEMP/recovery/published"
+          node scripts/deploy/recover-promotion-evidence.mjs verify \
+            --document "$RUNNER_TEMP/recovery/published/deployment-evidence.json" \
+            --sidecar "$RUNNER_TEMP/recovery/published/deployment-evidence.json.sha256" \
+            --stage-run-id '${{ inputs.stage_run_id }}' \
+            --promotion-run-id '${{ inputs.promotion_run_id }}'
