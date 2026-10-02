@@ -51,4 +51,4 @@ Circuit breaker: count window 4, 50% failure rate, 80ms open wait in tests / 150
 
 ## Demo-reproducible failures
 
-Every row in [DEMO_SCENARIOS.md](DEMO_SCENARIOS.md) has a seed id. Local and public demo can trigger them without waiting for real outages (synthetic injectors on **protected** admin in live; public demo uses pre-seeded transactions).
+Every row in [DEMO_SCENARIOS.md](DEMO_SCENARIOS.md) has a seed id. Local labs can trigger them without waiting for real outages. There is **no** anonymous public recruiter demo.

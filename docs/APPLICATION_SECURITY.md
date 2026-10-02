@@ -36,12 +36,19 @@ Current claims: [CV_CLAIMS_MATRIX.md](../CV_CLAIMS_MATRIX.md).
 - Firebase-managed Token Creator exists in the project
 - Historical Pulumi passphrase exposure remains a hygiene follow-up
 
-Optional scanners and Cosign are listed in [ROADMAP.md](ROADMAP.md). They are not required for
-current portfolio/CV readiness.
+## Known quality findings (not CV blockers)
+
+- oxlint findings in frontend **test mocks** (pre-existing polish)
+- frontend transitive `npm audit`: 4 high via the Firebase / `@grpc` path
+- infra transitive audit: 3 existing findings
+- deploy-script audit: 0
+
+Do not claim zero vulnerabilities. Scanners listed in [ROADMAP.md](ROADMAP.md) are optional.
 
 ## Public vs protected (current)
 
-The hosted public surface is the Firebase SPA plus BFF-gated session/API rewrites. The core API
-is not publicly invocable. Local `dev` labs remain a separate trusted-developer path.
+The hosted surface is the Firebase operator SPA plus BFF-gated session/API rewrites (sign-in
+required; not a public recruiter demo). The core API is not publicly invocable. Local `dev`
+labs remain a separate trusted-developer path.
 
 Do not fuzz HMAC ingest or hosted session cookies against the live project.

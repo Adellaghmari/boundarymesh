@@ -96,7 +96,7 @@ Google Secret Manager holds secrets. Firestore holds references, versions, rotat
 
 ### 6. Quarantine & Recovery Orchestrator
 
-Timeouts, bounded retries, 429 Retry-After, circuit breaker, Pub/Sub redelivery, dead-letter, idempotent reprocess. Quarantine is a workflow with reason codes, not a trash folder.
+Timeouts, bounded retries, 429 Retry-After, circuit breaker, Pub/Sub redelivery, idempotent reprocess. Quarantine is a workflow with reason codes, not a trash folder. Dead-letter forwarding is **not configured**.
 
 ## Synthetic integration organization
 
@@ -123,25 +123,11 @@ These two connectors are enough. Additional Graph APIs are out of scope unless a
 
 ## Recruiter experience
 
-Public, no signup:
+The **hosted** operator console (`https://boundarymesh-dev.web.app`) requires Firebase Google sign-in. It is a portfolio/dev environment, **not** a public recruiter demo and **not** anonymous SaaS.
 
-- Overview
-- Connections
-- Boundary Events
-- Quarantine
-- Attestations
-- Boundary Graph
-- Microsoft 365 Connector
-- Security Posture
-- Architecture
+The **local** Vue lab console (`npm run dev`) is the walkthrough: overview, connections, labs, quarantine, attestations, boundary graph, and architecture. No cloud operator account is required for those labs.
 
-Protected (Entra OIDC, Spring Security BFF session):
-
-- connector configuration
-- credential rotation
-- quarantine reprocess
-- policy/contract version activation
-- administrative operations
+Protected mutations (quarantine reprocess, credential rotation, policy activation) require an authorized session: Firebase on the hosted path, Entra OIDC on the local Microsoft admin path when configured.
 
 ### One-minute wow path
 
@@ -167,7 +153,7 @@ A transaction detail page must answer the questions in [docs/API_CONTRACTS.md](A
 ## Truth boundaries
 
 **SYNTHETIC DEMO:** Velora systems, payloads, failures, transactions.  
-**LIVE PROJECT DATA (later phases only):** Git SHA, CI, GCP revision, Pulumi stack, AppSec scan results, real Graph calls **only if executed**, real KMS verify, real Pub/Sub, real Cloud Run.
+**LIVE PROJECT DATA:** Git SHA, CI, GCP revision, Pulumi stack, real Graph calls **only if executed**, real KMS verify, real Pub/Sub, real Cloud Run. AppSec scanners are not in CI.
 
 Never blur them. Never claim live Microsoft 365 behavior from WireMock.
 

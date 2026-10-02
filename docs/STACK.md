@@ -72,7 +72,9 @@ No Next.js. No Nuxt as a hosting framework (Vite SPA is enough). No Tailwind-as-
 | IaC | Pulumi 3.x + TypeScript + `@pulumi/gcp` |
 | State | GCS DIY backend with object versioning (no Pulumi Cloud subscription required) |
 
-## Test and AppSec (implemented locally; scanners optional)
+## Test and AppSec
+
+Implemented in-repo:
 
 | Tool | Role |
 | --- | --- |
@@ -83,13 +85,11 @@ No Next.js. No Nuxt as a hosting framework (Vite SPA is enough). No Tailwind-as-
 | WireMock | Graph and partner HTTP simulation |
 | Pact JVM | Consumer contracts for Graph client and selected API consumers |
 | Testcontainers | Firestore emulator, Pub/Sub emulator, WireMock |
-| OWASP Dependency-Check | Java dependencies |
-| Gitleaks | Secret scanning |
-| Semgrep | SAST |
-| OWASP ZAP | Baseline DAST against public demo later |
-| Dependabot | Dependency PRs |
+| Vitest / Playwright | Frontend unit and local e2e |
 
-Not central: Trivy / Syft / Cosign. Container scan may exist because Cloud Run images exist. It is not the Project C story.
+**Not implemented** (optional; see [ROADMAP.md](ROADMAP.md)): OWASP Dependency-Check, Gitleaks, Semgrep, OWASP ZAP, Dependabot.
+
+Not central: Trivy / Syft / Cosign. Container SBOM/provenance are published **unsigned**. They are not a signed-supply-chain claim.
 
 ## Module shape
 

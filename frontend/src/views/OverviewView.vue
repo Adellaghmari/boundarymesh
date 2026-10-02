@@ -22,11 +22,10 @@ import { OUTCOME_COPY } from '@/domain/labels'
         BoundaryMesh sits in front of system-to-system integrations. It is not an assistant, not a
         release board, and not a generic API client. A transaction is authenticated, authorized,
         verified, contract-checked, and data-governed before a delivery instruction can reach Apache
-        Camel. Credential and consent checks sit in front of the connector. Microsoft Entra OIDC and
+        Camel. Credential and consent checks sit in front of the connector.         Microsoft Entra OIDC and
         Microsoft Graph Calendar are implemented locally as a harness, with live tenant verification
-        only when configured. The private cloud API, Pub/Sub, Firestore, KMS, and Worker Pool were
-        verified in Phase 15I; this browser console is not yet connected to that cloud runtime. A
-        valid identity is not an automatic crossing.
+        only when configured. The hosted operator console is a separate Firebase Hosting + BFF
+        path; this page talks to the local API. A valid identity is not an automatic crossing.
       </p>
     </section>
 
@@ -36,8 +35,8 @@ import { OUTCOME_COPY } from '@/domain/labels'
       <h2>Deterministic pipeline</h2>
       <p class="muted">
         Every crossing is evaluated in this order. Credential and consent checks, Camel delivery,
-        quarantine recovery, tamper-evident audit, and local cryptographic attestations are
-        implemented locally. Phase 15I also verified Firestore and Cloud KMS from deployed workloads.
+        quarantine recovery, tamper-evident audit, and cryptographic attestations are implemented
+        locally. Hosted Firestore and Cloud KMS are verified on the deployed path.
       </p>
       <PipelineSteps />
     </section>

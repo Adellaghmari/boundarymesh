@@ -6,11 +6,9 @@
 
 **Environment:** GCP project `boundarymesh-dev`, region `europe-west4` — portfolio/dev production, not enterprise production and not paid customer traffic.
 
-**Phase:** **16E.6 CLOSED / HEALTHY.** Phase **16F** is documentation and reviewer-presentation closure only.
+**Overall:** live in the portfolio/dev GCP environment. The frozen published release is **staged, promoted, and live**. Promotion evidence is **immutable**. Rollback is **ready and not executed**. Reviewer documentation is frozen to this reality.
 
-**Overall:** the frozen Phase 16D release is **staged, promoted, and live**. Promotion evidence is **immutable**. Rollback is **ready and not executed**.
-
-Current truth for reviewers is this file, the README current-state section, [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md), and [docs/README.md](docs/README.md). Files named `docs/PHASE_*.md` are historical gate records.
+Current truth for reviewers is the root [README.md](README.md), this file, [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md), and [docs/README.md](docs/README.md). Files named `docs/PHASE_*.md` are historical gate records. You do not need phase numbering to understand the product.
 
 ## Current live topology
 

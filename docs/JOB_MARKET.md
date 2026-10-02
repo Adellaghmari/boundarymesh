@@ -1,5 +1,7 @@
 # Job market scorecard
 
+**Historical Phase 0 planning artifact.** Not live inventory. Current claims: [../CV_CLAIMS_MATRIX.md](../CV_CLAIMS_MATRIX.md), [../PROJECT_STATUS.md](../PROJECT_STATUS.md).
+
 Portfolio evidence only. Not a claim of professional employment.
 
 Scores: 1–10 as **how clearly a recruiter hiring for that title would see relevant engineering**.
@@ -12,7 +14,7 @@ Scores: 1–10 as **how clearly a recruiter hiring for that title would see rele
 | Implementation Engineer | **9** | Rotation, consent vs credential, Entra setup doc | Delegated Calendars.Read mapped to ConsentGrant; one local real-account Graph crossing verified |
 | Solutions Engineer | **10** | One-minute crossing + outage + reprocess | Recruiter graph + Microsoft harness crossing |
 | Cloud Engineer | **8** | Cloud Run, Pub/Sub, WIF, Pulumi | Private API, Worker, Web BFF, shared GCS/KMS state, keyless WIF, and least-privilege hosted preview live verified |
-| Platform Engineer | **7** | Runtime separation + scoped IAM + shared state | Three keyless runtimes and separate keyless verification/preview identities; publication and CD remain planned |
+| Platform Engineer | **7** | Runtime separation + scoped IAM + shared state | Three keyless runtimes plus keyless publish/deploy; application PR CI is still local-only |
 | Security-minded Software Engineer | **10** | AuthN/AuthZ, webhook, egress, CSRF on session chain | Hash-chain audit + OIDC BFF without tokens in Vue |
 | API Engineer | **9** | OpenAPI / AsyncAPI / JSON Schema + delivery contract | `m365-calendar/v1` normalized Graph contract |
 | IAM / identity-oriented | **9** | JWT scopes + Entra/Firebase BFFs + WIF | Local Entra and hosted Firebase auth live verified; WIF positive/negative boundaries live verified |

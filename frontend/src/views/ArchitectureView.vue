@@ -8,11 +8,12 @@ import TruthBanner from '@/components/TruthBanner.vue'
     <header class="stack">
       <div class="cluster">
         <h1>Architecture</h1>
-        <TruthBanner label="CURRENT VERSUS PLANNED" />
+        <TruthBanner label="LOCAL LAB / HOSTED TOPOLOGY" />
       </div>
       <p>
-        This console currently demonstrates the local control labs. Phase 15I separately deployed
-        and verified the private cloud transaction pipeline; browser access to it is Phase 15J work.
+        This console is the local control lab. The hosted operator path is Firebase Hosting →
+        Web BFF → IAM-private API → Firestore/outbox → Pub/Sub → Worker Pool. External connectors
+        and production Entra remain disabled.
       </p>
     </header>
 
@@ -20,7 +21,7 @@ import TruthBanner from '@/components/TruthBanner.vue'
       <article class="card stack">
         <h2>Current / implemented</h2>
         <ul>
-          <li>Vue 3 TypeScript recruiter console</li>
+          <li>Vue 3 TypeScript lab console</li>
           <li>Java 25 / Spring Boot local backend</li>
           <li>Boundary Enforcement Engine</li>
           <li>Synthetic local evaluate API</li>
@@ -34,17 +35,18 @@ import TruthBanner from '@/components/TruthBanner.vue'
           <li>Local ECDSA P-256 exchange attestations</li>
           <li>Microsoft Entra OIDC session architecture + Graph Calendar harness</li>
           <li>Private Cloud Run API and Worker Pool with dedicated service identities</li>
+          <li>Firebase Hosting and authenticated Web BFF to the IAM-private API</li>
           <li>Live Firestore, Pub/Sub, and Cloud KMS transaction path</li>
         </ul>
       </article>
       <article class="card stack">
-        <h2>Planned</h2>
+        <h2>Not in this environment</h2>
         <ul>
-          <li>Live Microsoft tenant verification (when credentials exist)</li>
           <li>Microsoft Graph change notifications</li>
-          <li>Firebase Hosting and authenticated browser-to-private-API access</li>
-          <li>Browser readback of live transaction, audit, attestation, and delivery evidence</li>
-          <li>Production Entra/OIDC and external connector delivery</li>
+          <li>Production Entra/OIDC on the hosted path</li>
+          <li>Live external connector delivery</li>
+          <li>OpenTelemetry, Cloud Trace, or production alert policies</li>
+          <li>Signed artifact provenance / Cosign</li>
         </ul>
       </article>
     </section>

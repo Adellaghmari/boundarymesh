@@ -2,198 +2,175 @@
 
 **Secure every system crossing.**
 
-A successful HTTP request does **not** prove that one system should be allowed to exchange data or actions with another system.
+A successful HTTP request does not prove that one system should be allowed to exchange data or actions with another. BoundaryMesh is a **cross-system security enforcement layer**: it sits in front of an integration and answers one question — **can this transaction cross this security boundary?**
 
-BoundaryMesh is a **cross-system security enforcement layer**. It sits in front of system-to-system integrations and answers one question:
+A *system crossing* is an untrusted payload leaving one trust domain and entering another (for example a signed partner webhook becoming a settlement instruction). BoundaryMesh authenticates identity, authorizes the action, checks authenticity, freshness and replay, validates the integration contract, governs which fields may leave, then enforces a deterministic outcome: `ALLOW`, `ALLOW_WITH_TRANSFORMATION`, `QUARANTINE`, or `REJECT`. Allowed work becomes a delivery instruction. Evidence of what was enforced is recorded.
 
-> Can this transaction cross this security boundary?
+It is **not** an API dashboard, an iPaaS clone, an AI copilot, or a release-intelligence product. It is portfolio engineering in a GCP `dev` project — not enterprise production and not paid customer traffic.
 
-It is **not** an API dashboard, an iPaaS clone, an AI copilot, or a release-intelligence product.
+## What I built
 
-## Product in one paragraph
+A full-stack enforcement product with a Vue console, a Java/Spring API, and a Camel worker, deployed to Google Cloud with Pulumi and keyless GitHub Actions.
 
-An untrusted system transaction arrives. BoundaryMesh authenticates identity, authorizes the specific action, verifies message authenticity, distinguishes malicious replay from legitimate duplicate delivery, validates the integration contract, governs which fields may leave the source boundary, then **enforces** a deterministic outcome: `ALLOW`, `ALLOW_WITH_TRANSFORMATION`, `QUARANTINE`, or `REJECT`. Allowed work becomes a `DeliveryInstruction`, passes credential/consent checks, and is routed by Apache Camel with Resilience4j around the connector. Recoverable failures become quarantine items that an authorized operator can reprocess. Each terminal crossing writes a tamper-evident audit chain and a local ECDSA P-256 Cryptographic Exchange Attestation. An Integration Boundary Graph renders configured and observed crossings from application state.
+The hosted path is Firebase Hosting → authenticated Web BFF → IAM-private API → Firestore / outbox → Pub/Sub → Cloud Run Worker Pool, with Cloud KMS signing exchange attestations. External connectors and production Microsoft Entra remain intentionally disabled. Local labs prove the engine, HMAC webhooks, contract/egress firewalled crossings, and a bounded Graph calendar pull.
 
-## Flagship capabilities
+## Architecture
 
-1. **Identity Federation Gateway** — OAuth 2.0 / OIDC / JWT / JWKS, including Microsoft Entra ID
-2. **Webhook & Subscription Defense** — HMAC and provider-specific Graph notification security
-3. **Contract Drift Firewall** — versioned OpenAPI / AsyncAPI / JSON Schema as runtime enforcement
-4. **Data Boundary Firewall** — destination-specific allow / redact / deny, no AI PII guessing
-5. **Credential & Consent Vault** — local reference/version/consent model; Secret Manager containers live; hosted connector secret read not exercised
-6. **Quarantine & Recovery Orchestrator** — local workflow plus Firestore-backed terminal quarantine **LIVE VERIFIED** on the hosted Worker path
+```mermaid
+flowchart TD
+  user[User / browser]
+  hosting[Firebase Hosting]
+  bff[Web BFF]
+  api[Private API]
+  fs[(Firestore / outbox)]
+  kms[Cloud KMS]
+  sm[Secret Manager]
+  ps[Pub/Sub]
+  worker[Worker Pool]
+  ext[External provider boundary]
 
-Also implemented: **Tamper-Evident Audit Chain**, **Cryptographic Exchange Attestation** (local JCA; Cloud KMS signing LIVE VERIFIED on the hosted path), **Integration Boundary Graph**.
-
-## Stack (locked)
-
-| Layer | Choice | Locked version |
-| --- | --- | --- |
-| Frontend | Vue 3 + TypeScript + Pinia + Vue Router + SCSS + Vite | Vue 3.5.x, Pinia 4.x, Vue Router 5.x, Vite 8.x |
-| Backend | Java + Spring Boot + Spring Security | **Java 25 LTS**, **Spring Boot 4.1.1** |
-| Integration | Apache Camel | **4.22.0 LTS** (Java 17/21/25) |
-| Enterprise connector | Microsoft Graph + Microsoft Entra ID | Graph Java SDK **6.67.0** |
-| Cloud | Google Cloud (Cloud Run, Pub/Sub, Firestore, Secret Manager, Cloud KMS) | Region `europe-west4` |
-| IaC | Pulumi + TypeScript | GCS DIY state backend |
-| CI | GitHub Actions + Workload Identity Federation | No JSON keys |
-
-Exact pins: [docs/STACK.md](docs/STACK.md).
-
-## What this is not
-
-Do not describe BoundaryMesh as professional security employment, paid Microsoft 365 consulting, enterprise production ownership, or years of IAM / Java experience. This is **portfolio engineering** by Adel Laghmari.
-
-Do not modify **Project A** (AI Operations Copilot) or **Project B** (CloudOps Release Intelligence). Both are frozen.
-
-## What the local labs prove
-
-Local Java 25 / Spring Boot 4.1.1 / Spring Security resource server, a separate Camel delivery worker, and a Vue 3 recruiter console with a premium product header. This is the developer loop. Hosted production is separate; see **Current status**.
-
-Phase 3 proves **local** JWT/JWKS identity federation.  
-Phase 4 proves **QuayForge** HMAC webhook defense (not Graph subscriptions).  
-Phase 5–7 prove contract drift, data-boundary transformation, and the composed engine.  
-Phase 8 delivers approved crossings through **Apache Camel 4.22.0** and **Resilience4j 2.4.0** against WireMock providers.  
-Phase 9 adds a **local credential/consent boundary** (not Secret Manager).  
-Phase 10 makes quarantine a real **recovery workflow** with admin-scoped reprocess (not Firestore).  
-Phase 11 adds a **SHA-256 tamper-evident audit chain** (in-memory, not immutable).  
-Phase 12 signs a **Cryptographic Exchange Attestation** with local ECDSA P-256 (Cloud KMS adapter **IMPLEMENTED + UNIT TESTED**; live KMS **LIVE VERIFIED LOCALLY**).
-Phase 13 renders an **Integration Boundary Graph** from live local repositories (not a blast-radius graph).  
-Phase 14 adds a **premium navigation shell** plus **Microsoft Entra OIDC BFF** and a **bounded Outlook Calendar Graph connector**. Local live verification: delegated `Calendars.Read` with a personal Microsoft account; Graph HTTP 200 with one event normalized to `m365-calendar/v1` and enforced by `m365-calendar-egress/v1` (`ALLOW_WITH_TRANSFORMATION`). Helix 365 remains SYNTHETIC DEMO. Graph change notifications remain **PLANNED**.
-
-### One-minute story
-
-A QuayForge order arrives. Identity, authorization, authenticity, freshness, and replay **PASS**. The contract is **VALID**. The Data Boundary Firewall redacts governed fields. The engine emits **ALLOW_WITH_TRANSFORMATION**. Credential version 2 is resolvable. Consent is granted. The connector circuit is **CLOSED**. Camel routes to Lumenway or CoveCRM. The provider receives the transformed body. Result: **DELIVERED**. The audit chain verifies. The exchange attestation signature verifies. The graph edge is **ACTIVE**.
-
-Then contract drift **QUARANTINES** the Rivertide edge, or replay **REJECTS** CoveCRM with no delivery. The graph reflects the actual outcome.
-
-A valid JWT still does **not** automatically allow a crossing. An attestation does **not** prove business data is true.
-
-The hosted path is Firebase Hosting → Web BFF → IAM-private API → Firestore/KMS/outbox → Pub/Sub → Worker Pool. One synthetic browser-origin transaction was live-verified through that internal path. External connector delivery remains intentionally disabled. Graph change notifications and production Entra/OIDC remain disabled. Dead-letter forwarding is not configured. Evidence records: [Phase 15J](docs/PHASE_15J_FINAL.md), [16C](docs/PHASE_16C_FINAL.md), [16D](docs/PHASE_16D_FINAL.md) (historical publication freeze; the release was later promoted).
-
-## Navigation
-
-Desktop: Core (Overview, Boundary Events, Connections, Architecture, Boundary Graph, Full Crossing) | Labs dropdown | Operations dropdown | Evidence dropdown | Status | Recruiter/operator control.
-
-Labs, Operations, and Evidence are grouped so the header stays a product shell instead of a crowded admin menu.
-
-## How to run locally
-
-Requires **JDK 25** and **Node 22**. No secrets. `VITE_*` values are public browser configuration.
-
-```powershell
-cd backend
-.\mvnw.cmd verify
-.\mvnw.cmd -pl worker -am spring-boot:run
-.\mvnw.cmd -pl api -am spring-boot:run
+  user -->|Firebase Auth / session cookie| hosting
+  hosting --> bff
+  bff -->|IAM identity token| api
+  api --> fs
+  api --> kms
+  fs --> ps
+  ps --> worker
+  worker --> sm
+  worker -.->|intentionally unconfigured| ext
 ```
 
-`scripts/start-backend.ps1` starts the worker (8081) then the API (8080).
+Deeper design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-```powershell
-cd frontend
-npm install
-npm run typecheck
-npm run lint
-npm test
-npm run build
-npm run dev
-```
+## Live / verified status
 
-Full-stack helper: `scripts/dev-local.ps1`.
-
-```text
-Frontend  http://localhost:5173
-API       http://localhost:8080
-Worker    http://localhost:8081
-GET       /api/v1/health
-GET       /api/v1/ready
-POST      /api/v1/dev/delivery-lab/{scenario}
-GET       /api/v1/dev/credential-lab
-GET       /api/v1/quarantine
-POST      /api/v1/quarantine/{id}/reprocess   (boundary.admin)
-GET       /api/v1/audit/chains
-GET       /api/v1/audit/chains/{integrationId}/verify
-GET       /api/v1/attestations
-POST      /api/v1/attestations/{id}/verify
-GET       /api/v1/microsoft/connector
-POST      /api/v1/dev/microsoft-lab/harness-crossing
-GET       /api/v1/admin/session
-```
-
-`POST /api/v1/dev/evaluate` and `POST /api/v1/dev/crossings/evaluate` require a local bearer JWT with `boundary.evaluate`. Labs mint or sign on the Java side — do not paste tokens or HMAC secrets into the UI.
-
-See [docs/PHASE5.md](docs/PHASE5.md), [docs/PHASE6.md](docs/PHASE6.md), and [docs/PHASE7.md](docs/PHASE7.md).
-
-Playwright (`npm run test:e2e` in `frontend/`) starts the Java backend and the Vite app.
-
-## Current status
-
-BoundaryMesh is **live** in the portfolio/dev GCP project `boundarymesh-dev` (`europe-west4`). This is not enterprise production and not paid customer traffic.
-
-**Topology:** Firebase Hosting → authenticated Web BFF → IAM-private API → Firestore / KMS / outbox → Pub/Sub → Cloud Run Worker Pool.
-
-**Infrastructure:** Pulumi `dev` stack, **83 managed / zero drift**, GCS DIY state + KMS secrets. Compute Engine API is **disabled**. GitHub Actions deploys through Workload Identity Federation (**7 exact** main-only contexts). CI/CD and workload service accounts have **zero user-managed keys**.
-
-**Delivery:** the frozen 16D release is **promoted**. Promotion evidence is **immutable**. Rollback is **implemented and not live-executed**. Evidence recovery is **break-glass**, not the happy path. SBOM/provenance are **published and unsigned**.
-
-**Not live:** external connectors, production Entra/OIDC, Graph notifications, DLQ forwarding, OpenTelemetry, AppSec CI scanners.
-
-Deeper truth: [PROJECT_STATUS.md](PROJECT_STATUS.md), [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/CI_CD.md](docs/CI_CD.md), [docs/README.md](docs/README.md).
-
-## Documentation
-
-Start with [docs/README.md](docs/README.md). `docs/PHASE_*.md` files are historical gate records.
-
-| Document | Purpose |
+| Item | State |
 | --- | --- |
-| [docs/README.md](docs/README.md) | Current vs historical documentation map |
-| [docs/PRODUCT.md](docs/PRODUCT.md) | Product definition, thesis, synthetic org, recruiter story |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System design, service boundaries, coherence |
-| [docs/BOUNDARY_ENFORCEMENT_ENGINE.md](docs/BOUNDARY_ENFORCEMENT_ENGINE.md) | Deterministic enforcement |
-| [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md) | Trust boundaries, public vs protected |
-| [docs/IDENTITY_MODEL.md](docs/IDENTITY_MODEL.md) | AuthN vs AuthZ, Entra, machine identity |
-| [docs/MICROSOFT_ENTRA_SETUP.md](docs/MICROSOFT_ENTRA_SETUP.md) | App registration, redirect URI, env names |
-| [docs/M365_GRAPH_INTEGRATION.md](docs/M365_GRAPH_INTEGRATION.md) | Calendar connector, live vs harness |
-| [docs/APACHE_CAMEL_ROUTES.md](docs/APACHE_CAMEL_ROUTES.md) | EIP usage after enforcement |
-| [docs/WEBHOOK_SECURITY.md](docs/WEBHOOK_SECURITY.md) | HMAC vs Graph notifications |
-| [docs/CONTRACT_MODEL.md](docs/CONTRACT_MODEL.md) | OpenAPI, AsyncAPI, JSON Schema |
-| [docs/DATA_BOUNDARY_FIREWALL.md](docs/DATA_BOUNDARY_FIREWALL.md) | Egress allow / redact / deny |
-| [docs/SECRET_MODEL.md](docs/SECRET_MODEL.md) | Credential vault |
-| [docs/EXCHANGE_ATTESTATIONS.md](docs/EXCHANGE_ATTESTATIONS.md) | Signed enforcement proof |
-| [docs/AUDIT_CHAIN.md](docs/AUDIT_CHAIN.md) | Tamper-evident hash chain |
-| [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) | STRIDE |
-| [docs/FAILURE_MODEL.md](docs/FAILURE_MODEL.md) | Fail closed / retry / quarantine |
-| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Firestore access patterns |
-| [docs/API_CONTRACTS.md](docs/API_CONTRACTS.md) | Public and protected APIs |
-| [docs/COST_MODEL.md](docs/COST_MODEL.md) | Portfolio cost before any provision |
-| [docs/TEST_STRATEGY.md](docs/TEST_STRATEGY.md) | Test pyramid |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | Completed / current 16F / optional follow-ups |
-| [docs/QUARANTINE.md](docs/QUARANTINE.md) | Recovery orchestrator |
-| [docs/BOUNDARY_GRAPH.md](docs/BOUNDARY_GRAPH.md) | Visual system |
-| [docs/NETWORK_BOUNDARIES.md](docs/NETWORK_BOUNDARIES.md) | Trust hops |
-| [docs/PULUMI.md](docs/PULUMI.md) | IaC |
-| [docs/GCP_ADAPTERS.md](docs/GCP_ADAPTERS.md) | GCP module boundary and port map |
-| [docs/PHASE_15J_FINAL.md](docs/PHASE_15J_FINAL.md) | Final hosted production verification and cleanup freeze |
-| [docs/PHASE_16C_FINAL.md](docs/PHASE_16C_FINAL.md) | Shared-state and keyless CI-preview live evidence |
-| [docs/PHASE_16D_FINAL.md](docs/PHASE_16D_FINAL.md) | Historical publication freeze (release later promoted) |
-| [docs/CI_CD.md](docs/CI_CD.md) | WIF, publication, stage, promote, rollback, break-glass recovery |
-| [docs/PHASE0_GATE.md](docs/PHASE0_GATE.md) | Final YES/NO gate |
-| [docs/PHASE1.md](docs/PHASE1.md) | Phase 1 implementation record |
-| [docs/PHASE2.md](docs/PHASE2.md) | Phase 2 Vue console record |
-| [docs/PHASE3.md](docs/PHASE3.md) | Phase 3 local identity gateway |
-| [docs/DELIVERY_MODEL.md](docs/DELIVERY_MODEL.md) | DeliveryInstruction and DeliveryPort |
-| [docs/CREDENTIAL_MODEL.md](docs/CREDENTIAL_MODEL.md) | References, rotation, consent |
-| [docs/QUARANTINE_RECOVERY.md](docs/QUARANTINE_RECOVERY.md) | Local orchestrator |
-| [docs/PHASE8.md](docs/PHASE8.md) | Camel worker delivery |
-| [docs/PHASE9.md](docs/PHASE9.md) | Credential and consent boundary |
-| [docs/PHASE10.md](docs/PHASE10.md) | Quarantine and recovery |
-| [docs/PHASE4.md](docs/PHASE4.md) | Phase 4 QuayForge webhook defense |
-| [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md) | Implemented controls and explicit gaps |
-| [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) | Logs and health; no OpenTelemetry claim |
-| [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Records |
+| Portfolio/dev GCP environment | **LIVE** (`boundarymesh-dev`, `europe-west4`) |
+| API / Web BFF / Worker | Promoted staged release, 100% traffic |
+| Firebase Hosting | Live SPA; operator sign-in required |
+| Pulumi | 83 managed / zero drift |
+| Delivery | Promotion evidence verified and immutable |
+| Rollback | Implemented, targets preserved; **not live-executed** |
+| Compute Engine API | Disabled intentionally |
 
-## Phase 0 gate
+This is not a public recruiter demo and not a public production SaaS. The hosted UI is an operator console. Walk through the product locally (below). Current inventory: [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
-**PROJECT C ARCHITECTURE READY FOR PHASE 1: YES**
+## Engineering highlights
 
-See [docs/PHASE0_GATE.md](docs/PHASE0_GATE.md).
+- Vue 3 console and Java 25 / Spring Boot API with a separate Camel worker
+- Firebase Hosting → Web BFF → IAM-private Cloud Run API
+- Firestore transactional outbox → Pub/Sub → Cloud Run Worker Pool
+- Pulumi-managed GCP (83 resources); CD owns image, revision, and traffic
+- Keyless GitHub Actions via Workload Identity Federation (7 exact contexts; no user-managed keys on CI/CD or workload accounts)
+- Immutable, digest-pinned artifacts with published **unsigned** SBOM and provenance
+- Cloud KMS–backed exchange attestations (enforcement proof, not artifact signing)
+- Human-gated stage / promote; fail-closed break-glass evidence recovery
+- Rollback workflows and preserved targets — **not exercised against live traffic**
+
+## Tech stack
+
+| Area | In use |
+| --- | --- |
+| Frontend | Vue 3, TypeScript, Pinia, Vue Router, Vite, SCSS |
+| Backend | Java 25, Spring Boot 4.1, Spring Security, Apache Camel 4.22, Resilience4j |
+| Cloud | Cloud Run (API + BFF + Worker Pool), Firebase Hosting, Artifact Registry |
+| Data & messaging | Firestore, Pub/Sub, Secret Manager, Cloud KMS |
+| Infrastructure / delivery | Pulumi TypeScript, GitHub Actions, Workload Identity Federation |
+| Security | Firebase Auth + BFF session, HMAC, JWT/JWKS, IAM-private API |
+| Testing | JUnit, Spring Security tests, Camel/WireMock, Vitest, Playwright |
+
+Pins: [docs/STACK.md](docs/STACK.md). OpenTelemetry, Cosign, ZAP, and Dependabot are **not** in this repository.
+
+## How the system works
+
+1. An untrusted transaction arrives (local lab, HMAC webhook, or hosted synthetic operator path).
+2. The API runs identity, authorization, authenticity, freshness, replay, contract, and egress controls.
+3. `REJECT` stops with evidence only. `QUARANTINE` holds work for an operator. `ALLOW` / `ALLOW_WITH_TRANSFORMATION` emit a `DeliveryInstruction`.
+4. Production persists the instruction in a Firestore outbox and publishes to Pub/Sub.
+5. The worker consumes the event, may resolve a named secret, and runs Camel **after** the policy decision.
+6. Terminal outcomes write a SHA-256 audit chain and a KMS-signed exchange attestation.
+
+Hosted verification used one synthetic browser-origin transaction through that internal path. **No live third-party connector fan-out.** Graph change notifications are not implemented.
+
+## Security and delivery model
+
+GitHub Actions authenticates to GCP through Workload Identity Federation. CI, deploy, and workload service accounts have **no user-managed keys**. The core API is IAM-private behind the Web BFF. Deployments consume immutable digest-pinned release artifacts.
+
+```mermaid
+flowchart LR
+  src[Source on main]
+  verify[Verification / WIF]
+  arts[Immutable artifacts]
+  stage[Stage]
+  promo[Promote]
+  evid[Immutable evidence]
+  rec[Break-glass evidence recovery]
+
+  src --> verify --> arts --> stage --> promo --> evid
+  evid -.-> rec
+```
+
+Promotion evidence is fail-closed. A separate keyless workflow can recover **missing evidence only** after a successful promotion — it cannot promote, roll back, or redeploy. Details: [docs/CI_CD.md](docs/CI_CD.md), [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md).
+
+## Testing
+
+Suites are separate; do not add them into one marketing total.
+
+| Suite | Evidence |
+| --- | --- |
+| Backend (Maven / JUnit) | 387 tests in the default verify |
+| Frontend (Vitest) | 63 tests |
+| Infrastructure (Pulumi unit) | 47 tests |
+| Deploy scripts | 115 tests |
+| Playwright | 15 tests present (local Java + Vite; not re-run in the documentation freeze) |
+
+Types covered: domain decisions, Spring Security slices, Camel routes and Resilience4j, contract/egress fixtures, Vue view-models. Opt-in GCP emulator/live groups are not part of default `mvnw verify`.
+
+Known polish: oxlint findings in test mocks; frontend transitive npm audit issues on the Firebase/@grpc path; infra transitive audit findings. Deploy audit is clean. **No claim of zero vulnerabilities.** See [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md).
+
+## Repository guide
+
+| Path | What it is |
+| --- | --- |
+| [`backend/`](backend/) | Java modules: domain, API, Web BFF, worker, GCP adapters |
+| [`frontend/`](frontend/) | Vue 3 console (local labs) and hosted operator SPA |
+| [`infra/`](infra/) | Pulumi TypeScript for `boundarymesh-dev` |
+| [`contracts/`](contracts/) | OpenAPI, AsyncAPI, JSON Schema, release/evidence schemas |
+| [`scripts/deploy/`](scripts/deploy/) | Publication, stage, promote, rollback, evidence recovery |
+| [`docs/`](docs/) | Current architecture/security/CI docs; `PHASE_*` files are history |
+
+## Trusted docs
+
+Start here, not in phase notes:
+
+- [PROJECT_STATUS.md](PROJECT_STATUS.md) — what is live
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — topology
+- [docs/CI_CD.md](docs/CI_CD.md) — WIF, stage, promote, recovery
+- [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md) — controls and gaps
+- [docs/PULUMI.md](docs/PULUMI.md) — IaC and fenced CD fields
+- [docs/README.md](docs/README.md) — documentation map
+- [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md) — what is safe to say on a CV
+- [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) — how to run locally
+
+## Scope and honest limitations
+
+Safe to infer from this repo: full-stack implementation, cloud engineering, API design, an internal event-driven path, IaC, CI/CD, security boundaries, and production-style deployment discipline.
+
+**Not claimed**
+
+- Public recruiter demo or paid production
+- Live rollback success
+- Signed software supply chain / Cosign
+- OpenTelemetry, Cloud Trace, or production alerts
+- Enterprise Graph notifications or hosted Entra
+- Fully automated application CI on pull requests
+- Complete AppSec scanning (no SAST/DAST in CI)
+- “All human access is keyless” (workstation ADC exists)
+- Zero-trust / fully hardened / complete observability
+
+Optional follow-ups (not CV blockers): [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## Local development
+
+Requires **JDK 25** and **Node 22**. No secrets in Git. Commands: [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md).

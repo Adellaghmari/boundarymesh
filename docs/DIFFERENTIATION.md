@@ -20,7 +20,7 @@ Question: *Can an AI-generated recommendation be sufficiently supported by evide
 | Security story | Responsible AI, abstention | IAM, webhooks, egress, KMS | Different |
 | Recruiter story | Evidence-grounded AI | Cryptographic enforcement of integrations | No |
 
-**Similarity score: 2 / 10** (shared: portfolio polish, public demo, deterministic *engines* as a product pattern — not the same engine or domain). Target ≤ 3. **Pass.**
+**Similarity score: 2 / 10** (shared: portfolio polish and deterministic *engines* as a product pattern — not the same engine or domain). Target ≤ 3. **Pass.**
 
 Forbidden in C: LLMs, RAG, agents, AI verdicts, confidence scores, Decision Assurance concepts, hallucination eval, human-as-core-decision.
 
