@@ -13,8 +13,13 @@ import {
     observePromotion,
 } from "../evidence.mjs";
 import {
+    buildHostingRecoveryHandoff,
     buildVerifiedRecoveryProof,
+    FAILED_RECOVERY_RUN_1,
+    isRecoveryRun1HostingQuotaDenial,
     recoverPromotionEvidence,
+    sealHostingRecoveryHandoff,
+    verifyHostingRecoveryHandoff,
     verifyRecoveredPromotionEvidence,
 } from "../recover-promotion-evidence.mjs";
 
@@ -322,4 +327,130 @@ test("recovery proof reconstruction binds original runs and refuses every unsafe
     for (const [overrides, pattern] of failures) {
         assert.throws(() => verifiedProof(overrides), pattern);
     }
+});
+
+test("recovery run #1 fails closed before evidence publication on Hosting USER_PROJECT_DENIED", () => {
+    const diagnostic = {
+        httpStatus: 403,
+        error: {
+            code: 403,
+            status: "PERMISSION_DENIED",
+            message: "Caller does not have required permission to use project boundarymesh-dev. Grant the caller the roles/serviceusage.serviceUsageConsumer role, or a custom role with the serviceusage.services.use permission, by visiting https://console.developers.google.com/iam-admin/iam?project=boundarymesh-dev and then retry. Propagation of the new permission may take a few minutes.",
+        },
+        errorInfo: [{
+            reason: "USER_PROJECT_DENIED",
+            domain: "googleapis.com",
+            metadata: { service: "firebasehosting.googleapis.com", consumer: "projects/boundarymesh-dev" },
+        }],
+    };
+    const error = new Error(`Firebase Hosting request failed: ${JSON.stringify(diagnostic)}`);
+    error.name = "FirebaseHostingRequestError";
+    error.diagnostic = diagnostic;
+    assert.equal(isRecoveryRun1HostingQuotaDenial(error), true);
+    let published = false;
+    assert.throws(() => {
+        if (isRecoveryRun1HostingQuotaDenial(error)) throw error;
+        recoverPromotionEvidence({
+            stageEvidence,
+            runtimeSnapshot,
+            hostingSnapshot: promoteHosting.result,
+            proof: validProof(),
+            outputDir: mkdtempSync(join(tmpdir(), "bm-recover-run1-")),
+            publish: true,
+            publisher: () => { published = true; },
+        });
+    }, /USER_PROJECT_DENIED|serviceusage\.services\.use|Firebase Hosting request failed/);
+    assert.equal(published, false);
+    assert.throws(() => recoverPromotionEvidence({
+        stageEvidence,
+        runtimeSnapshot,
+        hostingSnapshot: promoteHosting.result,
+        proof: validProof({ runId: FAILED_RECOVERY_RUN_1, requiredPromotionRunId: FAILED_RECOVERY_RUN_1, originalPromotionRunId: FAILED_RECOVERY_RUN_1 }),
+        outputDir: mkdtempSync(join(tmpdir(), "bm-recover-failed-run-")),
+        publish: true,
+        publisher: () => { published = true; },
+    }), /37003377107|promotion run/);
+    assert.equal(published, false);
+});
+
+test("dual-principal Hosting handoff is hashed, run-scoped, and fail-closed", () => {
+    const snapshot = promoteHosting.result;
+    const sealed = sealHostingRecoveryHandoff(buildHostingRecoveryHandoff({
+        snapshot,
+        firebaseStatus: 200,
+        recoveryRunId: "99900000001",
+    }));
+    const verified = verifyHostingRecoveryHandoff({
+        payloadB64: sealed.payloadB64,
+        sha256: sealed.sha256,
+        byteLength: sealed.byteLength,
+        recoveryRunId: "99900000001",
+        stageEvidence,
+    });
+    assert.equal(verified.principal, "boundarymesh-hosting-deploy@boundarymesh-dev.iam.gserviceaccount.com");
+    assert.equal(verified.snapshot.version, "sites/boundarymesh-dev/versions/c9def09b61688b16");
+    assert.throws(() => verifyHostingRecoveryHandoff({
+        payloadB64: sealed.payloadB64,
+        sha256: "0".repeat(64),
+        byteLength: sealed.byteLength,
+        recoveryRunId: "99900000001",
+        stageEvidence,
+    }), /SHA-256/);
+    assert.throws(() => verifyHostingRecoveryHandoff({
+        payloadB64: sealed.payloadB64,
+        sha256: sealed.sha256,
+        byteLength: String(sealed.byteLength - 1),
+        recoveryRunId: "99900000001",
+        stageEvidence,
+    }), /truncated|padded|byte length/);
+    assert.throws(() => verifyHostingRecoveryHandoff({
+        payloadB64: sealed.payloadB64,
+        sha256: sealed.sha256,
+        byteLength: sealed.byteLength,
+        recoveryRunId: "99900000002",
+        stageEvidence,
+    }), /this recovery run/);
+    assert.throws(() => verifyHostingRecoveryHandoff({
+        payloadB64: sealed.payloadB64,
+        sha256: sealed.sha256,
+        byteLength: sealed.byteLength,
+        recoveryRunId: FAILED_RECOVERY_RUN_1,
+        stageEvidence,
+    }), /37003377107|this recovery run/);
+    const wrongPrincipal = sealHostingRecoveryHandoff({
+        ...buildHostingRecoveryHandoff({ snapshot, firebaseStatus: 200, recoveryRunId: "99900000001" }),
+        principal: "boundarymesh-deploy@boundarymesh-dev.iam.gserviceaccount.com",
+    });
+    assert.throws(() => verifyHostingRecoveryHandoff({
+        payloadB64: wrongPrincipal.payloadB64,
+        sha256: wrongPrincipal.sha256,
+        byteLength: wrongPrincipal.byteLength,
+        recoveryRunId: "99900000001",
+        stageEvidence,
+    }), /Hosting deploy identity/);
+    const wrongVersion = sealHostingRecoveryHandoff(buildHostingRecoveryHandoff({
+        snapshot: { ...snapshot, version: "sites/boundarymesh-dev/versions/1bce16129fb1a0d4" },
+        firebaseStatus: 200,
+        recoveryRunId: "99900000001",
+    }));
+    assert.throws(() => verifyHostingRecoveryHandoff({
+        payloadB64: wrongVersion.payloadB64,
+        sha256: wrongVersion.sha256,
+        byteLength: wrongVersion.byteLength,
+        recoveryRunId: "99900000001",
+        stageEvidence,
+    }), /baseline version|exact staged version/);
+    assert.throws(() => buildHostingRecoveryHandoff({
+        snapshot,
+        firebaseStatus: 200,
+        recoveryRunId: FAILED_RECOVERY_RUN_1,
+    }), /37003377107/);
+    const driftedRuntime = {
+        ...runtimeSnapshot,
+        state: {
+            ...runtimeSnapshot.state,
+            api: { ...runtimeSnapshot.state.api, revision: "boundarymesh-api-00004-9hw" },
+        },
+    };
+    assert.throws(() => verifiedProof({ runtimeSnapshot: driftedRuntime }), /revision|production/);
 });
