@@ -1,0 +1,83 @@
+{
+  "before": {
+    "api": {
+      "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api@sha256:560986f62d3e8cf1dc51f68fc5c94c0eedb66f479b3363804f9de2b2d2d5d191",
+      "revision": "boundarymesh-api-00004-9hw",
+      "traffic": [
+        {
+          "percent": 100,
+          "revision": "boundarymesh-api-00004-9hw",
+          "tag": null,
+          "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION"
+        }
+      ]
+    },
+    "web": {
+      "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:50402bda46523a4b59b97e5babb3f9c5e76df70749d07df6b4c70fb96c3647a4",
+      "revision": "boundarymesh-web-00004-k48",
+      "traffic": [
+        {
+          "percent": 100,
+          "revision": "boundarymesh-web-00004-k48",
+          "tag": null,
+          "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION"
+        }
+      ]
+    },
+    "worker": {
+      "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker@sha256:c4f445ae2859bc3a070935645b21a3eb2dbfee7e844dcf662811446a1503b8b4",
+      "revision": "boundarymesh-worker-00002-v6j",
+      "split": [
+        {
+          "percent": 100,
+          "revision": "boundarymesh-worker-00002-v6j",
+          "tag": null,
+          "type": "INSTANCE_SPLIT_ALLOCATION_TYPE_REVISION"
+        }
+      ]
+    }
+  },
+  "checks": {
+    "health": true,
+    "orderedPromotion": true,
+    "staleBaselineRejected": false
+  },
+  "result": {
+    "api": {
+      "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-api@sha256:bcfd9b01a3189228f583fa3f5d1ed8797f73d214af85bea4d84caeedfa0db8d7",
+      "revision": "boundarymesh-api-c-36941014905",
+      "traffic": [
+        {
+          "percent": 100,
+          "revision": "boundarymesh-api-c-36941014905",
+          "tag": null,
+          "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION"
+        }
+      ]
+    },
+    "web": {
+      "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-web-edge@sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04",
+      "revision": "boundarymesh-web-c-36941014905",
+      "traffic": [
+        {
+          "percent": 100,
+          "revision": "boundarymesh-web-c-36941014905",
+          "tag": null,
+          "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION"
+        }
+      ]
+    },
+    "worker": {
+      "image": "europe-west4-docker.pkg.dev/boundarymesh-dev/boundarymesh/boundarymesh-worker@sha256:7b1841487a2d1b3751e8bc63ee5323965e76ebeae9ae581c95b672f50154bb2d",
+      "revision": "boundarymesh-worker-c-36941014905",
+      "split": [
+        {
+          "percent": 100,
+          "revision": "boundarymesh-worker-c-36941014905",
+          "tag": null,
+          "type": "INSTANCE_SPLIT_ALLOCATION_TYPE_REVISION"
+        }
+      ]
+    }
+  }
+}

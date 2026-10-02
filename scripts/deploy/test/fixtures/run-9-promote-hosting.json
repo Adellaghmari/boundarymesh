@@ -1,0 +1,23 @@
+{
+  "before": {
+    "release": "sites/boundarymesh-dev/channels/live/releases/1790076373374000",
+    "releaseTime": "2026-09-22T11:26:13.374Z",
+    "site": "boundarymesh-dev",
+    "version": "sites/boundarymesh-dev/versions/1bce16129fb1a0d4"
+  },
+  "checks": {
+    "assetsHealthyAndImmutable": true,
+    "authBootstrapFailClosed": true,
+    "deepLinkHealthy": true,
+    "exactStagedVersion": true,
+    "htmlNoCache": true,
+    "noPrivateCoreLeak": true,
+    "rootHealthy": true
+  },
+  "result": {
+    "release": "sites/boundarymesh-dev/channels/live/releases/1790900894914000",
+    "releaseTime": "2026-10-02T00:28:14.914Z",
+    "site": "boundarymesh-dev",
+    "version": "sites/boundarymesh-dev/versions/c9def09b61688b16"
+  }
+}

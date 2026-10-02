@@ -230,6 +230,17 @@ test("only deployment evidence is uploaded and immutable collisions fail first",
     assert.match(artifacts, /repository: lock\.releaseRepository,[\s\S]*packageName: lock\.frontend\.package/);
 });
 
+test("evidence-only recovery is isolated from the deployment mutation workflow", () => {
+    const recover = readFileSync(join(root, "scripts", "deploy", "recover-promotion-evidence.mjs"), "utf8");
+    assert.doesNotMatch(workflowText, /recover-promotion-evidence/);
+    assert.deepEqual(workflow.on.workflow_dispatch.inputs.operation.options, ["stage", "promote", "rollback"]);
+    assert.doesNotMatch(recover, /cloud-runtime\.mjs|cloud-hosting\.mjs/);
+    assert.doesNotMatch(recover, /promoteRuntime|promoteHosting|rollbackRuntime|rollbackHosting/);
+    assert.doesNotMatch(recover, /pulumi|gcloud iam|hosting:channel:deploy|releases\?versionName=/);
+    assert.match(recover, /recover command/);
+    assert.match(JSON.stringify(workflow.jobs["record-promote-evidence"]), /observe-promotion/);
+});
+
 test("workflow has no automatic rollback, latest-release selection, or credential output", () => {
     assert.doesNotMatch(workflowText, /if:\s*failure\(\)|if:\s*always\(\).*rollback|automatic rollback/i);
     assert.doesNotMatch(workflowText, /--version\s+latest|tags\/latest|:latest\b/);
