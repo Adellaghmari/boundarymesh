@@ -230,10 +230,18 @@ test("GitHub WIF foundation defines a tightly scoped provider and keyless verifi
 test("Hosting rewrites select the BFF before the SPA and never target the private API", () => {
     const hosting = JSON.parse(readFileSync(join(root, "..", "firebase.json"), "utf8")).hosting;
     assert.equal(hosting.public, "frontend/dist");
-    assert.deepEqual(hosting.rewrites.map((rule) => rule.source), ["/session/**", "/api/**", "**"]);
+    assert.deepEqual(hosting.rewrites.map((rule) => rule.source), [
+        "/session/**",
+        "/api/**",
+        "/operator",
+        "/operator/**",
+        "**",
+    ]);
     assert.equal(hosting.rewrites[0].run.serviceId, "boundarymesh-web");
     assert.equal(hosting.rewrites[1].run.serviceId, "boundarymesh-web");
-    assert.equal(hosting.rewrites[2].destination, "/index.html");
+    assert.equal(hosting.rewrites[2].destination, "/operator.html");
+    assert.equal(hosting.rewrites[3].destination, "/operator.html");
+    assert.equal(hosting.rewrites[4].destination, "/index.html");
 });
 
 test("Hosting revalidates every SPA shell request before overriding only hashed assets", () => {

@@ -180,7 +180,10 @@ onUnmounted(() => {
         <strong>BoundaryMesh</strong>
         <span>Governed cloud transactions</span>
       </div>
-      <button v-if="authState === 'authenticated'" type="button" :disabled="busy" @click="logout">Sign out</button>
+      <div class="cloud-header__actions">
+        <a href="/">Portfolio</a>
+        <button v-if="authState === 'authenticated'" type="button" :disabled="busy" @click="logout">Sign out</button>
+      </div>
     </header>
     <main id="main" class="cloud-main stack">
       <div class="hero stack">
@@ -240,6 +243,8 @@ onUnmounted(() => {
 .cloud-shell { min-height: 100vh; background: #f2f7f8; color: #172d39; }
 .cloud-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.2rem max(1.5rem, calc((100vw - 72rem) / 2)); background: #102935; color: white; }
 .cloud-header div { display: flex; flex-direction: column; }
+.cloud-header .cloud-header__actions { flex-direction: row; align-items: center; gap: .75rem; }
+.cloud-header a { color: white; font-weight: 700; }
 .cloud-header strong { font-size: 1.35rem; }
 .cloud-header span { color: #b9d7d9; font-size: .85rem; }
 .cloud-main { max-width: 72rem; margin: auto; padding: 3rem 1.5rem 5rem; gap: 1.4rem; }

@@ -29,6 +29,17 @@ describe('hosted production console', () => {
     vi.mocked(verifyAuditChain).mockReset()
   })
 
+  it('keeps operator actions behind sign in', async () => {
+    vi.mocked(initializeCloudSession).mockResolvedValueOnce(null)
+    const wrapper = mount(CloudConsoleView)
+    await flushPromises()
+    expect(wrapper.get('a[href="/"]').text()).toBe('Portfolio')
+    expect(wrapper.text()).toContain('Sign in with your approved Google account')
+    expect(wrapper.text()).not.toContain('Submit synthetic transaction')
+    await wrapper.get('button').trigger('click')
+    expect(signInOperator).toHaveBeenCalledOnce()
+  })
+
   it('shows the operator message only for an explicit allowlist rejection without executing a lab call', async () => {
     vi.mocked(initializeCloudSession).mockResolvedValueOnce(null)
     vi.mocked(signInOperator).mockRejectedValueOnce(new BoundaryMeshApiError('forbidden', 'Denied', {

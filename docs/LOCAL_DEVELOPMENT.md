@@ -31,7 +31,7 @@ npm run dev
 
 `npm run lint` may report pre-existing oxlint findings in tests. Playwright (`npm run test:e2e`) starts the local Java backend and Vite.
 
-The local Vite app is the **lab console**. It is not the hosted operator SPA. Hosted Firebase Hosting uses a separate cloud bundle and requires operator sign-in.
+`npm run dev` is the lab console. It is not the hosted site. A cloud build (`VITE_APP_MODE=cloud`) serves a public portfolio page at the root and the operator console from `operator.html`. Operator actions still require Google sign in. The lab routes stay out of that cloud build.
 
 ## Full stack helper
 

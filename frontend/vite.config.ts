@@ -1,8 +1,29 @@
 import { fileURLToPath, URL } from 'node:url'
 
 import vue from '@vitejs/plugin-vue'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
+
+function rewriteOperatorEntry(): Plugin {
+  const rewrite = (req: { url?: string }, _res: unknown, next: () => void) => {
+    const url = req.url ?? ''
+    const path = url.split('?')[0] ?? ''
+    if (path === '/operator' || path.startsWith('/operator/')) {
+      const query = url.includes('?') ? url.slice(url.indexOf('?')) : ''
+      req.url = `/operator.html${query}`
+    }
+    next()
+  }
+  return {
+    name: 'boundarymesh-operator-entry',
+    configureServer(server) {
+      server.middlewares.use(rewrite)
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use(rewrite)
+    },
+  }
+}
 
 const proxy = {
   '/api': { target: 'http://127.0.0.1:8080', changeOrigin: true },
@@ -13,7 +34,7 @@ const proxy = {
 }
 
 export default defineConfig({
-  plugins: [vue(), ...(process.env.VITEST ? [] : [vueDevTools()])],
+  plugins: [vue(), rewriteOperatorEntry(), ...(process.env.VITEST ? [] : [vueDevTools()])],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -30,6 +51,14 @@ export default defineConfig({
     port: 4173,
     strictPort: true,
     proxy,
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        operator: fileURLToPath(new URL('./operator.html', import.meta.url)),
+      },
+    },
   },
   css: {
     preprocessorOptions: {
