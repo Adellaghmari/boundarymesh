@@ -30,7 +30,4 @@ Worker Pool matches the long-running pull consumer without inventing a public wo
 
 ## Consequences
 
-The API stays IAM-authenticated in the Phase 15I-A preview. Browser ingress and application
-authentication require a later explicit design decision before deployment. The worker's fixed
-instance has an idle cost when deployed. Java image size: use a JRE 25 distroless-style image in
-the deployment phase.
+The API stays IAM-authenticated. Browser traffic ends at Firebase Hosting and the public web edge, which calls the API with a service identity. The worker's fixed instance has an idle cost when deployed.

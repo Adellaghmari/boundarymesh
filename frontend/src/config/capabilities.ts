@@ -2,7 +2,7 @@ import type { CapabilityClaim } from '@/domain/types'
 
 /**
  * Manual frontend summary of reviewed project evidence.
- * Aligns with PROJECT_STATUS.md / CV_CLAIMS_MATRIX.md. Not a live cloud feed.
+ * Static capability copy for the lab. Not a live cloud feed.
  */
 export const CAPABILITY_CLAIMS: readonly CapabilityClaim[] = [
   {

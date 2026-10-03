@@ -1,47 +1,38 @@
-# Documentation map
+# Documentation
 
-Current project truth lives in a small set of documents meant for a reviewer. Historical
-phase notes remain as audit records. They are not current status. You do not need
-Phase 15 or 16 numbering to understand the product.
+These documents describe the software in this repository. The root [README](../README.md) is the project entry point.
 
-## Current truth
-
-| Document | Use for |
-| --- | --- |
-| [../README.md](../README.md) | Product thesis and portfolio entry |
-| [../PROJECT_STATUS.md](../PROJECT_STATUS.md) | What is live |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Topology and service boundaries |
-| [CI_CD.md](CI_CD.md) | Keyless WIF, publication, stage, promote, rollback, recovery |
-| [PULUMI.md](PULUMI.md) | IaC, 83 managed resources, fenced CD-owned fields |
-| [APPLICATION_SECURITY.md](APPLICATION_SECURITY.md) | Implemented controls and explicit gaps |
-| [OBSERVABILITY.md](OBSERVABILITY.md) | Logs, health, metrics; no OpenTelemetry claim |
-| [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) | JDK 25 / Node 22 local loop |
-| [PRODUCT.md](PRODUCT.md) | Product definition and honest career purpose |
-| [ROADMAP.md](ROADMAP.md) | Completed work and optional follow-ups |
-| [../CV_CLAIMS_MATRIX.md](../CV_CLAIMS_MATRIX.md) | SAFE NOW / SAFE WITH QUALIFIER / NOT YET SAFE |
-
-## Implementation detail (when you need depth)
+## Architecture and product
 
 | Document | Topic |
 | --- | --- |
-| [BOUNDARY_ENFORCEMENT_ENGINE.md](BOUNDARY_ENFORCEMENT_ENGINE.md) | Deterministic enforcement |
-| [SECURITY_MODEL.md](SECURITY_MODEL.md) | Trust boundaries |
-| [NETWORK_BOUNDARIES.md](NETWORK_BOUNDARIES.md) | Network hops |
-| [IDENTITY_MODEL.md](IDENTITY_MODEL.md) | AuthN vs AuthZ |
-| [SECRET_MODEL.md](SECRET_MODEL.md) | Credential vault |
-| [TEST_STRATEGY.md](TEST_STRATEGY.md) | Test pyramid |
-| [STACK.md](STACK.md) | Locked language/runtime versions |
-| [COST_MODEL.md](COST_MODEL.md) | Portfolio cost model |
-| [adr/README.md](adr/README.md) | Architecture Decision Records |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Topology, service boundaries, and enforcement flow |
+| [PRODUCT.md](PRODUCT.md) | What the product is, and what it is not |
+| [API_CONTRACTS.md](API_CONTRACTS.md) | OpenAPI, AsyncAPI, and JSON Schema |
+| [DATA_MODEL.md](DATA_MODEL.md) | Firestore collections and delivery records |
+| [adr/README.md](adr/README.md) | Architecture decision records |
 
-## Historical / not primary reviewer docs
+## Security and identity
 
-Files named `docs/PHASE_*.md` are implementation and audit records for a specific gate.
-They freeze the facts that were true **at that gate**, including resource counts and
-“NOT STARTED” statements that later gates closed.
+| Document | Topic |
+| --- | --- |
+| [SECURITY.md](SECURITY.md) | Controls, trust boundaries, secrets, and known gaps |
+| [THREAT_MODEL.md](THREAT_MODEL.md) | Assets, actors, and accepted threats |
+| [IDENTITY_AND_ACCESS.md](IDENTITY_AND_ACCESS.md) | Hosted sessions, local Entra, and Graph |
 
-Read them as evidence, not as current status. If a historical freeze conflicts with
-`PROJECT_STATUS.md` or the root README, those current docs win.
+## Infrastructure and delivery
 
-Planning scorecards in [SCORECARDS.md](SCORECARDS.md) and [JOB_MARKET.md](JOB_MARKET.md)
-are Phase 0 artifacts. They are not live inventory.
+| Document | Topic |
+| --- | --- |
+| [INFRASTRUCTURE.md](INFRASTRUCTURE.md) | GCP topology, Pulumi ownership, and cost limits |
+| [DELIVERY_AND_RECOVERY.md](DELIVERY_AND_RECOVERY.md) | Outbox, worker, quarantine, and recovery |
+| [CI_CD.md](CI_CD.md) | Keyless workflows, the frozen release, and rollback |
+| [OBSERVABILITY.md](OBSERVABILITY.md) | Logs, health, and what is not instrumented |
+
+## Testing and development
+
+| Document | Topic |
+| --- | --- |
+| [TESTING.md](TESTING.md) | Local test suites and opt-in GCP checks |
+| [LOCAL_DEVELOPMENT.md](LOCAL_DEVELOPMENT.md) | JDK 25 and Node 22 commands |
+| [DEMO.md](DEMO.md) | How to walk through the product |

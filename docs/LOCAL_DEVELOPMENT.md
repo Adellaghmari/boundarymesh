@@ -2,7 +2,7 @@
 
 Requires JDK 25 (Eclipse Temurin) and Node 22. Do not put secrets in Git or in `VITE_*` variables. Those values are public browser configuration.
 
-Microsoft Entra and live Graph are optional. Copy [`.env.example`](../.env.example) only if you are configuring local Entra; leave the values blank to keep recruiter/lab mode and the Graph contract harness.
+Microsoft Entra and live Graph are optional. Copy [`.env.example`](../.env.example) only if you are configuring local Entra. Leave the values blank to keep the lab and the Graph contract harness.
 
 ## Backend
 
@@ -16,7 +16,7 @@ From `backend/`:
 
 `scripts/start-backend.ps1` starts the worker (`http://127.0.0.1:8081`) then the API (`http://127.0.0.1:8080`).
 
-Default `mvnw verify` does not need Docker, ADC, or Google network access. Opt-in `-Pgcp-emulator` / `-Pgcp-live` groups are documented in [TEST_STRATEGY.md](TEST_STRATEGY.md).
+Default `mvnw verify` does not need Docker, ADC, or Google network access. Opt-in emulator and live KMS groups are documented in [TESTING.md](TESTING.md).
 
 ## Frontend
 

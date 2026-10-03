@@ -5,8 +5,7 @@ Pulumi + TypeScript workspace for Google Cloud resources in `boundarymesh-dev` /
 Authentication for local preview uses workstation **Application Default Credentials**. Do not set
 `GOOGLE_APPLICATION_CREDENTIALS`. Do not commit ADC files, tokens, or service-account JSON.
 
-Current reviewer truth: [docs/PULUMI.md](../docs/PULUMI.md), [docs/CI_CD.md](../docs/CI_CD.md),
-[PROJECT_STATUS.md](../PROJECT_STATUS.md).
+Current description: [docs/INFRASTRUCTURE.md](../docs/INFRASTRUCTURE.md) and [docs/CI_CD.md](../docs/CI_CD.md).
 
 ## Current state
 
@@ -23,7 +22,7 @@ Current reviewer truth: [docs/PULUMI.md](../docs/PULUMI.md), [docs/CI_CD.md](../
 | Cloud Run API / Web / Worker | LIVE; traffic and images owned by CD, fenced from Pulumi |
 | Firebase Hosting | LIVE / outside Pulumi |
 | Dead-letter forwarding | NOT CONFIGURED |
-| Phase 16D release | PUBLISHED then **promoted** by CD (not by Pulumi) |
+| Promoted release | Published, then promoted by CD, not by Pulumi |
 
 Pulumi `ignoreChanges` on image, revision, traffic, and Worker `instanceSplits`. Live promoted
 revisions therefore do not appear as Pulumi drift.
@@ -38,18 +37,9 @@ boundarymesh-worker@sha256:7b1841487a2d1b3751e8bc63ee5323965e76ebeae9ae581c95b67
 boundarymesh-web-edge@sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04
 ```
 
-See [docs/PHASE_16D_FINAL.md](../docs/PHASE_16D_FINAL.md) for the publication freeze. That document
-is historical for “not deployed”; current Hosting/API/Worker run the promoted 16D release.
+The promoted Hosting, API, and worker revisions are that published release. Older image tags can remain in Artifact Registry. They are not the current identities.
 
-## Historical image tags
-
-Phase 15D / 15I / 15J digest tags remain in Artifact Registry as historical images. They are not
-the current promoted identities.
-
-## Optional / not provisioned by this workspace
-
-Listed in [docs/ROADMAP.md](../docs/ROADMAP.md). Not CV blockers: DLQ forwarding, AppSec CI,
-tracing/alerts, historical cleanup.
+Dead-letter forwarding, application security CI, and tracing are not provisioned here.
 
 ## Local commands
 
