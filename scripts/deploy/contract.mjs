@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { createReadStream, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, normalize, relative, resolve, sep } from "node:path";
-import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
@@ -290,9 +289,28 @@ export async function extractFrontendArchive({ archivePath, destination, expecte
     return entries;
 }
 
+function frozenFirebaseVendorPath(lock) {
+    if (!/^[0-9a-f]{40}$/.test(lock.sourceSha ?? "")) throw new Error("Frozen release source SHA is malformed.");
+    const declared = lock.firebase?.vendoredPath;
+    if (typeof declared !== "string" || declared.length === 0 || declared.includes("\0")) {
+        throw new Error("Frozen Firebase config path is malformed.");
+    }
+    const expectedName = `firebase.${lock.sourceSha}.json`;
+    if (basename(declared) !== expectedName) throw new Error("Frozen Firebase config path does not match the historical source SHA.");
+    const absolute = resolve(repositoryRoot, declared);
+    const root = resolve(here, "release", "frozen");
+    const offset = relative(root, absolute);
+    if (!offset || offset === ".." || offset.startsWith(`..${sep}`) || isAbsolute(offset) || offset !== expectedName) {
+        throw new Error("Frozen Firebase config path escapes the vendored release directory.");
+    }
+    return absolute;
+}
+
 export function materializeFrozenFirebaseConfig({ destination, sourceSha, lock = loadFrozenRelease() }) {
     exact(sourceSha ?? lock.sourceSha, lock.sourceSha, "Firebase config source SHA");
-    const bytes = execFileSync("git", ["cat-file", "blob", `${lock.sourceSha}:${lock.firebase.configPath}`], { cwd: repositoryRoot, encoding: null });
+    const vendorPath = frozenFirebaseVendorPath(lock);
+    if (!existsSync(vendorPath)) throw new Error("Vendored frozen Firebase config is missing.");
+    const bytes = readFileSync(vendorPath);
     exact(sha256Bytes(bytes), lock.firebase.configSha256, "release-source firebase.json SHA-256");
     mkdirSync(dirname(destination), { recursive: true });
     writeFileSync(destination, bytes, { flag: "wx" });

@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
 import test from "node:test";
 import {
@@ -16,6 +18,7 @@ import {
     loadFrozenRelease,
     materializeFrozenFirebaseConfig,
     runtimeInvariant,
+    repositoryRoot,
     sha256Bytes,
     validateDispatchInputs,
     validateRecoveryDispatchInputs,
@@ -190,13 +193,104 @@ test("Cloud Run production allocation normalizes full revision names and rejects
     assert.throws(() => activeProductionRevision([...traffic("one", 50), ...traffic("two", 50)]), /exactly one revision/);
 });
 
-test("Firebase Hosting config is materialized byte-for-byte from the frozen release source", () => {
+test("Firebase Hosting config is materialized byte-for-byte from the vendored frozen release", () => {
+    const contractSource = readFileSync(fileURLToPath(new URL("../contract.mjs", import.meta.url)), "utf8");
+    assert.doesNotMatch(contractSource, /cat-file/);
     const directory = mkdtempSync(join(tmpdir(), "bm-firebase-config-"));
     const destination = join(directory, "firebase.json");
     materializeFrozenFirebaseConfig({ destination, sourceSha: lock.sourceSha });
     assert.ok(existsSync(destination));
     assert.equal(sha256Bytes(readFileSync(destination)), lock.firebase.configSha256);
+    assert.equal(sha256Bytes(readFileSync(join(repositoryRoot, lock.firebase.vendoredPath))), lock.firebase.configSha256);
+    assert.notEqual(sha256Bytes(readFileSync(join(repositoryRoot, "firebase.json"))), lock.firebase.configSha256);
     assert.throws(() => materializeFrozenFirebaseConfig({ destination: join(directory, "wrong.json"), sourceSha: "f".repeat(40) }), /source SHA/);
+});
+
+test("frozen Firebase reconstruction fails closed without Git history or the current config", () => {
+    const frozenDir = join(repositoryRoot, "scripts", "deploy", "release", "frozen");
+    const scratch = [];
+    const writeVendor = (sourceSha, bytes) => {
+        const name = `firebase.${sourceSha}.json`;
+        const path = join(frozenDir, name);
+        writeFileSync(path, bytes);
+        scratch.push(path);
+        return `scripts/deploy/release/frozen/${name}`;
+    };
+    try {
+        const missingSha = "1".repeat(40);
+        assert.throws(() => materializeFrozenFirebaseConfig({
+            destination: join(tmpdir(), "missing.json"),
+            sourceSha: missingSha,
+            lock: { ...lock, sourceSha: missingSha, firebase: { ...lock.firebase, vendoredPath: `scripts/deploy/release/frozen/firebase.${missingSha}.json` } },
+        }), /missing/);
+        const wrongSha = "2".repeat(40);
+        const wrongPath = writeVendor(wrongSha, Buffer.from("{}\n"));
+        assert.throws(() => materializeFrozenFirebaseConfig({
+            destination: join(tmpdir(), "wrong-bytes.json"),
+            sourceSha: wrongSha,
+            lock: { ...lock, sourceSha: wrongSha, firebase: { ...lock.firebase, vendoredPath: wrongPath, configSha256: "3".repeat(64) } },
+        }), /SHA-256/);
+        const substitutedSha = "4".repeat(40);
+        const substitutedPath = writeVendor(substitutedSha, readFileSync(join(repositoryRoot, "firebase.json")));
+        assert.throws(() => materializeFrozenFirebaseConfig({
+            destination: join(tmpdir(), "substituted.json"),
+            sourceSha: substitutedSha,
+            lock: { ...lock, sourceSha: substitutedSha, firebase: { ...lock.firebase, vendoredPath: substitutedPath } },
+        }), /SHA-256/);
+        assert.throws(() => materializeFrozenFirebaseConfig({
+            destination: join(tmpdir(), "escaped.json"),
+            sourceSha: lock.sourceSha,
+            lock: { ...lock, firebase: { ...lock.firebase, vendoredPath: "firebase.json" } },
+        }), /historical source SHA|escapes/);
+        assert.throws(() => materializeFrozenFirebaseConfig({
+            destination: join(tmpdir(), "renamed.json"),
+            sourceSha: "5".repeat(40),
+            lock: { ...lock, sourceSha: "5".repeat(40), firebase: { ...lock.firebase } },
+        }), /historical source SHA/);
+        assert.throws(() => materializeFrozenFirebaseConfig({
+            destination: join(tmpdir(), "malformed.json"),
+            sourceSha: "zz",
+            lock: { ...lock, sourceSha: "zz", firebase: { ...lock.firebase, vendoredPath: "scripts/deploy/release/frozen/firebase.zz.json" } },
+        }), /malformed/);
+    } finally {
+        for (const path of scratch) rmSync(path, { force: true });
+    }
+});
+
+test("a single-commit repository can reconstruct the frozen Firebase config", () => {
+    const directory = mkdtempSync(join(tmpdir(), "bm-single-branch-"));
+    try {
+        for (const relativePath of [
+            "scripts/deploy/contract.mjs",
+            "scripts/deploy/frozen-release.json",
+            lock.firebase.vendoredPath,
+            "scripts/release/release-manifest.mjs",
+            "contracts/release-manifest/v1.schema.json",
+            "contracts/deployment-evidence/v1.schema.json",
+        ]) {
+            const destination = join(directory, relativePath);
+            mkdirSync(dirname(destination), { recursive: true });
+            cpSync(join(repositoryRoot, relativePath), destination);
+        }
+        symlinkSync(join(repositoryRoot, "scripts", "deploy", "node_modules"), join(directory, "node_modules"), "junction");
+        execFileSync("git", ["init", "-b", "main"], { cwd: directory, stdio: "pipe" });
+        execFileSync("git", ["add", "scripts", "contracts"], { cwd: directory, stdio: "pipe" });
+        execFileSync("git", ["-c", "user.email=boundarymesh-test@example.com", "-c", "user.name=BoundaryMesh Test", "commit", "-m", "snapshot"], { cwd: directory, stdio: "pipe" });
+        assert.equal(execFileSync("git", ["rev-list", "--count", "HEAD"], { cwd: directory, encoding: "utf8" }).trim(), "1");
+        assert.throws(() => execFileSync("git", ["cat-file", "-e", `${lock.sourceSha}^{commit}`], { cwd: directory, stdio: "pipe" }));
+        const script = `
+            import { mkdirSync, readFileSync } from "node:fs";
+            import { materializeFrozenFirebaseConfig, loadFrozenRelease, sha256Bytes } from "./scripts/deploy/contract.mjs";
+            const lock = loadFrozenRelease();
+            mkdirSync("./out", { recursive: true });
+            materializeFrozenFirebaseConfig({ destination: "./out/firebase.json", sourceSha: lock.sourceSha });
+            if (sha256Bytes(readFileSync("./out/firebase.json")) !== "${"34d9f2a073429420b6a15b9133486096fba75a1255ec1f3431fda5b2fd5a242c"}") process.exit(2);
+        `;
+        execFileSync(process.execPath, ["--input-type=module", "-e", script], { cwd: directory, stdio: "pipe" });
+    } finally {
+        rmSync(join(directory, "node_modules"), { force: true });
+        rmSync(directory, { recursive: true, force: true });
+    }
 });
 
 test("ETag and stale-stage checks fail closed", () => {

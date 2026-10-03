@@ -109,7 +109,7 @@ Do not describe recovery as part of every promotion.
 
 ## Current deployed release
 
-The promoted release was built from source `a876a7bfa5fa86f88e8387efb557773281daa6e6` and deployed without a rebuild. Later commits, including the public portfolio page, are in Git and are not that frozen artifact.
+The promoted release was built from source `a876a7bfa5fa86f88e8387efb557773281daa6e6` and deployed without a rebuild. Later commits, including the public portfolio page, are in Git and are not that frozen artifact. The Hosting config for that release is the vendored file under `scripts/deploy/release/frozen/`. Deployment reads those bytes and checks the recorded SHA256. It does not read the historical commit from Git, and it does not substitute the current `firebase.json`.
 
 | Surface | Identity |
 | --- | --- |

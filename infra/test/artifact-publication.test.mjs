@@ -15,9 +15,8 @@ const repositoryRoot = join(infraRoot, "..");
 const source = readFileSync(join(infraRoot, "src", "artifact-publication.ts"), "utf8");
 const registry = readFileSync(join(infraRoot, "src", "registry.ts"), "utf8");
 const wif = readFileSync(join(infraRoot, "src", "wif.ts"), "utf8");
-const templatePath = join(repositoryRoot, "docs", "templates", "artifact-publish.yml");
-const template = readFileSync(templatePath, "utf8");
-const workflow = readFileSync(join(repositoryRoot, ".github", "workflows", "artifact-publish.yml"), "utf8");
+const workflowPath = join(repositoryRoot, ".github", "workflows", "artifact-publish.yml");
+const workflow = readFileSync(workflowPath, "utf8");
 const schema = JSON.parse(readFileSync(join(repositoryRoot, "contracts", "release-manifest", "v1.schema.json"), "utf8"));
 
 const sha = "a".repeat(40);
@@ -164,8 +163,9 @@ test("WIF publication context remains exact when deployment contexts are added",
 });
 
 test("publication workflow is manual-only, least privileged, and matches the reviewed contract", () => {
-    assert.equal(existsSync(join(repositoryRoot, ".github", "workflows", "artifact-publish.yml")), true);
-    assert.match(template, /NON-RUNNABLE PHASE 16D WORKFLOW CONTRACT/);
+    assert.equal(existsSync(workflowPath), true);
+    assert.equal(existsSync(join(repositoryRoot, "docs", "templates", "artifact-publish.yml")), false);
+    assert.match(workflow, /does not deploy BoundaryMesh/);
     assert.match(workflow, /^\s*workflow_dispatch:\s*$/m);
     assert.match(workflow, /^\s{2}contents:\s*read\s*$/m);
     assert.match(workflow, /^\s{2}id-token:\s*write\s*$/m);
