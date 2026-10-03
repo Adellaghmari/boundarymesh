@@ -1,8 +1,8 @@
 # Data model (Firestore)
 
-Access patterns first. Firestore Native, regional `europe-west4`, named database `boundarymesh` (never the default database). The Phase 15F-A Pulumi database uses **PESSIMISTIC** concurrency. This is **not** a SQL schema dump.
+Access patterns first. Firestore Native, regional `europe-west4`, named database `boundarymesh` (never the default database). The database uses pessimistic concurrency. This is not a SQL schema dump.
 
-Phase 15F-C live-verified the official Java SDK path against `projects/boundarymesh-dev/databases/boundarymesh`. Phase 15I-D1 verified one deployed workload transaction end to end; D2 removed its disposable outbox and delivery-idempotency records while preserving signed attestation and append-only audit evidence. The delivery outbox collection is **EMULATOR TESTED + LIVE VERIFIED**. Pub/Sub topics and pull subscriptions are **LIVE / PROVISIONED**.
+The Java SDK path is verified against `projects/boundarymesh-dev/databases/boundarymesh`. One deployed workload transaction completed end to end. Disposable outbox and delivery-idempotency records from that check were removed. Signed attestation and append-only audit evidence were kept. The delivery outbox is emulator tested and live verified. Pub/Sub topics and the pull subscription are provisioned.
 
 ## Patterns
 
@@ -54,7 +54,7 @@ Identity, boundary/outcome references, reason metadata, status/lifecycle, recove
 
 ### `attestations/{attestationId}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
 
-See [EXCHANGE_ATTESTATIONS.md](EXCHANGE_ATTESTATIONS.md). Public signature + signer **reference** only. No private key material.
+Public signature and signer reference only. No private key material. Cloud KMS signs the attestation. The private key does not leave KMS.
 
 ### `deliveryOutbox/{instructionId}` — **IMPLEMENTED** (emulator-tested + live-verified locally)
 
@@ -85,7 +85,7 @@ Circuit state, last HTTP status (no body), credential_id, Graph subscription ids
 
 ### `credentials/{credentialId}`
 
-References and rotation metadata only. [SECRET_MODEL.md](SECRET_MODEL.md).
+References and rotation metadata only. Secret values stay in Secret Manager.
 
 ### `contracts/{contractId}/versions/{version}`
 
@@ -105,7 +105,7 @@ Graph subscription metadata, expiry, integration_id. No `clientState` value.
 
 ### `projectIdentity/current`
 
-Git SHA, Cloud Run revisions, Pulumi stack, AppSec summary — **live project data**, labeled separately from synthetic transactions.
+Described as a place for Git SHA, Cloud Run revisions, and stack summary. The current services do not write this document.
 
 ## Indexes
 
@@ -113,7 +113,7 @@ Composite: `transactions`: `synthetic` + `occurred_at`; `quarantine`: `status` +
 
 ## Why not Postgres or DynamoDB
 
-Project A already demonstrates PostgreSQL. Project B already demonstrates DynamoDB. Firestore matches serverless GCP and the key/value + document access patterns above. If a later phase proves query patterns that Firestore cannot serve (heavy ad-hoc analytics), the fallback is **BigQuery export**, not a second OLTP database. BigQuery is **OPTIONAL** and not in Phase 0 provision.
+Firestore matches the key and document access patterns above. Heavy ad-hoc analytics are not a current requirement. BigQuery export is not provisioned.
 
 ## Consistency
 

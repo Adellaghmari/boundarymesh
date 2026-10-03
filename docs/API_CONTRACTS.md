@@ -6,11 +6,11 @@ Generated OpenAPI: `/v3/api-docs` (springdoc). Partner/runtime contracts live un
 
 Base path: `/api/v1`.
 
-## Phase 3–4 implemented
+## HTTP surface
 
 | Method | Path | Auth | Notes |
 | --- | --- | --- | --- |
-| GET | `/health`, `/ready` | public | Recruiter-safe |
+| GET | `/health`, `/ready` | public | Status only |
 | GET | `/security/me` | bearer JWT | Safe identity only |
 | POST | `/identity/evaluate` | bearer JWT (authenticated) | Domain AuthN/AuthZ → engine |
 | POST | `/dev/evaluate` | bearer JWT + `boundary.evaluate` | Local/test synthetic evaluate |
@@ -84,7 +84,7 @@ The JSON for `GET /transactions/{id}` maps 1:1 to UI:
 
 ## AsyncAPI
 
-`delivery-instructions` message: see [CONTRACT_MODEL.md](CONTRACT_MODEL.md).  
+`delivery-instructions` message is the AsyncAPI payload for an approved crossing.
 DLQ envelope adds `delivery_attempt`, `last_error_class` (enum, no body dump).
 
 ## Versioning
@@ -93,4 +93,4 @@ API URI `/api/v1`. Breaking changes increment URI. Additive fields allowed.
 
 ## Rate limits
 
-Public GET: generous. Ingest: per connector id. Verify: per IP. Exact numbers in Phase 3.
+Public reads are loose. Ingest is limited per connector. Verify is limited per caller. The application enforces the numbers. They are not a published service level.

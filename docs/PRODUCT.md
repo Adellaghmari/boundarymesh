@@ -1,164 +1,34 @@
 # Product
 
-**Name:** BoundaryMesh  
-**Tagline:** Secure every system crossing.  
-**Owner:** Adel Laghmari — portfolio project, not professional employment.  
-**Project:** C of three flagship portfolio projects. A and B are frozen.
+BoundaryMesh decides whether one system may exchange data or an action with another. A successful HTTP status code is not that decision.
 
-## A. Product definition
+A crossing is an untrusted payload leaving one trust domain and entering another. The engine checks identity, authorization, authenticity, freshness, and replay. It validates the integration contract and decides which fields may leave. The outcome is `ALLOW`, `ALLOW_WITH_TRANSFORMATION`, `QUARANTINE`, or `REJECT`. Allowed work becomes a delivery instruction. The system records the controls it applied.
 
-BoundaryMesh is a **boundary enforcement product for system-to-system integrations**.
+This is not an API dashboard, an integration platform, an AI assistant, or a release board.
 
-It intercepts an untrusted transaction that is attempting to leave one trust domain and enter another. Before the transaction continues, the product evaluates identity, authorization, authenticity, freshness, replay, contract compatibility, destination-specific data egress, credential resolvability, and connector safety. It then emits a **deterministic enforcement outcome**, optionally transforms the payload, routes or quarantines the work, delivers through enterprise integration patterns, and records **machine-verifiable evidence** of what was enforced.
+## What a reader can see
 
-The recruiter-facing impression that must be true:
+The public page explains the system. It does not submit transactions.
 
-> This developer built a cross-system security enforcement layer that controls identity, contracts, data movement and delivery, then produces cryptographically verifiable evidence of what was enforced.
+The operator console can submit one synthetic transaction after Google sign-in. That path is the hosted proof that the web edge, private API, outbox, Pub/Sub, and worker agree. It does not call a partner API.
 
-### Unique product audit (must remain NO)
+The local lab is the full walkthrough: HMAC webhooks, contract and egress checks, quarantine, audit, attestation, and one bounded Microsoft Graph calendar pull against a personal account.
 
-| Trap | Answer | Why BoundaryMesh is not that |
-| --- | --- | --- |
-| Just an API gateway? | **NO** | Gateways terminate TLS and route. BoundaryMesh owns contract versions, field-level egress, replay vs duplicate, quarantine as an operational state, and signed attestations of enforcement. |
-| Just an integration dashboard? | **NO** | The UI explains enforcement. The product is the engine and the evidence, not charts of HTTP calls. |
-| Zapier / iPaaS clone? | **NO** | iPaaS optimizes connectivity and workflow authoring. BoundaryMesh optimizes **whether a crossing is allowed** and **what proof exists**. |
-| Project A without AI? | **NO** | Project A asks whether an AI recommendation is evidence-supported for a human. BoundaryMesh asks whether a machine transaction may cross a boundary. No LLM, no RAG, no human-in-the-loop as the core decision. |
-| Project B on GCP? | **NO** | Project B is release risk, health, blast radius, rollback. BoundaryMesh is integration security. Pub/Sub is delivery decoupling, not an EventBridge/SQS retelling. |
+## Differentiation that is in the software
 
-## B. Product thesis
+- The untrusted request stops at the boundary. Destinations see a normalized instruction.
+- Controls are typed Java results, not a prompt and not a gateway plugin.
+- Transformation is an explicit outcome. Redacted fields are part of the decision, not a silent filter.
+- Quarantine is a durable hold with a reason. It is not a log line.
+- Exchange attestations are signed in Cloud KMS. Release artifacts are not signed by that key.
+- Publication, staging, promotion, rollback, and evidence recovery are separate human-gated operations.
 
-A **successful HTTP request does not prove** that one system should exchange data or actions with another.
+## Honest limits
 
-The missing product is a deterministic enforcement layer that treats every external transaction as a **boundary crossing**, not as a successful webhook.
+The Google Cloud project is a portfolio and development environment. It is not enterprise production and it does not carry paid traffic.
 
-BoundaryMesh therefore asks:
+Production Microsoft Entra is disabled. Graph change notifications are not implemented. External connector delivery is disabled. Dead-letter forwarding is not configured. Rollback is implemented and has not been executed against live traffic. SBOM and provenance are unsigned. There is no OpenTelemetry pipeline and no application pull-request workflow.
 
-**CAN THIS TRANSACTION CROSS THIS SYSTEM BOUNDARY?**
+## Not in this repository
 
-It does **not** ask:
-
-- Is this information true?
-- Should a human trust an AI answer?
-- What changed in a release, and how risky is recovery?
-
-The decision is **application/security policy**. It is not an AI recommendation, not fact-checking, and not a human approval workflow.
-
-### Core execution flow
-
-```text
-UNTRUSTED SYSTEM TRANSACTION
-  → AUTHENTICATE
-  → AUTHORIZE
-  → VERIFY AUTHENTICITY
-  → CHECK FRESHNESS / REPLAY
-  → VALIDATE CONTRACT
-  → GOVERN DATA EGRESS
-  → ENFORCE BOUNDARY
-  → CREDENTIAL / CONSENT
-  → CAMEL ROUTE / CONNECTOR
-  → DELIVER OR QUARANTINE
-  → RECORD AUDIT CHAIN
-  → GENERATE CRYPTOGRAPHIC EXCHANGE ATTESTATION
-```
-
-### Enforcement outcomes
-
-| Outcome | Meaning |
-| --- | --- |
-| `ALLOW` | All controls passed. Payload unchanged. Delivery may proceed. |
-| `ALLOW_WITH_TRANSFORMATION` | Controls passed after deterministic redaction/transformation. Delivery uses the transformed payload. |
-| `QUARANTINE` | Not a silent drop. The crossing is held: contract drift, connector unsafety, exhausted retry, missing secret. Operators may inspect safe metadata and reprocess. |
-| `REJECT` | Fail closed. Authentication, authorization, authenticity, replay, or hard data-policy denial. |
-
-No probabilities. No confidence scores. No generated verdicts.
-
-## Six flagship differentiators
-
-### 1. Identity Federation Gateway
-
-Cryptographically valid identity is not permission. Entra / JWT / JWKS validation is authentication. Scopes, app roles, and integration ACLs are authorization. Both appear separately in API evidence and UI.
-
-### 2. Webhook & Subscription Defense
-
-Generic HMAC-SHA256 (timestamp, nonce, constant-time compare, replay window) is distinct from Microsoft Graph change-notification validation (subscription validation handshake, `clientState`, lifecycle notifications). Malicious replay is distinct from legitimate duplicate delivery.
-
-### 3. Contract Drift Firewall
-
-OpenAPI 3.1, AsyncAPI, and JSON Schema are **runtime artifacts**. Drift is an operational state (`QUARANTINE` + `CONTRACT_DRIFT`), not merely HTTP 400.
-
-### 4. Data Boundary Firewall
-
-Destination-specific allow / redact / deny. Explicit rules, not ML PII classification. Evidence records field actions without storing sensitive values.
-
-### 5. Credential & Consent Vault
-
-Google Secret Manager holds secrets. Firestore holds references, versions, rotation status, Entra consent metadata. Rotation is a demonstrated control.
-
-### 6. Quarantine & Recovery Orchestrator
-
-Timeouts, bounded retries, 429 Retry-After, circuit breaker, Pub/Sub redelivery, idempotent reprocess. Quarantine is a workflow with reason codes, not a trash folder. Dead-letter forwarding is **not configured**.
-
-## Synthetic integration organization
-
-**Do not reuse Northstar Commerce or any Project B fiction.**
-
-**Organization:** Velora Interchange  
-**Marking:** every business record displays **SYNTHETIC DEMO**  
-**Nature:** fictional B2B operations network that coordinates partner work across calendar, CRM, orders, settlements, and fulfillment. Not a real company. Not a real customer.
-
-| System | Role | Security character |
-| --- | --- | --- |
-| **Helix 365** | Microsoft 365 tenant (Entra + Graph) | Entra application identity, Graph calendar notifications, least-privilege `Calendars.Read` |
-| **CoveCRM** | CRM destination | Inbound activity records; strict egress (emails redacted, internal scores denied) |
-| **QuayForge Orders** | Commerce / order platform | Signed partner webhooks (HMAC-SHA256) |
-| **Rivertide Settlements** | Financial / payment-like destination | High-sensitivity egress; extra denylist; never a real payment processor |
-| **Lumenway Fulfillment** | Analytics / fulfillment destination | Broader allowlist, still no secrets; used to show destination-specific policy |
-
-### Flagship live-or-harness scenarios
-
-1. **Helix 365 → CoveCRM** — Outlook calendar event (customer meeting created/updated) becomes a CRM activity after identity, contract, and egress checks.
-2. **QuayForge → Rivertide** — signed order webhook becomes a settlement instruction after HMAC, replay, contract, and field denial checks.
-
-These two connectors are enough. Additional Graph APIs are out of scope unless a later phase finds a genuine gap.
-
-## Recruiter experience
-
-The **hosted** operator console (`https://boundarymesh-dev.web.app`) requires Firebase Google sign-in. It is a portfolio/dev environment, **not** a public recruiter demo and **not** anonymous SaaS.
-
-The **local** Vue lab console (`npm run dev`) is the walkthrough: overview, connections, labs, quarantine, attestations, boundary graph, and architecture. No cloud operator account is required for those labs.
-
-Protected mutations (quarantine reprocess, credential rotation, policy activation) require an authorized session: Firebase on the hosted path, Entra OIDC on the local Microsoft admin path when configured.
-
-### One-minute wow path
-
-A Helix 365 calendar transaction appears:
-
-| Control | Result |
-| --- | --- |
-| Identity | VERIFIED |
-| Authorization | VERIFIED |
-| Contract | VALID |
-| Replay | CLEAR |
-| Data boundary | 2 FIELDS REDACTED |
-| Delivery | SUCCESS |
-| Boundary outcome | `ALLOW_WITH_TRANSFORMATION` |
-| Exchange attestation | SIGNATURE VALID |
-
-Then the same shape with wrong audience → `REJECT`.  
-Then the same signed webhook outside the replay window → `REJECT`.  
-Then unsupported schema version → `QUARANTINE`.
-
-A transaction detail page must answer the questions in [docs/API_CONTRACTS.md](API_CONTRACTS.md) without exposing secrets or raw tokens.
-
-## Truth boundaries
-
-**SYNTHETIC DEMO:** Velora systems, payloads, failures, transactions.  
-**LIVE PROJECT DATA:** Git SHA, CI, GCP revision, Pulumi stack, real Graph calls **only if executed**, real KMS verify, real Pub/Sub, real Cloud Run. AppSec scanners are not in CI.
-
-Never blur them. Never claim live Microsoft 365 behavior from WireMock.
-
-## Career purpose (honest)
-
-Portfolio evidence for Integration Engineer, Java Backend, Technical Solutions / Implementation, API, IAM-aware software, Cloud (GCP), and Microsoft-ecosystem integration conversations.
-
-Never claim: professional security job, paid M365 consulting, enterprise production ownership, years of IAM or Java employment.
+Later work could add dead-letter forwarding, tracing, or a secret scanner in CI. None of that is required to understand or run the system as it stands. Do not describe those items as present.

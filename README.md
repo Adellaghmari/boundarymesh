@@ -64,7 +64,7 @@ More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | Rollback | Implemented, with preserved targets. Not executed against the live environment |
 | Compute Engine API | Disabled on purpose |
 
-This is not a public recruiter demo and not a public SaaS product. The hosted UI is an operator console. The walkthrough is local. Inventory with revision names: [PROJECT_STATUS.md](PROJECT_STATUS.md).
+The public page explains the project. It is not a public SaaS product, and it is not anonymous access to operator actions. Revision names and the frozen release identity are in [docs/CI_CD.md](docs/CI_CD.md).
 
 ## Engineering highlights
 
@@ -90,7 +90,7 @@ This is not a public recruiter demo and not a public SaaS product. The hosted UI
 | Security | Firebase Auth and a BFF session, HMAC, JWT and JWKS, private API |
 | Testing | JUnit, Spring Security tests, Camel and WireMock, Vitest, Playwright |
 
-Version pins: [docs/STACK.md](docs/STACK.md). OpenTelemetry, Cosign, ZAP, and Dependabot are not in this repository.
+Version pins: [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md). OpenTelemetry, Cosign, ZAP, and Dependabot are not in this repository.
 
 ## How a crossing moves
 
@@ -121,7 +121,7 @@ flowchart LR
   evid -.-> rec
 ```
 
-Promotion evidence is written only when the promotion completed. If that record is missing, a separate keyless workflow can publish it. That workflow cannot promote, roll back, or redeploy. Detail: [docs/CI_CD.md](docs/CI_CD.md) and [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md).
+Promotion evidence is written only when the promotion completed. If that record is missing, a separate keyless workflow can publish it. That workflow cannot promote, roll back, or redeploy. Detail: [docs/CI_CD.md](docs/CI_CD.md) and [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Testing
 
@@ -137,30 +137,26 @@ The suites below were not run as one combined total. Do not add the counts toget
 
 Coverage includes domain decisions, Spring Security slices, Camel routes, Resilience4j, contract and egress fixtures, and Vue view models. The default `mvnw verify` does not include the optional GCP emulator or live groups.
 
-Known findings, not hidden: oxlint notes in test mocks, frontend transitive npm audit findings on the Firebase and `@grpc` path, and three transitive findings in infra. The deploy script audit is clean. This repository does not claim zero vulnerabilities. See [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md).
+Known findings, not hidden: oxlint notes in test mocks, frontend transitive npm audit findings on the Firebase and `@grpc` path, and three transitive findings in infra. The deploy script audit is clean. This repository does not claim zero vulnerabilities. See [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Repository guide
 
 | Path | What it is |
 | --- | --- |
 | [`backend/`](backend/) | Java modules: domain, API, web BFF, worker, GCP adapters |
-| [`frontend/`](frontend/) | Vue 3 console for local labs, and the hosted operator app |
+| [`frontend/`](frontend/) | Vue 3 lab console locally, and the hosted public page plus operator console |
 | [`infra/`](infra/) | Pulumi TypeScript for the BoundaryMesh development project |
 | [`contracts/`](contracts/) | OpenAPI, AsyncAPI, JSON Schema, and release evidence schemas |
 | [`scripts/deploy/`](scripts/deploy/) | Publish, stage, promote, rollback, and evidence recovery |
-| [`docs/`](docs/) | Current architecture, security, and delivery docs. `PHASE_*` files are history |
+| [`docs/`](docs/) | Architecture, security, delivery, and local development |
 
 ## Where to read next
 
-Start here. Phase notes are audit history, not the product introduction.
-
-- [PROJECT_STATUS.md](PROJECT_STATUS.md) for what is live
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for topology
-- [docs/CI_CD.md](docs/CI_CD.md) for WIF, stage, promote, and recovery
-- [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md) for controls and gaps
-- [docs/PULUMI.md](docs/PULUMI.md) for infrastructure and the fields delivery owns
 - [docs/README.md](docs/README.md) for the documentation map
-- [CV_CLAIMS_MATRIX.md](CV_CLAIMS_MATRIX.md) for what is safe to say on a CV
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for topology
+- [docs/SECURITY.md](docs/SECURITY.md) for controls and gaps
+- [docs/CI_CD.md](docs/CI_CD.md) for publish, stage, promote, and recovery
+- [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) for Pulumi and what delivery owns
 - [docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) for how to run it locally
 
 ## What this project does not claim
@@ -179,7 +175,7 @@ It does not support these claims:
 - "All human access is keyless." Workstation credentials exist
 - Zero trust, a fully hardened platform, or complete observability
 
-Later ideas that are not required for a CV: [docs/ROADMAP.md](docs/ROADMAP.md).
+Optional later work, not part of the current system: [docs/PRODUCT.md](docs/PRODUCT.md).
 
 ## Local development
 

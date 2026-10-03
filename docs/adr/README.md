@@ -1,16 +1,15 @@
 # Architecture Decision Records
 
-Status: **Accepted** at Phase 0 unless noted. Date: 2026-09-09.
+Status: accepted unless a record says otherwise. Date: 2026-09-09.
 
-These ADRs are design decisions. They are not live inventory. Current topology and claims:
-[../README.md](../README.md), [../../PROJECT_STATUS.md](../../PROJECT_STATUS.md),
-[../../CV_CLAIMS_MATRIX.md](../../CV_CLAIMS_MATRIX.md).
+These records are design decisions. Current topology is [../ARCHITECTURE.md](../ARCHITECTURE.md)
+and the root [README](../../README.md).
 
 | ID | Title |
 | --- | --- |
 | [0001](0001-java-and-spring.md) | Java 25, Spring Boot 4.1, Spring Security 7.1 |
 | [0002](0002-apache-camel.md) | Apache Camel 4.22 on the worker |
-| [0003](0003-vue.md) | Vue 3 recruiter console |
+| [0003](0003-vue.md) | Vue 3 console |
 | [0004](0004-gcp-cloud-run.md) | GCP Cloud Run Service + Worker Pool |
 | [0005](0005-firestore.md) | Firestore Native |
 | [0006](0006-pubsub.md) | Pub/Sub for post-boundary delivery |
