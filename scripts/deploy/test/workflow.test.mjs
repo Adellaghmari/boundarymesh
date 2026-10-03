@@ -186,6 +186,7 @@ test("application identities are fixed by the frozen release lock", () => {
     assert.equal(lock.images.web, "sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04");
     assert.equal(lock.frontend.archiveSha256, "80d4cfa4e88cac297c7a130ac5c83d68b468b06b60e04537c5060cb275943d84");
     assert.equal(lock.firebase.configSha256, "34d9f2a073429420b6a15b9133486096fba75a1255ec1f3431fda5b2fd5a242c");
+    assert.equal(lock.firebase.vendoredPath, "scripts/deploy/release/frozen/firebase.a876a7bfa5fa86f88e8387efb557773281daa6e6.json");
 });
 
 test("runtime mutation adapter uses ETags, allowMissing=false, and exact field masks", () => {
