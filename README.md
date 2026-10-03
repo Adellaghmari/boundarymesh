@@ -6,7 +6,7 @@ A successful HTTP request does not prove that one system should be allowed to ex
 
 A system crossing is an untrusted payload leaving one trust domain and entering another. One example is a signed partner webhook that becomes a settlement instruction. BoundaryMesh checks identity, authorization, authenticity, freshness, and replay. It validates the integration contract and decides which fields may leave. The outcome is one of `ALLOW`, `ALLOW_WITH_TRANSFORMATION`, `QUARANTINE`, or `REJECT`. Allowed work becomes a delivery instruction, and the system records what it enforced.
 
-This is not an API dashboard, an iPaaS product, an AI copilot, or a release board. It is a portfolio project in the GCP project `boundarymesh-dev`. It is not enterprise production, and it does not carry paid customer traffic.
+This is not an API dashboard, an iPaaS product, an AI copilot, or a release board. It is a portfolio project in the BoundaryMesh development project on Google Cloud. It is not enterprise production, and it does not carry paid customer traffic.
 
 ## What I built
 
@@ -18,18 +18,18 @@ The hosted path is Firebase Hosting, then an authenticated web BFF, then a priva
 
 ```mermaid
 flowchart TD
-  user[User / browser]
+  user[Browser]
   hosting[Firebase Hosting]
   bff[Web BFF]
   api[Private API]
-  fs[(Firestore / outbox)]
+  fs[(Firestore outbox)]
   kms[Cloud KMS]
   sm[Secret Manager]
   ps[Pub/Sub]
   worker[Worker Pool]
   ext[External provider boundary]
 
-  user -->|Firebase Auth / session cookie| hosting
+  user -->|Firebase Auth session cookie| hosting
   hosting --> bff
   bff -->|IAM identity token| api
   api --> fs
@@ -46,9 +46,9 @@ More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 | Item | State |
 | --- | --- |
-| Portfolio GCP environment | Live (`boundarymesh-dev`, `europe-west4`) |
+| Portfolio GCP environment | Live, in Europe west 4 |
 | API, web BFF, and worker | Promoted release, 100% traffic |
-| Firebase Hosting | Live. Operator sign-in is required |
+| Firebase Hosting | Live. Operator sign in is required |
 | Pulumi | 83 managed resources, zero drift |
 | Promotion evidence | Verified and immutable |
 | Rollback | Implemented, with preserved targets. Not executed against the live environment |
@@ -62,7 +62,7 @@ This is not a public recruiter demo and not a public SaaS product. The hosted UI
 - Firebase Hosting to a web BFF to a private Cloud Run API
 - Firestore outbox to Pub/Sub to a Cloud Run worker pool
 - Pulumi owns the infrastructure (83 resources). Continuous delivery owns the image, revision, and traffic
-- GitHub Actions reaches GCP through Workload Identity Federation. Seven exact contexts. CI, deploy, and workload service accounts have no user-managed keys
+- GitHub Actions reaches GCP through Workload Identity Federation. Seven exact contexts. CI, deploy, and workload service accounts have no keys managed by users
 - Release artifacts are immutable and pinned to a digest. SBOM and provenance are published and unsigned
 - Cloud KMS signs exchange attestations. That is enforcement proof, not artifact signing
 - A person starts stage and promote. A separate break glass workflow can restore missing promotion evidence. It cannot promote again
@@ -89,18 +89,18 @@ Version pins: [docs/STACK.md](docs/STACK.md). OpenTelemetry, Cosign, ZAP, and De
 3. `REJECT` stops and keeps evidence only. `QUARANTINE` holds the work for an operator. `ALLOW` and `ALLOW_WITH_TRANSFORMATION` emit a `DeliveryInstruction`.
 4. The hosted API writes that instruction to a Firestore outbox and publishes it to Pub/Sub.
 5. The worker consumes the event, may resolve one named secret, and runs Camel only after the policy decision.
-6. A finished crossing writes a SHA-256 audit chain and an exchange attestation signed by Cloud KMS.
+6. A finished crossing writes a SHA256 audit chain and an exchange attestation signed by Cloud KMS.
 
 The hosted check was one synthetic browser transaction through that internal path. There is no live fan out to third party connectors. Graph change notifications are not implemented.
 
 ## Security and delivery
 
-GitHub Actions authenticates to GCP with Workload Identity Federation. The CI, deploy, and workload service accounts have no user-managed keys. The core API is private behind the web BFF. A deployment consumes a release artifact that is already pinned to a digest. It does not rebuild the image.
+GitHub Actions authenticates to GCP with Workload Identity Federation. The CI, deploy, and workload service accounts have no keys managed by users. The core API is private behind the web BFF. A deployment consumes a release artifact that is already pinned to a digest. It does not rebuild the image.
 
 ```mermaid
 flowchart LR
   src[Source on main]
-  verify[Verification / WIF]
+  verify[Verification with WIF]
   arts[Immutable artifacts]
   stage[Stage]
   promo[Promote]
@@ -123,9 +123,9 @@ The suites below were not run as one combined total. Do not add the counts toget
 | Frontend (Vitest) | 63 tests |
 | Infrastructure | 47 tests |
 | Deploy scripts | 115 tests |
-| Playwright | 15 tests in the repo. They were not re-run for the documentation freeze |
+| Playwright | 15 tests in the repo. They were not run again for the documentation freeze |
 
-Coverage includes domain decisions, Spring Security slices, Camel routes, Resilience4j, contract and egress fixtures, and Vue view models. The default `mvnw verify` does not include the opt-in GCP emulator or live groups.
+Coverage includes domain decisions, Spring Security slices, Camel routes, Resilience4j, contract and egress fixtures, and Vue view models. The default `mvnw verify` does not include the optional GCP emulator or live groups.
 
 Known findings, not hidden: oxlint notes in test mocks, frontend transitive npm audit findings on the Firebase and `@grpc` path, and three transitive findings in infra. The deploy script audit is clean. This repository does not claim zero vulnerabilities. See [docs/APPLICATION_SECURITY.md](docs/APPLICATION_SECURITY.md).
 
@@ -135,7 +135,7 @@ Known findings, not hidden: oxlint notes in test mocks, frontend transitive npm 
 | --- | --- |
 | [`backend/`](backend/) | Java modules: domain, API, web BFF, worker, GCP adapters |
 | [`frontend/`](frontend/) | Vue 3 console for local labs, and the hosted operator app |
-| [`infra/`](infra/) | Pulumi TypeScript for `boundarymesh-dev` |
+| [`infra/`](infra/) | Pulumi TypeScript for the BoundaryMesh development project |
 | [`contracts/`](contracts/) | OpenAPI, AsyncAPI, JSON Schema, and release evidence schemas |
 | [`scripts/deploy/`](scripts/deploy/) | Publish, stage, promote, rollback, and evidence recovery |
 | [`docs/`](docs/) | Current architecture, security, and delivery docs. `PHASE_*` files are history |
