@@ -1,51 +1,25 @@
-# Threat model (STRIDE)
+# Threat model
 
-Scope: BoundaryMesh API, worker, Vue demo, GCP project, Entra/Graph connector, partner webhooks.  
-Out of scope: compromising Google or Microsoft as vendors; physical datacenter.
+Scope: the BoundaryMesh API, worker, web edge, the Google Cloud project, the local Entra and Graph connector, and partner webhooks. Compromising Google or Microsoft as vendors, and physical datacenter access, are out of scope.
 
-## Phase 8–10 implemented mitigations
+## Current mitigations
 
-| Threat | Implemented now | Still planned |
+| Threat | In place | Not in place |
 | --- | --- | --- |
-| Information disclosure (secrets) | References only in API/UI/ControlVector; worker JIT resolve; leak tests | Secret Manager IAM, Gitleaks CI |
-| Elevation of privilege (reprocess) | `boundary.admin` on quarantine reprocess | Entra app roles |
-| Replay (inbound) | HMAC nonce window | Firestore TTL nonce |
-| Replay (outbound) | Delivery idempotent consumer | Firestore idempotency |
-| Tampering | JWT/HMAC/contracts/egress + audit-chain verification + ECDSA attestation verify; KMS key hosted in GCP, live signing verified, API-only CryptoKey IAM applied | Cloud Run workload verification, Firestore versioning |
-| Denial / dependency failure | Bounded R4j retry, circuit breaker, quarantine | Pub/Sub redelivery budget |
+| Secret disclosure | References in records; worker resolves Secret Manager at use time; named-secret IAM | A secret scanner in CI |
+| Reprocess by an anonymous caller | Operator session on the hosted path; `boundary.admin` on the local path | Production Entra app roles |
+| Inbound replay | HMAC timestamp window and nonce store | A Firestore TTL policy on nonce documents |
+| Outbound replay | Idempotent delivery consumer | |
+| Tampering of a crossing | JWT or HMAC, contract checks, egress policy, audit chain, Cloud KMS attestation | Object versioning that would detect a privileged storage edit |
+| Dependency failure | Resilience4j retry and circuit breaker, then quarantine | Pub/Sub dead-letter forwarding |
+| Spoofed webhook | HMAC-SHA256 over the raw body, constant-time compare | Graph change-notification proofs. Notifications are not implemented |
+| Oversized ingest | 65536-byte webhook limit | A distributed rate limit |
 
-## Phase 11–13 implemented mitigations
+The audit chain does not stop a privileged storage administrator from deleting documents. That remains a governance concern.
 
-| Threat | Implemented now | Still planned |
-| --- | --- | --- |
-| Repudiation | Structured audit + SHA-256 hash-chain continuity | Firestore + exported checkpoints |
-| Tampering (audit entries) | Recalculated hashes and previous-hash links | Object versioning / privileged-admin detection |
-| Tampering (attestation) | ECDSA P-256 verification of RFC 8785 bytes; Cloud KMS signing **LIVE VERIFIED LOCALLY**; digest/signature/public-key integrity checks, strict DER → P1363, verification before SIGNED; API-only CryptoKey IAM **LIVE** | Production workload verification (15I-C/D) |
-| Information disclosure | Metadata-only audit/attestation/graph | Gitleaks CI |
+Local and test runs use a local signer. The `gcp-live-kms` profile signs synthetic input with the existing `exchange-attestation` key version. The deployed API can sign through Cloud KMS. A signing failure returns unsigned and does not change the crossing outcome. Those failure tests are not live IAM outage tests.
 
-The chain does **not** prevent deletion by a privileged storage administrator. That remains a storage/governance concern.
-
-Normal/local/test and `gcp-emulator` retain JCA with no live KMS dependency. The explicit
-`gcp-live-kms` Maven profile permits real KMS metadata reads, signing, and public-key retrieval
-against the existing version 1 with synthetic input. Phase 15H-C is **LIVE VERIFIED LOCALLY**.
-Phase 15I-A composes `CloudKmsAttestationSigner`; Phase 15I-B1 applied the API-only,
-CryptoKey-scoped signing and public-key-viewer IAM. The Cloud Run API Service and Worker Pool are
-deployed and Ready; workload KMS signing remains Phase 15I-D verification work. Controlled failure tests
-return UNSIGNED without changing the boundary outcome; they are not live IAM/key failure tests.
-
-## Phase 3–4 implemented mitigations
-
-| Threat | Implemented now | Still planned |
-| --- | --- | --- |
-| Spoofing (JWT) | Asymmetric RS256 + JWKS, issuer, audience, exp, nbf | Entra issuer/JWKS live |
-| Spoofing (webhook) | HMAC-SHA256 over raw body, constant-time compare | Secret Manager |
-| Tampering (webhook body) | Signature covers SHA-256 of raw bytes | Graph-specific proofs |
-| Replay | Signed timestamp ±300s + atomic nonce store | Firestore TTL **policy** |
-| Elevation of privilege | Scope `boundary.evaluate` on HTTP and domain AuthZ | Entra app roles / ACL |
-| Information disclosure | Sanitized 401/403, no raw JWT/HMAC in responses or normal logs | Gitleaks CI, cloud log sinks |
-| Oversized ingest | 65536-byte webhook limit, 413 | Distributed rate limit |
-
-KMS infrastructure is **LIVE / PROVISIONED**, and opt-in KMS signing is **LIVE VERIFIED LOCALLY**. Secret Manager has one enabled synthetic version in each of the four integration containers; production Java adapters are live-verified locally without payload disclosure. The Cloud Run workloads are deployed and Ready, but their Firestore, Secret Manager, Pub/Sub, and KMS data paths await Phase 15I-D verification.
+Secret Manager holds synthetic versions. The hosted worker did not read a connector secret on the verified transaction. Firestore, Pub/Sub, and KMS are on the live path for that transaction.
 
 Each important threat maps to **preventive**, **detective**, and **recovery** controls.
 
@@ -116,5 +90,5 @@ Each important threat maps to **preventive**, **detective**, and **recovery** co
 ## Residual risk (accepted)
 
 - Privileged GCP project Owner can mutate Firestore and delete checkpoints. Detective controls + later log sinks. Not claimed solved.
-- Recruiter-visible synthetic data can be copied. It is fictional.
+- Synthetic lab data can be copied. It is fictional.
 - Contract harness can be mistaken for live Graph if UI badge is ignored — badge is mandatory.

@@ -27,3 +27,5 @@ Breadth without contract/egress/audit depth is a keyword move.
 ## Consequences
 
 `mvn verify` and Playwright do not call Microsoft. Live tenant verification is a manual checkpoint.
+
+The hosted operator session is Firebase Google sign-in, not Entra. Production Entra stays disabled. One local calendar pull against a personal account is the Graph evidence. Change notifications are still not implemented.

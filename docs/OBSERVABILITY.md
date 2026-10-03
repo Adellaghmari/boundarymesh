@@ -24,8 +24,7 @@ and no alert policy owned by BoundaryMesh.
 
 ## Future / optional
 
-OpenTelemetry, tracing, and alerting may be added later. They are not implemented and are not
-required for current CV readiness. See [ROADMAP.md](ROADMAP.md).
+OpenTelemetry, tracing, and alerting may be added later. They are not implemented.
 
 Safe log/trace attributes, **if tracing is ever added**, must still exclude secrets, tokens,
 cookies, HMAC material, emails, and PAN. Until then, do not claim trace context propagation.

@@ -38,7 +38,7 @@ No pull-request or push event is privileged by this provider.
 
 All listed accounts have **zero user-managed keys** and no `roles/iam.serviceAccountTokenCreator`
 on the CI/CD or workload identities. A Firebase-managed identity in the project holds Token
-Creator; that is outside the keyless CI/CD claim. See [APPLICATION_SECURITY.md](APPLICATION_SECURITY.md).
+Creator; that is outside the keyless CI/CD claim. See [SECURITY.md](SECURITY.md).
 
 | Account | May do | May not do |
 | --- | --- | --- |
@@ -63,10 +63,9 @@ publish (once per source SHA)
     → [optional later] rollback
 ```
 
-Publication, stage, and promote are separate protected workflows or operations. Promotion
-consumes the frozen Phase 16D manifest and parent OCI digests. Cloud Run may show a resolved
-linux/amd64 child digest at runtime; identity continuity compares parent and resolved images
-without treating that as drift.
+Publication, stage, and promote are separate protected workflows or operations. Promotion consumes the frozen release manifest and parent OCI digests. Cloud Run may show a
+resolved linux/amd64 child digest at runtime. Identity continuity compares parent and resolved
+images without treating that as drift.
 
 ### `wif-verify.yml`
 
@@ -107,6 +106,25 @@ recording immutable evidence. It does **not** promote, roll back, or change runt
   identity, and a missing evidence version would otherwise be unrecoverable without mutation.
 
 Do not describe recovery as part of every promotion.
+
+## Current deployed release
+
+The promoted release was built from source `a876a7bfa5fa86f88e8387efb557773281daa6e6` and deployed without a rebuild. Later commits, including the public portfolio page, are in Git and are not that frozen artifact.
+
+| Surface | Identity |
+| --- | --- |
+| API | `boundarymesh-api-c-36941014905` at 100% |
+| Web edge | `boundarymesh-web-c-36941014905` at 100% |
+| Worker | `boundarymesh-worker-c-36941014905` at 100% |
+| Firebase Hosting live | version `c9def09b61688b16` |
+| Rollback API | `00004-9hw` |
+| Rollback web | `00004-k48` |
+| Rollback worker | `00002-v6j` |
+| Rollback Hosting | `1bce16129fb1a0d4` |
+
+Rollback identities are readable. They have not been dispatched. Promotion evidence is an immutable generic package version bound to the original promotion run.
+
+Parent image digests are listed in [INFRASTRUCTURE.md](INFRASTRUCTURE.md). The deploy lock is `scripts/deploy/frozen-release.json`. Do not edit that lock to match a newer commit. A newer release requires a new publication.
 
 ## What CI/CD is not
 
