@@ -1,10 +1,11 @@
 import { createApp } from 'vue'
 import './styles/_base.scss'
 
-// Build-time split keeps local lab routes and their chunks out of the hosted bundle.
+// Hosted builds set VITE_APP_MODE=cloud. That bundle is the public portfolio page.
+// Local `npm run dev` leaves the variable unset and keeps the lab console.
 if (import.meta.env.VITE_APP_MODE === 'cloud') {
-  void import('./views/CloudConsoleView.vue').then(({ default: CloudConsoleView }) => {
-    createApp(CloudConsoleView).mount('#app')
+  void import('./views/PublicLandingView.vue').then(({ default: PublicLandingView }) => {
+    createApp(PublicLandingView).mount('#app')
   })
 } else {
   void Promise.all([import('./App.vue'), import('./router'), import('pinia')]).then(

@@ -14,6 +14,16 @@ A Vue console, a Java and Spring API, and an Apache Camel worker, deployed on Go
 
 The hosted path is Firebase Hosting, then an authenticated web BFF, then a private API, then Firestore and a transactional outbox, then Pub/Sub, then a Cloud Run worker pool. Cloud KMS signs exchange attestations. External connectors and production Microsoft Entra stay off on purpose. Local labs exercise the engine, HMAC webhooks, contract and egress checks, and one bounded Microsoft Graph calendar pull.
 
+## Three surfaces
+
+The public portfolio page is the hosted root. A recruiter can read it with no sign in. It is static Hosting content. It does not call the API.
+
+The operator console is a separate hosted page at `/operator`. Google sign in and a web edge session are required before any operator action. That page is not an anonymous demo.
+
+The local lab console is what `npm run dev` serves in `frontend/`. It is the richer console on this machine. Its lab routes are not part of the hosted cloud build.
+
+The Hosting version that is live today is still the earlier operator page. The public root and the operator route are in this repository. They reach the live site only through a later approved release.
+
 ## Architecture
 
 ```mermaid
@@ -48,7 +58,7 @@ More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | --- | --- |
 | Portfolio GCP environment | Live, in Europe west 4 |
 | API, web BFF, and worker | Promoted release, 100% traffic |
-| Firebase Hosting | Live. Operator sign in is required |
+| Firebase Hosting | Live. The promoted page is still the earlier operator console, and sign in is required there. The public root and `/operator` route in this repository are not on that channel yet |
 | Pulumi | 83 managed resources, zero drift |
 | Promotion evidence | Verified and immutable |
 | Rollback | Implemented, with preserved targets. Not executed against the live environment |
@@ -159,7 +169,7 @@ The repository supports full stack work, cloud engineering, API design, one inte
 
 It does not support these claims:
 
-- A public recruiter demo, or paid production
+- Anonymous use of the operator console, or paid production
 - A live rollback that has already succeeded
 - A signed software supply chain, or Cosign
 - OpenTelemetry, Cloud Trace, or production alerts
