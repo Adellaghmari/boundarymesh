@@ -31,7 +31,8 @@
     "project": "boundarymesh-dev",
     "site": "boundarymesh-dev",
     "configPath": "firebase.json",
-    "configSha256": "34d9f2a073429420b6a15b9133486096fba75a1255ec1f3431fda5b2fd5a242c"
+    "configSha256": "34d9f2a073429420b6a15b9133486096fba75a1255ec1f3431fda5b2fd5a242c",
+    "vendoredPath": "scripts/deploy/release/frozen/firebase.a876a7bfa5fa86f88e8387efb557773281daa6e6.json"
   },
   "deploymentEvidence": {
     "repository": "boundarymesh-deployments",
