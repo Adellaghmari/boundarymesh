@@ -95,6 +95,25 @@ import TruthBanner from '@/components/TruthBanner.vue'
       </p>
     </section>
 
+    <section class="card stack" data-testid="about-system-console">
+      <h2>System Console</h2>
+      <p>
+        The public demo includes a built in System Console that exposes the synthetic runtime state of BoundaryMesh. It lets visitors inspect the current crossing, policy outcome, pipeline stages, delivery state, and event timeline without exposing private APIs or production authority.
+      </p>
+      <p>
+        It is a small control fixed to the bottom edge of the page. Opening it shows a dark drawer that stays with you while you move through the public product. The interaction is inspired by the bottom control used during local development. The public version is a finished product console, not a framework debugger.
+      </p>
+      <p>
+        Visitors can inspect runtime mode, the current page, the selected crossing, the policy decision, pipeline stages, attestation state, delivery state, synthetic events, and other safe public state. The data is deterministic sample data that lives in the browser.
+      </p>
+      <p>
+        It never exposes private API access, operator sessions, credentials, production logs, or a way to change real cloud state. The real operator environment remains protected.
+      </p>
+      <p>
+        The System Console is an intentional engineering feature. It demonstrates observability, runtime introspection, state visualization, event tracing, security boundaries, and product thinking.
+      </p>
+    </section>
+
     <section class="card stack">
       <h2>Source on GitHub</h2>
       <p>
