@@ -351,6 +351,30 @@ test("wrong version identity and Hosting config fail closed", async () => {
     );
 });
 
+test("frozen Hosting redirects are part of the serving config identity", () => {
+    const withRedirects = normalizeFrozenHostingConfig({
+        hosting: {
+            headers: [],
+            redirects: [
+                { source: "/explore", destination: "/", type: 301 },
+                { source: "/explore/**", destination: "/", type: 301 },
+            ],
+            rewrites: [{ source: "**", destination: "/index.html" }],
+        },
+    });
+    assert.deepEqual(withRedirects.redirects, [
+        { glob: "/explore", location: "/", statusCode: 301 },
+        { glob: "/explore/**", location: "/", statusCode: 301 },
+    ]);
+    const withoutRedirects = normalizeFrozenHostingConfig({
+        hosting: {
+            headers: [],
+            rewrites: [{ source: "**", destination: "/index.html" }],
+        },
+    });
+    assert.equal(Object.hasOwn(withoutRedirects, "redirects"), false);
+});
+
 test("old single-bundle substring assumption is not authoritative", async () => {
     const state = harness();
     assert.doesNotMatch(readFileSync(join(state.publicDirectory, "index.html"), "utf8"), /boundarymesh-dev/);
