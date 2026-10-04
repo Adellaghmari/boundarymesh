@@ -4,14 +4,21 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {
+    MAX_HOSTED_FILE_COUNT,
+    MAX_VERSION_FILE_COUNT,
+    assertFrozenFileCount,
     assertHostedVersionInventory,
     createHostedVerificationBudget,
+    frozenFrontendFiles,
     normalizeFrozenHostingConfig,
     parseVersionFileCount,
     readHostedResponse,
     verifyHostedServingBehavior,
     verifyHostedVersion,
 } from "../cloud-hosting.mjs";
+
+const PUBLISHED_FULL_CONSOLE_FILE_COUNT = 77;
+const PREVIOUS_HOSTED_FILE_CAP = 16;
 
 const previewUrl = "https://boundarymesh-dev--bm-100-abc.web.app/";
 const versionName = "sites/boundarymesh-dev/versions/preview100";
@@ -202,12 +209,49 @@ test("fileCount below the frozen deploy-owned count fails closed", () => {
 });
 
 test("invalid and unbounded fileCount values fail closed", () => {
-    for (const fileCount of ["", "09", "-1", "1.5", "1e2", "NaN", 1.5, 27, "27", "10000", true, {}, []]) {
+    for (const fileCount of ["", "09", "-1", "1.5", "1e2", "NaN", 1.5, MAX_VERSION_FILE_COUNT + 1, String(MAX_VERSION_FILE_COUNT + 1), "10000", true, {}, []]) {
         assert.throws(
             () => assertHostedVersionInventory(inventoryArgs({ fileCount })),
             /fileCount/,
         );
     }
+});
+
+test("Version.fileCount is not the frozen inventory authority", () => {
+    assert.deepEqual(parseVersionFileCount("27"), { available: true, value: 27 });
+    const args = inventoryArgs({ fileCount: "27" });
+    assert.equal(args.files.length, 5);
+    assert.notEqual(args.files.length, 27);
+    assert.equal(assertHostedVersionInventory(args), true);
+});
+
+function writeInventory(count) {
+    const directory = mkdtempSync(join(tmpdir(), "bm-frozen-inventory-"));
+    for (let index = 0; index < count; index += 1) {
+        writeFileSync(join(directory, `asset-${index}.txt`), Buffer.from("synthetic"));
+    }
+    return directory;
+}
+
+test("the published 77 file console passes the reviewed ceiling", () => {
+    assert.equal(frozenFrontendFiles(writeInventory(PUBLISHED_FULL_CONSOLE_FILE_COUNT)).length, PUBLISHED_FULL_CONSOLE_FILE_COUNT);
+    assertFrozenFileCount(PUBLISHED_FULL_CONSOLE_FILE_COUNT);
+    assert.ok(PUBLISHED_FULL_CONSOLE_FILE_COUNT <= MAX_HOSTED_FILE_COUNT);
+});
+
+test("stage 37238811079 fails the old 16 file cap and passes the reviewed ceiling", () => {
+    assert.throws(
+        () => assertFrozenFileCount(PUBLISHED_FULL_CONSOLE_FILE_COUNT, PREVIOUS_HOSTED_FILE_CAP),
+        /Frozen frontend file count exceeded the verification limit/,
+    );
+    assert.doesNotThrow(() => assertFrozenFileCount(PUBLISHED_FULL_CONSOLE_FILE_COUNT));
+});
+
+test("one file above the hard safety ceiling fails closed", () => {
+    assert.throws(
+        () => frozenFrontendFiles(writeInventory(MAX_HOSTED_FILE_COUNT + 1)),
+        /Frozen frontend file count exceeded the verification limit/,
+    );
 });
 
 test("unexpected Firebase-reserved paths fail unless explicitly allowed", () => {
@@ -642,5 +686,8 @@ test("hosted verifier never buffers a full body before enforcing size limits", (
     assert.doesNotMatch(source, /Number\(version\.fileCount\) !== files\.length/);
     assert.match(source, /parseVersionFileCount/);
     assert.match(source, /MAX_VERSION_FILE_COUNT/);
+    assert.match(source, /MAX_HOSTED_FILE_COUNT = 128/);
+    assert.doesNotMatch(source, /MAX_HOSTED_FILE_COUNT = 16/);
+    assert.doesNotMatch(source, /version\.fileCount\) !== files\.length/);
     assert.doesNotMatch(source, /\/__\/\*\*/);
 });

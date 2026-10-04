@@ -17,10 +17,18 @@ const here = dirname(fileURLToPath(import.meta.url));
 const FIREBASE_BIN = join(here, "node_modules", "firebase-tools", "lib", "bin", "firebase.js");
 const QUOTA_PROJECT = loadFrozenRelease().project;
 const MAX_API_RESPONSE_BYTES = 5 * 1024 * 1024;
-const MAX_HOSTED_FILE_COUNT = 16;
+// Hard ceiling for a Hosting inventory. It is not the expected file list.
+// Publication f307c9009f39f60f3fe4c036846ba1c0c3c42a7f contains 77 frozen files
+// and 391,439 bytes. Stage 37238811079 failed only because the previous ceiling
+// of 16 rejected that count before path or byte comparison. 128 is the smallest
+// power of two above 77 that still leaves room for additional per-route script
+// and stylesheet chunks. Exact equality with the frozen archive remains authoritative.
+// Version.fileCount is never that authority. The 512 KiB frozen byte cap is unchanged
+// because this archive is already inside it.
+export const MAX_HOSTED_FILE_COUNT = 128;
 const MAX_HOSTED_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_FROZEN_TOTAL_BYTES = 512 * 1024;
-const MAX_HOSTED_TOTAL_BYTES = 2 * 1024 * 1024; // Frozen static payload is ~170 KiB; probes add <100 KiB.
+const MAX_HOSTED_TOTAL_BYTES = 2 * 1024 * 1024; // Frozen static payload is 391,439 bytes; probes re-read only the shell assets.
 const MAX_HOSTED_REQUEST_COUNT = (MAX_HOSTED_FILE_COUNT * 2) + 3;
 const MAX_HTML_PROBE_BYTES = 256 * 1024;
 const MAX_ASSET_PROBE_BYTES = 1024 * 1024;
@@ -38,7 +46,7 @@ const FIREBASE_GENERATED_VERSION_PATHS = Object.freeze([
 // against that list. Hosting FAQ extra metadata vs the local project is bounded
 // here to the two reserved init files plus a tiny unlisted slack; unknown paths fail closed.
 const MAX_UNLISTED_VERSION_METADATA_FILES = 8;
-const MAX_VERSION_FILE_COUNT = MAX_HOSTED_FILE_COUNT + FIREBASE_GENERATED_VERSION_PATHS.length + MAX_UNLISTED_VERSION_METADATA_FILES;
+export const MAX_VERSION_FILE_COUNT = MAX_HOSTED_FILE_COUNT + FIREBASE_GENERATED_VERSION_PATHS.length + MAX_UNLISTED_VERSION_METADATA_FILES;
 const MAX_DIAGNOSTIC_MESSAGE_LENGTH = 2048;
 const MAX_DIAGNOSTIC_FIELD_LENGTH = 1024;
 const MAX_ERROR_INFO_ENTRIES = 8;
@@ -492,6 +500,16 @@ export async function readHostedResponse(url, {
     }
 }
 
+export function assertFrozenFileCount(fileCount, ceiling = MAX_HOSTED_FILE_COUNT) {
+    if (!Number.isSafeInteger(fileCount) || fileCount < 1 || fileCount > ceiling) {
+        throw new Error("Frozen frontend file count exceeded the verification limit.");
+    }
+}
+
+export function frozenFrontendFiles(publicDirectory) {
+    return expectedFrozenFiles(publicDirectory);
+}
+
 function expectedFrozenFiles(publicDirectory) {
     const files = [];
     function visit(directory) {
@@ -511,7 +529,7 @@ function expectedFrozenFiles(publicDirectory) {
     visit(publicDirectory);
     files.sort((a, b) => a.path.localeCompare(b.path));
     const totalBytes = files.reduce((sum, file) => sum + file.bytes.length, 0);
-    if (!files.length || files.length > MAX_HOSTED_FILE_COUNT) throw new Error("Frozen frontend file count exceeded the verification limit.");
+    assertFrozenFileCount(files.length);
     if (totalBytes > MAX_FROZEN_TOTAL_BYTES) throw new Error("Frozen frontend exceeded the total verification size limit.");
     if (new Set(files.map((file) => file.path)).size !== files.length) throw new Error("Frozen frontend contains duplicate hosted paths.");
     return files;
