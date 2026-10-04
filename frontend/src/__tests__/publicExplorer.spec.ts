@@ -1,163 +1,98 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { createPinia, setActivePinia } from 'pinia'
 import { flushPromises, mount } from '@vue/test-utils'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import {
-  PORTFOLIO_EXPLORER_CROSSINGS,
-  filterPortfolioCrossings,
-} from '@/domain/portfolioExplorer'
+import { createMemoryHistory, createRouter } from 'vue-router'
+import { describe, expect, it, vi } from 'vitest'
+import { fetchAttestations, fetchHealth, fetchQuarantineList, reprocessQuarantine } from '@/api/syntheticPortfolio'
+import { ABOUT_NAV, PRIMARY_NAV } from '@/config/navigation'
+import { PORTFOLIO_EXPLORER_CROSSINGS } from '@/domain/portfolioExplorer'
 import { selectPublicEntry } from '@/publicEntry'
-import { formatPortfolioDate } from '@/domain/portfolioDate'
-import PublicExplorerView from '@/views/PublicExplorerView.vue'
+import { routes } from '@/router'
+import AboutProjectView from '@/views/AboutProjectView.vue'
+import App from '@/App.vue'
 
-function visibleText(wrapper: ReturnType<typeof mount>) {
-  return wrapper.text()
-}
-
-describe('public product explorer', () => {
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('chooses the public document from the path and leaves the lab router alone', () => {
+describe('public product shell', () => {
+  it('serves the shared console for every hosted path except the explore redirect', () => {
     expect(selectPublicEntry('/')).toBe('product')
+    expect(selectPublicEntry('/about')).toBe('product')
+    expect(selectPublicEntry('/identity')).toBe('product')
     expect(selectPublicEntry('/explore')).toBe('redirect-home')
     expect(selectPublicEntry('/explore/')).toBe('redirect-home')
-    expect(selectPublicEntry('/operator')).toBe('missing')
-    expect(selectPublicEntry('/identity')).toBe('missing')
-  })
-
-  it('renders the synthetic portfolio without auth or network calls', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
-    const wrapper = mount(PublicExplorerView)
-    await flushPromises()
-    const text = visibleText(wrapper)
-    expect(text).toContain('Portfolio demo')
-    expect(text).toContain('Synthetic data')
-    expect(text).toContain('not customer traffic')
-    expect(text).toContain('System crossings')
-    expect(text).toContain('Overview')
-    expect(text).not.toContain('Explore BoundaryMesh')
-    expect(text).not.toContain('What I built')
-    expect(text).toContain('QuayForge order accepted')
-    expect(text).toContain('Contact field transformed')
-    expect(text).toContain('Contract drift held')
-    expect(text).toContain('Replay rejected')
-    expect(text).toContain('ALLOW')
-    expect(text).toContain('ALLOW WITH TRANSFORMATION')
-    expect(text).toContain('QUARANTINE')
-    expect(text).toContain('REJECT')
-    expect(wrapper.get('nav button').text()).toBe('About the project')
-    expect(wrapper.get('nav a[href="/operator"]').text()).toBe('Operator sign in')
-    expect(wrapper.get('nav a[href="https://github.com/Adellaghmari/boundarymesh"]').text()).toBe('Source on GitHub')
-    expect(text).not.toContain('Checking your session')
-    expect(text).not.toContain('Submit synthetic transaction')
-    expect(fetchSpy).not.toHaveBeenCalled()
-    expect(text).not.toMatch(/[-—–]/)
-  })
-
-  it('walks crossing, policy, attestation, and delivery without a private API call', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
-    const wrapper = mount(PublicExplorerView)
-    await flushPromises()
-
-    await wrapper.get('[data-testid="explorer-search"]').setValue('replay')
-    expect(wrapper.text()).toContain('Replay rejected')
-    expect(wrapper.text()).not.toContain('QuayForge order accepted')
-
-    await wrapper.get('[data-testid="explorer-filter"]').setValue('QUARANTINE')
-    await wrapper.get('[data-testid="explorer-search"]').setValue('')
-    const quarantine = wrapper.findAll('button.crossing').find((button) => button.text().includes('Contract drift held'))
-    expect(quarantine).toBeTruthy()
-    await quarantine!.trigger('click')
-
-    const crossingTab = wrapper.findAll('button[role="tab"]').find((tab) => tab.text() === 'Crossing')
-    await crossingTab!.trigger('click')
-    expect(wrapper.text()).toContain('Incoming crossing')
-    expect(wrapper.text()).toContain('Source identity')
-    expect(wrapper.text()).toContain('Authorization')
-    expect(wrapper.text()).toContain('Authenticity')
-    expect(wrapper.text()).toContain('Freshness')
-    expect(wrapper.text()).toContain('Replay detection')
-    expect(wrapper.text()).toContain('Contract validation')
-
-    await wrapper.findAll('button[role="tab"]').find((tab) => tab.text() === 'Policy')!.trigger('click')
-    expect(wrapper.get('[data-testid="policy-decision"]').text()).toContain('QUARANTINE')
-    expect(wrapper.text()).toContain('Transformation')
-
-    await wrapper.findAll('button[role="tab"]').find((tab) => tab.text() === 'Evidence')!.trigger('click')
-    expect(wrapper.get('[data-testid="attestation"]').text()).toContain('Exchange attestation')
-    expect(wrapper.text()).toContain('Cloud KMS')
-    expect(wrapper.get('[data-testid="timeline"]').text()).toContain('Contract validation failed')
-
-    await wrapper.findAll('button[role="tab"]').find((tab) => tab.text() === 'Delivery')!.trigger('click')
-    expect(wrapper.get('[data-testid="delivery-state"]').text()).toContain('Held')
-    expect(wrapper.text()).toContain('Worker processing')
-    expect(wrapper.text()).not.toMatch(/[-—–]/)
-    expect(fetchSpy).not.toHaveBeenCalled()
-  })
-
-  it('keeps real operator actions disabled and unable to call the network', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch')
-    const wrapper = mount(PublicExplorerView)
-    await flushPromises()
-    const locked = wrapper.findAll('button.locked')
-    expect(locked.map((button) => button.text())).toEqual([
-      'Acknowledge hold',
-      'Retry delivery',
-      'Approve release',
-      'Reject crossing',
+    expect(PRIMARY_NAV.map((item) => item.label)).toEqual([
+      'Overview',
+      'Boundary Events',
+      'Connections',
+      'Architecture',
+      'Boundary Graph',
+      'Full Crossing',
     ])
-    for (const button of locked) {
-      expect(button.attributes('disabled')).toBeDefined()
-      await button.trigger('click')
-    }
-    expect(fetchSpy).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Real operator actions require authentication')
-    expect(wrapper.text()).not.toMatch(/[-—–]/)
+    expect(ABOUT_NAV.label).toBe('About the project')
+    expect(ABOUT_NAV.to).toBe('/about')
   })
 
-  it('filters the fixture layer and does not import private modules', () => {
-    expect(filterPortfolioCrossings(PORTFOLIO_EXPLORER_CROSSINGS, '4114', 'ALL')).toHaveLength(1)
-    expect(filterPortfolioCrossings(PORTFOLIO_EXPLORER_CROSSINGS, '', 'REJECT').map((item) => item.id)).toEqual(['4126'])
-    const files = [
-      'src/views/PublicExplorerView.vue',
-      'src/domain/portfolioExplorer.ts',
-      'src/publicEntry.ts',
-    ]
-    for (const file of files) {
-      const source = readFileSync(resolve(file), 'utf8')
-      expect(source).not.toContain('@/api/')
-      expect(source).not.toContain('cloudSession')
-      expect(source).not.toContain('firebase')
-    }
-    const operator = readFileSync(resolve('src/views/CloudConsoleView.vue'), 'utf8')
-    expect(operator).toContain("authState.value !== 'authenticated'")
-    expect(operator).toContain('initializeCloudSession')
+  it('keeps the public bundle on the synthetic adapter', () => {
+    const main = readFileSync(resolve('src/main.ts'), 'utf8')
+    const facade = readFileSync(resolve('vite.config.ts'), 'utf8')
+    const synthetic = readFileSync(resolve('src/api/syntheticPortfolio.ts'), 'utf8')
+    expect(main).toContain('App.vue')
+    expect(main).not.toContain('PublicExplorerView')
+    expect(facade).toContain('syntheticPortfolio.ts')
+    expect(facade).toContain('boundarymeshLive.ts')
+    expect(synthetic).not.toContain("from '@/api/client'")
+    expect(synthetic).not.toContain('firebase')
   })
 
-  it('keeps project context in an optional panel and shows the current date', async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date(2026, 9, 4, 15, 0, 0))
+  it('returns the four outcomes from memory', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
-    const wrapper = mount(PublicExplorerView)
-    await flushPromises()
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
-    await wrapper.get('nav button').trigger('click')
-    const dialog = wrapper.get('[role="dialog"]')
-    expect(dialog.text()).toContain('About the project')
-    expect(dialog.text()).toContain('The problem')
-    expect(dialog.text()).toContain('What I built')
-    expect(dialog.text()).toContain('Architecture')
-    expect(dialog.text()).toContain('Security model')
-    expect(dialog.text()).toContain('Technology stack')
-    expect(dialog.text()).toContain('Synthetic data')
-    expect(dialog.text()).toContain('not customer traffic')
-    expect(wrapper.get('[data-testid="portfolio-date"]').text()).toBe(formatPortfolioDate(new Date(2026, 9, 4, 15, 0, 0)))
-    expect(wrapper.find('[data-testid="explorer-search"]').exists()).toBe(true)
-    expect(dialog.text()).not.toMatch(/[-—–]/)
-    await wrapper.get('.about__close').trigger('click')
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    const health = await fetchHealth()
+    const quarantine = await fetchQuarantineList()
+    const attestations = await fetchAttestations()
+    expect(health.data.truth).toBe('SYNTHETIC DEMO')
+    expect(quarantine.items.map((item) => item.id)).toContain('q4120')
+    expect(attestations.items.map((item) => item.boundaryOutcome)).toEqual(
+      PORTFOLIO_EXPLORER_CROSSINGS.map((crossing) => crossing.outcome),
+    )
+    await expect(reprocessQuarantine()).rejects.toMatchObject({ kind: 'forbidden' })
     expect(fetchSpy).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
+  })
+
+  it('renders About the project inside the console', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const router = createRouter({ history: createMemoryHistory(), routes })
+    await router.push('/about')
+    await router.isReady()
+    const wrapper = mount(App, { global: { plugins: [pinia, router] } })
+    await flushPromises()
+    const text = wrapper.text()
+    expect(text).toContain('About the project')
+    expect(text).toContain('What BoundaryMesh is')
+    expect(text).toContain('The problem it solves')
+    expect(text).toContain('What was built')
+    expect(text).toContain('How a system crossing works')
+    expect(text).toContain('Architecture')
+    expect(text).toContain('Security model')
+    expect(text).toContain('Technology stack')
+    expect(text).toContain('Cloud architecture')
+    expect(text).toContain('CI/CD and immutable deployment')
+    expect(text).toContain('Synthetic demo explanation')
+    expect(text).toContain('What is public versus protected')
+    expect(text).toContain('Source on GitHub')
+    expect(text).toContain('About the builder')
+    expect(text).toContain('Boundary Events')
+    expect(text).not.toContain('System crossings')
+    expect(wrapper.get('a[href="https://github.com/Adellaghmari/boundarymesh"]').text()).toBe('Source on GitHub')
+    expect(text).not.toMatch(/[-—–]/)
+    wrapper.unmount()
+  })
+
+  it('keeps the about view on the shared visual system', () => {
+    const source = readFileSync(resolve('src/views/AboutProjectView.vue'), 'utf8')
+    expect(source).toContain('class="card stack"')
+    expect(source).not.toContain('PublicExplorerView')
+    const wrapper = mount(AboutProjectView)
+    expect(wrapper.find('.card').exists()).toBe(true)
   })
 })

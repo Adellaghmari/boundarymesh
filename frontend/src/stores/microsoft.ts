@@ -1,12 +1,24 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import {
-  fetchMicrosoftConnector,
-  fetchMicrosoftSession,
-  runHarnessCalendarCrossing,
-  type MicrosoftConnector,
-  type MicrosoftSession,
-} from '@/api/microsoft'
+import type { MicrosoftConnector, MicrosoftSession } from '@/api/microsoft'
+
+const PUBLIC_SESSION: MicrosoftSession = {
+  authenticated: false,
+  entraEnabled: false,
+  loginUrl: '/operator',
+  logoutUrl: '/operator',
+  roleLabel: 'Visitor',
+  graphMode: 'CONTRACT_HARNESS',
+  graphModeLabel: 'Synthetic portfolio',
+}
+
+const PUBLIC_CONNECTOR: MicrosoftConnector = {
+  mode: 'CONTRACT_HARNESS',
+  permission: 'Calendars.Read',
+  permissionKind: 'DELEGATED',
+  live: false,
+  banner: 'SYNTHETIC DEMO',
+}
 
 export const useMicrosoftStore = defineStore('microsoft', () => {
   const session = ref<MicrosoftSession | null>(null)
@@ -16,8 +28,13 @@ export const useMicrosoftStore = defineStore('microsoft', () => {
   const loading = ref(false)
 
   async function loadSession(): Promise<void> {
+    if (import.meta.env.VITE_APP_MODE === 'cloud') {
+      session.value = PUBLIC_SESSION
+      return
+    }
     try {
-      session.value = await fetchMicrosoftSession()
+      const api = await import('@/api/microsoft')
+      session.value = await api.fetchMicrosoftSession()
     } catch {
       session.value = {
         authenticated: false,
@@ -32,17 +49,27 @@ export const useMicrosoftStore = defineStore('microsoft', () => {
   }
 
   async function loadConnector(): Promise<void> {
+    if (import.meta.env.VITE_APP_MODE === 'cloud') {
+      connector.value = PUBLIC_CONNECTOR
+      return
+    }
     try {
-      connector.value = await fetchMicrosoftConnector()
+      const api = await import('@/api/microsoft')
+      connector.value = await api.fetchMicrosoftConnector()
     } catch (error) {
       errorMessage.value = error instanceof Error ? error.message : 'Connector status unavailable.'
     }
   }
 
   async function runHarness(): Promise<void> {
+    if (import.meta.env.VITE_APP_MODE === 'cloud') {
+      lastHarness.value = { outcome: 'ALLOW', banner: 'SYNTHETIC DEMO' }
+      return
+    }
     loading.value = true
     try {
-      lastHarness.value = await runHarnessCalendarCrossing()
+      const api = await import('@/api/microsoft')
+      lastHarness.value = await api.runHarnessCalendarCrossing()
     } finally {
       loading.value = false
     }

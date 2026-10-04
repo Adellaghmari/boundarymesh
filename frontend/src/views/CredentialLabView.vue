@@ -10,6 +10,7 @@ import { useDeliveryStore } from '@/stores/delivery'
 const store = useDeliveryStore()
 const { evaluating, errorMessage, catalog, lastCredentialEvent } = storeToRefs(store)
 const selected = ref<(typeof CREDENTIAL_LAB_SCENARIOS)[number]['id']>('transformed-delivery')
+const publicDemo = import.meta.env.VITE_APP_MODE === 'cloud'
 
 onMounted(async () => {
   await store.loadCatalog()
@@ -44,7 +45,7 @@ async function rotate(): Promise<void> {
     <section class="card stack" aria-labelledby="credential-catalog-heading">
       <div class="cluster">
         <h2 id="credential-catalog-heading">Credential references</h2>
-        <button type="button" class="action" data-action="rotate" :disabled="evaluating" @click="rotate">
+        <button type="button" class="action" data-action="rotate" :disabled="evaluating || publicDemo" @click="rotate">
           Rotate CoveCRM
         </button>
       </div>

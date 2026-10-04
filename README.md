@@ -58,7 +58,7 @@ More detail: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | --- | --- |
 | Portfolio GCP environment | Live, in Europe west 4 |
 | API, web BFF, and worker | Promoted release, 100% traffic |
-| Firebase Hosting | The live channel still serves the previous public release. This repository root is the public product explorer, and `/operator` remains the protected console. The source change reaches the live channel only through a later approved release |
+| Firebase Hosting | This repository root is the full BoundaryMesh console with synthetic data, and `/operator` remains the protected console. The source change reaches the live channel only through a later approved release |
 | Pulumi | 83 managed resources, zero drift |
 | Promotion evidence | Verified and immutable |
 | Rollback | Implemented, with preserved targets. Not executed against the live environment |

@@ -21,6 +21,7 @@ export const ROUTE_NAMES = {
   attestationDetail: 'attestation-detail',
   boundaryGraph: 'boundary-graph',
   status: 'status',
+  about: 'about',
   notFound: 'not-found',
 } as const
 
@@ -148,6 +149,12 @@ export const routes: RouteRecordRaw[] = [
     name: ROUTE_NAMES.status,
     component: () => import('@/views/StatusView.vue'),
     meta: { title: 'Status' },
+  },
+  {
+    path: '/about',
+    name: ROUTE_NAMES.about,
+    component: () => import('@/views/AboutProjectView.vue'),
+    meta: { title: 'About the project' },
   },
   {
     path: '/:pathMatch(.*)*',

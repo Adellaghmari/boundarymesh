@@ -125,6 +125,7 @@ describe('rendered website copy has no visible dashes', () => {
       ['Attestations', '/attestations'],
       ['Attestation', '/attestations/att-test-1'],
       ['Boundary graph', '/boundary-graph'],
+      ['About the project', '/about'],
     ]
     for (const [surface, path] of pages) {
       const wrapper = await openSurface(path)

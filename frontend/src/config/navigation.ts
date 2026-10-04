@@ -75,10 +75,17 @@ export const STATUS_NAV: NavDestination = {
   label: 'Status',
 }
 
+export const ABOUT_NAV: NavDestination = {
+  name: ROUTE_NAMES.about,
+  to: '/about',
+  label: 'About the project',
+  description: 'What BoundaryMesh is and how this console is built',
+}
+
 export const MOBILE_GROUPS = [
   { id: 'core', label: 'Core', items: PRIMARY_NAV },
   { id: 'labs', label: 'Labs', items: LAB_NAV },
   { id: 'operations', label: 'Operations', items: OPERATIONS_NAV },
   { id: 'evidence', label: 'Evidence', items: EVIDENCE_NAV },
-  { id: 'project', label: 'Project', items: [STATUS_NAV] },
+  { id: 'project', label: 'Project', items: [STATUS_NAV, ABOUT_NAV] },
 ] as const

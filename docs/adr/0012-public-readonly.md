@@ -21,4 +21,4 @@ Usable demo + real authorization boundaries. Login is not a banner; 401/403 test
 
 Ingest endpoints are “public” to producers but authenticated by JWT/HMAC/Graph, not by recruiter cookies. Rate-limit verify and ingest.
 
-**Current implementation:** the cloud root is the synthetic product, and `/operator` is the protected operator page. `/explore` redirects to `/`. The public application does not call the API and cannot mutate cloud state. Anonymous APIs are not the live Hosting path. A source change reaches the live channel only through a later approved release. Local labs remain the full walkthrough. See [../ARCHITECTURE.md](../ARCHITECTURE.md).
+**Current implementation:** the cloud root is the same console as the local lab, with a synthetic data adapter, and `/operator` is the protected operator page. `/about` explains the project inside that console. `/explore` redirects to `/`. The public application does not call the API and cannot mutate cloud state. Anonymous APIs are not the live Hosting path. A source change reaches the live channel only through a later approved release. See [../ARCHITECTURE.md](../ARCHITECTURE.md).

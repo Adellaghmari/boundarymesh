@@ -5,74 +5,106 @@ async function expectNoHorizontalOverflow(page: Page): Promise<void> {
   expect(overflow).toBe(false)
 }
 
-test('the public root is the product, and the operator page stays protected', async ({ page }) => {
+async function expectNoVisibleDash(page: Page): Promise<void> {
+  const text = await page.locator('body').innerText()
+  expect(text).not.toMatch(/[-—–]/)
+}
+
+test('the public root is the full BoundaryMesh console', async ({ page }) => {
   const privateCalls: string[] = []
   page.on('request', (request) => {
     const url = request.url()
-    if (/\/api\/|\/session|identitytoolkit|securetoken/.test(url)) privateCalls.push(url)
+    if (/\/api\/|\/session|identitytoolkit|securetoken|googleapis/.test(url)) privateCalls.push(url)
   })
 
   await page.goto('/')
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.locator('.explorer__header')).toHaveCSS('display', 'flex')
-  await expect(page.getByRole('heading', { name: 'System crossings', level: 1 })).toBeVisible()
-  await expect(page.getByTestId('explorer-search')).toBeVisible()
-  await expect(page.getByText('Portfolio demo').first()).toBeVisible()
-  await expect(page.getByText('Synthetic data').first()).toBeVisible()
-  await expect(page.getByText('not customer traffic')).toBeVisible()
+  const nav = page.getByRole('navigation', { name: 'Primary' })
+  await expect(page.getByRole('heading', { name: 'BoundaryMesh', level: 1 })).toBeVisible()
+  await expect(nav).toBeVisible()
+  await expect(nav.getByRole('link', { name: 'Overview', exact: true })).toBeVisible()
+  await expect(nav.getByRole('link', { name: 'Boundary Events' })).toBeVisible()
+  await expect(nav.getByRole('link', { name: 'Connections' })).toBeVisible()
+  await expect(nav.getByRole('link', { name: 'Architecture' })).toBeVisible()
+  await expect(nav.getByRole('link', { name: 'Boundary Graph' })).toBeVisible()
+  await expect(nav.getByRole('link', { name: 'Full Crossing' })).toBeVisible()
+  await expect(nav.getByRole('button', { name: 'Labs' })).toBeVisible()
+  await expect(nav.getByRole('button', { name: 'Operations' })).toBeVisible()
+  await expect(nav.getByRole('button', { name: 'Evidence' })).toBeVisible()
+  await expect(nav.getByRole('link', { name: 'About the project' })).toBeVisible()
+  await expect(page.getByTestId('synthetic-badge')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'System crossings' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Explore BoundaryMesh' })).toHaveCount(0)
-  await expect(page.getByRole('heading', { name: 'What I built' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Operator access' })).toHaveCount(0)
   expect(privateCalls).toEqual([])
+  await expectNoVisibleDash(page)
 
-  await page.getByRole('button', { name: /Contact field transformed/ }).click()
-  await page.getByRole('tab', { name: 'Crossing' }).click()
-  await expect(page.getByRole('heading', { name: 'Incoming crossing' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Source identity' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Replay detection' })).toBeVisible()
-
-  await page.getByRole('tab', { name: 'Policy' }).click()
-  await expect(page.getByTestId('policy-decision')).toContainText('ALLOW WITH TRANSFORMATION')
-
-  await page.getByRole('tab', { name: 'Evidence' }).click()
-  await expect(page.getByTestId('attestation')).toContainText('signed')
-  await expect(page.getByRole('heading', { name: 'Cloud KMS' })).toBeVisible()
-  await page.getByText('Transformation applied').click()
-  await expect(page.getByTestId('timeline')).toBeVisible()
-
-  await page.getByRole('tab', { name: 'Delivery' }).click()
-  await expect(page.getByTestId('delivery-state')).toContainText('Delivered after transformation')
-  await expect(page.getByRole('button', { name: 'Acknowledge hold' })).toBeDisabled()
-  await expect(page.getByRole('button', { name: 'Retry delivery' })).toBeDisabled()
-  await expect(page.getByRole('button', { name: 'Approve release' })).toBeDisabled()
-  await expect(page.getByRole('button', { name: 'Reject crossing' })).toBeDisabled()
-
-  await page.getByRole('button', { name: 'About the project' }).click()
-  const about = page.getByRole('dialog', { name: 'About the project' })
-  await expect(about).toBeVisible()
-  await expect(about.getByRole('heading', { name: 'What I built' })).toBeVisible()
-  await expect(about.getByRole('heading', { name: 'Architecture' })).toBeVisible()
-  await expect(about.getByRole('heading', { name: 'Security model' })).toBeVisible()
-  await expect(about.getByTestId('explorer-search')).toHaveCount(0)
-  await expect(page.getByTestId('explorer-search')).toBeVisible()
-  await about.getByRole('button', { name: 'Close' }).click()
-  await expect(about).toHaveCount(0)
+  await nav.getByRole('link', { name: 'Boundary Events' }).click()
+  await expect(page.getByRole('heading', { name: 'Boundary events' })).toBeVisible()
+  await expect(page.getByText('ALLOW', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('ALLOW WITH TRANSFORMATION', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('QUARANTINE', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('REJECT', { exact: true }).first()).toBeVisible()
   expect(privateCalls).toEqual([])
 
-  const productText = await page.locator('body').innerText()
-  expect(productText).not.toMatch(/[-—–]/)
+  await nav.getByRole('link', { name: 'Full Crossing' }).click()
+  await expect(page.getByRole('heading', { name: 'Full Boundary Crossing' })).toBeVisible()
+  await page.getByRole('button', { name: 'Inspect crossing' }).click()
+  await expect(page.getByText('Policy version')).toBeVisible()
+  await expect(page.getByText('ALLOW WITH TRANSFORMATION', { exact: true }).first()).toBeVisible()
+  expect(privateCalls).toEqual([])
+
+  await nav.getByRole('link', { name: 'Boundary Graph' }).click()
+  await expect(page.getByRole('heading', { name: 'Integration Boundary Graph' })).toBeVisible()
+  await expect(page.getByText('QuayForge').first()).toBeVisible()
+  expect(privateCalls).toEqual([])
+
+  await nav.getByRole('button', { name: 'Operations' }).click()
+  await page.getByRole('menuitem', { name: /Delivery/ }).click()
+  await expect(page.getByRole('heading', { name: 'Delivery Lab' })).toBeVisible()
+  await page.getByRole('button', { name: 'Run delivery' }).click()
+  await expect(page.getByTestId('delivery-kind')).toBeVisible()
+  expect(privateCalls).toEqual([])
+
+  await nav.getByRole('button', { name: 'Evidence' }).click()
+  await page.getByRole('menuitem', { name: /Attestations/ }).click()
+  await expect(page.getByRole('heading', { name: 'Exchange Attestations' })).toBeVisible()
+  await expect(page.getByText('QuayForge').first()).toBeVisible()
+  expect(privateCalls).toEqual([])
+
+  await nav.getByRole('button', { name: 'Evidence' }).click()
+  await page.getByRole('menuitem', { name: /Audit/ }).click()
+  await expect(page.getByRole('heading', { name: 'Audit Chain' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'QuayForge orders' })).toBeVisible()
+  expect(privateCalls).toEqual([])
+
+  await nav.getByRole('link', { name: 'About the project' }).click()
+  await expect(page).toHaveURL(/\/about\/?$/)
+  const about = page.getByTestId('about-project')
+  await expect(about.getByRole('heading', { name: 'What BoundaryMesh is' })).toBeVisible()
+  await expect(about.getByRole('heading', { name: 'Security model' })).toBeVisible()
+  await expect(about.getByRole('heading', { name: 'About the builder' })).toBeVisible()
+  await expect(about.getByRole('link', { name: 'Source on GitHub' })).toBeVisible()
+  await expectNoVisibleDash(page)
+
+  await nav.getByRole('link', { name: 'Overview', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'BoundaryMesh', level: 1 })).toBeVisible()
+  expect(privateCalls).toEqual([])
 
   await page.goto('/explore')
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.getByRole('heading', { name: 'System crossings', level: 1 })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'BoundaryMesh', level: 1 })).toBeVisible()
+  expect(privateCalls).toEqual([])
 
   await page.getByRole('link', { name: 'Operator sign in' }).click()
   await expect(page).toHaveURL(/\/operator\/?$/)
   await expect(page.getByRole('heading', { name: 'Operator access' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Submit synthetic transaction' })).toHaveCount(0)
+  expect(privateCalls.every((url) => url.includes('/session/bootstrap'))).toBe(true)
+  expect(privateCalls.some((url) => /\/api\//.test(url))).toBe(false)
 })
 
-test('public product layouts do not overflow', async ({ page }) => {
+test('public product layouts stay usable', async ({ page }) => {
   for (const viewport of [
     { width: 1440, height: 900 },
     { width: 768, height: 1024 },
@@ -80,12 +112,18 @@ test('public product layouts do not overflow', async ({ page }) => {
   ]) {
     await page.setViewportSize(viewport)
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'System crossings' })).toBeVisible()
-    await page.getByRole('tab', { name: 'Evidence' }).click()
-    await page.getByRole('button', { name: /Replay rejected/ }).click()
+    await expect(page.getByRole('heading', { name: 'BoundaryMesh', level: 1 })).toBeVisible()
     await expectNoHorizontalOverflow(page)
-    await page.getByRole('button', { name: 'About the project' }).click()
-    await expect(page.getByRole('dialog')).toBeVisible()
+    if (viewport.width < 1100) {
+      await page.getByRole('button', { name: 'Open navigation' }).click()
+      await expect(page.getByRole('link', { name: 'About the project' })).toBeVisible()
+      await expect(page.getByRole('link', { name: 'Boundary Events' })).toBeVisible()
+      await page.getByRole('link', { name: 'About the project' }).click()
+    } else {
+      await page.getByRole('link', { name: 'About the project' }).click()
+    }
+    await expect(page.getByRole('heading', { name: 'What BoundaryMesh is' })).toBeVisible()
     await expectNoHorizontalOverflow(page)
+    await expectNoVisibleDash(page)
   }
 })
