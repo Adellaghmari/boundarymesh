@@ -202,7 +202,11 @@ test("Firebase Hosting config is materialized byte-for-byte from the vendored fr
     assert.ok(existsSync(destination));
     assert.equal(sha256Bytes(readFileSync(destination)), lock.firebase.configSha256);
     assert.equal(sha256Bytes(readFileSync(join(repositoryRoot, lock.firebase.vendoredPath))), lock.firebase.configSha256);
-    assert.notEqual(sha256Bytes(readFileSync(join(repositoryRoot, "firebase.json"))), lock.firebase.configSha256);
+    assert.equal(sha256Bytes(readFileSync(join(repositoryRoot, "firebase.json"))), lock.firebase.configSha256);
+    assert.equal(
+        sha256Bytes(readFileSync(join(repositoryRoot, "scripts/deploy/release/frozen/firebase.a876a7bfa5fa86f88e8387efb557773281daa6e6.json"))),
+        "34d9f2a073429420b6a15b9133486096fba75a1255ec1f3431fda5b2fd5a242c",
+    );
     assert.throws(() => materializeFrozenFirebaseConfig({ destination: join(directory, "wrong.json"), sourceSha: "f".repeat(40) }), /source SHA/);
 });
 
@@ -231,7 +235,7 @@ test("frozen Firebase reconstruction fails closed without Git history or the cur
             lock: { ...lock, sourceSha: wrongSha, firebase: { ...lock.firebase, vendoredPath: wrongPath, configSha256: "3".repeat(64) } },
         }), /SHA-256/);
         const substitutedSha = "4".repeat(40);
-        const substitutedPath = writeVendor(substitutedSha, readFileSync(join(repositoryRoot, "firebase.json")));
+        const substitutedPath = writeVendor(substitutedSha, readFileSync(join(repositoryRoot, "scripts/deploy/release/frozen/firebase.a876a7bfa5fa86f88e8387efb557773281daa6e6.json")));
         assert.throws(() => materializeFrozenFirebaseConfig({
             destination: join(tmpdir(), "substituted.json"),
             sourceSha: substitutedSha,
@@ -284,7 +288,7 @@ test("a single-commit repository can reconstruct the frozen Firebase config", ()
             const lock = loadFrozenRelease();
             mkdirSync("./out", { recursive: true });
             materializeFrozenFirebaseConfig({ destination: "./out/firebase.json", sourceSha: lock.sourceSha });
-            if (sha256Bytes(readFileSync("./out/firebase.json")) !== "${"34d9f2a073429420b6a15b9133486096fba75a1255ec1f3431fda5b2fd5a242c"}") process.exit(2);
+            if (sha256Bytes(readFileSync("./out/firebase.json")) !== "${"93458d9cdc3ad454f064fdc13fe405f405afa761a8d2da010ba205580d3bd983"}") process.exit(2);
         `;
         execFileSync(process.execPath, ["--input-type=module", "-e", script], { cwd: directory, stdio: "pipe" });
     } finally {

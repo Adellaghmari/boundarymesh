@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "boundarymesh.deployment-lock/v1",
+  "project": "boundarymesh-dev",
+  "projectNumber": "891977254468",
+  "region": "europe-west4",
+  "repository": "Adellaghmari/boundarymesh",
+  "repositoryId": "1385415640",
+  "sourceSha": "a876a7bfa5fa86f88e8387efb557773281daa6e6",
+  "sourceRef": "refs/heads/main",
+  "publicationRunId": "36492495801",
+  "publicationWorkflow": ".github/workflows/artifact-publish.yml",
+  "publicationEnvironment": "boundarymesh-artifact-publish",
+  "releaseRepository": "boundarymesh-releases",
+  "releasePackage": "boundarymesh-release",
+  "releaseVersion": "a876a7bfa5fa86f88e8387efb557773281daa6e6",
+  "releaseManifestSha256": "ecdbaf88710ff73fd694c5c4e13c0a8ce300fdacf2a3761064b7511bd627300d",
+  "dockerRepository": "boundarymesh",
+  "images": {
+    "api": "sha256:bcfd9b01a3189228f583fa3f5d1ed8797f73d214af85bea4d84caeedfa0db8d7",
+    "worker": "sha256:7b1841487a2d1b3751e8bc63ee5323965e76ebeae9ae581c95b672f50154bb2d",
+    "web": "sha256:85f98f90450b7807f55649f58807f952010a6278793b808ae1f4df78a22c0b04"
+  },
+  "frontend": {
+    "repository": "boundarymesh-releases",
+    "package": "boundarymesh-frontend",
+    "version": "a876a7bfa5fa86f88e8387efb557773281daa6e6",
+    "archive": "frontend-dist.tar.gz",
+    "archiveSha256": "80d4cfa4e88cac297c7a130ac5c83d68b468b06b60e04537c5060cb275943d84"
+  },
+  "firebase": {
+    "project": "boundarymesh-dev",
+    "site": "boundarymesh-dev",
+    "configPath": "firebase.json",
+    "configSha256": "34d9f2a073429420b6a15b9133486096fba75a1255ec1f3431fda5b2fd5a242c",
+    "vendoredPath": "scripts/deploy/release/frozen/firebase.a876a7bfa5fa86f88e8387efb557773281daa6e6.json"
+  },
+  "deploymentEvidence": {
+    "repository": "boundarymesh-deployments",
+    "package": "boundarymesh-deployment-evidence"
+  }
+}

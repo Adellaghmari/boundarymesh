@@ -372,7 +372,7 @@ export function buildVerifiedRecoveryProof({
         startedAt: inspected.startedAt,
         completedAt: inspected.completedAt,
     };
-    assertPromotionRecoveryPreconditions(proof);
+    assertPromotionRecoveryPreconditions(proof, lock);
     return proof;
 }
 
@@ -404,7 +404,7 @@ export function recoverPromotionEvidence({
     collisionRunner,
     publisher,
 }) {
-    assertPromotionRecoveryPreconditions(proof);
+    assertPromotionRecoveryPreconditions(proof, lock);
     if (String(proof.runId) !== String(proof.originalPromotionRunId ?? proof.runId)) {
         throw new Error("Promotion recovery must bind the original promotion run as evidence identity.");
     }
