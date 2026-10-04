@@ -99,7 +99,7 @@ One Vue package builds two ways.
 
 `npm run dev` is the local lab. It includes the boundary graph, labs, and local API routes. Those routes are not part of the hosted cloud build.
 
-A cloud build (`VITE_APP_MODE=cloud`) emits the public portfolio at `/`, the public explorer at `/explore`, and an operator document at `/operator`. The public pages do not call the API. The explorer uses synthetic data and cannot change cloud state. Operator actions require Google sign-in and a web edge session. A source change reaches the live channel only through a later approved release.
+A cloud build (`VITE_APP_MODE=cloud`) serves the public product explorer at `/` and an operator document at `/operator`. `/explore` redirects to `/`. The public application does not call the API and cannot change cloud state. Operator actions require Google sign-in and a web edge session. A source change reaches the live channel only through a later approved release.
 
 ## Trust hops
 

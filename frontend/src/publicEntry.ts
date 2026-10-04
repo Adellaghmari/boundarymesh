@@ -1,8 +1,8 @@
-export type PublicEntry = 'landing' | 'explore' | 'missing'
+export type PublicEntry = 'product' | 'redirect-home' | 'missing'
 
 export function selectPublicEntry(pathname: string): PublicEntry {
   const path = pathname.replace(/\/+$/, '') || '/'
-  if (path === '/') return 'landing'
-  if (path === '/explore' || path.startsWith('/explore/')) return 'explore'
+  if (path === '/') return 'product'
+  if (path === '/explore' || path.startsWith('/explore/')) return 'redirect-home'
   return 'missing'
 }

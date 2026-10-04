@@ -12,8 +12,7 @@ onMounted(() => {
       <h1>Page not available</h1>
       <p>This address is not part of the public portfolio.</p>
       <div class="cluster">
-        <a class="action" href="/">Portfolio</a>
-        <a class="action action--quiet" href="/explore">Explore BoundaryMesh</a>
+        <a class="action" href="/">BoundaryMesh</a>
         <a class="action action--quiet" href="/operator">Operator sign in</a>
       </div>
     </main>

@@ -31,7 +31,7 @@ npm run dev
 
 `npm run lint` may report pre-existing oxlint findings in tests. Playwright (`npm run test:e2e`) starts the local Java backend and Vite.
 
-`npm run dev` is the lab console. It is not the hosted site. A cloud build (`VITE_APP_MODE=cloud`) serves a public portfolio page at `/`, a public explorer at `/explore`, and the operator console from `operator.html`. Operator actions still require Google sign in. The lab routes stay out of that cloud build.
+`npm run dev` is the lab console. It is not the hosted site. A cloud build (`VITE_APP_MODE=cloud`) serves the public product at `/` and the operator console from `operator.html`. `/explore` redirects to `/`. Operator actions still require Google sign in. The lab routes stay out of that cloud build.
 
 ## Full stack helper
 

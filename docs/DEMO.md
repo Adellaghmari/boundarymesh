@@ -1,6 +1,6 @@
 # Demo
 
-Use the local lab for a full walkthrough against the Java API. Use the public page to read the project. Use `/explore` for the synthetic product walkthrough, which does not sign in and does not call the API. Use the operator console only after Google sign-in, and only for the synthetic transaction it offers.
+Use the local lab for a full walkthrough against the Java API. The hosted root is the synthetic product. It does not sign in and does not call the API. About the project opens inside that application. Use the operator console only after Google sign-in, and only for the synthetic transaction it offers.
 
 ## Local lab
 
@@ -21,7 +21,7 @@ If Entra is not configured, the calendar pull stays on the contract harness. A c
 
 ## Hosted pages
 
-The public page and `/explore` do not call `/session` or `/api`. The explorer is a simulated read only walkthrough. It is not anonymous access to operator actions.
+The public root does not call `/session` or `/api`. It is a simulated read only application. It is not anonymous access to operator actions. `/explore` redirects to `/`.
 
 The operator page asks for Google sign-in before any action. After a session exists, the console can submit one synthetic crossing. That crossing is the hosted proof. It does not call CoveCRM, Lumenway, Rivertide, or Graph.
 
