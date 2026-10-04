@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import AppHeader from '@/components/shell/AppHeader.vue'
+import SystemConsole from '@/components/shell/SystemConsole.vue'
+
+const publicDemo = import.meta.env.VITE_APP_MODE === 'cloud'
 </script>
 
 <template>
@@ -10,6 +13,7 @@ import AppHeader from '@/components/shell/AppHeader.vue'
     <main id="main" class="shell__main">
       <RouterView />
     </main>
+    <SystemConsole v-if="publicDemo" />
   </div>
 </template>
 
