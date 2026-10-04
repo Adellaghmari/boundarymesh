@@ -520,7 +520,7 @@ function expectedFrozenFiles(publicDirectory) {
 export function normalizeFrozenHostingConfig(firebaseConfig) {
     const hosting = firebaseConfig?.hosting;
     if (!hosting || typeof hosting !== "object") throw new Error("Frozen Firebase config has no Hosting configuration.");
-    return {
+    const normalized = {
         headers: (hosting.headers ?? []).map((entry) => ({
             glob: entry.source,
             headers: Object.fromEntries((entry.headers ?? []).map((header) => [header.key, header.value])),
@@ -532,6 +532,14 @@ export function normalizeFrozenHostingConfig(firebaseConfig) {
                 : { run: { serviceId: entry.run?.serviceId, region: entry.run?.region } }),
         })),
     };
+    if (Array.isArray(hosting.redirects) && hosting.redirects.length > 0) {
+        normalized.redirects = hosting.redirects.map((entry) => ({
+            glob: entry.source,
+            location: entry.destination,
+            statusCode: entry.type,
+        }));
+    }
+    return normalized;
 }
 
 export function parseVersionFileCount(fileCount) {
