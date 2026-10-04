@@ -89,7 +89,7 @@ export function assertPromotedHostingObservation({ hostingResult, stageEvidence 
     return true;
 }
 
-export function assertPromotionRecoveryPreconditions(proof) {
+export function assertPromotionRecoveryPreconditions(proof, lock = loadFrozenRelease()) {
     const requiredJobs = {
         "validate-release": "success",
         "load-stage-evidence": "success",
@@ -108,7 +108,7 @@ export function assertPromotionRecoveryPreconditions(proof) {
     if (proof.sha && proof.sha !== proof.workflowSha) {
         throw new Error("Promotion recovery source SHA does not match the original promotion workflow SHA.");
     }
-    if (proof.frozenSourceSha !== loadFrozenRelease().sourceSha || proof.manifestSha256 !== loadFrozenRelease().releaseManifestSha256) {
+    if (proof.frozenSourceSha !== lock.sourceSha || proof.manifestSha256 !== lock.releaseManifestSha256) {
         throw new Error("Promotion recovery frozen release identity does not match the lock.");
     }
     if (!proof.requiredStageRunId || String(proof.stageRunId) !== String(proof.requiredStageRunId)) {

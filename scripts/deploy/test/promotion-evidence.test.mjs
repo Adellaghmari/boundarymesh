@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { assertEvidenceLookupAbsent } from "../artifacts.mjs";
-import { canonicalJson, evidenceVersion, loadFrozenRelease, validateDeploymentEvidence } from "../contract.mjs";
+import { canonicalJson, evidenceVersion, validateDeploymentEvidence } from "../contract.mjs";
 import {
     assertPromotedHostingObservation,
     assertPromotedRuntimeObservation,
@@ -29,7 +29,7 @@ import {
 } from "../recover-promotion-evidence.mjs";
 
 const fixtures = join(import.meta.dirname, "fixtures");
-const lock = loadFrozenRelease();
+const lock = JSON.parse(readFileSync(join(fixtures, "promoted-release-lock.json"), "utf8"));
 const stageEvidence = JSON.parse(readFileSync(join(fixtures, "run-8-stage-evidence.json"), "utf8"));
 const promoteRuntime = JSON.parse(readFileSync(join(fixtures, "run-9-promote-runtime.json"), "utf8"));
 const promoteHosting = JSON.parse(readFileSync(join(fixtures, "run-9-promote-hosting.json"), "utf8"));
@@ -100,6 +100,7 @@ function observeRun9(overrides = {}) {
         hostingJobResult: "success",
         runtimeValue: promoteRuntime,
         hostingValue: promoteHosting,
+        lock,
         ...overrides,
     });
 }
@@ -116,6 +117,7 @@ test("run #9 parent-vs-resolved image comparison fails the old exactTransition a
         observedState: runtimeSnapshot.state,
         stageEvidence,
         runtimeServiceAccounts: serviceAccounts,
+        lock,
     }));
     const observed = observeRun9();
     assert.equal(observed.outcome, "success");
@@ -138,6 +140,7 @@ test("promotion identity continuity remains exact for revision, digest, SA, run,
             observedState: structuredClone(runtimeSnapshot.state),
             stageEvidence,
             runtimeServiceAccounts: { ...serviceAccounts },
+            lock,
         };
         mutate(value);
         assert.throws(() => assertPromotedRuntimeObservation(value), pattern, label);
@@ -145,12 +148,13 @@ test("promotion identity continuity remains exact for revision, digest, SA, run,
     assert.throws(() => assertPromotedHostingObservation({
         hostingResult: { ...promoteHosting.result, version: "sites/boundarymesh-dev/versions/1bce16129fb1a0d4" },
         stageEvidence,
+        lock,
     }), /baseline version|exact staged version/);
-    assert.throws(() => validateDeploymentEvidence({ ...stageEvidence, workflow: { ...stageEvidence.workflow, runId: "1" } }, { operation: "stage", runId: "36941014905" }), /workflow run/);
-    assert.throws(() => assertPromotionRecoveryPreconditions(validProof({ frozenSourceSha: "0".repeat(40) })), /frozen release identity/);
-    assert.throws(() => assertPromotionRecoveryPreconditions(validProof({ manifestSha256: "0".repeat(64) })), /frozen release identity/);
-    assert.throws(() => assertPromotionRecoveryPreconditions(validProof({ requiredPromotionRunId: "1" })), /promotion run/);
-    assert.throws(() => assertPromotionRecoveryPreconditions(validProof({ stageRunId: "1" })), /stage run/);
+    assert.throws(() => validateDeploymentEvidence({ ...stageEvidence, workflow: { ...stageEvidence.workflow, runId: "1" } }, { operation: "stage", runId: "36941014905", lock }), /workflow run/);
+    assert.throws(() => assertPromotionRecoveryPreconditions(validProof({ frozenSourceSha: "0".repeat(40) }), lock), /frozen release identity/);
+    assert.throws(() => assertPromotionRecoveryPreconditions(validProof({ manifestSha256: "0".repeat(64) }), lock), /frozen release identity/);
+    assert.throws(() => assertPromotionRecoveryPreconditions(validProof({ requiredPromotionRunId: "1" }), lock), /promotion run/);
+    assert.throws(() => assertPromotionRecoveryPreconditions(validProof({ stageRunId: "1" }), lock), /stage run/);
 });
 
 test("promotion allocation transition requires staged zero to promoted 100 and exact Firebase version", () => {
@@ -160,6 +164,7 @@ test("promotion allocation transition requires staged zero to promoted 100 and e
         promoteResult: stillZero,
         observedState: runtimeSnapshot.state,
         stageEvidence,
+        lock,
     }), /100 percent/);
     const partial = structuredClone(runtimeSnapshot.state);
     partial.web.traffic = [
@@ -170,6 +175,7 @@ test("promotion allocation transition requires staged zero to promoted 100 and e
         promoteResult: promoteRuntime.result,
         observedState: partial,
         stageEvidence,
+        lock,
     }), /100 percent/);
     const historical = structuredClone(promoteRuntime.result);
     historical.worker.revision = "boundarymesh-worker-00002-v6j";
@@ -178,10 +184,12 @@ test("promotion allocation transition requires staged zero to promoted 100 and e
         promoteResult: historical,
         observedState: runtimeSnapshot.state,
         stageEvidence,
+        lock,
     }), /revision|staged candidate/);
     assert.throws(() => assertPromotedHostingObservation({
         hostingResult: { ...promoteHosting.result, version: "sites/boundarymesh-dev/versions/otherversion" },
         stageEvidence,
+        lock,
     }), /exact staged version/);
 });
 
@@ -192,12 +200,14 @@ test("representation differences do not loosen identity or allocation matching",
         promoteResult: swapped,
         observedState: runtimeSnapshot.state,
         stageEvidence,
+        lock,
     }), /frozen parent digest/);
     assert.notEqual(canonicalJson(promoteRuntime.result), canonicalJson(runtimeSnapshot.state));
     assert.doesNotThrow(() => assertPromotedRuntimeObservation({
         promoteResult: promoteRuntime.result,
         observedState: runtimeSnapshot.state,
         stageEvidence,
+        lock,
     }));
 });
 
@@ -213,6 +223,7 @@ test("evidence-only recovery binds the original promotion run and cannot reach m
         proof: validProof(),
         outputDir: directory,
         publish: false,
+        lock,
     });
     assert.equal(recovered.published, null);
     assert.equal(recovered.version, `${lock.sourceSha}-promote-run-36945783284`);
@@ -245,6 +256,7 @@ test("evidence-only recovery refuses unsafe preconditions and collisions before 
             hostingSnapshot: promoteHosting.result,
             proof: validProof(overrides),
             outputDir: directory,
+            lock,
         }), pattern);
     }
     const wrongStage = structuredClone(stageEvidence);
@@ -257,6 +269,7 @@ test("evidence-only recovery refuses unsafe preconditions and collisions before 
         references: { stageRunId: "36941014905" },
         startedAt: "2026-10-02T00:25:00.000Z",
         completedAt: "2026-10-02T00:28:59.000Z",
+        lock,
     }), /schema|staged candidate|workflow run|revision|zero production allocation/);
     let published = false;
     assert.throws(() => recoverPromotionEvidence({
@@ -268,12 +281,13 @@ test("evidence-only recovery refuses unsafe preconditions and collisions before 
         publish: true,
         collisionRunner: () => ({ status: 0, stdout: "", stderr: "" }),
         publisher: () => { published = true; },
+        lock,
     }), /already exists/);
     assert.equal(published, false);
     assert.throws(() => assertEvidenceLookupAbsent(
         { status: 0, stdout: "", stderr: "" },
-        { project: lock.project, location: lock.region, repository: lock.deploymentEvidence.repository, packageName: lock.deploymentEvidence.package, version: evidenceVersion("promote", "36945783284") },
-        { project: lock.project, location: lock.region, repository: lock.deploymentEvidence.repository, packageName: lock.deploymentEvidence.package, version: evidenceVersion("promote", "36945783284") },
+        { project: lock.project, location: lock.region, repository: lock.deploymentEvidence.repository, packageName: lock.deploymentEvidence.package, version: evidenceVersion("promote", "36945783284", lock) },
+        { project: lock.project, location: lock.region, repository: lock.deploymentEvidence.repository, packageName: lock.deploymentEvidence.package, version: evidenceVersion("promote", "36945783284", lock) },
     ), /already exists/);
 });
 
@@ -292,6 +306,7 @@ function verifiedProof(overrides = {}) {
         promotionEvidenceExists: false,
         requiredStageRunId: "36941014905",
         requiredPromotionRunId: "36945783284",
+        lock,
         ...overrides,
     });
 }
@@ -309,10 +324,12 @@ test("recovery proof reconstruction binds original runs and refuses every unsafe
         proof,
         outputDir: mkdtempSync(join(tmpdir(), "bm-recover-proof-")),
         publish: false,
+        lock,
     });
     assert.doesNotThrow(() => verifyRecoveredPromotionEvidence(recovered.evidence, {
         stageRunId: "36941014905",
         promotionRunId: "36945783284",
+        lock,
     }));
     const failures = [
         [{ run: { ...promotionRun, id: 1 } }, /promotion run/],
@@ -363,6 +380,7 @@ test("recovery run #1 fails closed before evidence publication on Hosting USER_P
             outputDir: mkdtempSync(join(tmpdir(), "bm-recover-run1-")),
             publish: true,
             publisher: () => { published = true; },
+            lock,
         });
     }, /USER_PROJECT_DENIED|serviceusage\.services\.use|Firebase Hosting request failed/);
     assert.equal(published, false);
@@ -374,6 +392,7 @@ test("recovery run #1 fails closed before evidence publication on Hosting USER_P
         outputDir: mkdtempSync(join(tmpdir(), "bm-recover-failed-run-")),
         publish: true,
         publisher: () => { published = true; },
+        lock,
     }), /37003377107|promotion run/);
     assert.equal(published, false);
 });
@@ -391,6 +410,7 @@ test("dual-principal Hosting handoff is hashed, run-scoped, and fail-closed", ()
         byteLength: sealed.byteLength,
         recoveryRunId: "99900000001",
         stageEvidence,
+        lock,
     });
     assert.equal(verified.principal, "boundarymesh-hosting-deploy@boundarymesh-dev.iam.gserviceaccount.com");
     assert.equal(verified.snapshot.version, "sites/boundarymesh-dev/versions/c9def09b61688b16");
@@ -400,6 +420,7 @@ test("dual-principal Hosting handoff is hashed, run-scoped, and fail-closed", ()
         byteLength: sealed.byteLength,
         recoveryRunId: "99900000001",
         stageEvidence,
+        lock,
     }), /SHA-256/);
     assert.throws(() => verifyHostingRecoveryHandoff({
         payloadB64: sealed.payloadB64,
@@ -407,6 +428,7 @@ test("dual-principal Hosting handoff is hashed, run-scoped, and fail-closed", ()
         byteLength: String(sealed.byteLength - 1),
         recoveryRunId: "99900000001",
         stageEvidence,
+        lock,
     }), /truncated|padded|byte length/);
     assert.throws(() => verifyHostingRecoveryHandoff({
         payloadB64: sealed.payloadB64,
@@ -414,6 +436,7 @@ test("dual-principal Hosting handoff is hashed, run-scoped, and fail-closed", ()
         byteLength: sealed.byteLength,
         recoveryRunId: "99900000002",
         stageEvidence,
+        lock,
     }), /this recovery run/);
     assert.throws(() => verifyHostingRecoveryHandoff({
         payloadB64: sealed.payloadB64,
@@ -421,6 +444,7 @@ test("dual-principal Hosting handoff is hashed, run-scoped, and fail-closed", ()
         byteLength: sealed.byteLength,
         recoveryRunId: FAILED_RECOVERY_RUN_1,
         stageEvidence,
+        lock,
     }), /37003377107|this recovery run/);
     const wrongPrincipal = sealHostingRecoveryHandoff({
         ...buildHostingRecoveryHandoff({ snapshot, firebaseStatus: 200, recoveryRunId: "99900000001" }),
@@ -432,6 +456,7 @@ test("dual-principal Hosting handoff is hashed, run-scoped, and fail-closed", ()
         byteLength: wrongPrincipal.byteLength,
         recoveryRunId: "99900000001",
         stageEvidence,
+        lock,
     }), /Hosting deploy identity/);
     const wrongVersion = sealHostingRecoveryHandoff(buildHostingRecoveryHandoff({
         snapshot: { ...snapshot, version: "sites/boundarymesh-dev/versions/1bce16129fb1a0d4" },
@@ -444,6 +469,7 @@ test("dual-principal Hosting handoff is hashed, run-scoped, and fail-closed", ()
         byteLength: wrongVersion.byteLength,
         recoveryRunId: "99900000001",
         stageEvidence,
+        lock,
     }), /baseline version|exact staged version/);
     assert.throws(() => buildHostingRecoveryHandoff({
         snapshot,
@@ -494,11 +520,13 @@ test("recovery run #2 fails closed before evidence publication on invalid Worker
             outputDir: mkdtempSync(join(tmpdir(), "bm-recover-run2-")),
             publish: true,
             publisher: () => { published = true; },
+            lock,
         });
     }, /Cannot find revision \[boundarymesh-worker-00002-v6j\]/);
     assert.equal(published, false);
     const proved = await assertWorkerRollbackRevisionExists({
         stageEvidence,
+        lock,
         getter: workerExistsGetter,
     });
     assert.equal(proved.revision, "boundarymesh-worker-00002-v6j");
@@ -540,18 +568,22 @@ test("Worker rollback existence proof rejects wrong identities and malformed rea
     }), /Worker Pool revision/);
     await assert.rejects(() => assertWorkerRollbackRevisionExists({
         stageEvidence: { ...stageEvidence, rollback: { ...stageEvidence.rollback, workerRevision: "missing-worker-revision" } },
+        lock,
         getter: () => ({ status: 200, payload: { name: workerRollbackName } }),
     }), /Worker Pool revision|malformed/);
     await assert.rejects(() => assertWorkerRollbackRevisionExists({
         stageEvidence,
+        lock,
         getter: () => ({ status: 404, payload: { error: { status: "NOT_FOUND" } } }),
     }), /does not exist/);
     await assert.rejects(() => assertWorkerRollbackRevisionExists({
         stageEvidence: { ...stageEvidence, rollback: { ...stageEvidence.rollback, workerRevision: "boundarymesh-api-00004-9hw" } },
+        lock,
         getter: () => ({ status: 200, payload: { name: workerRollbackName } }),
     }), /service revision|Worker Pool revision/);
     await assert.rejects(() => assertWorkerRollbackRevisionExists({
         stageEvidence,
+        lock,
         getter: () => ({
             status: 200,
             payload: { name: "projects/boundarymesh-dev/locations/europe-west4/workerPools/other-pool/revisions/boundarymesh-worker-00002-v6j" },
@@ -559,14 +591,17 @@ test("Worker rollback existence proof rejects wrong identities and malformed rea
     }), /exact requested Worker Pool revision/);
     await assert.rejects(() => assertWorkerRollbackRevisionExists({
         stageEvidence,
+        lock,
         getter: () => ({ status: 403, payload: { error: { status: "PERMISSION_DENIED" } } }),
     }), /permission denied/);
     await assert.rejects(() => assertWorkerRollbackRevisionExists({
         stageEvidence,
+        lock,
         getter: () => ({ status: 200, payload: "revision" }),
     }), /malformed/);
     await assert.rejects(() => assertWorkerRollbackRevisionExists({
         stageEvidence: { ...stageEvidence, rollback: { ...stageEvidence.rollback, workerRevision: "boundarymesh-worker-c-36941014905" } },
+        lock,
         getter: workerExistsGetter,
     }), /current staged candidate/);
 });
