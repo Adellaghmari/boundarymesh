@@ -8,11 +8,11 @@ This is not an API dashboard, an integration platform, an AI assistant, or a rel
 
 ## What a reader can see
 
-The hosted root is the synthetic product. About the project explains the system from inside that application. The public page does not submit a real transaction.
+The hosted root is the same console as the local lab, with synthetic crossings instead of the Java API. About the project is a page in the navigation. The public page does not submit a real transaction.
 
 The operator console can submit one synthetic transaction after Google sign-in. That path is the hosted proof that the web edge, private API, outbox, Pub/Sub, and worker agree. It does not call a partner API.
 
-The local lab is the full walkthrough: HMAC webhooks, contract and egress checks, quarantine, audit, attestation, and one bounded Microsoft Graph calendar pull against a personal account.
+The local lab and the public console share the same navigation: HMAC webhooks, contract and egress checks, quarantine, audit, attestation, and one bounded Microsoft Graph calendar pull against a personal account in the lab. The public console answers those pages from synthetic data.
 
 ## Differentiation that is in the software
 

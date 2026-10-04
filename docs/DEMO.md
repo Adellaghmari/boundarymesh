@@ -1,6 +1,6 @@
 # Demo
 
-Use the local lab for a full walkthrough against the Java API. The hosted root is the synthetic product. It does not sign in and does not call the API. About the project opens inside that application. Use the operator console only after Google sign-in, and only for the synthetic transaction it offers.
+Use the local lab for a full walkthrough against the Java API. The hosted root is the same console, filled with synthetic data. It does not sign in and does not call the API. About the project is a page in that navigation. Use the operator console only after Google sign-in, and only for the synthetic transaction it offers.
 
 ## Local lab
 

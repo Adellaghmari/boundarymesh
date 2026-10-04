@@ -2,6 +2,7 @@ import type { Component } from 'vue'
 import {
   Activity,
   BadgeCheck,
+  BookOpen,
   FileCheck,
   Home,
   KeyRound,
@@ -36,6 +37,7 @@ export const NAV_ICONS: Record<string, Component> = {
   [ROUTE_NAMES.audit]: ScrollText,
   [ROUTE_NAMES.attestations]: BadgeCheck,
   [ROUTE_NAMES.status]: Activity,
+  [ROUTE_NAMES.about]: BookOpen,
   labs: LayoutGrid,
 }
 

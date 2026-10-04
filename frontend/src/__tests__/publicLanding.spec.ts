@@ -26,6 +26,7 @@ describe('hosted public documents', () => {
       ROUTE_NAMES.attestationDetail,
       ROUTE_NAMES.boundaryGraph,
       ROUTE_NAMES.status,
+      ROUTE_NAMES.about,
       ROUTE_NAMES.notFound,
     ])
 
@@ -34,7 +35,9 @@ describe('hosted public documents', () => {
     const firebase = JSON.parse(readFileSync(resolve('../firebase.json'), 'utf8'))
 
     expect(main).toContain("import.meta.env.VITE_APP_MODE === 'cloud'")
-    expect(main).toContain('PublicExplorerView.vue')
+    expect(main).toContain('seedPublicDemo')
+    expect(main).toContain('App.vue')
+    expect(main).not.toContain('PublicExplorerView')
     expect(main).not.toContain('PublicLandingView')
     expect(main).toContain('selectPublicEntry')
     expect(main).toContain('App.vue')

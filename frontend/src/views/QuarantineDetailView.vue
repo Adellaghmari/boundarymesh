@@ -11,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const store = useDeliveryStore()
+const publicDemo = import.meta.env.VITE_APP_MODE === 'cloud'
 const { evaluating, errorMessage, selectedQuarantine, lastReprocess } = storeToRefs(store)
 
 onMounted(async () => {
@@ -74,11 +75,12 @@ async function reprocess(): Promise<void> {
         v-if="selectedQuarantine.eligible && selectedQuarantine.status !== 'TERMINAL'"
         type="button"
         class="action"
-        :disabled="evaluating"
+        :disabled="evaluating || publicDemo"
         @click="reprocess"
       >
         {{ $show(evaluating ? 'Reprocessing…' : 'Reprocess as operator') }}
       </button>
+      <p v-if="publicDemo" class="muted">Reprocess stays in the protected operator console.</p>
       <p v-else class="muted">This item is not eligible for another recovery cycle.</p>
     </section>
 

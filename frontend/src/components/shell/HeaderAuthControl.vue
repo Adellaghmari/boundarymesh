@@ -5,6 +5,7 @@ import { LogIn, LogOut, UserRound } from '@lucide/vue'
 import { useMicrosoftStore } from '@/stores/microsoft'
 
 const store = useMicrosoftStore()
+const publicDemo = import.meta.env.VITE_APP_MODE === 'cloud'
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
 
@@ -45,6 +46,10 @@ onBeforeUnmount(() => {
       >
         <LogIn :size="14" aria-hidden="true" />
         Admin sign in
+      </a>
+      <a v-else-if="publicDemo" class="auth__signin" href="/operator">
+        <LogIn :size="14" aria-hidden="true" />
+        Operator sign in
       </a>
       <span v-else class="auth__hint">Sign in unavailable</span>
     </p>

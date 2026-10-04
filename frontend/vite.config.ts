@@ -51,9 +51,23 @@ const proxy = {
 export default defineConfig({
   plugins: [vue(), rewriteOperatorEntry(), ...(process.env.VITEST ? [] : [vueDevTools()])],
   resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
+    alias: [
+      {
+        find: '@/api/boundarymesh',
+        replacement: fileURLToPath(
+          new URL(
+            process.env.VITE_APP_MODE === 'cloud'
+              ? './src/api/syntheticPortfolio.ts'
+              : './src/api/boundarymeshLive.ts',
+            import.meta.url,
+          ),
+        ),
+      },
+      {
+        find: '@',
+        replacement: fileURLToPath(new URL('./src', import.meta.url)),
+      },
+    ],
   },
   server: {
     host: '127.0.0.1',

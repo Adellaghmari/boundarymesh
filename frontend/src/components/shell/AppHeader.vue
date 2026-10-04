@@ -14,7 +14,7 @@ import MobileNavigation from '@/components/shell/MobileNavigation.vue'
 import NavDropdown from '@/components/shell/NavDropdown.vue'
 import NavItem from '@/components/shell/NavItem.vue'
 import SyntheticBadge from '@/components/shell/SyntheticBadge.vue'
-import { EVIDENCE_NAV, LAB_NAV, OPERATIONS_NAV, PRIMARY_NAV, STATUS_NAV } from '@/config/navigation'
+import { ABOUT_NAV, EVIDENCE_NAV, LAB_NAV, OPERATIONS_NAV, PRIMARY_NAV, STATUS_NAV } from '@/config/navigation'
 import { NAV_ICONS, navIcon } from '@/config/navIcons'
 import { useActiveNav } from '@/composables/useActiveNav'
 
@@ -75,6 +75,12 @@ const mobileOpen = ref(false)
             :label="STATUS_NAV.label"
             :icon="Activity"
             :current="isActive(STATUS_NAV.name)"
+          />
+          <NavItem
+            :to="ABOUT_NAV.to"
+            :label="ABOUT_NAV.label"
+            :icon="navIcon(ABOUT_NAV.name)"
+            :current="isActive(ABOUT_NAV.name)"
           />
         </div>
       </nav>
@@ -203,6 +209,7 @@ const mobileOpen = ref(false)
     position: relative;
     z-index: 3;
     gap: 0.4rem;
+    flex-wrap: wrap;
   }
 
   .header__primary,
