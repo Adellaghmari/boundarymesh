@@ -21,4 +21,4 @@ Usable demo + real authorization boundaries. Login is not a banner; 401/403 test
 
 Ingest endpoints are “public” to producers but authenticated by JWT/HMAC/Graph, not by recruiter cookies. Rate-limit verify and ingest.
 
-**Current implementation:** source contains a static public page at `/` and a protected operator page at `/operator`. Anonymous APIs are not the live Hosting path. The promoted Hosting channel can still be the earlier operator bundle until a later release. Local labs remain the full walkthrough. See [../ARCHITECTURE.md](../ARCHITECTURE.md).
+**Current implementation:** source contains a public page at `/`, a synthetic explorer at `/explore`, and a protected operator page at `/operator`. The explorer does not call the API and cannot mutate cloud state. Anonymous APIs are not the live Hosting path. A source change reaches the live channel only through a later approved release. Local labs remain the full walkthrough. See [../ARCHITECTURE.md](../ARCHITECTURE.md).

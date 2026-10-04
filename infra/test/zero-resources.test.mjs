@@ -235,6 +235,8 @@ test("Hosting rewrites select the BFF before the SPA and never target the privat
         "/api/**",
         "/operator",
         "/operator/**",
+        "/explore",
+        "/explore/**",
         "**",
     ]);
     assert.equal(hosting.rewrites[0].run.serviceId, "boundarymesh-web");
@@ -242,6 +244,8 @@ test("Hosting rewrites select the BFF before the SPA and never target the privat
     assert.equal(hosting.rewrites[2].destination, "/operator.html");
     assert.equal(hosting.rewrites[3].destination, "/operator.html");
     assert.equal(hosting.rewrites[4].destination, "/index.html");
+    assert.equal(hosting.rewrites[5].destination, "/index.html");
+    assert.equal(hosting.rewrites[6].destination, "/index.html");
 });
 
 test("Hosting revalidates every SPA shell request before overriding only hashed assets", () => {

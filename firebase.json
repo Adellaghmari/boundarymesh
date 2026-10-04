@@ -7,6 +7,8 @@
       { "source": "/api/**", "run": { "serviceId": "boundarymesh-web", "region": "europe-west4" } },
       { "source": "/operator", "destination": "/operator.html" },
       { "source": "/operator/**", "destination": "/operator.html" },
+      { "source": "/explore", "destination": "/index.html" },
+      { "source": "/explore/**", "destination": "/index.html" },
       { "source": "**", "destination": "/index.html" }
     ],
     "headers": [

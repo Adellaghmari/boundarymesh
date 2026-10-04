@@ -39,7 +39,10 @@ describe('public portfolio landing', () => {
     expect(wrapper.find('button').exists()).toBe(false)
     expect(text).not.toContain('Checking your session')
     expect(text).not.toContain('secure web edge is unavailable')
-    expect(wrapper.find('a[href="/operator"]').exists()).toBe(true)
+    expect(wrapper.findAll('a[href="/explore"]').length).toBeGreaterThan(1)
+    expect(wrapper.find('a[href="/explore"]').text()).toBe('Explore BoundaryMesh')
+    expect(wrapper.findAll('a[href="/operator"]').every((link) => link.text() === 'Operator sign in')).toBe(true)
+    expect(text).not.toContain('Open operator console')
     expect(wrapper.get('a[href="https://github.com/Adellaghmari/boundarymesh"]').text()).toBe('Source on GitHub')
     expect(fetchSpy).not.toHaveBeenCalled()
     expect(text).not.toMatch(/[-—–]/)
@@ -89,6 +92,8 @@ describe('public portfolio landing', () => {
 
     expect(main).toContain("import.meta.env.VITE_APP_MODE === 'cloud'")
     expect(main).toContain('PublicLandingView.vue')
+    expect(main).toContain('PublicExplorerView.vue')
+    expect(main).toContain('selectPublicEntry')
     expect(main).toContain('App.vue')
     expect(main).not.toContain('CloudConsoleView')
     expect(operator).toContain('CloudConsoleView')
@@ -101,9 +106,13 @@ describe('public portfolio landing', () => {
       '/api/**',
       '/operator',
       '/operator/**',
+      '/explore',
+      '/explore/**',
       '**',
     ])
     expect(firebase.hosting.rewrites[2].destination).toBe('/operator.html')
+    expect(firebase.hosting.rewrites[4].destination).toBe('/index.html')
+    expect(firebase.hosting.rewrites[5].destination).toBe('/index.html')
     expect(firebase.hosting.rewrites.at(-1).destination).toBe('/index.html')
   })
 })

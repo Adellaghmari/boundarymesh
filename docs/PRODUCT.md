@@ -8,7 +8,7 @@ This is not an API dashboard, an integration platform, an AI assistant, or a rel
 
 ## What a reader can see
 
-The public page explains the system. It does not submit transactions.
+The public page explains the system. `/explore` shows a synthetic crossing without sign in. Neither page submits a real transaction.
 
 The operator console can submit one synthetic transaction after Google sign-in. That path is the hosted proof that the web edge, private API, outbox, Pub/Sub, and worker agree. It does not call a partner API.
 
