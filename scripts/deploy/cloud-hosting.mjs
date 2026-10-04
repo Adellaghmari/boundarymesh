@@ -18,17 +18,18 @@ const FIREBASE_BIN = join(here, "node_modules", "firebase-tools", "lib", "bin", 
 const QUOTA_PROJECT = loadFrozenRelease().project;
 const MAX_API_RESPONSE_BYTES = 5 * 1024 * 1024;
 // Hard ceiling for a Hosting inventory. It is not the expected file list.
-// Publication f307c9009f39f60f3fe4c036846ba1c0c3c42a7f contains 77 frozen files
-// and 391,439 bytes. Stage 37238811079 failed only because the previous ceiling
-// of 16 rejected that count before path or byte comparison. 128 is the smallest
-// power of two above 77 that still leaves room for additional per-route script
-// and stylesheet chunks. Exact equality with the frozen archive remains authoritative.
+// Publication 685db5200b7bb4b8042de35dd2281d8d40149c7f contains 77 frozen files
+// and 404,071 bytes. Publication f307c9009f39f60f3fe4c036846ba1c0c3c42a7f contained
+// 77 files and 391,439 bytes. Stage 37238811079 failed only because the previous
+// ceiling of 16 rejected that count before path or byte comparison. 128 is the
+// smallest power of two above 77 that still leaves room for additional per-route
+// script and stylesheet chunks. Exact equality with the frozen archive remains authoritative.
 // Version.fileCount is never that authority. The 512 KiB frozen byte cap is unchanged
 // because this archive is already inside it.
 export const MAX_HOSTED_FILE_COUNT = 128;
 const MAX_HOSTED_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_FROZEN_TOTAL_BYTES = 512 * 1024;
-const MAX_HOSTED_TOTAL_BYTES = 2 * 1024 * 1024; // Frozen static payload is 391,439 bytes; probes re-read only the shell assets.
+const MAX_HOSTED_TOTAL_BYTES = 2 * 1024 * 1024; // Frozen static payload is 404,071 bytes; probes re-read only the shell assets.
 const MAX_HOSTED_REQUEST_COUNT = (MAX_HOSTED_FILE_COUNT * 2) + 3;
 const MAX_HTML_PROBE_BYTES = 256 * 1024;
 const MAX_ASSET_PROBE_BYTES = 1024 * 1024;
