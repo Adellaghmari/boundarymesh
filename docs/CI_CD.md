@@ -109,7 +109,7 @@ Do not describe recovery as part of every promotion.
 
 ## Current deployed release
 
-The deploy lock points at published source `2ad8ae1e7b49351c4ad1abea0acc595922911ac3`, publication run `37233745279`. Its Hosting config is vendored at `scripts/deploy/release/frozen/firebase.2ad8ae1e7b49351c4ad1abea0acc595922911ac3.json`. Earlier Hosting configs remain vendored for `a876a7bfa5fa86f88e8387efb557773281daa6e6` and `22019c72ab7f4435c9dc588bb331a5c97d45b1c4`. Deployment reads the lock's vendored Hosting bytes and checks the recorded SHA256. It does not read a historical commit from Git.
+The deploy lock points at published source `f307c9009f39f60f3fe4c036846ba1c0c3c42a7f`, publication run `37238013523`. Its Hosting config is vendored at `scripts/deploy/release/frozen/firebase.f307c9009f39f60f3fe4c036846ba1c0c3c42a7f.json`. Earlier Hosting configs remain vendored for `a876a7bfa5fa86f88e8387efb557773281daa6e6`, `22019c72ab7f4435c9dc588bb331a5c97d45b1c4`, and `2ad8ae1e7b49351c4ad1abea0acc595922911ac3`. Deployment reads the lock's vendored Hosting bytes and checks the recorded SHA256. It does not read a historical commit from Git.
 
 | Surface | Identity |
 | --- | --- |
