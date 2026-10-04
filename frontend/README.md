@@ -3,7 +3,7 @@
 Vue 3 console for **BoundaryMesh**.
 
 - **Local** (`npm run dev`): the lab console against the Java API on this machine. This is the default when `VITE_APP_MODE` is unset.
-- **Hosted root** (`VITE_APP_MODE=cloud`): a static public portfolio page. No sign in.
+- **Hosted root** (`VITE_APP_MODE=cloud`): a public portfolio page at `/` and a synthetic explorer at `/explore`. No sign in and no private API call.
 - **Hosted operator page** (`operator.html`, routed from `/operator`): the existing operator console. Google sign in and a web edge session are required.
 
 `VITE_*` values are public browser configuration. Never put secrets there.

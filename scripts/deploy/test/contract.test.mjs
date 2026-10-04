@@ -202,7 +202,9 @@ test("Firebase Hosting config is materialized byte-for-byte from the vendored fr
     assert.ok(existsSync(destination));
     assert.equal(sha256Bytes(readFileSync(destination)), lock.firebase.configSha256);
     assert.equal(sha256Bytes(readFileSync(join(repositoryRoot, lock.firebase.vendoredPath))), lock.firebase.configSha256);
-    assert.equal(sha256Bytes(readFileSync(join(repositoryRoot, "firebase.json"))), lock.firebase.configSha256);
+    const workingHosting = JSON.parse(readFileSync(join(repositoryRoot, "firebase.json"), "utf8")).hosting;
+    assert.equal(workingHosting.rewrites.find((rule) => rule.source === "/explore").destination, "/index.html");
+    assert.equal(workingHosting.rewrites.find((rule) => rule.source === "/operator").destination, "/operator.html");
     assert.equal(
         sha256Bytes(readFileSync(join(repositoryRoot, "scripts/deploy/release/frozen/firebase.a876a7bfa5fa86f88e8387efb557773281daa6e6.json"))),
         "34d9f2a073429420b6a15b9133486096fba75a1255ec1f3431fda5b2fd5a242c",

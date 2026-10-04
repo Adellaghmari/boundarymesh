@@ -76,7 +76,10 @@ onUnmounted(() => {
           <span class="brand__tagline">Secure every system crossing.</span>
         </span>
       </a>
-      <a class="portfolio__operator" href="/operator">Open operator console</a>
+      <div class="portfolio__actions">
+        <a class="portfolio__explore" href="/explore">Explore BoundaryMesh</a>
+        <a class="portfolio__operator" href="/operator">Operator sign in</a>
+      </div>
     </header>
 
     <main id="main" class="portfolio__main stack">
@@ -87,6 +90,10 @@ onUnmounted(() => {
         </div>
         <h1>BoundaryMesh</h1>
         <p class="lede">Secure every system crossing.</p>
+        <div class="cluster">
+          <a class="action" href="/explore">Explore BoundaryMesh</a>
+          <a class="action action--quiet" href="/operator">Operator sign in</a>
+        </div>
         <p>
           A successful HTTP request does not prove that one system should be allowed to exchange
           data or actions with another. BoundaryMesh sits in front of that exchange and asks one
@@ -208,8 +215,9 @@ onUnmounted(() => {
           keyless.
         </p>
         <div class="cluster">
-          <a class="action" href="https://github.com/Adellaghmari/boundarymesh">Source on GitHub</a>
-          <a class="action action--quiet" href="/operator">Open operator console</a>
+          <a class="action" href="/explore">Explore BoundaryMesh</a>
+          <a class="action action--quiet" href="/operator">Operator sign in</a>
+          <a class="action action--quiet" href="https://github.com/Adellaghmari/boundarymesh">Source on GitHub</a>
         </div>
       </section>
     </main>
@@ -336,6 +344,13 @@ onUnmounted(() => {
   font-size: 0.75rem;
 }
 
+.portfolio__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+}
+
+.portfolio__explore,
 .portfolio__operator,
 .action {
   display: inline-flex;
@@ -353,6 +368,12 @@ onUnmounted(() => {
   background: transparent;
   color: $color-accent;
   border: 1px solid $color-accent;
+}
+
+.portfolio__header .portfolio__explore {
+  background: $color-nav-active;
+  color: $color-header;
+  border: 1px solid $color-nav-active;
 }
 
 .portfolio__header .portfolio__operator {
