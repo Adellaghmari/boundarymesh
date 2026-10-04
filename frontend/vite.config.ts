@@ -14,12 +14,27 @@ function rewriteOperatorEntry(): Plugin {
     }
     next()
   }
+  const redirectExplore = (
+    req: { url?: string },
+    res: { statusCode: number; setHeader: (name: string, value: string) => void; end: () => void },
+    next: () => void,
+  ) => {
+    const path = (req.url ?? '').split('?')[0] ?? ''
+    if (path === '/explore' || path.startsWith('/explore/')) {
+      res.statusCode = 301
+      res.setHeader('Location', '/')
+      res.end()
+      return
+    }
+    next()
+  }
   return {
     name: 'boundarymesh-operator-entry',
     configureServer(server) {
       server.middlewares.use(rewrite)
     },
     configurePreviewServer(server) {
+      server.middlewares.use(redirectExplore)
       server.middlewares.use(rewrite)
     },
   }

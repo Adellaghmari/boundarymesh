@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { flushPromises, mount } from '@vue/test-utils'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   PORTFOLIO_EXPLORER_CROSSINGS,
   filterPortfolioCrossings,
 } from '@/domain/portfolioExplorer'
 import { selectPublicEntry } from '@/publicEntry'
+import { formatPortfolioDate } from '@/domain/portfolioDate'
 import PublicExplorerView from '@/views/PublicExplorerView.vue'
 
 function visibleText(wrapper: ReturnType<typeof mount>) {
@@ -14,10 +15,14 @@ function visibleText(wrapper: ReturnType<typeof mount>) {
 }
 
 describe('public product explorer', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('chooses the public document from the path and leaves the lab router alone', () => {
-    expect(selectPublicEntry('/')).toBe('landing')
-    expect(selectPublicEntry('/explore')).toBe('explore')
-    expect(selectPublicEntry('/explore/')).toBe('explore')
+    expect(selectPublicEntry('/')).toBe('product')
+    expect(selectPublicEntry('/explore')).toBe('redirect-home')
+    expect(selectPublicEntry('/explore/')).toBe('redirect-home')
     expect(selectPublicEntry('/operator')).toBe('missing')
     expect(selectPublicEntry('/identity')).toBe('missing')
   })
@@ -30,7 +35,10 @@ describe('public product explorer', () => {
     expect(text).toContain('Portfolio demo')
     expect(text).toContain('Synthetic data')
     expect(text).toContain('not customer traffic')
+    expect(text).toContain('System crossings')
     expect(text).toContain('Overview')
+    expect(text).not.toContain('Explore BoundaryMesh')
+    expect(text).not.toContain('What I built')
     expect(text).toContain('QuayForge order accepted')
     expect(text).toContain('Contact field transformed')
     expect(text).toContain('Contract drift held')
@@ -39,8 +47,9 @@ describe('public product explorer', () => {
     expect(text).toContain('ALLOW WITH TRANSFORMATION')
     expect(text).toContain('QUARANTINE')
     expect(text).toContain('REJECT')
-    expect(wrapper.get('nav a[href="/"]').text()).toBe('Portfolio')
+    expect(wrapper.get('nav button').text()).toBe('About the project')
     expect(wrapper.get('nav a[href="/operator"]').text()).toBe('Operator sign in')
+    expect(wrapper.get('nav a[href="https://github.com/Adellaghmari/boundarymesh"]').text()).toBe('Source on GitHub')
     expect(text).not.toContain('Checking your session')
     expect(text).not.toContain('Submit synthetic transaction')
     expect(fetchSpy).not.toHaveBeenCalled()
@@ -114,7 +123,6 @@ describe('public product explorer', () => {
     const files = [
       'src/views/PublicExplorerView.vue',
       'src/domain/portfolioExplorer.ts',
-      'src/views/PublicLandingView.vue',
       'src/publicEntry.ts',
     ]
     for (const file of files) {
@@ -126,5 +134,30 @@ describe('public product explorer', () => {
     const operator = readFileSync(resolve('src/views/CloudConsoleView.vue'), 'utf8')
     expect(operator).toContain("authState.value !== 'authenticated'")
     expect(operator).toContain('initializeCloudSession')
+  })
+
+  it('keeps project context in an optional panel and shows the current date', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 9, 4, 15, 0, 0))
+    const fetchSpy = vi.spyOn(globalThis, 'fetch')
+    const wrapper = mount(PublicExplorerView)
+    await flushPromises()
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    await wrapper.get('nav button').trigger('click')
+    const dialog = wrapper.get('[role="dialog"]')
+    expect(dialog.text()).toContain('About the project')
+    expect(dialog.text()).toContain('The problem')
+    expect(dialog.text()).toContain('What I built')
+    expect(dialog.text()).toContain('Architecture')
+    expect(dialog.text()).toContain('Security model')
+    expect(dialog.text()).toContain('Technology stack')
+    expect(dialog.text()).toContain('Synthetic data')
+    expect(dialog.text()).toContain('not customer traffic')
+    expect(wrapper.get('[data-testid="portfolio-date"]').text()).toBe(formatPortfolioDate(new Date(2026, 9, 4, 15, 0, 0)))
+    expect(wrapper.find('[data-testid="explorer-search"]').exists()).toBe(true)
+    expect(dialog.text()).not.toMatch(/[-—–]/)
+    await wrapper.get('.about__close').trigger('click')
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
+    expect(fetchSpy).not.toHaveBeenCalled()
   })
 })

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import CrossingPipeline from '@/components/CrossingPipeline.vue'
 import OutcomeBadge from '@/components/OutcomeBadge.vue'
 import TruthBanner from '@/components/TruthBanner.vue'
+import { formatPortfolioDate, millisecondsUntilNextLocalDate } from '@/domain/portfolioDate'
 import {
   EXPLORER_LOCKED_ACTIONS,
   EXPLORER_SECTIONS,
@@ -18,6 +19,21 @@ const query = ref('')
 const outcomeFilter = ref<BoundaryOutcome | 'ALL'>('ALL')
 const section = ref<ExplorerSection>('overview')
 const selectedId = ref(crossings[0]?.id ?? '')
+const aboutOpen = ref(false)
+const aboutPanel = ref<HTMLElement | null>(null)
+const currentDate = ref(formatPortfolioDate(new Date()))
+let dateTimer: number | undefined
+
+const architecture = [
+  'Browser',
+  'Firebase Hosting',
+  'Web BFF',
+  'Private BoundaryMesh API',
+  'Firestore and a transactional outbox',
+  'Pub/Sub',
+  'Worker',
+  'External provider boundary',
+]
 
 const visible = computed(() => filterPortfolioCrossings(crossings, query.value, outcomeFilter.value))
 const selected = computed(() => visible.value.find((crossing) => crossing.id === selectedId.value) ?? visible.value[0] ?? null)
@@ -41,8 +57,35 @@ function selectSection(id: ExplorerSection): void {
   section.value = id
 }
 
+function refreshDate(): void {
+  const now = new Date()
+  currentDate.value = formatPortfolioDate(now)
+  dateTimer = window.setTimeout(refreshDate, millisecondsUntilNextLocalDate(now))
+}
+
+async function openAbout(): Promise<void> {
+  aboutOpen.value = true
+  await nextTick()
+  aboutPanel.value?.focus()
+}
+
+function closeAbout(): void {
+  aboutOpen.value = false
+}
+
+function onAboutKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && aboutOpen.value) closeAbout()
+}
+
 onMounted(() => {
-  document.title = 'Explore BoundaryMesh'
+  document.title = 'BoundaryMesh'
+  refreshDate()
+  window.addEventListener('keydown', onAboutKeydown)
+})
+
+onUnmounted(() => {
+  if (dateTimer !== undefined) window.clearTimeout(dateTimer)
+  window.removeEventListener('keydown', onAboutKeydown)
 })
 </script>
 
@@ -64,25 +107,22 @@ onMounted(() => {
           <span class="brand__tagline">Secure every system crossing.</span>
         </span>
       </a>
-      <nav class="explorer__links" aria-label="Portfolio">
-        <a class="action" href="/">Portfolio</a>
-        <a class="action action--quiet" href="/operator">Operator sign in</a>
+      <nav class="explorer__links" aria-label="Application">
+        <button type="button" class="nav-link" @click="openAbout">About the project</button>
+        <a class="nav-link" href="https://github.com/Adellaghmari/boundarymesh">Source on GitHub</a>
+        <a class="nav-link" href="/operator">Operator sign in</a>
       </nav>
     </header>
 
     <main id="main" class="explorer__main stack">
-      <section class="hero stack">
-        <div class="cluster">
-          <TruthBanner label="Portfolio demo" />
-          <TruthBanner label="Synthetic data" />
-        </div>
-        <h1>Explore a governed crossing.</h1>
-        <p>
-          This is a portfolio demo with synthetic QuayForge and Rivertide data. It is not customer traffic.
-          The walkthrough is read only. Real operator actions require authentication, and the private API stays private.
-        </p>
-      </section>
-
+      <div class="cluster">
+        <TruthBanner label="Portfolio demo" />
+        <TruthBanner label="Synthetic data" />
+      </div>
+      <div class="product-heading">
+        <h1>System crossings</h1>
+        <p>Synthetic QuayForge and Rivertide data. This is not customer traffic.</p>
+      </div>
       <div class="workspace">
         <aside class="card stack" aria-label="Synthetic crossings">
           <label class="field">
@@ -205,6 +245,64 @@ onMounted(() => {
         </div>
       </section>
     </main>
+
+    <div v-if="aboutOpen" class="about-layer" @click.self="closeAbout">
+      <section
+        ref="aboutPanel"
+        class="about card stack"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="about-title"
+        tabindex="-1"
+      >
+        <div class="cluster about__bar">
+          <h2 id="about-title">About the project</h2>
+          <button type="button" class="about__close" @click="closeAbout">Close</button>
+        </div>
+        <p>BoundaryMesh decides whether one system may exchange data or an action with another.</p>
+        <h3>The problem</h3>
+        <p>
+          A successful request does not prove that one system should be allowed to exchange data or
+          actions with another. BoundaryMesh sits in front of that exchange.
+        </p>
+        <h3>What I built</h3>
+        <p>
+          I built a Vue console, a Java and Spring API, and an Apache Camel worker. A transaction is
+          checked before a delivery instruction can exist. This is a live portfolio and development
+          environment. It is not enterprise production.
+        </p>
+        <h3>Architecture</h3>
+        <p>
+          The browser loads this application from Firebase Hosting. Operator calls go to the web BFF.
+          The BFF calls the private API. The API writes Firestore, including a transactional outbox,
+          and publishes to Pub/Sub. A worker consumes that event. External connectors stay off on purpose.
+        </p>
+        <ol class="about__flow">
+          <li v-for="step in architecture" :key="step">{{ step }}</li>
+        </ol>
+        <h3>Security model</h3>
+        <p>
+          Firebase Authentication protects the operator console. This public application does not use it.
+          The private API stays behind the web BFF. The browser never holds service credentials. Cloud KMS
+          signs exchange attestations. Real operator actions require authentication.
+        </p>
+        <h3>Technology stack</h3>
+        <p>
+          Vue 3, TypeScript, and Vite. Java, Spring Boot, and Apache Camel. Cloud Run, Firebase Hosting,
+          Firestore, Pub/Sub, and Cloud KMS. Pulumi and GitHub Actions.
+        </p>
+        <h3>Synthetic data</h3>
+        <p>
+          The crossings in this application are synthetic QuayForge and Rivertide data. They are not
+          customer traffic. Nothing on this public page calls the private API.
+        </p>
+        <p>
+          <span class="date-label">Current date</span>
+          <time data-testid="portfolio-date">{{ currentDate }}</time>
+        </p>
+        <a href="https://github.com/Adellaghmari/boundarymesh">Source on GitHub</a>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -242,27 +340,76 @@ onMounted(() => {
   gap: $space-3;
 }
 
-.explorer__links .action {
+.nav-link {
   display: inline-flex;
   align-items: center;
-  width: fit-content;
-  border-radius: $radius-md;
-  padding: 0.7rem 1rem;
-  background: $color-nav-active;
-  color: $color-header;
-  text-decoration: none;
-  font-weight: 700;
-  border: 1px solid transparent;
-}
-
-.explorer__links .action--quiet {
+  border: 0;
   background: transparent;
   color: $color-header-ink;
-  border-color: $color-nav-active-border;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0.35rem 0.15rem;
+  cursor: pointer;
 }
 
-.hero h1 {
-  font-size: clamp(2rem, 4vw, 3.2rem);
+.product-heading h1 {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.product-heading p {
+  color: $color-ink-muted;
+}
+
+.about-layer {
+  position: fixed;
+  inset: 0;
+  z-index: $z-drawer;
+  display: grid;
+  place-items: center;
+  padding: $space-4;
+  background: rgb(7 21 39 / 48%);
+}
+
+.about {
+  width: min(100%, 40rem);
+  max-height: min(85vh, 46rem);
+  overflow: auto;
+}
+
+.about__bar {
+  justify-content: space-between;
+}
+
+.about__close,
+.about__flow {
+  margin: 0;
+}
+
+.about__close {
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+  color: $color-ink;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+}
+
+.about__flow {
+  padding-left: 1.2rem;
+  display: grid;
+  gap: $space-2;
+}
+
+.date-label {
+  display: block;
+  color: $color-ink-muted;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .workspace {

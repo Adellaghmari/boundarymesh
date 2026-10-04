@@ -26,7 +26,7 @@ npm run test
 npm run test:e2e
 ```
 
-Vitest covers the lab console, the public page, the public explorer, and the operator console. `npm run test:e2e` walks the local lab against the local Java API and does not set `VITE_APP_MODE=cloud`. `npx playwright test -c playwright.public.config.ts` builds the cloud bundle and walks `/`, `/explore`, and the protected `/operator` page.
+Vitest covers the lab console, the public product, and the operator console. `npm run test:e2e` walks the local lab against the local Java API and does not set `VITE_APP_MODE=cloud`. `npx playwright test -c playwright.public.config.ts` builds the cloud bundle and walks `/`, the `/explore` redirect, and the protected `/operator` page.
 
 `npm run lint` includes oxlint findings in test mocks. Those findings are known. ESLint is configured to fail on warnings.
 

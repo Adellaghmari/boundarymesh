@@ -5,7 +5,7 @@ async function expectNoHorizontalOverflow(page: Page): Promise<void> {
   expect(overflow).toBe(false)
 }
 
-test('a recruiter explores the product and still finds a protected operator page', async ({ page }) => {
+test('the public root is the product, and the operator page stays protected', async ({ page }) => {
   const privateCalls: string[] = []
   page.on('request', (request) => {
     const url = request.url()
@@ -13,17 +13,15 @@ test('a recruiter explores the product and still finds a protected operator page
   })
 
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'BoundaryMesh', level: 1 })).toBeVisible()
-  await expect(page.getByText('Secure every system crossing.').first()).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Explore BoundaryMesh' }).first()).toBeVisible()
-
-  await page.getByRole('link', { name: 'Explore BoundaryMesh' }).first().click()
-  await expect(page).toHaveURL(/\/explore\/?$/)
+  await expect(page).toHaveURL(/\/$/)
   await expect(page.locator('.explorer__header')).toHaveCSS('display', 'flex')
-  await expect(page.getByRole('heading', { name: 'Explore a governed crossing.' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'System crossings', level: 1 })).toBeVisible()
+  await expect(page.getByTestId('explorer-search')).toBeVisible()
   await expect(page.getByText('Portfolio demo').first()).toBeVisible()
   await expect(page.getByText('Synthetic data').first()).toBeVisible()
   await expect(page.getByText('not customer traffic')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Explore BoundaryMesh' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'What I built' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Operator access' })).toHaveCount(0)
   expect(privateCalls).toEqual([])
 
@@ -40,6 +38,7 @@ test('a recruiter explores the product and still finds a protected operator page
   await expect(page.getByTestId('attestation')).toContainText('signed')
   await expect(page.getByRole('heading', { name: 'Cloud KMS' })).toBeVisible()
   await page.getByText('Transformation applied').click()
+  await expect(page.getByTestId('timeline')).toBeVisible()
 
   await page.getByRole('tab', { name: 'Delivery' }).click()
   await expect(page.getByTestId('delivery-state')).toContainText('Delivered after transformation')
@@ -47,35 +46,46 @@ test('a recruiter explores the product and still finds a protected operator page
   await expect(page.getByRole('button', { name: 'Retry delivery' })).toBeDisabled()
   await expect(page.getByRole('button', { name: 'Approve release' })).toBeDisabled()
   await expect(page.getByRole('button', { name: 'Reject crossing' })).toBeDisabled()
+
+  await page.getByRole('button', { name: 'About the project' }).click()
+  const about = page.getByRole('dialog', { name: 'About the project' })
+  await expect(about).toBeVisible()
+  await expect(about.getByRole('heading', { name: 'What I built' })).toBeVisible()
+  await expect(about.getByRole('heading', { name: 'Architecture' })).toBeVisible()
+  await expect(about.getByRole('heading', { name: 'Security model' })).toBeVisible()
+  await expect(about.getByTestId('explorer-search')).toHaveCount(0)
+  await expect(page.getByTestId('explorer-search')).toBeVisible()
+  await about.getByRole('button', { name: 'Close' }).click()
+  await expect(about).toHaveCount(0)
   expect(privateCalls).toEqual([])
 
-  const exploreText = await page.locator('body').innerText()
-  expect(exploreText).not.toMatch(/[-—–]/)
+  const productText = await page.locator('body').innerText()
+  expect(productText).not.toMatch(/[-—–]/)
 
-  await page.getByRole('link', { name: 'Portfolio', exact: true }).click()
+  await page.goto('/explore')
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.locator('.portfolio__header')).toHaveCSS('display', 'flex')
-  await expect(page.getByRole('heading', { name: 'BoundaryMesh', level: 1 })).toBeVisible()
-  const landingText = await page.locator('body').innerText()
-  expect(landingText).not.toMatch(/[-—–]/)
+  await expect(page.getByRole('heading', { name: 'System crossings', level: 1 })).toBeVisible()
 
-  await page.getByRole('link', { name: 'Operator sign in' }).first().click()
+  await page.getByRole('link', { name: 'Operator sign in' }).click()
   await expect(page).toHaveURL(/\/operator\/?$/)
   await expect(page.getByRole('heading', { name: 'Operator access' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Submit synthetic transaction' })).toHaveCount(0)
 })
 
-test('public explorer layouts do not overflow', async ({ page }) => {
+test('public product layouts do not overflow', async ({ page }) => {
   for (const viewport of [
     { width: 1440, height: 900 },
     { width: 768, height: 1024 },
     { width: 390, height: 844 },
   ]) {
     await page.setViewportSize(viewport)
-    await page.goto('/explore')
-    await expect(page.getByRole('heading', { name: 'Explore a governed crossing.' })).toBeVisible()
+    await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'System crossings' })).toBeVisible()
     await page.getByRole('tab', { name: 'Evidence' }).click()
     await page.getByRole('button', { name: /Replay rejected/ }).click()
+    await expectNoHorizontalOverflow(page)
+    await page.getByRole('button', { name: 'About the project' }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
     await expectNoHorizontalOverflow(page)
   }
 })
