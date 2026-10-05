@@ -29,6 +29,7 @@ const MAX_API_RESPONSE_BYTES = 5 * 1024 * 1024;
 // script and stylesheet chunks. Exact equality with the frozen archive remains authoritative.
 // Version.fileCount is never that authority.
 // The reviewed public Vue DevTools archive is 115 files and 6,006,191 bytes.
+// Publication a134cbab129cc5b42a8a8c3671aa5b38d9ef0c6b contains 115 frozen files and 6,016,938 bytes.
 // 115 remains under the 128 file ceiling. The old 512 KiB frozen aggregate and the
 // old 2 MiB hosted response budget both reject that archive before Firebase Hosting
 // is involved. 6 MiB is the smallest mebibyte ceiling above the reviewed archive.
