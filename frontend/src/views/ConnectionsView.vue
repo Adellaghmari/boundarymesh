@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import { show as $show } from '@/domain/displayCopy'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { RouterLink } from 'vue-router'
 import TruthBanner from '@/components/TruthBanner.vue'
 import { VELORA_SYSTEMS } from '@/domain/connections'
 import { useMicrosoftStore } from '@/stores/microsoft'
 
 const store = useMicrosoftStore()
 const { connector, lastHarness, errorMessage, loading } = storeToRefs(store)
+const openIds = ref<string[]>([])
+
+function toggle(id: string): void {
+  openIds.value = openIds.value.includes(id)
+    ? openIds.value.filter((item) => item !== id)
+    : [...openIds.value, id]
+}
 
 onMounted(() => {
   void store.loadConnector()
@@ -69,13 +77,65 @@ async function runHarness(): Promise<void> {
       </p>
     </article>
 
-    <article v-for="system in VELORA_SYSTEMS" :key="system.id" class="card stack">
+    <article v-for="system in VELORA_SYSTEMS" :key="system.id" class="card stack" :data-testid="`connection-${system.id}`">
       <div class="cluster">
         <h2>{{ $show(system.name) }}</h2>
         <span class="truth-banner">{{ $show(system.connectorStatus) }}</span>
       </div>
       <p><strong>Role.</strong> {{ $show(system.role) }}</p>
       <p>{{ $show(system.character) }}</p>
+      <div class="actions">
+        <button
+          type="button"
+          class="action"
+          :aria-expanded="openIds.includes(system.id)"
+          :aria-controls="`connection-details-${system.id}`"
+          @click="toggle(system.id)"
+        >
+          View connection details
+        </button>
+        <RouterLink v-for="action in system.actions" :key="action.label" :to="action.to">
+          {{ action.label }}
+        </RouterLink>
+      </div>
+      <dl v-if="openIds.includes(system.id)" :id="`connection-details-${system.id}`" class="meta">
+        <div>
+          <dt>Mode</dt>
+          <dd>{{ $show(system.mode) }}</dd>
+        </div>
+        <div>
+          <dt>Source</dt>
+          <dd>{{ $show(system.source) }}</dd>
+        </div>
+        <div>
+          <dt>Destination</dt>
+          <dd>{{ $show(system.destination) }}</dd>
+        </div>
+        <div>
+          <dt>Contract</dt>
+          <dd>{{ $show(system.contract) }}</dd>
+        </div>
+        <div>
+          <dt>Permissions</dt>
+          <dd>{{ $show(system.permissions) }}</dd>
+        </div>
+        <div>
+          <dt>Policy path</dt>
+          <dd>{{ $show(system.policyPath) }}</dd>
+        </div>
+        <div>
+          <dt>Crossing</dt>
+          <dd>{{ $show(system.crossing) }}</dd>
+        </div>
+        <div>
+          <dt>Synthetic status</dt>
+          <dd>{{ $show(system.syntheticStatus) }}</dd>
+        </div>
+        <div>
+          <dt>Recent synthetic outcome</dt>
+          <dd>{{ $show(system.recentOutcome) }}</dd>
+        </div>
+      </dl>
     </article>
   </div>
 </template>
@@ -99,5 +159,12 @@ dt {
 
 .action {
   justify-self: start;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+  align-items: center;
 }
 </style>

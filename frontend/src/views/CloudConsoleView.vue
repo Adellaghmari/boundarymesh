@@ -175,13 +175,21 @@ onUnmounted(() => {
 <template>
   <div class="cloud-shell">
     <a class="skip-link" href="#main">Skip to content</a>
-    <header class="cloud-header">
-      <div>
-        <strong>BoundaryMesh</strong>
-        <span>Governed cloud transactions</span>
+    <header class="operator-header">
+      <div class="operator-header__brand">
+        <span class="operator-header__mark" aria-hidden="true">
+          <svg viewBox="0 0 32 36" fill="none">
+            <path d="M16 2.5c6.2 3.2 10.7 4.4 13.2 4.8v12.2c0 7.4-5.2 12.8-13.2 16.1C7.9 30.3 2.8 24.9 2.8 17.5V7.3C5.4 6.9 9.8 5.7 16 2.5Z" />
+            <path d="M16 7.4c3.6 1.8 6.2 2.5 7.6 2.7v8.2c0 4.2-2.9 7.3-7.6 9.3-4.7-2-7.6-5.1-7.6-9.3V10.1c1.4-.2 4-1 7.6-2.7Z" />
+          </svg>
+        </span>
+        <span class="operator-header__name">
+          <strong>BoundaryMesh</strong>
+          <span>Secure every system crossing.</span>
+        </span>
       </div>
-      <div class="cloud-header__actions">
-        <a href="/">Portfolio</a>
+      <div class="operator-header__actions">
+        <a href="/">Back to portfolio</a>
         <button v-if="authState === 'authenticated'" type="button" :disabled="busy" @click="logout">Sign out</button>
       </div>
     </header>
@@ -192,8 +200,13 @@ onUnmounted(() => {
         <p>Submit one synthetic QuayForge order for Rivertide. BoundaryMesh evaluates it, signs evidence, publishes a delivery instruction, and reports the worker's actual terminal state. No external connector is configured.</p>
       </div>
       <p v-if="message" class="card fail" role="alert">{{ $show(message) }}</p>
-      <section v-if="authState !== 'authenticated'" class="card stack" aria-label="Operator sign in">
+      <section v-if="authState !== 'authenticated'" class="card stack operator-card" aria-label="Operator sign in">
+        <p class="eyebrow">Protected operator environment</p>
         <h2>Operator access</h2>
+        <p>
+          This is the authenticated operator environment. It is separate from the public synthetic
+          demo. Private APIs, credentials, and production authority stay behind this sign in.
+        </p>
         <p v-if="authState === 'loading'">Checking your session…</p>
         <p v-else-if="authState === 'unauthorized'">Your account is authenticated but not on the operator allowlist.</p>
         <p v-else-if="authState === 'expired'">Your session has expired. Sign in again.</p>
@@ -240,23 +253,164 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
-.cloud-shell { min-height: 100vh; background: #f2f7f8; color: #172d39; }
-.cloud-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1.2rem max(1.5rem, calc((100vw - 72rem) / 2)); background: #102935; color: white; }
-.cloud-header div { display: flex; flex-direction: column; }
-.cloud-header .cloud-header__actions { flex-direction: row; align-items: center; gap: .75rem; }
-.cloud-header a { color: white; font-weight: 700; }
-.cloud-header strong { font-size: 1.35rem; }
-.cloud-header span { color: #b9d7d9; font-size: .85rem; }
-.cloud-main { max-width: 72rem; margin: auto; padding: 3rem 1.5rem 5rem; gap: 1.4rem; }
-.hero { max-width: 46rem; gap: .8rem; }
-.hero h1 { font-size: clamp(2rem, 4vw, 3.4rem); }
-.eyebrow { letter-spacing: .12em; color: #086c6b; font-size: .76rem; font-weight: 800; }
-.card { padding: 1.5rem; border: 1px solid #d2e1e4; border-radius: 1rem; background: white; max-width: 55rem; }
-.stack { display: grid; gap: .8rem; }
-.muted { color: #526a76; }
-.fail { border-color: #b44545; }
-button { width: fit-content; border: 0; border-radius: .55rem; padding: .7rem 1.1rem; background: #006e70; color: white; cursor: pointer; }
-button:disabled { opacity: .55; cursor: default; }
-button:focus-visible { outline: 3px solid #72dfd9; outline-offset: 2px; }
-@media (max-width: 40rem) { .cloud-header { padding: 1rem; } .cloud-main { padding: 2rem 1rem; } }
+@use '@/styles/tokens' as *;
+
+.cloud-shell {
+  min-height: 100vh;
+  background: $color-canvas;
+  color: $color-ink;
+  font-family: $font-sans;
+}
+
+.operator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $space-4;
+  padding: $space-4 max($space-5, calc((100vw - #{$measure}) / 2));
+  color: $color-header-ink;
+  background: linear-gradient(105deg, $color-header 0%, $color-header-mid 52%, $color-header-teal 100%);
+  box-shadow: $shadow-header;
+}
+
+.operator-header__brand,
+.operator-header__name,
+.operator-header__actions {
+  display: flex;
+  align-items: center;
+}
+
+.operator-header__brand {
+  gap: $space-3;
+}
+
+.operator-header__name {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+}
+
+.operator-header__name span,
+.operator-header__actions {
+  color: $color-nav-muted;
+}
+
+.operator-header__mark {
+  width: 2rem;
+  height: 2.25rem;
+}
+
+.operator-header__mark svg {
+  width: 100%;
+  height: 100%;
+  fill: $color-nav-active;
+}
+
+.operator-header strong {
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+}
+
+.operator-header__actions {
+  gap: $space-3;
+}
+
+.operator-header a {
+  color: $color-header-ink;
+  text-decoration: none;
+  font-weight: 700;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: $radius-nav;
+  padding: $space-2 $space-4;
+}
+
+.operator-header a:hover {
+  border-color: $color-nav-active-border;
+}
+
+.cloud-main {
+  max-width: $measure;
+  margin: auto;
+  padding: $space-7 $space-5 $space-7;
+  gap: $space-5;
+}
+
+.hero {
+  max-width: 46rem;
+  gap: $space-3;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.15;
+}
+
+.eyebrow {
+  letter-spacing: 0.08em;
+  color: $color-accent;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.operator-card {
+  max-width: 40rem;
+}
+
+.card {
+  padding: $space-5;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+  box-shadow: $shadow-sm;
+  max-width: 55rem;
+}
+
+.stack {
+  display: grid;
+  gap: $space-3;
+}
+
+.muted {
+  color: $color-ink-muted;
+}
+
+.fail {
+  border-color: $color-reject;
+}
+
+button {
+  width: fit-content;
+  border: 0;
+  border-radius: $radius-sm;
+  padding: $space-3 $space-4;
+  background: $color-header;
+  color: $color-header-ink;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+button:focus-visible,
+.operator-header a:focus-visible {
+  outline: 2px solid $color-focus;
+  outline-offset: 3px;
+}
+
+@media (max-width: 40rem) {
+  .operator-header {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: $space-4;
+  }
+
+  .cloud-main {
+    padding: $space-5 $space-4;
+  }
+}
 </style>

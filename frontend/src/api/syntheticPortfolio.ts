@@ -23,7 +23,8 @@ import type {
 } from '@/domain/types'
 
 const REQUEST = 'bm-public-demo'
-const WHEN = '2026-04-04T12:00:00Z'
+export const SYNTHETIC_DECISION_INSTANT = '2026-04-04T12:00:00Z'
+const WHEN = SYNTHETIC_DECISION_INSTANT
 const BANNER = 'SYNTHETIC DEMO'
 
 interface ApiResponse<T> {

@@ -1,18 +1,48 @@
 <script setup lang="ts">
 import { show as $show } from '@/domain/displayCopy'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import DecisionResult from '@/components/DecisionResult.vue'
 import TruthBanner from '@/components/TruthBanner.vue'
+import { classifyIdentityTest, type IdentityObservation } from '@/domain/identityTestVerdict'
 import { IDENTITY_LAB_SCENARIOS } from '@/domain/securityScenarios'
 import { useEventsStore } from '@/stores/events'
 
 const store = useEventsStore()
 const { evaluating, identityFailure, lastIdentityEvent } = storeToRefs(store)
 const selected = ref<(typeof IDENTITY_LAB_SCENARIOS)[number]['id']>('VALID_MACHINE')
+const judgedScenario = ref(selected.value)
+const ran = ref(false)
+
+const observation = computed<IdentityObservation | null>(() => {
+  if (!ran.value || evaluating.value) {
+    return null
+  }
+  if (identityFailure.value) {
+    return { type: 'http', status: identityFailure.value.status ?? 0 }
+  }
+  if (lastIdentityEvent.value) {
+    return {
+      type: 'decision',
+      status: lastIdentityEvent.value.httpStatus ?? 200,
+      outcome: lastIdentityEvent.value.outcome,
+    }
+  }
+  return null
+})
+
+const verdict = computed(() =>
+  observation.value ? classifyIdentityTest(judgedScenario.value, observation.value) : null,
+)
+
+const showDecision = computed(() =>
+  Boolean(lastIdentityEvent.value && !identityFailure.value && verdict.value?.result === 'PASS' && verdict.value.httpStatus !== 401),
+)
 
 async function run(): Promise<void> {
-  await store.evaluateIdentityScenario(selected.value)
+  judgedScenario.value = selected.value
+  ran.value = true
+  await store.evaluateIdentityScenario(judgedScenario.value)
 }
 </script>
 
@@ -47,33 +77,32 @@ async function run(): Promise<void> {
     </section>
 
     <section
-      v-if="identityFailure?.kind === 'unauthorized'"
-      class="card fail"
-      data-testid="authn-fail"
-      aria-labelledby="authn-fail-heading"
+      v-if="verdict"
+      class="card verdict"
+      :class="verdict.result === 'PASS' ? 'verdict--pass' : 'verdict--fail'"
+      data-testid="identity-test"
+      aria-labelledby="identity-test-heading"
     >
-      <h2 id="authn-fail-heading">Authentication</h2>
-      <p class="status">FAIL</p>
-      <p>Authentication could not be established.</p>
-      <p class="muted">HTTP {{ $show(identityFailure.status ?? 401) }}. No domain crossing was evaluated.</p>
+      <h2 id="identity-test-heading" class="eyebrow">SECURITY CHECK</h2>
+      <p class="status">{{ verdict.result === 'PASS' ? 'PASSED' : 'FAILED' }}</p>
+      <dl class="security-result">
+        <div>
+          <dt>Observed result</dt>
+          <dd>{{ verdict.observedResult }}</dd>
+        </div>
+        <div>
+          <dt>Reason</dt>
+          <dd>{{ verdict.reason }}</dd>
+        </div>
+        <div>
+          <dt>Boundary action</dt>
+          <dd>{{ verdict.boundaryAction }}</dd>
+        </div>
+      </dl>
     </section>
-
-    <section
-      v-else-if="identityFailure?.kind === 'forbidden'"
-      class="card fail"
-      data-testid="authz-http-fail"
-      aria-labelledby="authz-http-fail-heading"
-    >
-      <h2 id="authz-http-fail-heading">Authorization</h2>
-      <p class="status">FAIL</p>
-      <p>{{ $show(identityFailure.message) }}</p>
-      <p class="muted">HTTP {{ $show(identityFailure.status ?? 403) }}.</p>
-    </section>
-
-    <p v-else-if="identityFailure" class="card fail" role="alert">{{ $show(identityFailure.message) }}</p>
 
     <DecisionResult
-      v-if="lastIdentityEvent && !identityFailure"
+      v-if="showDecision && lastIdentityEvent"
       :event="lastIdentityEvent"
       show-detail-link
     />
@@ -84,7 +113,7 @@ async function run(): Promise<void> {
 @use '@/styles/tokens' as *;
 
 .lab,
-.fail {
+.verdict {
   display: grid;
   gap: $space-4;
 }
@@ -121,13 +150,46 @@ fieldset {
   opacity: 0.7;
 }
 
-.fail {
+.verdict--fail {
   background: $color-reject-soft;
   color: $color-reject;
+}
+
+.verdict--pass {
+  background: $color-allow-soft;
+  color: $color-allow;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .status {
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+.security-result {
+  display: grid;
+  gap: $space-3;
+  margin: 0;
+}
+
+.security-result div {
+  display: grid;
+  gap: $space-1;
+}
+
+.security-result dt {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.security-result dd {
+  margin: 0;
 }
 </style>
