@@ -33,7 +33,7 @@ describe('hosted production console', () => {
     vi.mocked(initializeCloudSession).mockResolvedValueOnce(null)
     const wrapper = mount(CloudConsoleView)
     await flushPromises()
-    expect(wrapper.get('a[href="/"]').text()).toBe('Portfolio')
+    expect(wrapper.get('a[href="/"]').text()).toBe('Back to portfolio')
     expect(wrapper.text()).toContain('Sign in with your approved Google account')
     expect(wrapper.text()).not.toContain('Submit synthetic transaction')
     await wrapper.get('button').trigger('click')

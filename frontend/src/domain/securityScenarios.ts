@@ -12,17 +12,17 @@ export const IDENTITY_LAB_SCENARIOS = [
   {
     id: 'EXPIRED',
     label: 'Expired identity',
-    summary: 'Authentication cannot be established. Expect HTTP 401.',
+    summary: 'Tests how BoundaryMesh handles an expired identity token.',
   },
   {
     id: 'WRONG_ISSUER',
     label: 'Wrong issuer',
-    summary: 'Authentication cannot be established. Expect HTTP 401.',
+    summary: 'Tests an identity issued by an untrusted authority.',
   },
   {
     id: 'WRONG_AUDIENCE',
     label: 'Wrong audience',
-    summary: 'Authentication cannot be established. Expect HTTP 401.',
+    summary: 'Tests a valid token intended for a different service.',
   },
 ] as const
 

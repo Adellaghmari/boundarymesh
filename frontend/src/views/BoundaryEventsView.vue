@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import OutcomeBadge from '@/components/OutcomeBadge.vue'
 import TruthBanner from '@/components/TruthBanner.vue'
 import { crossingLabel } from '@/domain/labels'
+import { presentBoundaryEventTime } from '@/domain/syntheticEventClock'
 import { useEventsStore } from '@/stores/events'
 import { storeToRefs } from 'pinia'
 
@@ -59,7 +60,7 @@ const { newestFirst } = storeToRefs(store)
           <td>{{ $show(crossingLabel(event.sourceSystem, event.destinationSystem).split(' → ')[0]) }}</td>
           <td>{{ $show(crossingLabel(event.sourceSystem, event.destinationSystem).split(' → ')[1]) }}</td>
           <td><OutcomeBadge :outcome="event.outcome" /></td>
-          <td>{{ $show(event.decidedAt) }}</td>
+          <td>{{ $show(presentBoundaryEventTime(event.scenarioId, event.decidedAt)) }}</td>
           <td>{{ $show(event.reasonCodes[0]?.code ?? '—') }}</td>
         </tr>
       </tbody>

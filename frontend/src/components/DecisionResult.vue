@@ -10,6 +10,7 @@ import OutcomeBadge from '@/components/OutcomeBadge.vue'
 import TruthBanner from '@/components/TruthBanner.vue'
 import WebhookDefensePanel from '@/components/WebhookDefensePanel.vue'
 import { crossingLabel, OUTCOME_COPY } from '@/domain/labels'
+import { presentBoundaryEventTime } from '@/domain/syntheticEventClock'
 import type { BoundaryEventRecord } from '@/domain/types'
 
 defineProps<{
@@ -67,7 +68,7 @@ defineProps<{
       </div>
       <div>
         <dt>Decision time</dt>
-        <dd>{{ $show(event.decidedAt) }}</dd>
+        <dd>{{ $show(presentBoundaryEventTime(event.scenarioId, event.decidedAt)) }}</dd>
       </div>
       <div>
         <dt>Scenario</dt>
