@@ -178,15 +178,15 @@ test("workflow contains no application build, republish, infrastructure, or iden
 });
 
 test("application identities are fixed by the frozen release lock", () => {
-    assert.equal(lock.sourceSha, "685db5200b7bb4b8042de35dd2281d8d40149c7f");
-    assert.equal(lock.publicationRunId, "37243181792");
-    assert.equal(lock.releaseManifestSha256, "e7cf3d26b22a7dc18948025689d38ba4c37a51e7705b229fae847632e51f9df3");
-    assert.equal(lock.images.api, "sha256:933d6f67c6239e60daafdd431400e491455b61ab74cbda1d0fe70c8e89b69690");
-    assert.equal(lock.images.worker, "sha256:59e9d4de9f2f07e7d4276dc70677ef3595ce9ab9a4014089374b0e57215fe8b9");
-    assert.equal(lock.images.web, "sha256:12ee6c1c884c5665b809f8f970d3be04124aed09aeec8d45787357f5e4eeabe4");
-    assert.equal(lock.frontend.archiveSha256, "5e048c97ab62b0ffe97abffd519aa8ec268f6a1c3678a6fb9e41853d1f337c28");
+    assert.equal(lock.sourceSha, "830b34190e0b8ae4bedb2c8690638d21a7c48516");
+    assert.equal(lock.publicationRunId, "37283296230");
+    assert.equal(lock.releaseManifestSha256, "7ed20baa3dfd37db09e2491f16b0572e99e52488697774df61b44a5852c79885");
+    assert.equal(lock.images.api, "sha256:80b53abcbbd31e1c78d23db15e57b7420fa84ec261dcbbe3f9a5c5b1523201c1");
+    assert.equal(lock.images.worker, "sha256:76111edd3f8fa13c05ea6db9c967e414a675385d539c0b0c48e17665594fc8b7");
+    assert.equal(lock.images.web, "sha256:e7eaf3c87a2de452fc66058dc0cafc6cc8d1683a1496941a250931c349630db0");
+    assert.equal(lock.frontend.archiveSha256, "12b53bd2257a3862d4b2111c75eb202e1f56bba2805d1ebbf35a10751d97252f");
     assert.equal(lock.firebase.configSha256, "8dc8ca5b52f08c9179a8fced41734e1ad7b79b1d053a61bf085a83055da31b4a");
-    assert.equal(lock.firebase.vendoredPath, "scripts/deploy/release/frozen/firebase.685db5200b7bb4b8042de35dd2281d8d40149c7f.json");
+    assert.equal(lock.firebase.vendoredPath, "scripts/deploy/release/frozen/firebase.830b34190e0b8ae4bedb2c8690638d21a7c48516.json");
 });
 
 test("runtime mutation adapter uses ETags, allowMissing=false, and exact field masks", () => {
