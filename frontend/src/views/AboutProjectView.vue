@@ -96,27 +96,21 @@ import TruthBanner from '@/components/TruthBanner.vue'
     </section>
 
     <section class="card stack" data-testid="about-system-console">
-      <h2>System Console</h2>
+      <h2>Public Inspector</h2>
       <p>
-        The public demo includes a built in System Console that exposes the synthetic runtime state of BoundaryMesh. It lets visitors inspect the current crossing, policy outcome, pipeline stages, delivery state, and event timeline without exposing private APIs or production authority.
+        BoundaryMesh includes a built in public inspection environment inspired by development observability tooling. It exposes the synthetic runtime of the product without exposing private APIs or production authority.
       </p>
       <p>
-        The control at the bottom of the public pages is a guided demo tool. Inspect mode explains the section under the pointer: what it represents, what BoundaryMesh is doing there, and what stays unavailable on the public site. Console mode shows the synthetic runtime state and the event flow for the selected crossing.
+        Inspect mode lets visitors examine product regions contextually. A crosshair highlights the section under the pointer and names what that part of BoundaryMesh is doing.
       </p>
       <p>
-        It is a small floating control near the bottom of the page. The interaction is inspired by the bottom control used during local development. The public version is a finished product tool, not a framework debugger.
+        The developer workspace exposes safe synthetic state, events, pipeline execution, routes, and system boundaries. Everything shown there is deterministic sample data that lives in the browser.
       </p>
       <p>
-        Visitors can inspect runtime mode, the current page, the selected crossing, the policy decision, pipeline stages, attestation state, delivery state, synthetic events, and other safe public state. Everything shown there is synthetic and safe for public viewing. The data is deterministic sample data that lives in the browser.
+        The public inspector does not expose private APIs, operator authority, credentials, or production telemetry. It never exposes operator sessions, production logs, or a way to change real cloud state.
       </p>
       <p>
-        Real operator actions remain protected behind /operator.
-      </p>
-      <p>
-        It never exposes private API access, operator sessions, credentials, production logs, or a way to change real cloud state. The real operator environment remains protected.
-      </p>
-      <p>
-        The System Console is an intentional engineering feature. It demonstrates observability, runtime introspection, state visualization, event tracing, security boundaries, and product thinking.
+        Real operator functionality remains protected behind /operator.
       </p>
     </section>
 

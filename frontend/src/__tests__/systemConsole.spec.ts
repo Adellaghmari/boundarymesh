@@ -38,11 +38,35 @@ describe('system console', () => {
     expect(model.log.map((line) => line.message)).toContain('Identity verified')
     expect(model.log.map((line) => line.message)).toContain('Policy result ALLOW')
     expect(model.log.map((line) => line.message)).toContain('Delivery completed')
+    expect(model.stages.map((stage) => stage.label)).toEqual([
+      'Authenticate',
+      'Authorize',
+      'Verify authenticity',
+      'Check replay / freshness',
+      'Validate contract',
+      'Govern data',
+      'Enforce boundary',
+      'Resolve credential / consent',
+      'Deliver or quarantine',
+      'Record audit chain',
+      'Sign exchange attestation',
+    ])
+    expect(model.groups.map((group) => group.id)).toEqual([
+      'runtime',
+      'events',
+      'crossing',
+      'policy',
+      'delivery',
+      'attestation',
+      'route',
+    ])
     expect(model.state.map((fact) => fact.value).join(' ')).not.toMatch(/[-—–]/)
     expect(model.log.map((line) => `${line.clock} ${line.message}`).join(' ')).not.toMatch(/[-—–]/)
+    expect(model.stages.map((stage) => Object.values(stage).join(' ')).join(' ')).not.toMatch(/[-—–]/)
+    expect(model.groups.flatMap((group) => group.fields.map((field) => `${field.key} ${field.value}`)).join(' ')).not.toMatch(/[-—–]/)
   })
 
-  it('opens the drawer and follows a new synthetic decision', async () => {
+  it('opens the docked inspector and follows a new synthetic decision', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch')
     const pinia = createPinia()
     setActivePinia(pinia)
@@ -58,6 +82,9 @@ describe('system console', () => {
     await flushPromises()
     expect(wrapper.get('[data-testid="system-console-anchor"]').attributes('aria-expanded')).toBe('true')
     expect(wrapper.get('[data-testid="system-console"]').attributes('style') ?? '').not.toContain('display: none')
+    expect(wrapper.get('[data-testid="inspector-rail"]').attributes('data-testid')).toBe('inspector-rail')
+    expect(wrapper.get('[data-testid="inspector-split"]').attributes('data-testid')).toBe('inspector-split')
+    expect(wrapper.get('.pill').text()).toBe('')
     expect(wrapper.text()).toContain('Synthetic demo')
     expect(wrapper.text()).toContain('About the project')
     expect(wrapper.text()).toContain('ALLOW')
@@ -75,8 +102,19 @@ describe('system console', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('REJECT')
     expect(wrapper.text()).toContain('Policy result REJECT')
-    await wrapper.get('#system-console-tab-events').trigger('click')
+    await wrapper.get('#system-console-tab-timeline').trigger('click')
     expect(wrapper.text()).toContain('Identity rejected')
+    await wrapper.get('#system-console-tab-state').trigger('click')
+    expect(wrapper.text()).toContain('readOnly')
+    expect(wrapper.text()).toContain('unavailable')
+    await wrapper.get('#system-console-tab-pipeline').trigger('click')
+    expect(wrapper.text()).toContain('Authenticate')
+    expect(wrapper.text()).toContain('Sign exchange attestation')
+    await wrapper.get('#system-console-tab-routes').trigger('click')
+    await wrapper.get('[data-testid="inspector-route-connections"]').trigger('click')
+    await vi.waitFor(() => {
+      expect(router.currentRoute.value.path).toBe('/connections')
+    })
     await wrapper.get('#system-console-tab-system').trigger('click')
     expect(wrapper.text()).toContain('Private API unavailable')
     expect(wrapper.text()).toContain('Operator authority unavailable')
