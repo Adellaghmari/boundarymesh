@@ -90,7 +90,7 @@ async function runDemo(scenario: string): Promise<void> {
 </script>
 
 <template>
-  <div class="stack">
+  <div class="stack" data-inspect="graph">
     <header class="stack">
       <div class="cluster">
         <h1>Integration Boundary Graph</h1>
