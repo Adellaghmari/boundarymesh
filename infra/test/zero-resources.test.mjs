@@ -250,16 +250,20 @@ test("Hosting rewrites select the BFF before the SPA and never target the privat
 
 test("Hosting revalidates every SPA shell request before overriding only hashed assets", () => {
     const hosting = JSON.parse(readFileSync(join(root, "..", "firebase.json"), "utf8")).hosting;
-    assert.deepEqual(hosting.headers.map((rule) => rule.source), ["**", "/assets/**"]);
+    assert.deepEqual(hosting.headers.map((rule) => rule.source), ["**", "/__devtools__/**", "/assets/**"]);
     const shellHeaders = Object.fromEntries(hosting.headers[0].headers.map(({ key, value }) => [key, value]));
-    const assetHeaders = Object.fromEntries(hosting.headers[1].headers.map(({ key, value }) => [key, value]));
+    const devtoolsHeaders = Object.fromEntries(hosting.headers[1].headers.map(({ key, value }) => [key, value]));
+    const assetHeaders = Object.fromEntries(hosting.headers[2].headers.map(({ key, value }) => [key, value]));
     assert.equal(shellHeaders["Cache-Control"], "no-cache");
+    assert.equal(devtoolsHeaders["Cache-Control"], "no-cache");
     assert.equal(assetHeaders["Cache-Control"], "public,max-age=31536000,immutable");
     assert.equal(hosting.rewrites.at(-1).destination, "/index.html");
-    const directives = Object.fromEntries(shellHeaders["Content-Security-Policy"].split(";").map((part) => {
+    const parseDirectives = (policy) => Object.fromEntries(policy.split(";").map((part) => {
         const [name, ...rest] = part.trim().split(/\s+/);
         return [name, rest.join(" ")];
     }));
+    const directives = parseDirectives(shellHeaders["Content-Security-Policy"]);
+    const devtoolsDirectives = parseDirectives(devtoolsHeaders["Content-Security-Policy"]);
     assert.equal(directives["default-src"], "'self'");
     assert.equal(directives["base-uri"], "'self'");
     assert.equal(directives["object-src"], "'none'");
@@ -271,7 +275,15 @@ test("Hosting revalidates every SPA shell request before overriding only hashed 
     assert.equal(directives["img-src"], "'self' data: https:");
     assert.equal(directives["form-action"], "'self'");
     assert.equal(directives["child-src"], undefined);
-    assert.equal(Object.values(directives).some((value) => value.split(/\s+/).includes("*")), false);
+    assert.equal(devtoolsDirectives["frame-ancestors"], "'self'");
+    assert.equal(devtoolsDirectives["frame-src"], directives["frame-src"]);
+    assert.equal(devtoolsDirectives["child-src"], undefined);
+    for (const [name, value] of Object.entries(directives)) {
+        if (name === "frame-ancestors") continue;
+        assert.equal(devtoolsDirectives[name], value);
+    }
+    assert.equal([...Object.keys(devtoolsDirectives)].sort().join(), [...Object.keys(directives)].sort().join());
+    assert.equal(Object.values(directives).concat(Object.values(devtoolsDirectives)).some((value) => value.split(/\s+/).includes("*")), false);
 });
 
 test("stack YAML is non-secret and pins the verified GCP project", () => {
