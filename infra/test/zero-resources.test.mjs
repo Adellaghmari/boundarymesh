@@ -256,6 +256,22 @@ test("Hosting revalidates every SPA shell request before overriding only hashed 
     assert.equal(shellHeaders["Cache-Control"], "no-cache");
     assert.equal(assetHeaders["Cache-Control"], "public,max-age=31536000,immutable");
     assert.equal(hosting.rewrites.at(-1).destination, "/index.html");
+    const directives = Object.fromEntries(shellHeaders["Content-Security-Policy"].split(";").map((part) => {
+        const [name, ...rest] = part.trim().split(/\s+/);
+        return [name, rest.join(" ")];
+    }));
+    assert.equal(directives["default-src"], "'self'");
+    assert.equal(directives["base-uri"], "'self'");
+    assert.equal(directives["object-src"], "'none'");
+    assert.equal(directives["frame-ancestors"], "'none'");
+    assert.equal(directives["script-src"], "'self' https://apis.google.com");
+    assert.equal(directives["style-src"], "'self' 'unsafe-inline'");
+    assert.equal(directives["connect-src"], "'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseapp.com");
+    assert.equal(directives["frame-src"], "'self' https://*.firebaseapp.com https://accounts.google.com");
+    assert.equal(directives["img-src"], "'self' data: https:");
+    assert.equal(directives["form-action"], "'self'");
+    assert.equal(directives["child-src"], undefined);
+    assert.equal(Object.values(directives).some((value) => value.split(/\s+/).includes("*")), false);
 });
 
 test("stack YAML is non-secret and pins the verified GCP project", () => {

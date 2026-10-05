@@ -96,18 +96,15 @@ import TruthBanner from '@/components/TruthBanner.vue'
     </section>
 
     <section class="card stack" data-testid="about-system-console">
-      <h2>Public Inspector</h2>
+      <h2>Public developer console</h2>
       <p>
-        BoundaryMesh includes a built in public inspection environment inspired by development observability tooling. It exposes the synthetic runtime of the product without exposing private APIs or production authority.
+        The public demo includes an embedded developer console for the synthetic Vue application. It observes the running public page without exposing private APIs or production authority.
       </p>
       <p>
-        Inspect mode lets visitors examine product regions contextually. A crosshair highlights the section under the pointer and names what that part of BoundaryMesh is doing.
+        The console can show the Vue component hierarchy, Pinia state, router state, and timeline activity. Selecting a store shows its live synthetic state.
       </p>
       <p>
-        The developer workspace exposes safe synthetic state, events, pipeline execution, routes, and system boundaries. Everything shown there is deterministic sample data that lives in the browser.
-      </p>
-      <p>
-        The public inspector does not expose private APIs, operator authority, credentials, or production telemetry. It never exposes operator sessions, production logs, or a way to change real cloud state.
+        The console only observes the synthetic public application. It does not expose private APIs, operator authority, credentials, or production telemetry. It never exposes operator sessions, production logs, or a way to change real cloud state.
       </p>
       <p>
         Real operator functionality remains protected behind /operator.

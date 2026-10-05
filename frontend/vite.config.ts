@@ -1,8 +1,22 @@
+import { cpSync } from 'node:fs'
+import { join } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 
 import vue from '@vitejs/plugin-vue'
 import { defineConfig, type Plugin } from 'vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
+
+function copyPublicDevtoolsClient(): Plugin {
+  const clientDir = fileURLToPath(new URL('./node_modules/vite-plugin-vue-devtools/client', import.meta.url))
+  return {
+    name: 'boundarymesh-public-devtools-client',
+    apply: 'build',
+    writeBundle(output) {
+      if (process.env.VITE_APP_MODE !== 'cloud' || !output.dir) return
+      cpSync(clientDir, join(output.dir, '__devtools__'), { recursive: true })
+    },
+  }
+}
 
 function rewriteOperatorEntry(): Plugin {
   const rewrite = (req: { url?: string }, _res: unknown, next: () => void) => {
@@ -48,8 +62,13 @@ const proxy = {
   '/logout': { target: 'http://127.0.0.1:8080', changeOrigin: true },
 }
 
+const publicDevtools = process.env.VITE_APP_MODE === 'cloud'
+
 export default defineConfig({
-  plugins: [vue(), rewriteOperatorEntry(), ...(process.env.VITEST ? [] : [vueDevTools()])],
+  define: {
+    __VUE_PROD_DEVTOOLS__: publicDevtools,
+  },
+  plugins: [vue(), rewriteOperatorEntry(), copyPublicDevtoolsClient(), ...(process.env.VITEST ? [] : [vueDevTools()])],
   resolve: {
     alias: [
       {

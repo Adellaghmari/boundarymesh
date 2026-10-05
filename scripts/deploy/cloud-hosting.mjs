@@ -26,12 +26,18 @@ const MAX_API_RESPONSE_BYTES = 5 * 1024 * 1024;
 // ceiling of 16 rejected that count before path or byte comparison. 128 is the
 // smallest power of two above 77 that still leaves room for additional per-route
 // script and stylesheet chunks. Exact equality with the frozen archive remains authoritative.
-// Version.fileCount is never that authority. The 512 KiB frozen byte cap is unchanged
-// because this archive is already inside it.
+// Version.fileCount is never that authority.
+// The reviewed public Vue DevTools archive is 115 files and 6,006,191 bytes.
+// 115 remains under the 128 file ceiling. The old 512 KiB frozen aggregate and the
+// old 2 MiB hosted response budget both reject that archive before Firebase Hosting
+// is involved. 6 MiB is the smallest mebibyte ceiling above the reviewed archive.
+// Stage verification downloads every frozen file and then re-reads the HTML shell,
+// so the hosted budget is that ceiling plus a bounded 512 KiB shell reread.
 export const MAX_HOSTED_FILE_COUNT = 128;
 const MAX_HOSTED_FILE_BYTES = 5 * 1024 * 1024;
-const MAX_FROZEN_TOTAL_BYTES = 512 * 1024;
-const MAX_HOSTED_TOTAL_BYTES = 2 * 1024 * 1024; // Frozen static payload is 427,340 bytes; probes re-read only the shell assets.
+export const MAX_FROZEN_TOTAL_BYTES = 6 * 1024 * 1024;
+export const MAX_HOSTED_SHELL_REREAD_BYTES = 512 * 1024;
+export const MAX_HOSTED_TOTAL_BYTES = MAX_FROZEN_TOTAL_BYTES + MAX_HOSTED_SHELL_REREAD_BYTES;
 const MAX_HOSTED_REQUEST_COUNT = (MAX_HOSTED_FILE_COUNT * 2) + 3;
 const MAX_HTML_PROBE_BYTES = 256 * 1024;
 const MAX_ASSET_PROBE_BYTES = 1024 * 1024;

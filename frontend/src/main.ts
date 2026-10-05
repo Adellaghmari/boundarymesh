@@ -11,6 +11,10 @@ async function mountProduct(): Promise<void> {
     import('./router'),
     import('pinia'),
   ])
+  if (import.meta.env.VITE_APP_MODE === 'cloud') {
+    const { installPublicDevtools } = await import('./devtools/installPublicDevtools')
+    installPublicDevtools()
+  }
   const app = createApp(App)
   const pinia = createPinia()
   setActivePinia(pinia)

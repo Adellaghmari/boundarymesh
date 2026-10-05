@@ -4,7 +4,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {
+    MAX_FROZEN_TOTAL_BYTES,
     MAX_HOSTED_FILE_COUNT,
+    MAX_HOSTED_SHELL_REREAD_BYTES,
+    MAX_HOSTED_TOTAL_BYTES,
     MAX_VERSION_FILE_COUNT,
     assertFrozenFileCount,
     assertHostedVersionInventory,
@@ -19,6 +22,8 @@ import {
 
 const PUBLISHED_FULL_CONSOLE_FILE_COUNT = 77;
 const PREVIOUS_HOSTED_FILE_CAP = 16;
+const REVIEWED_DEVTOOLS_ARCHIVE_FILES = 115;
+const REVIEWED_DEVTOOLS_ARCHIVE_BYTES = 6_006_191;
 
 const previewUrl = "https://boundarymesh-dev--bm-100-abc.web.app/";
 const versionName = "sites/boundarymesh-dev/versions/preview100";
@@ -251,6 +256,50 @@ test("one file above the hard safety ceiling fails closed", () => {
     assert.throws(
         () => frozenFrontendFiles(writeInventory(MAX_HOSTED_FILE_COUNT + 1)),
         /Frozen frontend file count exceeded the verification limit/,
+    );
+});
+
+function writeByteInventory(count, totalBytes) {
+    const directory = mkdtempSync(join(tmpdir(), "bm-frozen-bytes-"));
+    const perFileLimit = 5 * 1024 * 1024;
+    let remaining = totalBytes;
+    for (let index = 0; index < count; index += 1) {
+        const filesLeft = count - index;
+        const size = Math.min(perFileLimit, Math.max(0, remaining - (filesLeft - 1)));
+        writeFileSync(join(directory, `asset-${index}.bin`), Buffer.alloc(size));
+        remaining -= size;
+    }
+    if (remaining !== 0) throw new Error("test inventory could not place the requested byte count");
+    return directory;
+}
+
+test("the reviewed Vue DevTools archive passes the frozen byte and file ceilings", () => {
+    assert.ok(REVIEWED_DEVTOOLS_ARCHIVE_FILES <= MAX_HOSTED_FILE_COUNT);
+    assert.ok(REVIEWED_DEVTOOLS_ARCHIVE_BYTES <= MAX_FROZEN_TOTAL_BYTES);
+    assert.equal(MAX_HOSTED_TOTAL_BYTES, MAX_FROZEN_TOTAL_BYTES + MAX_HOSTED_SHELL_REREAD_BYTES);
+    const files = frozenFrontendFiles(writeByteInventory(REVIEWED_DEVTOOLS_ARCHIVE_FILES, REVIEWED_DEVTOOLS_ARCHIVE_BYTES));
+    assert.equal(files.length, REVIEWED_DEVTOOLS_ARCHIVE_FILES);
+    assert.equal(files.reduce((sum, file) => sum + file.bytes.length, 0), REVIEWED_DEVTOOLS_ARCHIVE_BYTES);
+});
+
+test("one byte above the reviewed frozen aggregate fails closed", () => {
+    assert.throws(
+        () => frozenFrontendFiles(writeByteInventory(2, MAX_FROZEN_TOTAL_BYTES + 1)),
+        /Frozen frontend exceeded the total verification size limit/,
+    );
+});
+
+test("the hosted aggregate budget stays enforced above the reviewed archive", () => {
+    const budget = createHostedVerificationBudget();
+    assert.equal(budget.maximumBytes, MAX_HOSTED_TOTAL_BYTES);
+    assert.doesNotThrow(() => budget.chargeBytes(REVIEWED_DEVTOOLS_ARCHIVE_BYTES));
+    assert.throws(
+        () => budget.chargeBytes(MAX_HOSTED_TOTAL_BYTES - REVIEWED_DEVTOOLS_ARCHIVE_BYTES + 1),
+        (error) => error.code === "TOTAL_BUDGET_EXCEEDED",
+    );
+    assert.throws(
+        () => createHostedVerificationBudget({ maximumBytes: MAX_HOSTED_TOTAL_BYTES + 1 }),
+        /byte budget is invalid/,
     );
 });
 
@@ -687,6 +736,10 @@ test("hosted verifier never buffers a full body before enforcing size limits", (
     assert.match(source, /parseVersionFileCount/);
     assert.match(source, /MAX_VERSION_FILE_COUNT/);
     assert.match(source, /MAX_HOSTED_FILE_COUNT = 128/);
+    assert.match(source, /MAX_FROZEN_TOTAL_BYTES = 6 \* 1024 \* 1024/);
+    assert.match(source, /MAX_HOSTED_SHELL_REREAD_BYTES = 512 \* 1024/);
+    assert.doesNotMatch(source, /MAX_FROZEN_TOTAL_BYTES = 512 \* 1024/);
+    assert.doesNotMatch(source, /MAX_HOSTED_TOTAL_BYTES = 2 \* 1024 \* 1024/);
     assert.doesNotMatch(source, /MAX_HOSTED_FILE_COUNT = 16/);
     assert.doesNotMatch(source, /version\.fileCount\) !== files\.length/);
     assert.doesNotMatch(source, /\/__\/\*\*/);
