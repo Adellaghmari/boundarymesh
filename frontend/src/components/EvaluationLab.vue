@@ -15,7 +15,7 @@ function selectScenario(id: ScenarioId): void {
 </script>
 
 <template>
-  <section class="card lab" aria-labelledby="lab-heading">
+  <section class="card lab" aria-labelledby="lab-heading" data-inspect="evaluation">
     <div class="cluster">
       <h2 id="lab-heading">Synthetic evaluation lab</h2>
       <TruthBanner />
@@ -25,7 +25,7 @@ function selectScenario(id: ScenarioId): void {
       outcome. The console does not reproduce the algorithm.
     </p>
 
-    <fieldset class="lab__scenarios">
+    <fieldset class="lab__scenarios" data-inspect="scenarios">
       <legend>Predefined crossings</legend>
       <label v-for="scenario in EVALUATION_SCENARIOS" :key="scenario.id" class="lab__option">
         <input

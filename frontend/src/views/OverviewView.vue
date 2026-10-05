@@ -11,7 +11,7 @@ import { OUTCOME_COPY } from '@/domain/labels'
 
 <template>
   <div class="stack">
-    <section class="hero card">
+    <section class="hero card" data-inspect="overview">
       <div class="cluster">
         <p class="eyebrow">Cross system security enforcement console</p>
         <TruthBanner />
@@ -33,7 +33,7 @@ import { OUTCOME_COPY } from '@/domain/labels'
 
     <BackendStatusCard />
 
-    <section class="card stack">
+    <section class="card stack" data-inspect="pipeline">
       <h2>Deterministic pipeline</h2>
       <p class="muted">
         Every crossing is evaluated in this order. Credential and consent checks, Camel delivery,
@@ -43,7 +43,7 @@ import { OUTCOME_COPY } from '@/domain/labels'
       <PipelineSteps />
     </section>
 
-    <section class="card stack">
+    <section class="card stack" data-inspect="outcomes">
       <h2>Boundary outcomes</h2>
       <ul class="outcomes">
         <li v-for="outcome in BOUNDARY_OUTCOMES" :key="outcome">

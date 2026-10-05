@@ -15,7 +15,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="stack">
+  <div class="stack" data-inspect="delivery">
     <header class="stack">
       <div class="cluster">
         <h1>Quarantine</h1>

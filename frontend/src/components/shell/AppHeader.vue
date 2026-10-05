@@ -23,7 +23,7 @@ const mobileOpen = ref(false)
 </script>
 
 <template>
-  <header class="header">
+  <header class="header" data-inspect="navigation">
     <HeaderMeshDecor />
     <div class="header__inner">
       <div class="header__brand">

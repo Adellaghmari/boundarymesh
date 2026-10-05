@@ -4,7 +4,7 @@ import TruthBanner from '@/components/TruthBanner.vue'
 </script>
 
 <template>
-  <div class="stack">
+  <div class="stack" data-inspect="architecture">
     <header class="stack">
       <div class="cluster">
         <h1>Architecture</h1>

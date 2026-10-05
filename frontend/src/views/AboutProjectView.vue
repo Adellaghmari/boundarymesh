@@ -3,7 +3,7 @@ import TruthBanner from '@/components/TruthBanner.vue'
 </script>
 
 <template>
-  <div class="stack" data-testid="about-project">
+  <div class="stack" data-testid="about-project" data-inspect="about">
     <header class="stack">
       <div class="cluster">
         <h1>About the project</h1>
@@ -101,10 +101,16 @@ import TruthBanner from '@/components/TruthBanner.vue'
         The public demo includes a built in System Console that exposes the synthetic runtime state of BoundaryMesh. It lets visitors inspect the current crossing, policy outcome, pipeline stages, delivery state, and event timeline without exposing private APIs or production authority.
       </p>
       <p>
-        It is a small control fixed to the bottom edge of the page. Opening it shows a dark drawer that stays with you while you move through the public product. The interaction is inspired by the bottom control used during local development. The public version is a finished product console, not a framework debugger.
+        The control at the bottom of the public pages is a guided demo tool. Inspect mode explains the section under the pointer: what it represents, what BoundaryMesh is doing there, and what stays unavailable on the public site. Console mode shows the synthetic runtime state and the event flow for the selected crossing.
       </p>
       <p>
-        Visitors can inspect runtime mode, the current page, the selected crossing, the policy decision, pipeline stages, attestation state, delivery state, synthetic events, and other safe public state. The data is deterministic sample data that lives in the browser.
+        It is a small floating control near the bottom of the page. The interaction is inspired by the bottom control used during local development. The public version is a finished product tool, not a framework debugger.
+      </p>
+      <p>
+        Visitors can inspect runtime mode, the current page, the selected crossing, the policy decision, pipeline stages, attestation state, delivery state, synthetic events, and other safe public state. Everything shown there is synthetic and safe for public viewing. The data is deterministic sample data that lives in the browser.
+      </p>
+      <p>
+        Real operator actions remain protected behind /operator.
       </p>
       <p>
         It never exposes private API access, operator sessions, credentials, production logs, or a way to change real cloud state. The real operator environment remains protected.

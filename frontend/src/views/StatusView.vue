@@ -6,7 +6,7 @@ import { CAPABILITY_STATUS_COPY } from '@/domain/labels'
 </script>
 
 <template>
-  <div class="stack">
+  <div class="stack" data-inspect="status">
     <header class="stack">
       <div class="cluster">
         <h1>Project status</h1>

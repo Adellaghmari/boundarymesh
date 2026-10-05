@@ -45,7 +45,7 @@ const decisionEvent = computed(() => {
 </script>
 
 <template>
-  <div class="stack">
+  <div class="stack" data-inspect="delivery">
     <header class="stack">
       <div class="cluster">
         <h1>Delivery Lab</h1>

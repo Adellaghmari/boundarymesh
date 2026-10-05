@@ -21,7 +21,7 @@ async function run(): Promise<void> {
 </script>
 
 <template>
-  <div class="stack">
+  <div class="stack" data-inspect="crossing">
     <header class="stack">
       <div class="cluster">
         <h1>Full Boundary Crossing</h1>
