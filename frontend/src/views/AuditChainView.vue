@@ -15,7 +15,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="stack" data-inspect="evidence">
+  <div class="stack" data-inspect="audit">
     <header class="stack">
       <div class="cluster">
         <h1>Audit Chain</h1>

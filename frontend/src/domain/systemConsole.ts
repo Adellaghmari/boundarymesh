@@ -1,9 +1,36 @@
 import { ABOUT_NAV, EVIDENCE_NAV, LAB_NAV, OPERATIONS_NAV, PRIMARY_NAV, STATUS_NAV } from '@/config/navigation'
 import { show } from '@/domain/displayCopy'
-import { OUTCOME_COPY } from '@/domain/labels'
+import { DESTINATION_LABELS, OUTCOME_COPY, SOURCE_LABELS } from '@/domain/labels'
 import type { BoundaryEventRecord, BoundaryOutcome, ControlKind } from '@/domain/types'
 
-export type SystemConsoleTab = 'overview' | 'events' | 'pipeline' | 'state' | 'system'
+export type SystemConsoleTab = 'overview' | 'state' | 'timeline' | 'pipeline' | 'routes' | 'system' | 'about'
+
+export interface InspectorStage {
+  label: string
+  status: string
+  input: string
+  result: string
+  impact: string
+  boundary: string
+}
+
+export interface InspectorField {
+  key: string
+  value: string
+}
+
+export interface InspectorGroup {
+  id: string
+  label: string
+  fields: InspectorField[]
+}
+
+export interface InspectorRoute {
+  name: string
+  label: string
+  to: string
+  path: string
+}
 
 export interface ConsoleLogLine {
   clock: string
@@ -29,6 +56,8 @@ export interface SystemConsoleModel {
   delivery: string
   attestation: string
   pipeline: ConsolePipelineStage[]
+  stages: InspectorStage[]
+  groups: InspectorGroup[]
   log: ConsoleLogLine[]
   selectedLog: ConsoleLogLine[]
   state: ConsoleFact[]
@@ -122,6 +151,184 @@ function pipelineFor(event: BoundaryEventRecord): ConsolePipelineStage[] {
   ]
 }
 
+function stage(label: string, status: string, input: string, result: string, impact: string): InspectorStage {
+  return {
+    label: show(label),
+    status: show(status),
+    input: show(input),
+    result: show(result),
+    impact: show(impact),
+    boundary: show('Synthetic public boundary. No private API and no operator authority.'),
+  }
+}
+
+function stagesFor(event: BoundaryEventRecord | null): InspectorStage[] {
+  if (!event) {
+    return [
+      stage('Authenticate', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+      stage('Authorize', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+      stage('Verify authenticity', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+      stage('Check replay / freshness', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+      stage('Validate contract', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+      stage('Govern data', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+      stage('Enforce boundary', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+      stage('Resolve credential / consent', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+      stage('Deliver or quarantine', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+      stage('Record audit chain', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+      stage('Sign exchange attestation', 'Unavailable', 'No crossing selected', 'No synthetic result', 'None'),
+    ]
+  }
+  const decision = OUTCOME_COPY[event.outcome].label
+  const stopped = event.outcome === 'REJECT'
+  const held = event.outcome === 'QUARANTINE'
+  return [
+    stage(
+      'Authenticate',
+      controlFailed(event, 'IDENTITY') ? 'Rejected' : 'Verified',
+      'Synthetic caller identity',
+      controlFailed(event, 'IDENTITY') ? 'Identity rejected' : 'Identity verified',
+      controlFailed(event, 'IDENTITY') ? 'Stops the crossing' : 'Continues',
+    ),
+    stage('Authorize', 'Evaluated', 'Synthetic action and destination', 'Authorization evaluated', stopped ? 'Recorded before the stop' : 'Continues'),
+    stage('Verify authenticity', 'Verified', 'Synthetic message integrity', 'Authenticity verified', 'Continues'),
+    stage(
+      'Check replay / freshness',
+      controlFailed(event, 'REPLAY') || controlFailed(event, 'FRESHNESS') ? 'Failed' : 'Accepted',
+      'Synthetic time window and replay key',
+      controlFailed(event, 'REPLAY') ? 'Replay check failed' : 'Freshness accepted',
+      controlFailed(event, 'REPLAY') ? 'Stops the crossing' : 'Continues',
+    ),
+    stage(
+      'Validate contract',
+      controlFailed(event, 'CONTRACT') ? 'Held' : 'Validated',
+      'Synthetic payload contract',
+      controlFailed(event, 'CONTRACT') ? 'Contract held' : 'Contract validated',
+      controlFailed(event, 'CONTRACT') ? 'Holds the crossing' : 'Continues',
+    ),
+    stage(
+      'Govern data',
+      controlFailed(event, 'EGRESS') ? 'Restricted' : 'Allowed',
+      'Synthetic field set',
+      event.outcome === 'ALLOW_WITH_TRANSFORMATION' ? 'Transformation applied' : 'Fields accepted',
+      event.outcome === 'ALLOW_WITH_TRANSFORMATION' ? 'Crosses after transformation' : 'Continues',
+    ),
+    stage(
+      'Enforce boundary',
+      decision,
+      'Synthetic policy',
+      `Policy result ${decision}`,
+      stopped ? 'Rejects the crossing' : held ? 'Holds the crossing' : 'Allows the crossing',
+    ),
+    stage(
+      'Resolve credential / consent',
+      controlFailed(event, 'CREDENTIAL_RESOLVABILITY') ? 'Unresolved' : 'Resolved',
+      'Synthetic credential reference',
+      controlFailed(event, 'CREDENTIAL_RESOLVABILITY') ? 'Credential unresolved' : 'Credential reference accepted',
+      'No secret is exposed',
+    ),
+    stage(
+      'Deliver or quarantine',
+      deliveryLabel(event.outcome),
+      'Synthetic delivery instruction',
+      deliveryLabel(event.outcome),
+      held ? 'Held in quarantine' : stopped ? 'Delivery not attempted' : 'Delivery completed',
+    ),
+    stage('Record audit chain', 'Recorded', 'Synthetic stage order', 'Audit chain extended', 'Public sample only'),
+    stage(
+      'Sign exchange attestation',
+      attestationLabel(event.outcome),
+      'Synthetic decision record',
+      attestationLabel(event.outcome),
+      'Not a production signature',
+    ),
+  ]
+}
+
+function groupsFor(input: {
+  routeName: unknown
+  events: readonly BoundaryEventRecord[]
+  selected: BoundaryEventRecord | null
+}): InspectorGroup[] {
+  const selected = input.selected
+  const present = show
+  const lines = selected ? linesFor(selected) : []
+  const lastLine = lines.length > 0 ? lines[lines.length - 1] : undefined
+  const latest = lastLine ? lastLine.message : 'None yet'
+  return [
+    {
+      id: 'runtime',
+      label: 'runtime',
+      fields: [
+        { key: 'mode', value: present('Synthetic demo') },
+        { key: 'readOnly', value: present('true') },
+        { key: 'privateApi', value: present('unavailable') },
+        { key: 'operatorAuthority', value: present('unavailable') },
+      ],
+    },
+    {
+      id: 'events',
+      label: 'events',
+      fields: [
+        { key: 'count', value: present(String(input.events.length)) },
+        { key: 'latest', value: present(latest) },
+      ],
+    },
+    {
+      id: 'crossing',
+      label: 'crossing',
+      fields: [
+        { key: 'id', value: present(selected?.transactionId ?? 'None yet') },
+        { key: 'name', value: present(selected?.scenarioLabel ?? 'None yet') },
+        { key: 'source', value: present(selected ? SOURCE_LABELS[selected.sourceSystem] : 'None yet') },
+        { key: 'destination', value: present(selected ? DESTINATION_LABELS[selected.destinationSystem] : 'None yet') },
+        { key: 'decision', value: present(selected ? OUTCOME_COPY[selected.outcome].label : 'None yet') },
+      ],
+    },
+    {
+      id: 'policy',
+      label: 'policy',
+      fields: [
+        { key: 'version', value: present(selected?.policyVersion ?? 'None yet') },
+        { key: 'decision', value: present(selected ? OUTCOME_COPY[selected.outcome].label : 'None yet') },
+      ],
+    },
+    {
+      id: 'delivery',
+      label: 'delivery',
+      fields: [
+        { key: 'state', value: present(selected ? deliveryLabel(selected.outcome) : 'Not attempted') },
+        { key: 'worker', value: present(selected ? workerLabel(selected.outcome) : 'Idle') },
+      ],
+    },
+    {
+      id: 'attestation',
+      label: 'attestation',
+      fields: [
+        { key: 'state', value: present(selected ? attestationLabel(selected.outcome) : 'None yet') },
+      ],
+    },
+    {
+      id: 'route',
+      label: 'route',
+      fields: [
+        { key: 'page', value: present(routeLabel(input.routeName)) },
+        { key: 'publicMode', value: present('Synthetic demo') },
+        { key: 'authRequired', value: present('No') },
+        { key: 'privateApi', value: present('Unavailable') },
+      ],
+    },
+  ]
+}
+
+export function inspectorRoutes(): InspectorRoute[] {
+  return NAV.map((item) => ({
+    name: item.name,
+    label: show(item.label),
+    to: item.to,
+    path: show(item.to),
+  }))
+}
+
 export function buildSystemConsole(input: {
   routeName: unknown
   events: readonly BoundaryEventRecord[]
@@ -140,8 +347,10 @@ export function buildSystemConsole(input: {
     delivery: present(selected ? deliveryLabel(selected.outcome) : 'Not attempted'),
     attestation: present(selected ? attestationLabel(selected.outcome) : 'None yet'),
     pipeline: selected
-      ? pipelineFor(selected).map((stage) => ({ label: present(stage.label), status: present(stage.status) }))
+      ? pipelineFor(selected).map((item) => ({ label: present(item.label), status: present(item.status) }))
       : [],
+    stages: stagesFor(selected),
+    groups: groupsFor({ ...input, selected }),
     log: log.map((line) => ({ clock: line.clock, message: present(line.message) })),
     selectedLog: (selected ? linesFor(selected) : []).map((line) => ({
       clock: line.clock,
