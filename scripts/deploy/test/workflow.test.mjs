@@ -178,15 +178,15 @@ test("workflow contains no application build, republish, infrastructure, or iden
 });
 
 test("application identities are fixed by the frozen release lock", () => {
-    assert.equal(lock.sourceSha, "5b60590dae95c36fcb871947ad50f9eb6ba26032");
-    assert.equal(lock.publicationRunId, "37304904079");
-    assert.equal(lock.releaseManifestSha256, "c086cae70def9c88d9cb23471f5aea4862297513e0932d4815cfe5f7a635c9c4");
-    assert.equal(lock.images.api, "sha256:8bf26afd883bd34209e63bc62a81a9832812a7a8ae1bdceaac4ad590af904c2c");
-    assert.equal(lock.images.worker, "sha256:631e12d015fda0e6e198a69bb4b91945d1541f7ea40f03ac6bf6336f88c3e3bf");
-    assert.equal(lock.images.web, "sha256:4d04634ae8d58c475631306cf10fdbbc5511e84ba5e060b98c992dcc6bb91f23");
-    assert.equal(lock.frontend.archiveSha256, "da7dde325d82bdd03050ce417b1e1e8288ea3f98b3641bc069e072bc21c94b9d");
-    assert.equal(lock.firebase.configSha256, "aca02b793a976b02818ae01bf9d7a20faaec8c80452b5ce9bf9059a11a580054");
-    assert.equal(lock.firebase.vendoredPath, "scripts/deploy/release/frozen/firebase.5b60590dae95c36fcb871947ad50f9eb6ba26032.json");
+    assert.equal(lock.sourceSha, "fd7dad52c63b9703fad2bafe614b1f632af4c997");
+    assert.equal(lock.publicationRunId, "37307548591");
+    assert.equal(lock.releaseManifestSha256, "4397f177d4a34c71d176aa125b3ca55ccd6abcb2c0d4dc625bdb1adcbe5e3292");
+    assert.equal(lock.images.api, "sha256:91dae8aec9caeab4c02c33baf8db63f25d4bf9e53acff9cef94429a8c7fbc5d9");
+    assert.equal(lock.images.worker, "sha256:6f3b4524c52aedd99d4a8ca3a8e0e90d6028b67bd3229c0e1988c71075dbd431");
+    assert.equal(lock.images.web, "sha256:e6ba86c965966ca83a368042275112de04af4a654d0621c6e029538a70b63d6c");
+    assert.equal(lock.frontend.archiveSha256, "2651677c9377ac087cab9fb14206518e139d28e380db1c7b0042ce08108acf2a");
+    assert.equal(lock.firebase.configSha256, "de90d10ec62636f730465b23fdfae4cd8fb444a75474b48e3ab622059af6cc06");
+    assert.equal(lock.firebase.vendoredPath, "scripts/deploy/release/frozen/firebase.fd7dad52c63b9703fad2bafe614b1f632af4c997.json");
 });
 
 test("runtime mutation adapter uses ETags, allowMissing=false, and exact field masks", () => {

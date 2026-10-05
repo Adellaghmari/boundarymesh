@@ -295,7 +295,7 @@ test("a single-commit repository can reconstruct the frozen Firebase config", ()
             const lock = loadFrozenRelease();
             mkdirSync("./out", { recursive: true });
             materializeFrozenFirebaseConfig({ destination: "./out/firebase.json", sourceSha: lock.sourceSha });
-            if (sha256Bytes(readFileSync("./out/firebase.json")) !== "${"aca02b793a976b02818ae01bf9d7a20faaec8c80452b5ce9bf9059a11a580054"}") process.exit(2);
+            if (sha256Bytes(readFileSync("./out/firebase.json")) !== "${"de90d10ec62636f730465b23fdfae4cd8fb444a75474b48e3ab622059af6cc06"}") process.exit(2);
         `;
         execFileSync(process.execPath, ["--input-type=module", "-e", script], { cwd: directory, stdio: "pipe" });
     } finally {
