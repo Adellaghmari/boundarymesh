@@ -5,34 +5,34 @@
   "region": "europe-west4",
   "repository": "Adellaghmari/boundarymesh",
   "repositoryId": "1385415640",
-  "sourceSha": "fd7dad52c63b9703fad2bafe614b1f632af4c997",
+  "sourceSha": "a134cbab129cc5b42a8a8c3671aa5b38d9ef0c6b",
   "sourceRef": "refs/heads/main",
-  "publicationRunId": "37307548591",
+  "publicationRunId": "37323912116",
   "publicationWorkflow": ".github/workflows/artifact-publish.yml",
   "publicationEnvironment": "boundarymesh-artifact-publish",
   "releaseRepository": "boundarymesh-releases",
   "releasePackage": "boundarymesh-release",
-  "releaseVersion": "fd7dad52c63b9703fad2bafe614b1f632af4c997",
-  "releaseManifestSha256": "4397f177d4a34c71d176aa125b3ca55ccd6abcb2c0d4dc625bdb1adcbe5e3292",
+  "releaseVersion": "a134cbab129cc5b42a8a8c3671aa5b38d9ef0c6b",
+  "releaseManifestSha256": "e0c6ce61d5fec6e71d6513bfb297c971fafb5a36c8f43af0dbe2102ef09166f3",
   "dockerRepository": "boundarymesh",
   "images": {
-    "api": "sha256:91dae8aec9caeab4c02c33baf8db63f25d4bf9e53acff9cef94429a8c7fbc5d9",
-    "worker": "sha256:6f3b4524c52aedd99d4a8ca3a8e0e90d6028b67bd3229c0e1988c71075dbd431",
-    "web": "sha256:e6ba86c965966ca83a368042275112de04af4a654d0621c6e029538a70b63d6c"
+    "api": "sha256:823c8a2952fbbcd3719ba484eac865d42182bfa3854be1857cd50ff2d49d7448",
+    "worker": "sha256:24d719425d20611d5d7105d50921e1b3bb3c2935aab93035403f3bbd371a71a0",
+    "web": "sha256:afe59c0cb8bb97eba3eeaded84e0baa77cbd0f182af7f980fee46de572e0aa71"
   },
   "frontend": {
     "repository": "boundarymesh-releases",
     "package": "boundarymesh-frontend",
-    "version": "fd7dad52c63b9703fad2bafe614b1f632af4c997",
+    "version": "a134cbab129cc5b42a8a8c3671aa5b38d9ef0c6b",
     "archive": "frontend-dist.tar.gz",
-    "archiveSha256": "2651677c9377ac087cab9fb14206518e139d28e380db1c7b0042ce08108acf2a"
+    "archiveSha256": "eebef9396c36bd604a6673ab948597f4f141c1806c1ee001a045ae579b45487e"
   },
   "firebase": {
     "project": "boundarymesh-dev",
     "site": "boundarymesh-dev",
     "configPath": "firebase.json",
     "configSha256": "de90d10ec62636f730465b23fdfae4cd8fb444a75474b48e3ab622059af6cc06",
-    "vendoredPath": "scripts/deploy/release/frozen/firebase.fd7dad52c63b9703fad2bafe614b1f632af4c997.json"
+    "vendoredPath": "scripts/deploy/release/frozen/firebase.a134cbab129cc5b42a8a8c3671aa5b38d9ef0c6b.json"
   },
   "deploymentEvidence": {
     "repository": "boundarymesh-deployments",
