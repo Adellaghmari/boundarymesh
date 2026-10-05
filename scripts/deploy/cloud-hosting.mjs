@@ -18,7 +18,8 @@ const FIREBASE_BIN = join(here, "node_modules", "firebase-tools", "lib", "bin", 
 const QUOTA_PROJECT = loadFrozenRelease().project;
 const MAX_API_RESPONSE_BYTES = 5 * 1024 * 1024;
 // Hard ceiling for a Hosting inventory. It is not the expected file list.
-// Publication 7352538198f2d3d372130977d311c48011fa85eb contains 77 frozen files
+// Publication 5b60590dae95c36fcb871947ad50f9eb6ba26032 contains 115 frozen files
+// and 6,006,191 bytes. Publication 7352538198f2d3d372130977d311c48011fa85eb contains 77 frozen files
 // and 427,340 bytes. Publication 830b34190e0b8ae4bedb2c8690638d21a7c48516 contained
 // 77 files and 411,842 bytes. Publication 685db5200b7bb4b8042de35dd2281d8d40149c7f contained
 // 77 files and 404,071 bytes. Publication f307c9009f39f60f3fe4c036846ba1c0c3c42a7f contained
