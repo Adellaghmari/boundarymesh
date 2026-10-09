@@ -39,9 +39,14 @@ onMounted(async () => {
           Refresh
         </button>
       </div>
-      <p v-if="quarantineList && quarantineList.items.length === 0" class="muted">
-        No quarantine items in this local session.
-      </p>
+      <div v-if="quarantineList && quarantineList.items.length === 0" class="empty">
+        <h2>No quarantine items</h2>
+        <p>
+          A recoverable hold appears here after a crossing is quarantined. Invalid identity and
+          malicious replay stay REJECT and never become items.
+        </p>
+        <RouterLink class="action" to="/">Evaluate a crossing on Overview</RouterLink>
+      </div>
       <table v-else-if="quarantineList">
         <caption class="visually-hidden">Local quarantine items</caption>
         <thead>
@@ -79,12 +84,14 @@ onMounted(async () => {
   color: $color-reject;
 }
 
+.empty {
+  display: grid;
+  gap: $space-3;
+  justify-items: start;
+}
+
 .action {
-  background: $color-header;
-  color: $color-header-ink;
-  border: 0;
-  border-radius: $radius-sm;
-  padding: $space-2 $space-4;
+  @include button-primary;
 }
 
 table {

@@ -62,26 +62,35 @@ import { OUTCOME_COPY } from '@/domain/labels'
 
 .hero {
   display: grid;
-  gap: $space-3;
+  gap: $space-4;
+  background:
+    radial-gradient(ellipse 22rem 9rem at 0% 0%, rgb(255 255 255 / 4%), transparent 70%),
+    radial-gradient(ellipse 16rem 7rem at 100% 0%, rgb(25 183 176 / 5%), transparent 72%),
+    $color-surface;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 6%),
+    $shadow-card;
 }
 
 .eyebrow {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: $color-ink-muted;
+  color: $color-accent-bright;
   font-weight: 700;
 }
 
 .lede {
-  font-size: 1.25rem;
-  color: $color-accent;
-  font-weight: 600;
+  font-size: 1.35rem;
+  color: $color-accent-bright;
+  font-weight: 640;
+  letter-spacing: -0.02em;
 }
 
 .question {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.12rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
 }
 
 .outcomes {
@@ -95,9 +104,11 @@ import { OUTCOME_COPY } from '@/domain/labels'
 .outcomes li {
   display: grid;
   gap: $space-2;
-  padding: $space-3;
+  align-content: start;
+  padding: $space-4;
   border: 1px solid $color-border;
-  border-radius: $radius-md;
+  border-radius: $radius-sm;
+  background: $color-surface-raised;
 }
 
 @media (min-width: $bp-md) {

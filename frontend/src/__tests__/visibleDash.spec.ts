@@ -69,7 +69,7 @@ describe('rendered website copy has no visible dashes', () => {
   it('session events and a recorded crossing', async () => {
     const list = await openSurface('/boundary-events', true)
     expect(list.text()).not.toMatch(/[-—–]/)
-    expectClean('Boundary events', list.text())
+    expectClean('Boundary Events', list.text())
     list.unmount()
 
     const detail = await openSurface(`/boundary-events/${sessionEvent.transactionId}`, true)

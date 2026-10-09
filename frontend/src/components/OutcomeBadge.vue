@@ -21,8 +21,8 @@ defineProps<{
 .outcome {
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.55rem;
-  border-radius: $radius-sm;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
   border: 1px solid currentcolor;
   font-size: 0.75rem;
   font-weight: 700;

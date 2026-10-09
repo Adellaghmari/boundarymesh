@@ -68,23 +68,11 @@ function selectScenario(id: ScenarioId): void {
 }
 
 .lab__scenarios {
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-  padding: $space-4;
-  display: grid;
-  gap: $space-3;
+  @include choice-fieldset;
 }
 
 .lab__option {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: $space-3;
-  align-items: start;
-}
-
-.lab__option span {
-  display: grid;
-  gap: $space-1;
+  @include choice-option;
 }
 
 .lab__error {
@@ -95,23 +83,12 @@ function selectScenario(id: ScenarioId): void {
 }
 
 .action {
-  background: $color-header;
-  color: $color-header-ink;
-  border: 0;
-  border-radius: $radius-sm;
-  padding: $space-2 $space-4;
-}
-
-.action:disabled {
-  opacity: 0.7;
+  @include button-primary;
 }
 
 .linkish {
   margin-left: $space-3;
-  background: transparent;
-  border: 0;
-  color: $color-ink;
-  text-decoration: underline;
-  padding: 0;
+  @include button-secondary;
+  padding: 0.35rem 0.7rem;
 }
 </style>

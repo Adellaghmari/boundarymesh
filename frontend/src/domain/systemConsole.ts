@@ -71,9 +71,10 @@ export function routeLabel(name: unknown): string {
 }
 
 function clock(decidedAt: string, offsetSeconds: number): string {
-  const match = /T(\d{2}):(\d{2}):(\d{2})/.exec(decidedAt)
-  const base = match
-    ? Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3])
+  const parsed = Date.parse(decidedAt)
+  const baseDate = Number.isNaN(parsed) ? null : new Date(parsed)
+  const base = baseDate
+    ? baseDate.getHours() * 3600 + baseDate.getMinutes() * 60 + baseDate.getSeconds()
     : 12 * 3600 + 41 * 60 + 3
   const total = (base + offsetSeconds) % 86400
   const hours = Math.floor(total / 3600)

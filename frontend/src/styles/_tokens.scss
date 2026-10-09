@@ -1,34 +1,44 @@
-$color-canvas: #e8eef3;
-$color-ink: #12202e;
-$color-ink-muted: #4a5c6a;
-$color-surface: #ffffff;
-$color-surface-raised: #f6fafb;
-$color-header: #071527;
-$color-header-mid: #0a3044;
-$color-header-teal: #0c5a5c;
-$color-header-ink: #f7fbfb;
-$color-nav-muted: #b9d5d6;
-$color-nav-active: #14a39a;
-$color-nav-active-border: rgb(126 232 223 / 55%);
-$color-nav-divider: rgb(255 255 255 / 16%);
-$color-accent: #0f7a74;
-$color-accent-soft: #d7efed;
-$color-border: #c9d6dc;
-$color-focus: #7ee8df;
-$color-focus-ink: #0b5fff;
+$color-canvas: #101214;
+$color-canvas-deep: #15191d;
+$color-canvas-mid: #111417;
+$color-canvas-bottom: #0f1113;
+$color-ink: #f2f4f5;
+$color-ink-secondary: #c0c5ca;
+$color-ink-muted: #a0a8b0;
+$color-ink-faint: #747e87;
+$color-surface: #191c20;
+$color-surface-raised: #1e2227;
+$color-surface-inset: #23282e;
+$color-surface-hover: #252a30;
+$color-header: #071018;
+$color-header-mid: #0b2a43;
+$color-header-teal: #0e4f56;
+$color-header-ink: #f4fbfb;
+$color-nav-muted: #b7c9ce;
+$color-nav-active: #22c7be;
+$color-nav-active-border: rgb(34 199 190 / 55%);
+$color-nav-divider: rgb(255 255 255 / 14%);
+$color-accent: #19b7b0;
+$color-accent-bright: #22c7be;
+$color-accent-deep: #0c6f6a;
+$color-accent-soft: rgb(25 183 176 / 8%);
+$color-border: #30363d;
+$color-border-strong: #353b42;
+$color-focus: #22c7be;
+$color-focus-ink: #22c7be;
 
-$color-allow: #0d6b4c;
-$color-allow-soft: #d8f3e8;
-$color-transform: #8a5a12;
-$color-transform-soft: #f7ead2;
-$color-quarantine: #8a4b16;
-$color-quarantine-soft: #f6e2d2;
-$color-reject: #8b1e2d;
-$color-reject-soft: #f6d9de;
-$color-pass: #0d6b4c;
-$color-fail: #8b1e2d;
-$color-na: #4a5c6a;
-$color-unavailable: #8a5a12;
+$color-allow: #7ddec0;
+$color-allow-soft: #14332c;
+$color-transform: #f0c27a;
+$color-transform-soft: #3a2e18;
+$color-quarantine: #e7b07a;
+$color-quarantine-soft: #3a2a1c;
+$color-reject: #f3a8b2;
+$color-reject-soft: #3a1c24;
+$color-pass: #7ddec0;
+$color-fail: #f3a8b2;
+$color-na: #8d9aa6;
+$color-unavailable: #e7b07a;
 
 $space-1: 0.25rem;
 $space-2: 0.5rem;
@@ -38,18 +48,20 @@ $space-5: 1.5rem;
 $space-6: 2rem;
 $space-7: 3rem;
 
-$font-sans: 'Segoe UI', 'Helvetica Neue', sans-serif;
+$font-sans: 'Aptos', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
 $font-mono: 'Cascadia Mono', 'Consolas', monospace;
 $measure: 68rem;
 
-$radius-sm: 0.25rem;
-$radius-md: 0.5rem;
+$radius-sm: 0.45rem;
+$radius-md: 0.8rem;
+$radius-control: 0.6rem;
 $radius-nav: 0.85rem;
 
-$shadow-sm: 0 1px 2px rgb(18 32 46 / 6%);
-$shadow-header: 0 10px 28px rgb(7 21 39 / 22%);
-$shadow-nav-active: 0 10px 20px rgb(6 30 36 / 32%);
-$shadow-dropdown: 0 16px 40px rgb(7 21 39 / 28%);
+$shadow-sm: 0 1px 2px rgb(0 0 0 / 28%);
+$shadow-card: inset 0 1px 0 rgb(255 255 255 / 4%), 0 10px 28px rgb(0 0 0 / 28%);
+$shadow-header: 0 16px 36px rgb(0 0 0 / 38%);
+$shadow-nav-active: 0 8px 18px rgb(14 90 86 / 35%);
+$shadow-dropdown: 0 18px 40px rgb(0 0 0 / 42%);
 
 $z-header: 40;
 $z-dropdown: 50;
@@ -59,19 +71,159 @@ $bp-md: 48rem;
 $bp-lg: 68rem;
 $bp-xl: 90rem;
 
-@mixin focus-ring {
-  outline: 2px solid $color-focus-ink;
-  outline-offset: 2px;
-}
-
-@mixin nav-focus-ring {
-  outline: 2px solid $color-focus;
-  outline-offset: 3px;
-}
-
 @mixin reduced-motion {
   @media (prefers-reduced-motion: reduce) {
     transition: none !important;
     animation: none !important;
   }
+}
+
+@mixin focus-ring {
+  outline: 2px solid $color-focus;
+  outline-offset: 2px;
+}
+
+@mixin button-base {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  border-radius: $radius-control;
+  padding: 0.62rem 1.05rem;
+  font: inherit;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+
+  @include reduced-motion;
+
+  &:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+  }
+}
+
+@mixin button-primary {
+  @include button-base;
+  background: $color-accent-deep;
+  color: $color-header-ink;
+  border: 1px solid $color-accent;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 16%),
+    0 8px 20px rgb(12 80 76 / 28%);
+
+  &:hover:not(:disabled) {
+    background: #128f89;
+    border-color: $color-accent-bright;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 18%),
+      0 0 0 1px rgb(34 199 190 / 28%),
+      0 10px 24px rgb(25 183 176 / 22%);
+  }
+
+  &:active:not(:disabled) {
+    background: #0a5551;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 35%);
+  }
+}
+
+@mixin button-secondary {
+  @include button-base;
+  background: $color-surface-inset;
+  color: $color-ink;
+  border: 1px solid $color-border-strong;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+
+  &:hover {
+    border-color: $color-accent;
+    color: $color-accent-bright;
+    background: $color-accent-soft;
+  }
+
+  &:active {
+    background: #1a1e22;
+  }
+}
+
+@mixin choice-fieldset {
+  margin: 0;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $space-4;
+  display: grid;
+  gap: $space-3;
+  background: $color-surface-raised;
+
+  legend {
+    padding: 0 $space-2;
+    color: $color-ink-muted;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
+@mixin choice-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: $space-3;
+  align-items: start;
+  margin: 0;
+  padding: 0.95rem 1rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-surface-inset;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+
+  @include reduced-motion;
+
+  &:hover {
+    border-color: $color-accent;
+    background: $color-surface-hover;
+  }
+
+  &:has(input:checked) {
+    border-color: $color-accent-bright;
+    background: $color-accent-soft;
+    box-shadow: inset 3px 0 0 $color-accent-bright;
+  }
+
+  &:has(input:focus-visible) {
+    outline: 2px solid $color-focus;
+    outline-offset: 2px;
+  }
+
+  input {
+    margin-top: 0.25rem;
+    accent-color: $color-accent-bright;
+  }
+
+  span {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  strong {
+    color: $color-ink;
+    font-weight: 650;
+    letter-spacing: -0.012em;
+  }
+}
+
+@mixin nav-focus-ring {
+  outline: 2px solid $color-focus;
+  outline-offset: 3px;
 }

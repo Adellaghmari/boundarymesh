@@ -362,7 +362,7 @@ onUnmounted(() => {
   border: 1px solid $color-border;
   border-radius: $radius-md;
   background: $color-surface;
-  box-shadow: $shadow-sm;
+  box-shadow: $shadow-card;
   max-width: 55rem;
 }
 
@@ -380,20 +380,7 @@ onUnmounted(() => {
 }
 
 button {
-  width: fit-content;
-  border: 0;
-  border-radius: $radius-sm;
-  padding: $space-3 $space-4;
-  background: $color-header;
-  color: $color-header-ink;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.55;
-  cursor: default;
+  @include button-primary;
 }
 
 button:focus-visible,

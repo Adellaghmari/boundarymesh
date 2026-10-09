@@ -108,12 +108,14 @@ const mobileOpen = ref(false)
 .header {
   position: sticky;
   top: 0;
+  width: 100%;
   z-index: $z-header;
   color: $color-header-ink;
   background:
-    linear-gradient(105deg, $color-header 0%, $color-header-mid 52%, $color-header-teal 100%);
+    radial-gradient(ellipse 32rem 9rem at 12% 0%, rgb(34 199 190 / 16%), transparent 68%),
+    linear-gradient(105deg, $color-header 0%, $color-header-mid 54%, $color-header-teal 100%);
   box-shadow: $shadow-header;
-  border-bottom: 1px solid rgb(126 232 223 / 18%);
+  border-bottom: 1px solid rgb(34 199 190 / 22%);
 }
 
 .header__inner {
@@ -141,11 +143,12 @@ const mobileOpen = ref(false)
 
 .header__desktop {
   display: none;
-  flex: 1 1 0;
-  flex-direction: row;
+  flex: 1 1 auto;
+  flex-direction: column;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: 0.85rem;
+  gap: 0.35rem;
   min-width: 0;
 }
 
@@ -204,52 +207,63 @@ const mobileOpen = ref(false)
 }
 
 @media (min-width: $bp-lg) {
+  .header__inner {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 1.25rem;
+    row-gap: 0.15rem;
+    min-height: 6.6rem;
+    padding: 0.85rem 1.5rem;
+  }
+
+  .header__brand {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+
   .header__desktop {
     display: flex;
     position: relative;
     z-index: 3;
-    gap: 0.4rem;
-    flex-wrap: wrap;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    width: 100%;
   }
 
   .header__primary,
   .header__secondary {
-    gap: 0.2rem;
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+    width: max-content;
+    max-width: 100%;
+  }
+
+  .header__utilities {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: center;
   }
 
   .header__desktop :deep(.nav-item),
   .header__desktop :deep(.dropdown__button) {
-    padding: 0.4rem 0.5rem;
-    font-size: 0.75rem;
+    padding: 0.42rem 0.62rem;
+    font-size: 0.78rem;
   }
 
   .header__rule {
-    display: block;
+    display: none;
   }
 
   .header__menu {
     display: none;
-  }
-}
-
-@media (min-width: $bp-xl) {
-  .header__inner {
-    padding-inline: 1.75rem;
-  }
-
-  .header__desktop {
-    gap: 0.85rem;
-  }
-
-  .header__primary,
-  .header__secondary {
-    gap: 0.45rem;
-  }
-
-  .header__desktop :deep(.nav-item),
-  .header__desktop :deep(.dropdown__button) {
-    padding: 0.5rem 0.7rem;
-    font-size: 0.8rem;
   }
 }
 </style>

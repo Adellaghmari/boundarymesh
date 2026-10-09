@@ -2,6 +2,7 @@
 import { show as $show } from '@/domain/displayCopy'
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import TimestampLabel from '@/components/TimestampLabel.vue'
 import { useRuntimeStore } from '@/stores/runtime'
 
 const store = useRuntimeStore()
@@ -63,7 +64,7 @@ onMounted(() => {
           <dd>{{ $show(health?.truth ?? '—') }}</dd>
         </div>
       </dl>
-      <p v-if="lastCheckedAt" class="muted">Last checked {{ $show(lastCheckedAt) }}</p>
+      <p v-if="lastCheckedAt" class="muted">Last checked <TimestampLabel :value="lastCheckedAt" /></p>
     </div>
 
     <div class="cluster">
@@ -105,28 +106,14 @@ onMounted(() => {
 .status-card__grid div {
   display: grid;
   gap: $space-1;
-}
-
-dt {
-  color: $color-ink-muted;
-  font-size: 0.8rem;
-}
-
-dd {
-  margin: 0;
-  font-weight: 600;
+  padding: $space-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-surface-raised;
 }
 
 .action {
-  background: $color-accent;
-  color: white;
-  border: 0;
-  border-radius: $radius-sm;
-  padding: $space-2 $space-4;
-}
-
-.action:disabled {
-  opacity: 0.7;
+  @include button-primary;
 }
 
 @media (min-width: $bp-md) {

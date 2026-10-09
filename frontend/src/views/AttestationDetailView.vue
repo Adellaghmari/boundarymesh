@@ -124,11 +124,7 @@ async function tamperDemo(): Promise<void> {
 @use '@/styles/tokens' as *;
 
 .action {
-  background: $color-header;
-  color: $color-header-ink;
-  border: 0;
-  border-radius: $radius-sm;
-  padding: $space-2 $space-4;
+  @include button-primary;
 }
 
 .fail {

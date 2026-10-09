@@ -105,9 +105,9 @@ ul {
 .scope__label {
   display: inline-flex;
   align-items: center;
-  padding: 0.1rem $space-2;
+  padding: 0.2rem 0.55rem;
   border: 1px solid $color-border;
-  border-radius: $radius-sm;
+  border-radius: 999px;
   background: $color-surface-raised;
   color: $color-ink-muted;
   font-size: 0.75rem;

@@ -23,8 +23,12 @@ import type {
 } from '@/domain/types'
 
 const REQUEST = 'bm-public-demo'
-export const SYNTHETIC_DECISION_INSTANT = '2026-04-04T12:00:00Z'
-const WHEN = SYNTHETIC_DECISION_INSTANT
+/** Captured once when this demo module loads. Later reads do not move it. */
+const DEMO_ORIGIN_MS = Date.now()
+
+function demoInstant(minutesAgo: number): string {
+  return new Date(DEMO_ORIGIN_MS - minutesAgo * 60_000).toISOString()
+}
 const BANNER = 'SYNTHETIC DEMO'
 
 interface ApiResponse<T> {
@@ -143,7 +147,7 @@ function decide(
       { kind: 'CREDENTIAL_RESOLVABILITY', status: 'PASS', reasonCodes: [], safeExplanation: 'Synthetic credential reference resolved.' },
       { kind: 'CONNECTOR_SAFETY', status: connector, reasonCodes: [], safeExplanation: connector === 'UNAVAILABLE' ? 'The destination connector is not available for this hold.' : 'Synthetic destination connector is available.' },
     ],
-    decided_at: WHEN,
+    decided_at: new Date().toISOString(),
     policy_version: 'boundary.demo.v1',
     duplicate_delivery: duplicate,
     identity: {
@@ -184,7 +188,7 @@ function decide(
       { kind: 'IDENTITY', status: identity, explanation: identity === 'FAIL' ? 'Synthetic identity is invalid.' : 'Source identity recognized.', reference: 'quayforge.orders' },
       { kind: 'AUTHORIZATION', status: 'PASS', explanation: 'Action permitted.', reference: 'boundary.evaluate' },
       { kind: 'AUTHENTICITY', status: 'PASS', explanation: 'Signature matched.', reference: 'synthetic.demo.1' },
-      { kind: 'FRESHNESS', status: 'PASS', explanation: 'Timestamp is inside the window.', reference: WHEN },
+      { kind: 'FRESHNESS', status: 'PASS', explanation: 'Timestamp is inside the window.', reference: 'session' },
       { kind: 'REPLAY', status: replay, explanation: replay === 'FAIL' ? 'Identifier already accepted.' : 'Identifier is new.', reference: transactionId },
       { kind: 'CONTRACT', status: held ? 'FAIL' : 'PASS', explanation: held ? 'Contract drift.' : 'Contract matched.', reference: 'quayforge.orders' },
       { kind: 'EGRESS', status: 'PASS', explanation: transformed ? 'Transformation required.' : 'Policy allows the fields.', reference: 'destination.egress' },
@@ -244,7 +248,7 @@ const QUARANTINE: QuarantineItemRecord[] = [
     eligible: true,
     credentialReference: 'covecrm-api:v2',
     connectorState: 'IDLE',
-    createdAt: WHEN,
+    createdAt: demoInstant(41),
   },
   {
     id: 'q4114',
@@ -257,7 +261,7 @@ const QUARANTINE: QuarantineItemRecord[] = [
     eligible: false,
     credentialReference: 'lumenway-api:v1',
     connectorState: 'UNAVAILABLE',
-    createdAt: WHEN,
+    createdAt: demoInstant(19),
   },
 ]
 
@@ -265,7 +269,7 @@ function chainEntries(): AuditEntryRecord[] {
   return [
     {
       sequence: 1,
-      occurredAt: WHEN,
+      occurredAt: demoInstant(41),
       eventType: 'BOUNDARY_DECISION',
       attributes: { outcome: 'ALLOW', integration: 'quayforge.orders' },
       previousHash: 'GENESIS',
@@ -275,7 +279,7 @@ function chainEntries(): AuditEntryRecord[] {
     },
     {
       sequence: 2,
-      occurredAt: WHEN,
+      occurredAt: demoInstant(19),
       eventType: 'DELIVERY_RECORDED',
       attributes: { outcome: 'ALLOW_WITH_TRANSFORMATION', integration: 'quayforge.orders' },
       previousHash: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
@@ -290,9 +294,9 @@ function catalog(): CredentialCatalog {
   return {
     banner: BANNER,
     credentials: [
-      { id: 'covecrm-api:v2', version: 'v2', status: 'ACTIVE', destination: 'CoveCRM', connector: 'CoveCRM', rotatedAt: WHEN },
-      { id: 'lumenway-api:v1', version: 'v1', status: 'ACTIVE', destination: 'Lumenway', connector: 'Lumenway', rotatedAt: WHEN },
-      { id: 'rivertide-api', version: 'v1', status: 'ACTIVE', destination: 'Rivertide', connector: 'Rivertide', rotatedAt: WHEN },
+      { id: 'covecrm-api:v2', version: 'v2', status: 'ACTIVE', destination: 'CoveCRM', connector: 'CoveCRM', rotatedAt: demoInstant(41) },
+      { id: 'lumenway-api:v1', version: 'v1', status: 'ACTIVE', destination: 'Lumenway', connector: 'Lumenway', rotatedAt: demoInstant(19) },
+      { id: 'rivertide-api', version: 'v1', status: 'ACTIVE', destination: 'Rivertide', connector: 'Rivertide', rotatedAt: demoInstant(8) },
     ],
     consents: [
       { id: 'cove.orders', destination: 'CoveCRM', operation: 'orders.create', status: 'GRANTED', kind: 'CONNECTOR', permissions: ['orders.create'] },

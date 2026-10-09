@@ -31,9 +31,14 @@ onMounted(() => {
     <p v-if="errorMessage" class="card fail" role="alert">{{ $show(errorMessage) }}</p>
     <p v-if="attestations" class="muted">{{ $show(attestations.banner) }}</p>
     <p v-if="loading">Loading…</p>
-    <p v-else-if="!attestations || attestations.items.length === 0">
-      No attestations yet. Run a delivery lab crossing first.
-    </p>
+    <section v-else-if="!attestations || attestations.items.length === 0" class="card empty">
+      <h2>No attestations yet</h2>
+      <p>
+        A terminal crossing writes a local exchange attestation. Run a delivery lab crossing and
+        return here to read it.
+      </p>
+      <RouterLink class="action" to="/delivery">Open the Delivery Lab</RouterLink>
+    </section>
     <ul v-else class="list">
       <li v-for="item in attestations.items" :key="item.id">
         <RouterLink :to="`/attestations/${item.id}`">
@@ -53,6 +58,17 @@ onMounted(() => {
   padding-left: $space-5;
   display: grid;
   gap: $space-2;
+}
+
+.empty {
+  display: grid;
+  gap: $space-3;
+  justify-items: start;
+  max-width: 40rem;
+}
+
+.action {
+  @include button-primary;
 }
 
 .fail {

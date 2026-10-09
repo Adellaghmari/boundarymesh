@@ -3,6 +3,7 @@ import { show as $show } from '@/domain/displayCopy'
 import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import DecisionResult from '@/components/DecisionResult.vue'
+import TimestampLabel from '@/components/TimestampLabel.vue'
 import TruthBanner from '@/components/TruthBanner.vue'
 import { CREDENTIAL_LAB_SCENARIOS } from '@/domain/securityScenarios'
 import { useDeliveryStore } from '@/stores/delivery'
@@ -66,7 +67,7 @@ async function rotate(): Promise<void> {
             <td>{{ $show(row.version) }}</td>
             <td>{{ $show(row.status) }}</td>
             <td>{{ $show(row.destination) }}</td>
-            <td>{{ $show(row.rotatedAt) }}</td>
+            <td><TimestampLabel :value="row.rotatedAt" /></td>
           </tr>
         </tbody>
       </table>
@@ -131,35 +132,16 @@ async function rotate(): Promise<void> {
 }
 
 fieldset {
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-  padding: $space-4;
-  display: grid;
-  gap: $space-3;
+  @include choice-fieldset;
 }
 
 .lab__option {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: $space-3;
-}
-
-.lab__option span {
-  display: grid;
-  gap: $space-1;
+  @include choice-option;
 }
 
 .action {
   justify-self: start;
-  background: $color-header;
-  color: $color-header-ink;
-  border: 0;
-  border-radius: $radius-sm;
-  padding: $space-2 $space-4;
-}
-
-.action:disabled {
-  opacity: 0.7;
+  @include button-primary;
 }
 
 .fail {

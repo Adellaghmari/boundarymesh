@@ -2,6 +2,7 @@
 import { show as $show } from '@/domain/displayCopy'
 import { onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import TimestampLabel from '@/components/TimestampLabel.vue'
 import TruthBanner from '@/components/TruthBanner.vue'
 import { useEvidenceStore } from '@/stores/evidence'
 
@@ -73,7 +74,7 @@ async function tamperDemo(): Promise<void> {
       <tbody>
         <tr v-for="entry in chain.entries" :key="entry.sequence">
           <td>{{ $show(entry.sequence) }}</td>
-          <td>{{ $show(entry.occurredAt) }}</td>
+          <td><TimestampLabel :value="entry.occurredAt" /></td>
           <td>{{ $show(entry.eventType) }}</td>
           <td>
             <span v-for="(value, key) in entry.attributes" :key="key" class="attr">
@@ -92,11 +93,7 @@ async function tamperDemo(): Promise<void> {
 @use '@/styles/tokens' as *;
 
 .action {
-  background: $color-header;
-  color: $color-header-ink;
-  border: 0;
-  border-radius: $radius-sm;
-  padding: $space-2 $space-4;
+  @include button-primary;
 }
 
 .fail {

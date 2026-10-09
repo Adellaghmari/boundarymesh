@@ -94,7 +94,12 @@ async function runHarness(): Promise<void> {
         >
           View connection details
         </button>
-        <RouterLink v-for="action in system.actions" :key="action.label" :to="action.to">
+        <RouterLink
+          v-for="action in system.actions"
+          :key="action.label"
+          class="quiet"
+          :to="action.to"
+        >
           {{ action.label }}
         </RouterLink>
       </div>
@@ -150,15 +155,24 @@ async function runHarness(): Promise<void> {
 
 .meta div {
   display: grid;
-  grid-template-columns: 8rem 1fr;
+  grid-template-columns: 9rem 1fr;
+  gap: $space-3;
+  align-items: baseline;
+  padding: $space-3 0;
+  border-bottom: 1px solid $color-border;
 }
 
-dt {
-  color: $color-ink-muted;
+.meta div:last-child {
+  border-bottom: 0;
 }
 
 .action {
   justify-self: start;
+  @include button-primary;
+}
+
+.quiet {
+  @include button-secondary;
 }
 
 .actions {

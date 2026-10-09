@@ -14,18 +14,41 @@ body,
 
 html {
   font-size: 16px;
+  scrollbar-gutter: stable;
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
-  color: $color-ink;
-  background: $color-canvas;
+  color: $color-ink-secondary;
+  background-color: $color-canvas;
+  background-image:
+    radial-gradient(ellipse 64rem 18rem at 50% -8rem, rgb(255 255 255 / 3%), transparent 62%),
+    linear-gradient(180deg, $color-canvas-deep 0%, $color-canvas-mid 35%, $color-canvas-bottom 100%);
+  background-attachment: fixed;
   font-family: $font-sans;
-  line-height: 1.5;
+  font-size: 1rem;
+  line-height: 1.65;
+  letter-spacing: 0.004em;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgb(34 199 190 / 28%);
+  color: $color-ink;
 }
 
 a {
-  color: $color-accent;
+  color: $color-accent-bright;
+}
+
+code {
+  font-family: $font-mono;
+  font-size: 0.88em;
+  padding: 0.08em 0.35em;
+  border: 1px solid $color-border;
+  border-radius: 0.3rem;
+  background: $color-surface-raised;
 }
 
 a:focus-visible,
@@ -56,17 +79,44 @@ p {
   margin: 0;
 }
 
+strong {
+  color: $color-ink;
+  font-weight: 650;
+}
+
 h1 {
-  font-size: 1.75rem;
-  line-height: 1.2;
+  font-size: clamp(2.15rem, 3vw, 2.75rem);
+  font-weight: 680;
+  letter-spacing: -0.032em;
+  line-height: 1.08;
+  color: $color-ink;
 }
 
 h2 {
-  font-size: 1.2rem;
+  font-size: 1.55rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: $color-ink;
 }
 
 h3 {
-  font-size: 1rem;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  color: $color-ink;
+}
+
+dt {
+  color: $color-ink-muted;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+}
+
+dd {
+  margin: 0;
+  font-weight: 600;
 }
 
 .skip-link {
@@ -87,14 +137,14 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: $space-2;
-  padding: 0.15rem $space-2;
+  padding: 0.22rem 0.55rem;
   border: 1px solid $color-border;
-  border-radius: $radius-sm;
+  border-radius: 999px;
   background: $color-surface-raised;
   color: $color-ink;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
@@ -102,8 +152,27 @@ h3 {
   background: $color-surface;
   border: 1px solid $color-border;
   border-radius: $radius-md;
-  box-shadow: $shadow-sm;
+  box-shadow: $shadow-card;
   padding: $space-5;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+
+  @include reduced-motion;
+}
+
+.card:hover {
+  border-color: $color-border-strong;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 5%),
+    0 16px 36px rgb(0 0 0 / 34%);
+}
+
+.card.fail {
+  border-color: #6a3038;
+  background: $color-reject-soft;
+  color: $color-reject;
+  box-shadow: none;
 }
 
 .muted {
@@ -112,7 +181,34 @@ h3 {
 
 .stack {
   display: grid;
-  gap: $space-4;
+  gap: $space-5;
+  animation: page-in 420ms ease both;
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stack {
+    animation: none;
+  }
+}
+
+.stack > *,
+.card,
+p,
+dd {
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .cluster {

@@ -62,7 +62,7 @@ test('the public root is the full BoundaryMesh console', async ({ page }) => {
   await expectNoVisibleDash(page)
 
   await nav.getByRole('link', { name: 'Boundary Events' }).click()
-  await expect(page.getByRole('heading', { name: 'Boundary events' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Boundary Events' })).toBeVisible()
   await expect(page.getByText('ALLOW', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('ALLOW WITH TRANSFORMATION', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('QUARANTINE', { exact: true }).first()).toBeVisible()

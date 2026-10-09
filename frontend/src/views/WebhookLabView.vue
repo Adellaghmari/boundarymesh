@@ -66,35 +66,16 @@ async function run(): Promise<void> {
 }
 
 fieldset {
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-  padding: $space-4;
-  display: grid;
-  gap: $space-3;
+  @include choice-fieldset;
 }
 
 .lab__option {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: $space-3;
-}
-
-.lab__option span {
-  display: grid;
-  gap: $space-1;
+  @include choice-option;
 }
 
 .action {
   justify-self: start;
-  background: $color-header;
-  color: $color-header-ink;
-  border: 0;
-  border-radius: $radius-sm;
-  padding: $space-2 $space-4;
-}
-
-.action:disabled {
-  opacity: 0.7;
+  @include button-primary;
 }
 
 .fail {

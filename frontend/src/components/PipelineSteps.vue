@@ -37,18 +37,25 @@ const steps = [
 
 .pipeline li {
   display: grid;
-  grid-template-columns: 1.75rem 1fr;
+  grid-template-columns: auto 1fr;
   gap: $space-3;
   align-items: center;
-  padding: $space-2 $space-3;
+  padding: $space-3 $space-3;
   background: $color-surface-raised;
   border: 1px solid $color-border;
   border-radius: $radius-sm;
 }
 
 .pipeline__index {
+  display: grid;
+  width: 1.6rem;
+  height: 1.6rem;
+  place-items: center;
+  border-radius: 999px;
+  background: $color-accent-soft;
+  color: $color-accent-bright;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: $color-accent;
 }
 
 @media (min-width: $bp-md) {

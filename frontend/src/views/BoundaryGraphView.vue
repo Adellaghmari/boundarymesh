@@ -229,11 +229,7 @@ async function runDemo(scenario: string): Promise<void> {
 @use '@/styles/tokens' as *;
 
 .action {
-  background: $color-header;
-  color: $color-header-ink;
-  border: 0;
-  border-radius: $radius-sm;
-  padding: $space-2 $space-4;
+  @include button-primary;
 }
 
 .fail {
@@ -244,10 +240,43 @@ async function runDemo(scenario: string): Promise<void> {
 .filters {
   display: flex;
   flex-wrap: wrap;
-  gap: $space-4;
+  gap: $space-3;
+  margin: 0;
   border: 1px solid $color-border;
   border-radius: $radius-md;
-  padding: $space-3 $space-4;
+  padding: $space-4;
+  background: $color-surface;
+  box-shadow: $shadow-card;
+
+  legend {
+    padding: 0 $space-2;
+    color: $color-ink-muted;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-2;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    background: $color-surface-raised;
+    cursor: pointer;
+  }
+
+  label:has(input:checked) {
+    border-color: $color-accent;
+    background: $color-accent-soft;
+    color: $color-accent-bright;
+  }
+
+  input {
+    accent-color: $color-accent;
+  }
 }
 
 .graph {
@@ -261,7 +290,7 @@ async function runDemo(scenario: string): Promise<void> {
 
 .edge {
   fill: none;
-  stroke: $color-border;
+  stroke: $color-border-strong;
   stroke-width: 3;
   cursor: pointer;
 }

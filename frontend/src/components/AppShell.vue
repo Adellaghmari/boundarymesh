@@ -24,5 +24,7 @@ import AppHeader from '@/components/shell/AppHeader.vue'
   width: min(100%, $measure);
   margin: 0 auto;
   padding: $space-6 $space-4 $space-7;
+  display: grid;
+  gap: $space-5;
 }
 </style>

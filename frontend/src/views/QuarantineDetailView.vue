@@ -121,14 +121,6 @@ dt {
 
 .action {
   justify-self: start;
-  background: $color-header;
-  color: $color-header-ink;
-  border: 0;
-  border-radius: $radius-sm;
-  padding: $space-2 $space-4;
-}
-
-.action:disabled {
-  opacity: 0.7;
+  @include button-primary;
 }
 </style>

@@ -231,7 +231,7 @@ test('premium navigation reaches labs, operations, evidence, and graph', async (
   const primary = page.locator('nav[aria-label="Primary"]')
   await expect(primary.locator('a[aria-current="page"]')).toContainText('Overview')
   await primary.getByRole('link', { name: 'Boundary Events' }).click()
-  await expect(page.getByRole('heading', { name: 'Boundary events' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Boundary Events' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Labs' }).click()
   await page.getByRole('menuitem', { name: /Identity Lab/ }).click()

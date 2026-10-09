@@ -2,6 +2,7 @@
  * Presentation labels for the website.
  * Technical identifiers stay unchanged in routes, requests, and storage.
  */
+import { formatTimestamp, isTimestamp } from '@/domain/timestamp'
 const PHRASES: readonly (readonly [string, string])[] = [
   ['m365-calendar-egress/v1', 'Calendar egress policy v1'],
   ['m365-calendar/v1', 'Calendar contract v1'],
@@ -68,21 +69,12 @@ const PHRASES: readonly (readonly [string, string])[] = [
 const ORDERED = PHRASES.slice().sort((left, right) => right[0].length - left[0].length)
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const ISO_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/
 
 function formatWhen(value: string): string | null {
-  if (!ISO_TIME.test(value)) {
+  if (!isTimestamp(value)) {
     return null
   }
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return null
-  }
-  return new Intl.DateTimeFormat('en-GB', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'UTC',
-  }).format(date)
+  return formatTimestamp(value, new Date())?.primary ?? null
 }
 
 function tidy(value: string): string {

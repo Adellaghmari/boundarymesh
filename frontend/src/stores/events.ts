@@ -87,6 +87,15 @@ export const useEventsStore = defineStore('events', () => {
     ]
   }
 
+  function stampDecidedAt(transactionId: string, decidedAt: string): void {
+    events.value = events.value.map((item) =>
+      item.transactionId === transactionId ? { ...item, decidedAt } : item,
+    )
+    if (lastEvent.value?.transactionId === transactionId) {
+      lastEvent.value = { ...lastEvent.value, decidedAt }
+    }
+  }
+
   function asSecurityFailure(error: unknown): SecurityHttpFailure {
     if (error instanceof BoundaryMeshApiError) {
       if (error.kind === 'unauthorized' || error.kind === 'forbidden') {
@@ -248,6 +257,7 @@ export const useEventsStore = defineStore('events', () => {
     identityFailure,
     webhookFailure,
     newestFirst,
+    stampDecidedAt,
     eventById,
     evaluateSelected,
     evaluateScenario,

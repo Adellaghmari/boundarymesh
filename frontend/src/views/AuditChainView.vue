@@ -32,9 +32,14 @@ onMounted(() => {
     <section class="card stack">
       <h2>Chains in this session</h2>
       <p v-if="loading">Loading…</p>
-      <p v-else-if="!chainList || chainList.chains.length === 0">
-        No audit entries yet. Run a delivery lab crossing first.
-      </p>
+      <div v-else-if="!chainList || chainList.chains.length === 0" class="empty">
+        <h2>No audit entries yet</h2>
+        <p>
+          The hash chain starts when a crossing is recorded. Run a delivery lab crossing, then
+          refresh this list.
+        </p>
+        <RouterLink class="action" to="/delivery">Open the Delivery Lab</RouterLink>
+      </div>
       <ul v-else class="list">
         <li v-for="id in chainList.chains" :key="id">
           <RouterLink :to="`/audit/${id}`">{{ $show(id) }}</RouterLink>
@@ -50,6 +55,16 @@ onMounted(() => {
 .list {
   margin: 0;
   padding-left: $space-5;
+}
+
+.empty {
+  display: grid;
+  gap: $space-3;
+  justify-items: start;
+}
+
+.action {
+  @include button-primary;
 }
 
 .fail {
